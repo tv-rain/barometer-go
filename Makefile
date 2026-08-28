@@ -1,4 +1,4 @@
-.PHONY: build check format format-check lint mobile-smoke test
+.PHONY: build check format format-check integrity lint mobile-smoke race test
 
 build:
 	go build ./...
@@ -16,11 +16,19 @@ format-check:
 test:
 	go test ./...
 
+race:
+	go test -race ./...
+
 lint:
 	go vet ./...
+
+integrity:
+	go mod tidy -diff
+	go mod verify
+	git diff --check
 
 mobile-smoke:
 	CGO_ENABLED=0 GOOS=android GOARCH=arm64 go build ./...
 	CGO_ENABLED=0 GOOS=ios GOARCH=arm64 go build ./...
 
-check: format-check build test lint mobile-smoke
+check: format-check build test race lint integrity mobile-smoke

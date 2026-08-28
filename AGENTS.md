@@ -72,10 +72,14 @@ Run commands from the repository root:
 - `make format` applies Go formatting.
 - `make format-check` checks formatting without editing files.
 - `make test` runs the test suite.
+- `make race` runs the test suite with Go's race detector on supported hosts.
 - `make lint` runs standard Go static analysis.
+- `make integrity` checks module consistency and verification and rejects whitespace errors in the working diff.
 - `make mobile-smoke` cross-compiles the current pure-Go packages for the selected mobile targets.
 - `make check` runs the complete non-mutating local validation set.
 
 The mobile smoke command is not gomobile, native-adapter, device, lifecycle, or platform-support validation. Extend it only through the dedicated reviewed mobile-compilation work.
+
+The race check requires a host supported by Go's race detector, CGO, and a working C compiler. If the local host cannot run it, execute the remaining individual checks and use the approved CI result for race-test evidence; do not claim that the complete `make check` set passed locally.
 
 Before handing off a change, run validation in proportion to risk and at minimum run `make check` and `git diff --check`. Confirm that the working tree contains no generated build artifacts, secrets, participant data, private configuration, personal paths, chat transcripts, or temporary agent files.
