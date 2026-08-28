@@ -1,0 +1,43 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Build output
+/build/
+/bin/
+/out/
+/dist/
+/coverage/
+coverage.out
+coverage.html
+
+# Go modules cache (if present)
+vendor/
+
+# Test result files
+*.coverprofile
+*.testresult
+*.tmp
+
+# IDE and editor settings
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Go workspace files
+go.work
+go.work.sum
+
+# cache files
+.cache/
