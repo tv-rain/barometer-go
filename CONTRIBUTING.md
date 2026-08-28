@@ -37,6 +37,8 @@ git diff --check
 
 `make check` verifies formatting, host compilation, unit tests, standard Go static analysis, and pure-Go cross-compilation for Android ARM64 and iOS ARM64. See the [README](README.md#validate-a-clean-checkout) for individual commands and the limits of the mobile smoke check.
 
+The complete check also runs unit tests with Go's race detector and checks repository integrity with `go mod tidy -diff`, `go mod verify`, and `git diff --check`. The race test requires a host supported by Go's race detector, CGO, and a working C compiler. When a local host does not provide those capabilities, run the remaining individual commands and use the approved CI result for race-test evidence; do not report the complete check as locally passed.
+
 Add focused tests for new behavior and boundary or hostile-input tests where safety, validation, resource use, cancellation, persistence, or clearing is affected. A change is not complete merely because it compiles.
 
 ## Review and Handoff

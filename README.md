@@ -20,6 +20,7 @@ See [Package Architecture](docs/package-architecture.md) for the intended packag
 
 - Go 1.26.0 or a later compatible Go release, as declared by [`go.mod`](go.mod).
 - Make for the canonical command aliases.
+- A host supported by Go's race detector, with CGO and a working C compiler, is required for `make race` and the complete `make check` validation set. The approved CI environment provides this capability.
 - No deployment credentials, participant data, private configuration, mobile SDK, or external service is required for the current validation commands.
 
 ## Validate a Clean Checkout
@@ -38,11 +39,15 @@ The individual commands are:
 | `make format` | Apply `gofmt` to repository Go files. |
 | `make format-check` | Fail if any Go file requires formatting without changing files. |
 | `make test` | Run all Go tests. |
+| `make race` | Run all Go tests with Go's race detector on supported hosts. |
 | `make lint` | Run the standard Go static analyzer with `go vet`. |
+| `make integrity` | Check module-file consistency, verify downloaded modules, and reject whitespace errors in the working diff. |
 | `make mobile-smoke` | Cross-compile the current pure-Go packages for Android ARM64 and iOS ARM64. |
-| `make check` | Run formatting, build, test, lint, and mobile-compilation checks. |
+| `make check` | Run formatting, build, unit-test, race-test, static-analysis, repository-integrity, and mobile-compilation checks. |
 
 `make mobile-smoke` is a compiler portability check only. It does not run on a device, build a native adapter, invoke gomobile, validate the future exported API boundary, or establish Android or Apple support.
+
+If a development host is not supported by Go's race detector, run the remaining individual checks locally and rely on the approved CI environment for the race-test result. Do not report the complete `make check` set as passed when the race test was skipped.
 
 ## Development
 
