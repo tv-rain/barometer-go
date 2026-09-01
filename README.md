@@ -1,3 +1,7 @@
+<p align="left">
+  <img src="assets/barometer-logo.svg" alt="Barometer" width="80">
+</p>
+
 # Barometer Go
 
 Barometer Go is the platform-neutral core planned for the Barometer mobile network-measurement library. It is intended to admit reviewed tasks, enforce safety and resource bounds, execute registered measurements, and return minimized structured observations without requiring a particular scheduler, collector, backend, or host application.
