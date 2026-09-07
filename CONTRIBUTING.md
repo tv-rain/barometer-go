@@ -8,6 +8,8 @@ For tracked Barometer work, follow the coordination repository's `docs/task-work
 
 Read [Package Architecture](docs/package-architecture.md) and the relevant public specifications before changing behavior. The public specification is authoritative for observable behavior; examples and internal review documents are not alternative schemas.
 
+Read [Versioning and Releases](docs/versioning-and-releases.md) before changing compatibility commitments, preparing release notes, updating the changelog, creating a release tag, or producing a release artifact.
+
 Work on a task-specific branch and keep changes limited to this repository unless an approved cross-repository plan explicitly requires otherwise. Inspect and preserve unrelated local work before editing.
 
 ## Change Scope
@@ -17,7 +19,7 @@ Work on a task-specific branch and keep changes limited to this repository unles
 - Do not create empty internal packages solely to reproduce the planned package tree.
 - Record specification ambiguities instead of silently selecting new observable behavior.
 - Create or propose a follow-up task for newly discovered work that can be completed independently.
-- Keep semantic versioning, tagging, changelog, artifact naming, and release policy changes within their dedicated reviewed work rather than defining them incidentally.
+- Follow the repository's reviewed [versioning and release conventions](docs/versioning-and-releases.md); do not redefine them incidentally in an unrelated change.
 
 ## Safety and Test Data
 

@@ -12,6 +12,12 @@ This repository is at the engineering-foundation stage. It currently contains th
 
 The Barometer `0.1.0` public specifications are Draft implementation inputs. A specification, package plan, successful Go build, or successful cross-compilation check is not evidence that a measurement or platform is implemented, conformant, field-validated, or supported.
 
+## Versions and Releases
+
+Repository versioning, compatibility, changelog, tag, artifact-naming, and experimental-release rules are defined in [Versioning and Releases](docs/versioning-and-releases.md). Notable changes are recorded in the [Changelog](CHANGELOG.md).
+
+A Barometer Go release version is independent from a public specification version and from the evidence-backed support status of any measurement or platform. The documented release process requires those facts to be stated separately.
+
 ## Project Boundaries
 
 The [Barometer coordination repository](https://github.com/tv-rain/barometer) owns project-wide principles, architecture decisions, delivery planning, and the task workflow. The [public specification](https://github.com/tv-rain/barometer-spec) is authoritative for observable library and measurement behavior. This repository owns only the Go implementation and its repository-local documentation, tests, and release history.
