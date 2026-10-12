@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Guidance for stable public requirement references and specification-baseline evidence in documentation, code, and tests.
 - Initial Go module and repository foundation.
 - Repository guidance, canonical validation commands, continuous integration, race testing, and repository-integrity checks.
 - MIT licensing for code and documentation, with separate trademark terms for the Barometer name and brand assets.

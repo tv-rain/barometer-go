@@ -315,6 +315,8 @@ Empty placeholder packages should not be created merely to reproduce this tree. 
 
 ## Specification Traceability
 
+Use [Requirement References](requirement-references.md) for stable references to individual public obligations. The table below remains a document-level navigation map, not a complete requirement inventory or conformance claim.
+
 | Implementation area | Primary Draft `0.1.0` specification inputs |
 |---|---|
 | Task models and decoding | `data-formats/task*.md` |
