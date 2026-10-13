@@ -1,4 +1,4 @@
-.PHONY: build check format format-check integrity lint mobile-smoke race test
+.PHONY: build check format format-check integrity lint mobile-smoke mobile-smoke-android mobile-smoke-apple race test
 
 build:
 	go build ./...
@@ -30,5 +30,11 @@ integrity:
 mobile-smoke:
 	CGO_ENABLED=0 GOOS=android GOARCH=arm64 go build ./...
 	CGO_ENABLED=0 GOOS=ios GOARCH=arm64 go build ./...
+
+mobile-smoke-android:
+	bash scripts/mobile-smoke.sh android
+
+mobile-smoke-apple:
+	bash scripts/mobile-smoke.sh apple
 
 check: format-check build test race lint integrity mobile-smoke

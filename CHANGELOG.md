@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Android and Apple gomobile compilation smoke checks with pinned tooling, a build-tagged synthetic boundary, and incompatible-export/dependency regression checks; these do not establish mobile platform support.
 - Guidance for stable public requirement references and specification-baseline evidence in documentation, code, and tests.
 - Initial Go module and repository foundation.
 - Repository guidance, canonical validation commands, continuous integration, race testing, and repository-integrity checks.
