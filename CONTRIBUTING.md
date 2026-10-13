@@ -18,6 +18,7 @@ Work on a task-specific branch and keep changes limited to this repository unles
 - Do not introduce public API, new exported packages, third-party dependencies, native SDK requirements, infrastructure, collectors, or deployment behavior without explicit reviewed scope.
 - Do not create empty internal packages solely to reproduce the planned package tree.
 - Record specification ambiguities instead of silently selecting new observable behavior.
+- Use the public [Specification Issue Workflow](https://github.com/tv-rain/barometer-spec/blob/main/specification-issues/README.md) and [template](https://github.com/tv-rain/barometer-spec/blob/main/specification-issues/template.md). Stop affected implementation pending public disposition and record findings in [Specification Issues](docs/specification-issues.md). Unaffected approved work may continue; proposals and passing local tests cannot alter the contract.
 - Create or propose a follow-up task for newly discovered work that can be completed independently.
 - Follow the repository's reviewed [versioning and release conventions](docs/versioning-and-releases.md); do not redefine them incidentally in an unrelated change.
 

@@ -6,5 +6,5 @@
 - [`normative-sources.md`](normative-sources.md) — complete document-level public contract inventory pinned to a reviewed specification revision, with authority and applicability boundaries.
 - [`package-architecture.md`](package-architecture.md) — package ownership, dependency direction, repository boundaries, and rules for introducing implementation packages.
 - [`requirement-references.md`](requirement-references.md) — public requirement IDs in documentation, code, and tests, with explicit baseline and evidence boundaries.
-- [`specification-issues.md`](specification-issues.md) — unresolved public contract findings from the Go source review; no local behavior decisions.
+- [`specification-issues.md`](specification-issues.md) — public review/adoption procedure and unresolved Go findings with impact, alternatives, and evidence; no local behavior decisions.
 - [`versioning-and-releases.md`](versioning-and-releases.md) — semantic versioning, compatibility, changelog, tags, artifact names, and experimental-release process.
