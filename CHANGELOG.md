@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Defined public Go facade signatures, trusted admission boundary, lifecycle and result ownership, with isolated native binding fixture validation; no production API or runtime implementation.
 - Adoption guidance for the public traceability-manifest format and evidence/status gates; no production mapping, checker, or implementation-support claim.
 - Contribution guidance for public specification-issue review and ordered adoption, with expanded evidence for the unresolved duplicate-member finding; no decoding behavior is selected.
 - Document-level inventory of all 27 Draft `0.1.0` public runtime contracts at a pinned specification revision, authority classifications, and an unresolved task-decoding specification issue; no implementation or conformance claim.

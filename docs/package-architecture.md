@@ -88,7 +88,7 @@ The module root is the only initially intended public Go package. It owns:
 
 It does not own measurement logic, JSON schema implementation, trust policy, persistence implementations, platform secrets, collector behavior, or censorship classification. Exporting additional Go packages or interfaces is a public API decision and requires explicit review.
 
-Exact exported method names and serialized representations are deferred until their dedicated API tasks. This document fixes ownership and dependency direction, not the final API signatures.
+The [Public Go API Boundary](public-api.md) defines the intended facade signatures and trusted adapter, lifecycle, and result-ownership contract. Runtime implementation remains pending. This architecture document fixes ownership and dependency direction; the API design does not export additional packages or create the planned internal package tree.
 
 ### Domain Models
 
