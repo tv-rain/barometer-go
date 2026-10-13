@@ -1,0 +1,58 @@
+name: Mobile compilation smoke
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  bind:
+    name: Bind (${{ matrix.target }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: android
+            runner: ubuntu-24.04
+          - target: apple
+            runner: macos-15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version: "1.26.0"
+          cache: false
+      - name: Check tooling module integrity
+        working-directory: tools/mobile
+        run: |
+          go mod tidy -diff
+          go mod verify
+      - name: Configure Android toolchain
+        if: matrix.target == 'android'
+        shell: bash
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "ndk;28.2.13676358"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/28.2.13676358" >> "$GITHUB_ENV"
+      - name: Report Apple toolchain
+        if: matrix.target == 'apple'
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+      - name: Compile current core boundary
+        run: make mobile-smoke-${{ matrix.target }}
+      - name: Verify smoke failure detection
+        run: python3 scripts/test-mobile-smoke.py ${{ matrix.target }}
+      - name: Check tracked files remain unchanged
+        run: git diff --exit-code

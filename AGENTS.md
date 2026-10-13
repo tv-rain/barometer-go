@@ -78,7 +78,7 @@ Run commands from the repository root:
 - `make mobile-smoke` cross-compiles the current pure-Go packages for the selected mobile targets.
 - `make check` runs the complete non-mutating local validation set.
 
-The mobile smoke command is not gomobile, native-adapter, device, lifecycle, or platform-support validation. Extend it only through the dedicated reviewed mobile-compilation work.
+The `mobile-smoke` command checks pure-Go portability. The separate `mobile-smoke-android` and `mobile-smoke-apple` commands compile gomobile bindings and require native toolchains. Follow [Mobile Compilation Smoke Checks](docs/mobile-smoke.md), including its negative tests, when changing the binding smoke checks or their tooling. None of these commands establishes device, lifecycle, or platform support.
 
 The race check requires a host supported by Go's race detector, CGO, and a working C compiler. If the local host cannot run it, execute the remaining individual checks and use the approved CI result for race-test evidence; do not claim that the complete `make check` set passed locally.
 
