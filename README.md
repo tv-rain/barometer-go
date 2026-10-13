@@ -24,7 +24,7 @@ The [Barometer coordination repository](https://github.com/tv-rain/barometer) ow
 
 The host application remains responsible for enablement, authenticated task delivery, scheduling, deployment policy, optional proxy operation, result delivery, participant transparency, and deployment-specific review. The Go core must enforce admission, validation, bounded execution, registered behavior, minimized results, cancellation, retention, and clearing without accepting trust assertions from task-controlled data.
 
-See [Package Architecture](docs/package-architecture.md) for the intended package ownership and dependency rules.
+See [Package Architecture](docs/package-architecture.md) for the intended package ownership and dependency rules. The [Public Go API Boundary](docs/public-api.md) defines the intended facade and trust/lifecycle contract; its isolated signature fixture is not a production API or runtime implementation.
 
 ## Requirements
 
