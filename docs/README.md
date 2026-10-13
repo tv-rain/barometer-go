@@ -2,6 +2,7 @@
 
 ## Directory Index
 
+- [`traceability-manifest.md`](traceability-manifest.md) — adoption of the public machine-readable mapping format, claim gates, and current checker/mapping limits.
 - [`mobile-smoke.md`](mobile-smoke.md) — smoke-only boundary decision, Android and Apple native compilation, prerequisites, and failure-detection checks.
 - [`normative-sources.md`](normative-sources.md) — complete document-level public contract inventory pinned to a reviewed specification revision, with authority and applicability boundaries.
 - [`package-architecture.md`](package-architecture.md) — package ownership, dependency direction, repository boundaries, and rules for introducing implementation packages.
