@@ -8,6 +8,8 @@ An ID is stable identity, not a specification version or a support claim. The in
 
 ## Reference Form
 
+Use [Traceability Manifest Adoption](traceability-manifest.md) for future machine-readable mappings between these references, immutable baselines, cases/results, issues, and support evidence. The public manifest format complements reference comments; it does not turn a comment into an implementation claim.
+
 Place one standalone comment near the implementing behavior or relevant test:
 
 ```go
