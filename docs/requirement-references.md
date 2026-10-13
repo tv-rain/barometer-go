@@ -4,7 +4,7 @@
 
 Use the public [requirement identifier convention](https://github.com/tv-rain/barometer-spec/blob/main/requirements/README.md) when referring to individual normative obligations in code, tests, documentation, and specification issues. Public specification maintainers allocate the IDs. This repository consumes them without defining alternative normative text or adding IDs to runtime task/result schemas.
 
-An ID is stable identity, not a specification version or a support claim. The initial catalog is intentionally partial. Untagged public requirements remain authoritative. The existing [package-level traceability map](package-architecture.md#specification-traceability) remains useful for locating surrounding requirements; these examples do not replace a complete source inventory or conformance matrix.
+An ID is stable identity, not a specification version or a support claim. The initial catalog is intentionally partial. Untagged public requirements remain authoritative. The [Normative Source Inventory](normative-sources.md) records the complete document-level baseline; the existing [package-level traceability map](package-architecture.md#specification-traceability) remains useful for locating surrounding requirements. Neither this document's examples nor the source inventory establish a complete requirement-to-case matrix or conformance.
 
 ## Reference Form
 

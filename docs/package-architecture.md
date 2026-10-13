@@ -315,7 +315,7 @@ Empty placeholder packages should not be created merely to reproduce this tree. 
 
 ## Specification Traceability
 
-Use [Requirement References](requirement-references.md) for stable references to individual public obligations. The table below remains a document-level navigation map, not a complete requirement inventory or conformance claim.
+Use the [Normative Source Inventory](normative-sources.md) for the complete document-level public baseline and [Requirement References](requirement-references.md) for stable references to individual public obligations. The table below remains a package-oriented navigation map, not a complete requirement inventory or conformance claim. Record unresolved public contract findings in [Specification Issues](specification-issues.md).
 
 | Implementation area | Primary Draft `0.1.0` specification inputs |
 |---|---|
