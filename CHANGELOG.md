@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Shared internal strict JSON decoding with explicit schema/version selection, exact bounded integers, Unicode and duplicate-name checks, finite resource envelopes, sanitized atomic errors, and synthetic negative/boundary/fuzz tests. Individual public model schemas and runtime admission remain pending.
+
 - Internal test-only negative/boundary fixtures, requirement-aware rejection assertions, and deterministic clock/HTTP transport controls, with synthetic reuse examples; no runtime decoding or measurement implementation.
 - Defined public Go facade signatures, trusted admission boundary, lifecycle and result ownership, with isolated native binding fixture validation; no production API or runtime implementation.
 - Adoption guidance for the public traceability-manifest format and evidence/status gates; no production mapping, checker, or implementation-support claim.

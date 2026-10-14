@@ -8,7 +8,7 @@ Barometer Go is the platform-neutral core planned for the Barometer mobile netwo
 
 ## Current Status
 
-This repository is at the engineering-foundation stage. It currently contains the Go module bootstrap and an accepted package-architecture plan; it does not yet implement registered measurements, conformance, native adapters, mobile artifacts, or a supported public API.
+This repository is at the engineering-foundation stage. It currently contains the Go module bootstrap, an accepted package-architecture plan, and [shared strict JSON decoding infrastructure](docs/json-decoding.md); it does not yet implement individual public model schemas, registered measurements, full runtime conformance, native adapters, mobile release artifacts, or a supported public API.
 
 The Barometer `0.1.0` public specifications are Draft implementation inputs. A specification, package plan, successful Go build, or successful cross-compilation check is not evidence that a measurement or platform is implemented, conformant, field-validated, or supported.
 
