@@ -2,6 +2,8 @@
 
 ## Directory Index
 
+- [`json-decoding.md`](json-decoding.md) — shared internal strict JSON decoding, schema selection, explicit resource bounds, synthetic cases, and model-adoption limits.
+
 - [`testkit.md`](testkit.md) — bounded negative/boundary fixtures, rejection diagnostics, deterministic time/transport controls, and consumer/evidence boundaries.
 - [`public-api.md`](public-api.md) — defined facade signatures, trusted adapter boundary, lifecycle/result ownership, and isolated native compatibility validation; runtime implementation pending.
 - [`traceability-manifest.md`](traceability-manifest.md) — adoption of the public machine-readable mapping format, claim gates, and current checker/mapping limits.

@@ -45,6 +45,7 @@ github.com/tv-rain/barometer-go          public Go facade and lifecycle entry po
     │   ├── observation                  bounded protocol and network observations
     │   └── result                       result, bundle, and linkage domain values
     ├── taskdecode                       deterministic decoding of serialized tasks
+    ├── jsondecode                       shared strict JSON representation and schema decoding
     ├── validation                       structural, semantic, target, safety, and limit validation
     ├── admission                        trust, policy, replay, expiry, and admission decisions
     ├── execution                        attempt orchestration, cancellation, path snapshots, and lifecycle
@@ -103,6 +104,8 @@ Models are dependency leaves. They contain validation-independent value definiti
 Serialized wire objects and admitted domain values must not be conflated. In particular, trusted source context, local policy, replay state, proxy configuration, and protected-storage capabilities are never populated from task-controlled fields.
 
 ### Deterministic Task Decoding
+
+The implemented `internal/jsondecode` package owns reusable strict JSON framing, Unicode, duplicate-name detection, exact numeric representation, schema/tuple selection, and bounded sanitized atomic decoding. It is a dependency leaf using only the standard library; task, result, bundle, configuration, and Network Context decoders may consume it without importing one another. It does not own any individual public model schema, domain normalization, admission, or execution. See [Shared Strict JSON Decoding](json-decoding.md) for the immutable adopted contract, implementation limits, and consumer responsibilities.
 
 `internal/taskdecode` owns conversion from the serialized Draft `0.1.0` task representation into a candidate task value. It is responsible for:
 
