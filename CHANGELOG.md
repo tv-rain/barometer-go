@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Internal test-only negative/boundary fixtures, requirement-aware rejection assertions, and deterministic clock/HTTP transport controls, with synthetic reuse examples; no runtime decoding or measurement implementation.
 - Defined public Go facade signatures, trusted admission boundary, lifecycle and result ownership, with isolated native binding fixture validation; no production API or runtime implementation.
 - Adoption guidance for the public traceability-manifest format and evidence/status gates; no production mapping, checker, or implementation-support claim.
 - Contribution guidance for public specification-issue review and ordered adoption, with expanded evidence for the unresolved duplicate-member finding; no decoding behavior is selected.

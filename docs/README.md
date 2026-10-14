@@ -2,6 +2,7 @@
 
 ## Directory Index
 
+- [`testkit.md`](testkit.md) — bounded negative/boundary fixtures, rejection diagnostics, deterministic time/transport controls, and consumer/evidence boundaries.
 - [`public-api.md`](public-api.md) — defined facade signatures, trusted adapter boundary, lifecycle/result ownership, and isolated native compatibility validation; runtime implementation pending.
 - [`traceability-manifest.md`](traceability-manifest.md) — adoption of the public machine-readable mapping format, claim gates, and current checker/mapping limits.
 - [`mobile-smoke.md`](mobile-smoke.md) — smoke-only boundary decision, Android and Apple native compilation, prerequisites, and failure-detection checks.

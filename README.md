@@ -12,6 +12,8 @@ This repository is at the engineering-foundation stage. It currently contains th
 
 The Barometer `0.1.0` public specifications are Draft implementation inputs. A specification, package plan, successful Go build, or successful cross-compilation check is not evidence that a measurement or platform is implemented, conformant, field-validated, or supported.
 
+Reusable [negative and boundary-test helpers](docs/testkit.md) provide bounded synthetic fixtures, rejection diagnostics, and deterministic time/transport controls for future tests. They do not implement runtime schemas or measurements.
+
 ## Versions and Releases
 
 Repository versioning, compatibility, changelog, tag, artifact-naming, and experimental-release rules are defined in [Versioning and Releases](docs/versioning-and-releases.md). Notable changes are recorded in the [Changelog](CHANGELOG.md).
