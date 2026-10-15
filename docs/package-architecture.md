@@ -40,6 +40,7 @@ The following paths are the intended ownership map. A path should be created onl
 ```text
 github.com/tv-rain/barometer-go          public Go facade and lifecycle entry points
 └── internal
+    ├── config                          immutable host configuration, validation and preparation
     ├── model
     │   ├── task                         admitted task and trusted-context domain values
     │   ├── observation                  bounded protocol and network observations
@@ -76,6 +77,10 @@ github.com/tv-rain/barometer-go          public Go facade and lifecycle entry po
 This map intentionally has no `pkg`, `common`, `shared`, `helpers`, or `utils` package. A repeated operation becomes a package only when it has one coherent owner and a stable reason to exist.
 
 ## Ownership Boundaries
+
+### Initialization Configuration
+
+`internal/config` owns the closed host-initialization schema, pure semantic validation, immutable snapshots and atomic proxy value replacement. It consumes `internal/jsondecode` and narrow clock/protected-key contracts in `internal/platform`, with deployment approvals supplied separately by reviewed internal integration. It does not import task decoding or orchestration, perform I/O or activate a runtime. Its preparation results establish no task provenance, local-policy authority, replay eligibility or execution permission. See [Initialization and Configuration Models](configuration-models.md) for local bounds, capability contracts, synthetic evidence and remaining runtime gates.
 
 ### Root `barometer` Package
 
