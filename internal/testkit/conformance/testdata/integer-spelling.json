@@ -1,0 +1,14 @@
+{
+  "format_version": 1,
+  "case_id": "integer-spelling",
+  "adapter": "common-task-v1",
+  "requirements": [
+    "REQ-JSON-0006"
+  ],
+  "task_base64": "eyJzY2hlbWFfdmVyc2lvbiI6IjAuMS4wIiwidGFza19pZCI6InN5bnRoZXRpYy10YXNrIiwidGVzdF9pZCI6IlNZTi0wMSIsInRlc3RfdmVyc2lvbiI6IjAuMS4wIiwiaW5wdXQiOnsic3ViamVjdCI6IkVYQU1QTEUifSwib3B0aW9ucyI6e30sInNjaGVkdWxlIjp7Im5vdF9hZnRlciI6IjIwMjYtMTAtMTZUMDA6MDA6MDBaIn0sImV4ZWN1dGlvbiI6eyJsaW1pdHMiOnsibWF4X2Nvbm5lY3Rpb25zIjoxZTB9fSwic2FmZXR5Ijp7InJpc2tfbGV2ZWwiOiJsb3ciLCJyZXF1aXJlc191c2VyX2NvbnNlbnQiOmZhbHNlfX0=",
+  "trusted_context": "remote-fixed-v1",
+  "local_policy": "synthetic-local-v1",
+  "expected": {
+    "rejection": "integer"
+  }
+}

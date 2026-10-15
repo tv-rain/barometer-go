@@ -1,0 +1,14 @@
+{
+  "format_version": 1,
+  "case_id": "duplicate",
+  "adapter": "common-task-v1",
+  "requirements": [
+    "REQ-JSON-0003"
+  ],
+  "task_base64": "eyJzY2hlbWFfdmVyc2lvbiI6IjAuMS4wIiwidGFza19pZCI6Im90aGVyIiwidGFza19cdTAwNjlkIjoic3ludGhldGljLXRhc2siLCJ0ZXN0X2lkIjoiU1lOLTAxIiwidGVzdF92ZXJzaW9uIjoiMC4xLjAiLCJpbnB1dCI6eyJzdWJqZWN0IjoiRVhBTVBMRSJ9LCJvcHRpb25zIjp7fSwic2NoZWR1bGUiOnsibm90X2FmdGVyIjoiMjAyNi0xMC0xNlQwMDowMDowMFoifSwiZXhlY3V0aW9uIjp7ImxpbWl0cyI6e319LCJzYWZldHkiOnsicmlza19sZXZlbCI6ImxvdyIsInJlcXVpcmVzX3VzZXJfY29uc2VudCI6ZmFsc2V9fQ==",
+  "trusted_context": "remote-fixed-v1",
+  "local_policy": "synthetic-local-v1",
+  "expected": {
+    "rejection": "duplicate"
+  }
+}
