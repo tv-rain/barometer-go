@@ -2,6 +2,8 @@
 
 ## Directory Index
 
+- [`execution-models.md`](execution-models.md) — finite admission errors, pure attempt lifecycle, terminal reasons, retry boundaries and synthetic evidence limits.
+
 - [`measurement-requirements.md`](measurement-requirements.md) — DEV-473 measurement ownership and 108 planned case families at the public PR #7 merge, with immutable manifest/report baselines and explicit evidence gaps.
 - [`cross-cutting-requirements.md`](cross-cutting-requirements.md) — DEV-471 planned shared-contract targets and case families, immutable-baseline mapping, explicit gaps and maintenance.
 
