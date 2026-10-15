@@ -1,4 +1,5 @@
-// Package task owns candidate task values. Candidates are not admitted tasks.
+// Package task owns candidate tasks and separate trusted source/policy values.
+// Neither candidates nor structurally valid trust values are admitted tasks.
 // It is a dependency leaf: no decoding, I/O, platform calls or orchestration.
 package task
 

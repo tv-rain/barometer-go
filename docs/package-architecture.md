@@ -108,6 +108,8 @@ Models are dependency leaves. They contain validation-independent value definiti
 
 Serialized wire objects and admitted domain values must not be conflated. In particular, trusted source context, local policy, replay state, proxy configuration, and protected-storage capabilities are never populated from task-controlled fields.
 
+The implemented [Trusted Context and Local Policy Models](trusted-policy-models.md) in `model/task` provide structurally validated source metadata, exact-byte delivery binding, immutable local/issuer/target policy values and revocation inputs. Constructors/getters are internal handoff surfaces; they do not authenticate, admit tasks, compute effective authority, activate policy or enforce revocation. No runtime admission or adapter package is created by this model work.
+
 ### Deterministic Task Decoding
 
 The implemented `internal/jsondecode` package owns reusable strict JSON framing, Unicode, duplicate-name detection, exact numeric representation, schema/tuple selection, and bounded sanitized atomic decoding. It is a dependency leaf using only the standard library; task, result, bundle, configuration, and Network Context decoders may consume it without importing one another. It does not own any individual public model schema, domain normalization, admission, or execution. See [Shared Strict JSON Decoding](json-decoding.md) for the immutable adopted contract, implementation limits, and consumer responsibilities.

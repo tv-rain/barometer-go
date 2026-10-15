@@ -16,6 +16,8 @@ Reusable [negative and boundary-test helpers](docs/testkit.md) provide bounded s
 
 [Initialization and configuration models](docs/configuration-models.md) add internal immutable host configuration, atomic value replacement, trusted deployment approval inputs and narrow clock/protected-key capability contracts. Configuration preparation does not activate a client or replace the pending admission, execution and native adapter work.
 
+[Trusted context and local policy models](docs/trusted-policy-models.md) provide separate internal source metadata, exact-byte delivery binding, immutable issuer/target policy snapshots and revocation inputs. They have no JSON import/export path and do not implement authentication, effective authorization, admission, replay, policy activation or revocation enforcement.
+
 ## Versions and Releases
 
 Repository versioning, compatibility, changelog, tag, artifact-naming, and experimental-release rules are defined in [Versioning and Releases](docs/versioning-and-releases.md). Notable changes are recorded in the [Changelog](CHANGELOG.md).

@@ -2,6 +2,7 @@
 
 ## Directory Index
 
+- [`trusted-policy-models.md`](trusted-policy-models.md) — separate trusted source context, exact-byte delivery binding, immutable policy/target models, revocation inputs and pending enforcement boundaries.
 - [`configuration-models.md`](configuration-models.md) — immutable host configuration, strict validation, separate trusted approvals, internal clock/key capabilities and preparation limits.
 - [`task-models.md`](task-models.md) — common task/schedule models, strict decoding, deterministic defaults, timing/eligibility validation, synthetic evidence and remaining admission/runtime work.
 - [`json-decoding.md`](json-decoding.md) — shared internal strict JSON decoding, schema selection, explicit resource bounds, synthetic cases, and model-adoption limits.
