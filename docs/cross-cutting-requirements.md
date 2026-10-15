@@ -8,6 +8,8 @@ The immutable public baseline is `47d75925b3829fccfb6954b545c15f695375b76f` (Dra
 
 ## Boundaries and Maintenance
 
+The DEV-481 [vocabulary proposal](specification-issues.md#go-spec-issue-002-missing-registered-observation-vocabularies) proposes replacing REQ-OBS-0011 and REQ-OBS-0021. Their two comments below use `requirement-history` because this map and its pinned links still describe the immutable PR #6 baseline, not the proposed successors. The manifests/reports retain their historical content; acceptance and adoption of any new vocabulary requires a separate current mapping update and executed evidence.
+
 The 16 format/library sources plus shared JSON decoding are in scope. Registered test-specific schemas/runners, the full threat-model and measurement-limitations inventories, implementation of these cases, native adapters, host and collector software, and field validation remain outside this mapping task. Their applicability is preserved as report gaps, not silently treated as covered. The [normative source inventory](normative-sources.md) supplies the wider source boundary; this map also includes the subsequently adopted JSON contract.
 
 Portable Go owns its package targets. Native storage and binding obligations map to planned native validation contracts in this repository, consumed by future Android/Apple adapter work; these documents cannot implement platform behavior. Host, collector and public authoring obligations map to planned integration/review records. Mixed core/integration case families must retain both scopes; Go tests alone cannot close them. Synthetic requests and canary values are local fixtures, not measurements or participant data.
@@ -112,7 +114,7 @@ Case plan: Exercise sequential arrival indexes, quantized timing, registered rco
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
-<!-- requirement-ref: REQ-OBS-0011 -->
+<!-- requirement-history: REQ-OBS-0011 -->
 
 - [REQ-OBS-0011](https://github.com/tv-rain/barometer-spec/blob/47d75925b3829fccfb6954b545c15f695375b76f/data-formats/measurement-observations.md#REQ-OBS-0011) → `CC-OBS-DNS-QUERY-DNS-RESPONSE`.
 
@@ -182,7 +184,7 @@ Case plan: Exercise conditional negotiated fields and bounded ALPN; exclude ever
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
-<!-- requirement-ref: REQ-OBS-0021 -->
+<!-- requirement-history: REQ-OBS-0021 -->
 <!-- requirement-ref: REQ-OBS-0022 -->
 
 - [REQ-OBS-0021](https://github.com/tv-rain/barometer-spec/blob/47d75925b3829fccfb6954b545c15f695375b76f/data-formats/measurement-observations.md#REQ-OBS-0021) → `CC-OBS-TLS-HANDSHAKE-DETAILS`.

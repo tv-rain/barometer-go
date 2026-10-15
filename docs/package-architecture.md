@@ -106,6 +106,8 @@ The packages under `internal/model` own in-process values after decoding and nor
 
 Models are dependency leaves. They contain validation-independent value definitions and small invariants needed to keep invalid states unrepresentable, but they do not perform I/O, scheduling, persistence, logging, or platform calls.
 
+The [Observation and Network Context Models](observation-models.md) implementation in `model/observation` owns bounded DNS/TCP/TLS/HTTP values and minimized access/egress snapshots with non-serialized path/generation binding. It depends only on the standard library and the shared strict JSON leaf; no acquisition/cache owner is created. The model adopts the merged public DNS/TLS vocabularies and their internal review alignment; it performs no protocol I/O or error parsing. The planned `networkcontext` package will consume these values for runtime acquisition and caching rather than duplicate their domain invariants.
+
 Serialized wire objects and admitted domain values must not be conflated. In particular, trusted source context, local policy, replay state, proxy configuration, and protected-storage capabilities are never populated from task-controlled fields.
 
 The implemented [Trusted Context and Local Policy Models](trusted-policy-models.md) in `model/task` provide structurally validated source metadata, exact-byte delivery binding, immutable local/issuer/target policy values and revocation inputs. Constructors/getters are internal handoff surfaces; they do not authenticate, admit tasks, compute effective authority, activate policy or enforce revocation. No runtime admission or adapter package is created by this model work.

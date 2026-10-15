@@ -22,6 +22,8 @@ Reusable [negative and boundary-test helpers](docs/testkit.md) provide bounded s
 
 [Execution-state and error models](docs/execution-models.md) add bounded internal admission errors, pure attempt transitions and the complete execution-reason vocabulary. Admission, runtime orchestration, budget enforcement and result serialization remain pending.
 
+[Observation and Network Context models](docs/observation-models.md) add bounded internal DNS/TCP/TLS/HTTP observations and immutable minimized access/egress snapshots bound to local path generations. The models adopt the merged public vocabulary contract and internal alignment recorded in [Specification Issues](docs/specification-issues.md#go-spec-issue-002-missing-registered-observation-vocabularies). Acquisition, caching, measurement execution and result integration remain pending.
+
 ## Versions and Releases
 
 Repository versioning, compatibility, changelog, tag, artifact-naming, and experimental-release rules are defined in [Versioning and Releases](docs/versioning-and-releases.md). Notable changes are recorded in the [Changelog](CHANGELOG.md).
