@@ -2,6 +2,8 @@
 
 ## Directory Index
 
+- [`result-models.md`](result-models.md) — bounded Measurement Result models and serialization, exact output selection, context binding, partial results and synthetic evidence limits.
+
 - [`observation-models.md`](observation-models.md) — bounded DNS/TCP/TLS/HTTP observations, immutable Network Context path binding, accepted vocabulary adoption and synthetic evidence limits.
 
 - [`execution-models.md`](execution-models.md) — finite admission errors, pure attempt lifecycle, terminal reasons, retry boundaries and synthetic evidence limits.

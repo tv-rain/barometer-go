@@ -207,6 +207,8 @@ Network Context cannot receive bundle identifiers, linkage material, participant
 
 It does not deliver results, retain transport metadata, infer censorship, or modify the observations it receives to create a preferred interpretation.
 
+The [Measurement Result models](result-models.md) implement detached typed values in `model/result` and the bounded producer/import serialization boundary in `internal/result`. That owner depends only on domain models, shared strict JSON and the standard library; it does not import execution or protocol implementations. The initial Output schemas validate retained evidence against a copied local task/output/profile binding. Runtime admission, actual execution, bundle handling and platform support remain pending.
+
 ### Bundle Construction
 
 `internal/bundle` owns bounded grouping of normalized results, bundle identifiers, optional linkage metadata, serialized bundle-size enforcement, and local delivery state transitions. Result delivery remains replaceable and host-controlled.
