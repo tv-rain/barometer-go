@@ -1,0 +1,14 @@
+{
+  "format_version": 1,
+  "case_id": "invalid-utf8",
+  "adapter": "common-task-v1",
+  "requirements": [
+    "REQ-JSON-0002"
+  ],
+  "task_base64": "/w==",
+  "trusted_context": "remote-fixed-v1",
+  "local_policy": "synthetic-local-v1",
+  "expected": {
+    "rejection": "text"
+  }
+}

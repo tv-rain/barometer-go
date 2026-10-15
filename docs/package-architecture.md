@@ -240,6 +240,8 @@ The exact gomobile and native wiring mechanism is deferred to the platform-integ
 
 ### Test Support
 
+The test-only `internal/testkit/conformance` subpackage owns the [Go-local versioned fixture format and runner](conformance-fixtures.md). It consumes `jsondecode`, `taskdecode`, `model/task` and `validation` for synthetic decoding assertions; runtime packages must not import it. Fixed synthetic context/policy profiles are test adapter inputs, not runtime serialization or authority.
+
 `internal/testkit` owns deterministic synthetic implementations used by unit and conformance tests, including clocks, transports, context providers, stores, cancellation controls, and sanitized fixtures.
 
 Production packages must never import `testkit`. An in-memory linkage or persistence implementation must be explicitly test or desktop scoped and must not become an unnoticed mobile fallback.

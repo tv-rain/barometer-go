@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Versioned Go-local conformance fixtures and a deterministic test-only runner for common task decoding, with exact-byte synthetic inputs, separate trusted-context/local-policy profiles, strict wrapper validation and positive/negative cases. Full admission, policy enforcement and measurement conformance remain pending.
+
 - Internal trusted-source context and exact-byte delivery binding, immutable local/issuer/registered-target policy models, bounded revocation inputs and synthetic boundary tests. Trusted models reject JSON import/export; authentication, admission, replay, policy activation and revocation enforcement remain pending.
 - Internal immutable initialization/configuration models for proxy, Network Context endpoints and optional linkage, with strict bounded decoding, separate deployment approvals, atomic proxy value replacement and clock/protected-key capability preparation. Client activation, native adapters and runtime admission remain pending.
 - Common internal task and schedule models with exact test-schema selection, deterministic defaults, strict common-field/limit validation, trusted-time expiry checks, bounded retry/repetition eligibility, and synthetic boundary/fuzz tests. Candidates do not establish complete admission or measurement support.

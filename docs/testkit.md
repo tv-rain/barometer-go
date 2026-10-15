@@ -6,6 +6,8 @@
 
 These helpers support later model and protocol cases without creating a competing schema or harness. The consumer supplies its own decoder/validator, exact error-class matcher, positive controls, and requirement references. The tests in `internal/testkit/reuse_test.go` demonstrate the same runner against two deliberately synthetic consumers; neither implements a Barometer contract or establishes conformance.
 
+The separate test-only [`internal/testkit/conformance`](conformance-fixtures.md) subpackage owns the versioned fixture wrapper and task-decoding adapter. Unlike the parent helpers, it consumes existing internal decoding and model packages. Production code must not import either package.
+
 ## Public Baseline and References
 
 Fixture categories follow Draft `0.1.0` at public revision [`05c1364af4f9a604b617fca45f060949b557d265`](https://github.com/tv-rain/barometer-spec/commit/05c1364af4f9a604b617fca45f060949b557d265):

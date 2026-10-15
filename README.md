@@ -12,6 +12,8 @@ This repository is at the engineering-foundation stage. It currently contains th
 
 The Barometer `0.1.0` public specifications are Draft implementation inputs. A specification, package plan, successful Go build, or successful cross-compilation check is not evidence that a measurement or platform is implemented, conformant, field-validated, or supported.
 
+The [conformance fixture format and runner](docs/conformance-fixtures.md) add versioned, strictly validated synthetic task-decoding cases with separate context/policy profiles and exact expected candidate projections or rejection classes. Admission, policy enforcement and measurement execution remain pending.
+
 Reusable [negative and boundary-test helpers](docs/testkit.md) provide bounded synthetic fixtures, rejection diagnostics, and deterministic time/transport controls for future tests. They do not implement runtime schemas or measurements.
 
 [Initialization and configuration models](docs/configuration-models.md) add internal immutable host configuration, atomic value replacement, trusted deployment approval inputs and narrow clock/protected-key capability contracts. Configuration preparation does not activate a client or replace the pending admission, execution and native adapter work.
