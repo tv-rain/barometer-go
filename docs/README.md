@@ -2,6 +2,8 @@
 
 ## Directory Index
 
+- [`cross-cutting-requirements.md`](cross-cutting-requirements.md) — DEV-471 planned shared-contract targets and case families, immutable-baseline mapping, explicit gaps and maintenance.
+
 - [`conformance-fixtures.md`](conformance-fixtures.md) — versioned Go-local synthetic fixture schema, exact-byte input, fixed context/policy profiles, deterministic runner and evidence limits.
 
 - [`trusted-policy-models.md`](trusted-policy-models.md) — separate trusted source context, exact-byte delivery binding, immutable policy/target models, revocation inputs and pending enforcement boundaries.
