@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Internal Measurement Result models and strict bounded serialization with independent envelope/test/result versions, exact local task/context binding, initial output schemas, NET-05 partial-step validation and synthetic boundary/fuzz tests. Runtime execution, bundling, persistence, delivery and platform support remain pending.
+
 - Internal bounded DNS/TCP/TLS/HTTP observation models and immutable minimized Network Context snapshots with strict decoding, path/generation binding and synthetic privacy/boundary tests. Closed public vocabularies, typed producer normalization and reviewed-query answer retention are implemented; acquisition, execution and result integration remain pending.
 
 - Internal finite admission errors, pure attempt lifecycle transitions and complete execution-reason models, with first-condition preservation, bounded retry classification and synthetic transition/boundary tests. Runtime admission, orchestration, budget enforcement and result serialization remain pending.

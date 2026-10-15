@@ -20,9 +20,11 @@ Reusable [negative and boundary-test helpers](docs/testkit.md) provide bounded s
 
 [Trusted context and local policy models](docs/trusted-policy-models.md) provide separate internal source metadata, exact-byte delivery binding, immutable issuer/target policy snapshots and revocation inputs. They have no JSON import/export path and do not implement authentication, effective authorization, admission, replay, policy activation or revocation enforcement.
 
-[Execution-state and error models](docs/execution-models.md) add bounded internal admission errors, pure attempt transitions and the complete execution-reason vocabulary. Admission, runtime orchestration, budget enforcement and result serialization remain pending.
+[Execution-state and error models](docs/execution-models.md) add bounded internal admission errors, pure attempt transitions and the complete execution-reason vocabulary. Admission, runtime orchestration, budget enforcement and runtime result integration remain pending.
 
-[Observation and Network Context models](docs/observation-models.md) add bounded internal DNS/TCP/TLS/HTTP observations and immutable minimized access/egress snapshots bound to local path generations. The models adopt the merged public vocabulary contract and internal alignment recorded in [Specification Issues](docs/specification-issues.md#go-spec-issue-002-missing-registered-observation-vocabularies). Acquisition, caching, measurement execution and result integration remain pending.
+[Observation and Network Context models](docs/observation-models.md) add bounded internal DNS/TCP/TLS/HTTP observations and immutable minimized access/egress snapshots bound to local path generations. The models adopt the merged public vocabulary contract and internal alignment recorded in [Specification Issues](docs/specification-issues.md#go-spec-issue-002-missing-registered-observation-vocabularies). Acquisition, caching, measurement execution and runtime result integration remain pending.
+
+[Measurement Result models](docs/result-models.md) add internal typed attempt values, strict bounded serialization, independently selected versions, initial test-output validation and NET-05 partial-result handling. Runtime execution, bundling, persistence and delivery remain pending.
 
 ## Versions and Releases
 
