@@ -2,6 +2,7 @@
 
 ## Directory Index
 
+- [`task-models.md`](task-models.md) — common task/schedule models, strict decoding, deterministic defaults, timing/eligibility validation, synthetic evidence and remaining admission/runtime work.
 - [`json-decoding.md`](json-decoding.md) — shared internal strict JSON decoding, schema selection, explicit resource bounds, synthetic cases, and model-adoption limits.
 
 - [`testkit.md`](testkit.md) — bounded negative/boundary fixtures, rejection diagnostics, deterministic time/transport controls, and consumer/evidence boundaries.

@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Common internal task and schedule models with exact test-schema selection, deterministic defaults, strict common-field/limit validation, trusted-time expiry checks, bounded retry/repetition eligibility, and synthetic boundary/fuzz tests. Candidates do not establish complete admission or measurement support.
 - Shared internal strict JSON decoding with explicit schema/version selection, exact bounded integers, Unicode and duplicate-name checks, finite resource envelopes, sanitized atomic errors, and synthetic negative/boundary/fuzz tests. Individual public model schemas and runtime admission remain pending.
 
 - Internal test-only negative/boundary fixtures, requirement-aware rejection assertions, and deterministic clock/HTTP transport controls, with synthetic reuse examples; no runtime decoding or measurement implementation.
