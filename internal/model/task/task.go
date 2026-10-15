@@ -104,11 +104,37 @@ type RiskFactor struct{ Type, Level string }
 type ExecutionReason string
 
 const (
+	CancelledByHost           ExecutionReason = "cancelled_by_host"
+	AttemptDeadlineExceeded   ExecutionReason = "attempt_deadline_exceeded"
+	ResourceLimit             ExecutionReason = "resource_limit"
+	NetworkChanged            ExecutionReason = "network_changed"
 	PlatformSuspended         ExecutionReason = "platform_suspended"
 	NetworkContextUnavailable ExecutionReason = "network_context_unavailable"
+	ConstraintsUnsatisfied    ExecutionReason = "constraints_unsatisfied"
+	LocalPolicyRejected       ExecutionReason = "local_policy_rejected"
+	ProxyNotConfigured        ExecutionReason = "proxy_not_configured"
+	ProxyNotPermitted         ExecutionReason = "proxy_not_permitted"
+	ProxyPathUnsupported      ExecutionReason = "proxy_path_unsupported"
 	ProxyUnavailable          ExecutionReason = "proxy_unavailable"
+	ProxyConnectFailed        ExecutionReason = "proxy_connect_failed"
+	ProxyReconfigured         ExecutionReason = "proxy_reconfigured"
 	InternalError             ExecutionReason = "internal_error"
 )
+
+// Valid checks the closed Draft 0.1.0 execution.reason vocabulary
+// (REQ-RESULT-0020). Protocol observations are never execution reasons.
+// requirement-ref: REQ-RESULT-0020
+func (r ExecutionReason) Valid() bool {
+	switch r {
+	case CancelledByHost, AttemptDeadlineExceeded, ResourceLimit, NetworkChanged,
+		PlatformSuspended, NetworkContextUnavailable, ConstraintsUnsatisfied,
+		LocalPolicyRejected, ProxyNotConfigured, ProxyNotPermitted,
+		ProxyPathUnsupported, ProxyUnavailable, ProxyConnectFailed,
+		ProxyReconfigured, InternalError:
+		return true
+	}
+	return false
+}
 
 // Retryable never infers an execution failure from DNS/TCP/TLS/HTTP observations.
 func Retryable(reason ExecutionReason) bool {

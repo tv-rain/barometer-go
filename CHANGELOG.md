@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Internal finite admission errors, pure attempt lifecycle transitions and complete execution-reason models, with first-condition preservation, bounded retry classification and synthetic transition/boundary tests. Runtime admission, orchestration, budget enforcement and result serialization remain pending.
+
 - Versioned Go-local conformance fixtures and a deterministic test-only runner for common task decoding, with exact-byte synthetic inputs, separate trusted-context/local-policy profiles, strict wrapper validation and positive/negative cases. Full admission, policy enforcement and measurement conformance remain pending.
 
 - Internal trusted-source context and exact-byte delivery binding, immutable local/issuer/registered-target policy models, bounded revocation inputs and synthetic boundary tests. Trusted models reject JSON import/export; authentication, admission, replay, policy activation and revocation enforcement remain pending.

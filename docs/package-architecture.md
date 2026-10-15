@@ -167,6 +167,8 @@ Admission does not execute network activity and cannot be bypassed by the root f
 
 Execution does not authenticate task delivery, widen policy, invent retries, operate a collector, infer censorship, or own protocol-specific interpretation.
 
+The implemented [Execution-State and Error Models](execution-models.md) provide only a pure immutable attempt transition value in `internal/execution` and finite admission-error/reason values in `internal/model/task`. They do not implement runtime orchestration, admission decisions, resource enforcement or result serialization. The task model remains a standard-library-only dependency leaf.
+
 ### Registered Measurements and Protocol Primitives
 
 `internal/measurement` owns the minimal runner contract shared by registered measurements. Each child package owns the behavior for exactly one registered test identifier and version.

@@ -20,6 +20,8 @@ Reusable [negative and boundary-test helpers](docs/testkit.md) provide bounded s
 
 [Trusted context and local policy models](docs/trusted-policy-models.md) provide separate internal source metadata, exact-byte delivery binding, immutable issuer/target policy snapshots and revocation inputs. They have no JSON import/export path and do not implement authentication, effective authorization, admission, replay, policy activation or revocation enforcement.
 
+[Execution-state and error models](docs/execution-models.md) add bounded internal admission errors, pure attempt transitions and the complete execution-reason vocabulary. Admission, runtime orchestration, budget enforcement and result serialization remain pending.
+
 ## Versions and Releases
 
 Repository versioning, compatibility, changelog, tag, artifact-naming, and experimental-release rules are defined in [Versioning and Releases](docs/versioning-and-releases.md). Notable changes are recorded in the [Changelog](CHANGELOG.md).
