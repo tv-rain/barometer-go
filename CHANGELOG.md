@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Internal immutable initialization/configuration models for proxy, Network Context endpoints and optional linkage, with strict bounded decoding, separate deployment approvals, atomic proxy value replacement and clock/protected-key capability preparation. Client activation, native adapters and runtime admission remain pending.
 - Common internal task and schedule models with exact test-schema selection, deterministic defaults, strict common-field/limit validation, trusted-time expiry checks, bounded retry/repetition eligibility, and synthetic boundary/fuzz tests. Candidates do not establish complete admission or measurement support.
 - Shared internal strict JSON decoding with explicit schema/version selection, exact bounded integers, Unicode and duplicate-name checks, finite resource envelopes, sanitized atomic errors, and synthetic negative/boundary/fuzz tests. Individual public model schemas and runtime admission remain pending.
 
