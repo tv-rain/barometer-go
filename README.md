@@ -30,6 +30,8 @@ Reusable [negative and boundary-test helpers](docs/testkit.md) provide bounded s
 
 [Model validation and normalization](docs/model-validation.md) records the Foundation models' validation order and acceptance coverage. Common candidate validation preserves label invariants and deterministic ordering, context case normalization stays within ASCII codes, and uninitialized result decoders reject before processing input.
 
+Executable, non-normative [sanitized API examples](internal/examples/README.md) cover existing Foundation models and intended lifecycle failure handling. Client lifecycle and clearing examples use an explicit test-only script; runtime implementation remains pending.
+
 ## Versions and Releases
 
 Repository versioning, compatibility, changelog, tag, artifact-naming, and experimental-release rules are defined in [Versioning and Releases](docs/versioning-and-releases.md). Notable changes are recorded in the [Changelog](CHANGELOG.md).
