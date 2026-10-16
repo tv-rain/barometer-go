@@ -5,7 +5,6 @@ package taskdecode
 import (
 	"errors"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -220,9 +219,7 @@ func common(v *jsondecode.Value) (task.Candidate, error) {
 		}
 	}
 	if labels := member(v, "labels"); labels != nil {
-		names := labels.Names()
-		sort.Strings(names)
-		for _, name := range names {
+		for _, name := range labels.Names() {
 			c.Labels = append(c.Labels, task.Label{Key: name, Value: member(labels, name).Text()})
 		}
 	}

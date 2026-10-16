@@ -28,6 +28,8 @@ Reusable [negative and boundary-test helpers](docs/testkit.md) provide bounded s
 
 [Result Bundle and linkage models](docs/bundle-models.md) add bounded internal bundle production from validated results, random logical-bundle identifiers, immutable retry bytes and optional rotating-linkage projections gated by trusted initialization. Token derivation, epoch lifecycle, persistence, delivery and clearing remain pending.
 
+[Model validation and normalization](docs/model-validation.md) records the Foundation models' validation order and acceptance coverage. Common candidate validation preserves label invariants and deterministic ordering, context case normalization stays within ASCII codes, and uninitialized result decoders reject before processing input.
+
 ## Versions and Releases
 
 Repository versioning, compatibility, changelog, tag, artifact-naming, and experimental-release rules are defined in [Versioning and Releases](docs/versioning-and-releases.md). Notable changes are recorded in the [Changelog](CHANGELOG.md).

@@ -193,3 +193,29 @@ func TestAttemptRejectsJSON(t *testing.T) {
 		t.Fatal("JSON changed attempt")
 	}
 }
+
+// requirement-ref: REQ-JSON-0011
+func TestStopValidationPrecedence(t *testing.T) {
+	terminal, err := execution.NewAttempt().Stop(task.CancelledByHost)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		name string
+		in   execution.Attempt
+		want error
+	}{
+		{"invalid phase and reason", execution.Attempt{}, execution.ErrTransition},
+		{"terminal phase and reason", terminal, execution.ErrTransition},
+		{"pending invalid reason", execution.NewAttempt(), execution.ErrReason},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			for range 20 {
+				got, err := tc.in.Stop(task.ExecutionReason("DO_NOT_RETAIN"))
+				if got != tc.in || !errors.Is(err, tc.want) || len(err.Error()) > 128 {
+					t.Fatalf("precedence or atomicity: %v", err)
+				}
+			}
+		})
+	}
+}

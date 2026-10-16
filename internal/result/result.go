@@ -59,7 +59,10 @@ type Binding struct {
 	CapturedContext            bool
 	Profile                    *ProfilePlan
 }
-type Decoder struct{ binding Binding }
+type Decoder struct {
+	ready   bool
+	binding Binding
+}
 
 func New(b Binding) (*Decoder, error) {
 	if !ascii(b.TaskID, 128) || b.MaxAttempts < 1 || b.MaxAttempts > 2 || b.MaxDurationMS < 1 || b.MaxDurationMS > 60000 ||
@@ -83,7 +86,7 @@ func New(b Binding) (*Decoder, error) {
 	} else if b.Profile != nil {
 		return nil, ErrBinding
 	}
-	return &Decoder{b}, nil
+	return &Decoder{ready: true, binding: b}, nil
 }
 func validOutput(o Output) bool {
 	if o.Test.Version != Contract || o.Test.ResultVersion != Contract || !oneOf(o.Test.ID, "DNS-01", "DNS-03", "DNS-04", "TCP-01", "TLS-01", "HTTP-01", "NET-01", "NET-03", "NET-05") {
@@ -128,7 +131,7 @@ func (v Value) View() model.Result        { return clone(v.value) }
 // requirement-ref: REQ-RESULT-0038
 // requirement-ref: REQ-RESULT-0044
 func (d *Decoder) Decode(input []byte) (Value, error) {
-	if d == nil {
+	if d == nil || !d.ready {
 		return Value{}, ErrBinding
 	}
 	b := d.binding
@@ -216,7 +219,7 @@ func (d *Decoder) Decode(input []byte) (Value, error) {
 // Bounded preflight happens before encoding; recursive/dynamic payloads cannot
 // allocate unbounded output or silently truncate required observations.
 func (d *Decoder) Build(v model.Result) (Value, error) {
-	if d == nil {
+	if d == nil || !d.ready {
 		return Value{}, ErrBinding
 	}
 	if !preflight(v) {
