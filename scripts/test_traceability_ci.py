@@ -140,5 +140,56 @@ class ReferenceTests(unittest.TestCase):
                                                       ("internal/a_test.go", 3, "REQ-TASK-0004")])
 
 
+class PreflightTests(unittest.TestCase):
+    root = Path(__file__).resolve().parents[1]
+
+    def errors(self, go_output="go version go1.26.0 linux/amd64", python=(3, 14), modules=("jsonschema",)):
+        def run_go():
+            if isinstance(go_output, BaseException):
+                raise go_output
+            return go_output
+        return ci.preflight(self.root, run_go=run_go, python_version=python, has_module=lambda name: name in modules)
+
+    def test_ready_environment(self):
+        self.assertEqual(self.errors(), [])
+        self.assertEqual(self.errors(go_output="go version go1.27.1 darwin/arm64"), [])
+
+    def test_module_requirement_is_read_from_go_mod(self):
+        self.assertEqual(ci.required_go(self.root), "1.26.0")
+
+    def test_old_go_fails_fast(self):
+        for output in ("go version go1.24.5 darwin/arm64", "go version go1.26rc1 linux/amd64", "go version go1.25 linux/amd64"):
+            with self.subTest(output=output):
+                [error] = self.errors(go_output=output)
+                self.assertIn("requires Go 1.26.0 or later", error)
+                self.assertIn("GOTOOLCHAIN=local", error)
+
+    def test_missing_or_unreadable_go_fails_fast(self):
+        for failure, text in ((FileNotFoundError(), "No `go` command"),
+                              (subprocess.CalledProcessError(1, ["go"]), "`go version` failed"),
+                              ("go version devel +abc linux/amd64", "Cannot determine")):
+            with self.subTest(text=text):
+                [error] = self.errors(go_output=failure)
+                self.assertIn(text, error)
+
+    def test_missing_jsonschema_fails_fast(self):
+        [error] = self.errors(modules=())
+        self.assertIn("cannot import jsonschema", error)
+        self.assertIn("docs/traceability-ci.md", error)
+
+    def test_old_python_fails_fast(self):
+        [error] = self.errors(python=(3, 9))
+        self.assertIn("older than the required 3.10", error)
+
+    def test_all_errors_are_reported_together(self):
+        self.assertEqual(len(self.errors(go_output="go version go1.24.0 linux/amd64", python=(3, 9), modules=())), 3)
+
+    def test_version_parsing(self):
+        self.assertEqual(ci.version_tuple("1.26.0"), (1, 26, 0))
+        self.assertEqual(ci.version_tuple("go1.26"), (1, 26, 0))
+        self.assertLess(ci.version_tuple("go1.26rc2"), ci.version_tuple("1.26.0"))
+        self.assertIsNone(ci.version_tuple("devel"))
+
+
 if __name__ == "__main__":
     unittest.main()

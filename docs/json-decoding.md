@@ -34,8 +34,8 @@ All cases use synthetic data, the baseline above, and `internal/jsondecode/decod
 
 | Public obligation | Implementation | Cases |
 |---|---|---|
-| REQ-JSON-0001: complete framing | `parser.go`: `parse`, `value` | `TestRejectionCorpus`, `TestPositiveAndPresence`, `FuzzParse` |
-| REQ-JSON-0002: UTF-8/scalar strings | `parse`, `string`, `hex4` | Negative UTF-8/escape/surrogate corpus and positive pair/literal-replacement controls |
+| REQ-JSON-0001: complete framing | `parser.go`: `parse`, `value` | `TestRejectionCorpus` (including `NaN`, `Infinity` and related non-finite tokens), `TestPositiveAndPresence`, `FuzzParse` |
+| REQ-JSON-0002: UTF-8/scalar strings | `parse`, `string`, `hex4` | Negative UTF-8/escape/surrogate corpus, raw control characters in values and names, overlong UTF-8 and raw-encoded (CESU-style) surrogates, and positive pair/literal-replacement controls |
 | REQ-JSON-0003: unique decoded names | `value` object parsing | Equal/conflicting/escaped, nested-label and array-object duplicates; distinct-object and non-normalized Unicode controls |
 | REQ-JSON-0004: exact/unknown fields | `decode.go`: `validate` | Case variants, unknown top-level/nested names, escaped known field and dynamic labels |
 | REQ-JSON-0005: types/presence | `validate`, `Value.Lookup` | Wrong type, required/null failure, missing/null/empty/zero controls |

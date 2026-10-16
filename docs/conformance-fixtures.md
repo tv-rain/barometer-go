@@ -59,7 +59,18 @@ make check
 
 The existing `make test`, race checks and CI discover the runner tests through `go test ./...`; no extra service, dependency, sibling checkout or native SDK is required. The corpus is loaded in sorted filename order, requires unique case IDs, and runs each parsed case repeatedly and concurrently. Go's test exit status provides the CI pass/fail result; no timestamps or raw input/error text enter diagnostics. Requirement IDs and case IDs are trusted test-author metadata and must remain sanitized.
 
-The corpus in [`testdata`](../internal/testkit/conformance/testdata) includes positive default/explicit-false cases and rejection cases for unknown fields, escaped duplicate names, trailing JSON, unsupported test versions, integer exponent spelling, null options and invalid UTF-8. Runner tests independently verify malformed fixture rejection, bounds, exact-byte preservation, storage isolation and that wrong outputs or wrong rejection classes fail.
+The corpus in [`testdata`](../internal/testkit/conformance/testdata) includes positive default, explicit-false and explicit-limits cases and rejection cases for unknown fields, escaped duplicate names, trailing JSON, unsupported test versions, integer exponent spelling, null options and invalid UTF-8.
+
+DEV-571 adds REQ-JSON-0009/0010 boundary cases at maximum-minus-one, maximum and maximum-plus-one for the task decoder's local parse limits of 65,536 bytes, 128 value levels and 32,768 value nodes:
+
+| Cases | Below and at the limit | Above the limit |
+|---|---|---|
+| `bytes-*` | Valid task padded with trailing whitespace to 65,535 and 65,536 bytes; normalizes like `defaults` | 65,537 bytes; `bounds` |
+| `depth-*` | Valid task plus an unknown nested-array member at 127 and 128 levels; `field` | 129 levels; `bounds` |
+| `nodes-*` | Top-level array of 32,767 and 32,768 values; `type` | 32,769 values; `bounds` |
+
+The closed task schema has no member that can hold 128 levels or 32,768 values, so the depth and node cases at and below the limit cannot be valid tasks. Their schema-level rejection class shows that the parse bound did not fire. The node limit also cannot be reached independently of the byte limit: the smallest value plus its separator takes two bytes, so 32,769 values need at least 65,537 bytes. `nodes-max-plus-one` therefore rejects at the byte bound before node counting, and the node check itself is covered by the configurable-limit unit tests in `internal/jsondecode`.
+Runner tests independently verify malformed fixture rejection, bounds, exact-byte preservation, storage isolation and that wrong outputs or wrong rejection classes fail.
 
 Start new cases with a positive control and change one property. Do not use real participant data, production targets, deployment configuration or secrets. Add a file under `testdata` with a unique case ID and review its requirement/assertion relationship. Unknown IDs require deliberate allowlist/baseline review. A profile, adapter or projection change must not silently reinterpret existing version-1 fixtures: add a new exact profile/adapter identifier or bump the format when its structure/meaning changes. Full schema/measurement/admission adapters remain separate implementation tasks.
 

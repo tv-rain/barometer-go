@@ -261,8 +261,10 @@ The high-level dependency flow is:
 ```text
 root facade
     ↓
-admission ──────────────→ taskdecode → model/task
-    │                         ↓
+admission ──────────────→ taskdecode ──→ model/task
+    │                      │     │
+    │                      │     └──────→ jsondecode (standard-library leaf)
+    │                      ↓
     └──────────────────→ validation → registry metadata
                               ↓
 execution ─────────────→ measurement runners → protocol primitives
@@ -280,13 +282,16 @@ test code       → production packages + testkit
 More specifically:
 
 - The root facade may import internal orchestration packages.
+- Task decoding may import the shared strict JSON decoder, task models, and pure validation; it invokes common and timing validation before publishing a candidate (see [Task Models](task-models.md)).
 - Admission may import task decoding, validation, task models, registry metadata, and the narrow persistence capabilities it consumes.
 - Execution may import admitted task models, the measurement contract, registry composition, Network Context, result construction, bundle construction, platform capabilities, and persistence capabilities.
 - Registered measurement packages may import task and observation models, protocol primitives, and narrow capabilities needed by that test.
 - Protocol packages may import observation models and small budget or cancellation value types owned by their consumer-facing contract.
-- Result and bundle packages may import model packages but not execution or concrete network implementations.
+- Result and bundle packages may import model packages but not execution or concrete network implementations. Bundle construction also consumes result construction and validated linkage configuration from `internal/config`.
 - Concrete adapters may import the capability contract they implement; capability packages must not import concrete adapters.
 - Tests may import production packages and `testkit`; production packages may not import `testkit`.
+
+`TestDependencyRules` in [`dependency_rules_test.go`](../dependency_rules_test.go) enforces the import-visible rules in this section and the next through `go test ./...`, and therefore `make check` and CI. It parses every Go file regardless of build tags. Production files outside `internal/testkit` must not import `internal/testkit` or its subpackages; internal packages, including their tests, must not import the root package; domain models import only other models, `jsondecode` and standard-library packages without network or filesystem access; `jsondecode` imports only the standard library; validation, measurement, protocol, result, bundle and capability-contract packages must not import the owners forbidden below. A synthetic negative test shows that each rule rejects a forbidden import. Behavioral rules, such as no clamping, no proxy-to-direct fallback, no replay mutation and no indirect network activity, are not visible in imports and remain review rules; a passing check does not establish them.
 
 If implementing a rule would require an import cycle, ownership must be reconsidered. A cycle must not be hidden through global registries, service locators, untyped maps, or callback bags.
 

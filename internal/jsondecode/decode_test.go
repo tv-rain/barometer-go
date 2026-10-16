@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -69,6 +70,21 @@ func TestRejectionCorpus(t *testing.T) {
 	}
 	add("surrogate-name", "REQ-JSON-0002", "text", `{`+base+`,"\ud800":"a"}`)
 	add("surrogate-nested", "REQ-JSON-0002", "text", `{`+base+`,"labels":{"x":"\udc00"}}`)
+	// Regression cases for already rejected input; they assert, not change, behavior.
+	for _, raw := range []string{"\x00", "\x01", "\x1f", "\t", "\n", "\r"} {
+		add("raw-control-value-"+strconv.Quote(raw), "REQ-JSON-0002", "text", `{`+base+`,"labels":{"x":"a`+raw+`b"}}`)
+	}
+	add("raw-control-name", "REQ-JSON-0002", "text", `{`+base+`,"labels":{"a`+"\x1f"+`b":"x"}}`)
+	for name, raw := range map[string]string{"slash-2": "\xc0\xaf", "nul-2": "\xc0\x80", "ascii-2": "\xc1\xbf", "slash-3": "\xe0\x80\xaf", "slash-4": "\xf0\x80\x80\xaf"} {
+		add("overlong-"+name, "REQ-JSON-0002", "text", `{`+base+`,"labels":{"x":"`+raw+`"}}`)
+	}
+	for name, raw := range map[string]string{"high": "\xed\xa0\x80", "low": "\xed\xb0\x80", "pair": "\xed\xa0\xbd\xed\xb8\x80"} {
+		add("cesu-surrogate-"+name, "REQ-JSON-0002", "text", `{`+base+`,"labels":{"x":"`+raw+`"}}`)
+	}
+	add("cesu-surrogate-name", "REQ-JSON-0002", "text", `{`+base+`,"labels":{"`+"\xed\xa0\x80"+`":"x"}}`)
+	for _, raw := range []string{"NaN", "-NaN", "Infinity", "-Infinity", "+Infinity", "inf", "nan"} {
+		add("non-finite-"+raw, "REQ-JSON-0001", "syntax", `{"version":"0.1.0","test_id":"SYNTHETIC","count":`+raw+`}`)
+	}
 	classes := map[string]error{"syntax": ErrSyntax, "text": ErrText, "type": ErrType, "duplicate": ErrDuplicate, "field": ErrField, "required": ErrRequired, "integer": ErrInteger, "range": ErrRange}
 	testkit.RunRejections(t, cases, func(input []byte) error {
 		v, err := Decode(input, modelSchema(), testLimits)
