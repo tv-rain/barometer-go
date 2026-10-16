@@ -1,4 +1,4 @@
-.PHONY: build check format format-check integrity lint mobile-smoke mobile-smoke-android mobile-smoke-apple race test
+.PHONY: build check format format-check integrity lint mobile-smoke mobile-smoke-android mobile-smoke-apple race test traceability
 
 build:
 	go build ./...
@@ -38,3 +38,9 @@ mobile-smoke-apple:
 	bash scripts/mobile-smoke.sh apple
 
 check: format-check build test race lint integrity mobile-smoke
+
+# Explicit public checkout and external output directory; no implicit fetch/install.
+PYTHON ?= python3
+traceability:
+	@test -n "$(SPEC_CHECKOUT)" -a -n "$(REPORT_DIR)" || { echo "Set SPEC_CHECKOUT and REPORT_DIR"; exit 2; }
+	$(PYTHON) -B scripts/check-traceability.py --spec-checkout "$(SPEC_CHECKOUT)" --report-dir "$(REPORT_DIR)"

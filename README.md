@@ -59,6 +59,8 @@ Run the complete local validation set from the repository root:
 make check
 ```
 
+The separate [traceability CI checks](docs/traceability-ci.md) use `make traceability` with an explicit public checkout, Python environment and report directory. They validate metadata/references and run synthetic conformance smoke cases while preserving unresolved gaps.
+
 The individual commands are:
 
 | Command | Purpose |
