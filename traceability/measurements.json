@@ -7,7 +7,7 @@
   },
   "implementation": {
     "repository": "https://github.com/tv-rain/barometer-go",
-    "revision": "4aafb0e94d5e13411d1f76521ece989a03aee617"
+    "revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874"
   },
   "coverage": {
     "mode": "partial",
@@ -611,21 +611,27 @@
     },
     {
       "id": "REQ-NET-01-0023",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
           "path": "internal/result/net01.go",
           "selector": "file",
           "state": "planned"
+        },
+        {
+          "path": "internal/result/measurement.go",
+          "selector": "symbol:Decoder.measurement",
+          "state": "existing"
         }
       ],
       "case_ids": [
-        "M-NET-01-OUTPUT"
+        "M-NET-01-OUTPUT",
+        "UT.internal.result.TestInitialPayloadSchemasAndEvidence"
       ],
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "All owners/cases are planned; every linked unit and schema/table row requires complete applicable coverage. No executed evidence or support is claimed."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No NET-01 measurement implementation produces the access snapshot; only result validation is evidenced. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-NET-01-0024",
@@ -1672,7 +1678,7 @@
     },
     {
       "id": "REQ-NET-03-0027",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
           "path": "internal/measurement/net03/run.go",
@@ -1683,15 +1689,22 @@
           "path": "internal/result/net03.go",
           "selector": "file",
           "state": "planned"
+        },
+        {
+          "path": "internal/result/measurement.go",
+          "selector": "symbol:net03",
+          "state": "existing"
         }
       ],
       "case_ids": [
-        "M-NET-03-NORMALIZATION"
+        "M-NET-03-NORMALIZATION",
+        "UT.internal.result.TestInitialPayloadSchemasAndEvidence",
+        "UT.internal.result.TestDNSCollectionAndHTTPEvidence"
       ],
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "All owners/cases are planned; every linked unit and schema/table row requires complete applicable coverage. No executed evidence or support is claimed."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No NET-03 measurement implementation exists; captive_portal_suspected, not_validated, dns_failure, tls_failure, unexpected_response and inconclusive have no positive test case. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-NET-03-0028",
@@ -3290,7 +3303,7 @@
     },
     {
       "id": "REQ-NET-05-0046",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
           "path": "internal/measurement/net05/run.go",
@@ -3301,15 +3314,21 @@
           "path": "internal/result/net05.go",
           "selector": "file",
           "state": "planned"
+        },
+        {
+          "path": "internal/result/measurement.go",
+          "selector": "symbol:Decoder.composite",
+          "state": "existing"
         }
       ],
       "case_ids": [
-        "M-NET-05-NORMALIZATION"
+        "M-NET-05-NORMALIZATION",
+        "UT.internal.result.TestCompositeCompletionAndPartialBoundaries"
       ],
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "All owners/cases are planned; every linked unit and schema/table row requires complete applicable coverage. No executed evidence or support is claimed."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: The inconclusive outcome has no test, and no NET-05 runner produces these outcomes. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-NET-05-0037",
@@ -3384,39 +3403,52 @@
     },
     {
       "id": "REQ-NET-05-0040",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
           "path": "internal/result/net05.go",
           "selector": "file",
           "state": "planned"
+        },
+        {
+          "path": "internal/result/measurement.go",
+          "selector": "symbol:Decoder.composite",
+          "state": "existing"
         }
       ],
       "case_ids": [
-        "M-NET-05-OUTPUT"
+        "M-NET-05-OUTPUT",
+        "UT.internal.result.TestCompositeCompletionAndPartialBoundaries"
       ],
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "All owners/cases are planned; every linked unit and schema/table row requires complete applicable coverage. No executed evidence or support is claimed."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Absence of Network Context inside steps and absence of derived censorship classifications are not asserted by any test; no NET-05 runner exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-NET-05-0041",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
           "path": "internal/result/net05.go",
           "selector": "file",
           "state": "planned"
+        },
+        {
+          "path": "internal/result/measurement.go",
+          "selector": "symbol:Decoder.composite",
+          "state": "existing"
         }
       ],
       "case_ids": [
-        "M-NET-05-OUTPUT"
+        "M-NET-05-OUTPUT",
+        "UT.internal.result.TestCompositeCompletionAndPartialBoundaries",
+        "UT.internal.result.TestCompositeVersionPrecisionAndMarkerPresence"
       ],
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "All owners/cases are planned; every linked unit and schema/table row requires complete applicable coverage. No executed evidence or support is claimed."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Validation applies to decoded results only; no NET-05 producer emits these fields. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-NET-05-0042",
@@ -3456,39 +3488,51 @@
     },
     {
       "id": "REQ-NET-05-0044",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
           "path": "internal/result/net05.go",
           "selector": "file",
           "state": "planned"
+        },
+        {
+          "path": "internal/result/measurement.go",
+          "selector": "symbol:Decoder.composite",
+          "state": "existing"
         }
       ],
       "case_ids": [
-        "M-NET-05-OUTPUT"
+        "M-NET-05-OUTPUT",
+        "UT.internal.result.TestCompositeCompletionAndPartialBoundaries"
       ],
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "All owners/cases are planned; every linked unit and schema/table row requires complete applicable coverage. No executed evidence or support is claimed."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Exclusion of a common envelope or Network Context inside step measurements is not explicitly tested; no NET-05 producer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-NET-05-0045",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
           "path": "internal/result/net05.go",
           "selector": "file",
           "state": "planned"
+        },
+        {
+          "path": "internal/result/measurement.go",
+          "selector": "symbol:Decoder.composite",
+          "state": "existing"
         }
       ],
       "case_ids": [
-        "M-NET-05-OUTPUT"
+        "M-NET-05-OUTPUT",
+        "UT.internal.result.TestCompositeCompletionAndPartialBoundaries"
       ],
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "All owners/cases are planned; every linked unit and schema/table row requires complete applicable coverage. No executed evidence or support is claimed."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Only result validation is evidenced; no NET-05 runner decides which steps start. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-NET-05-0047",
@@ -4905,7 +4949,7 @@
     },
     {
       "id": "REQ-DNS-01-0037",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
           "path": "internal/measurement/dns01/run.go",
@@ -4916,19 +4960,25 @@
           "path": "internal/result/dns01.go",
           "selector": "file",
           "state": "planned"
+        },
+        {
+          "path": "internal/result/measurement.go",
+          "selector": "symbol:dnsOutcome",
+          "state": "existing"
         }
       ],
       "case_ids": [
-        "M-DNS-01-NORMALIZATION"
+        "M-DNS-01-NORMALIZATION",
+        "UT.internal.result.TestInitialPayloadSchemasAndEvidence"
       ],
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "All owners/cases are planned; every linked unit and schema/table row requires complete applicable coverage. No executed evidence or support is claimed."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Only result-decoder validation of outcome/observation consistency exists; no DNS-01 measurement implementation produces these outcomes, and most rows (no_data, servfail, refused, timeout, resolver_error, malformed_response, unexpected_source, query_mismatch, inconclusive) have no positive test case. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-DNS-01-0038",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
           "path": "internal/measurement/dns01/run.go",
@@ -4939,15 +4989,21 @@
           "path": "internal/result/dns01.go",
           "selector": "file",
           "state": "planned"
+        },
+        {
+          "path": "internal/result/measurement.go",
+          "selector": "symbol:dnsOutcome",
+          "state": "existing"
         }
       ],
       "case_ids": [
-        "M-DNS-01-NORMALIZATION"
+        "M-DNS-01-NORMALIZATION",
+        "UT.internal.result.TestDNSCollectionAndHTTPEvidence"
       ],
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "All owners/cases are planned; every linked unit and schema/table row requires complete applicable coverage. No executed evidence or support is claimed."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Discarding unrelated or mismatched datagrams during collection is a measurement behavior with no implementation or test; only validator-side outcome precedence is evidenced. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-DNS-01-0033",
@@ -6171,7 +6227,7 @@
     },
     {
       "id": "REQ-DNS-03-0027",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
           "path": "internal/measurement/dns03/run.go",
@@ -6182,15 +6238,27 @@
           "path": "internal/result/dns03.go",
           "selector": "file",
           "state": "planned"
+        },
+        {
+          "path": "internal/result/measurement.go",
+          "selector": "symbol:encryptedDNSOutcome",
+          "state": "existing"
+        },
+        {
+          "path": "internal/result/measurement.go",
+          "selector": "symbol:validPrimitive",
+          "state": "existing"
         }
       ],
       "case_ids": [
-        "M-DNS-03-NORMALIZATION"
+        "M-DNS-03-NORMALIZATION",
+        "UT.internal.result.TestInitialPayloadSchemasAndEvidence",
+        "UT.internal.result.TestDoHNonSuccessResponseAndRedirectBounds"
       ],
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "All owners/cases are planned; every linked unit and schema/table row requires complete applicable coverage. No executed evidence or support is claimed."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No DoH measurement implementation exists; outcomes bootstrap_failure, tls_failure, unexpected_content_type, dns_nxdomain, dns_servfail, dns_refused, malformed_dns_response, query_mismatch, timeout and inconclusive have no positive test case. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-DNS-03-0023",
@@ -7325,7 +7393,7 @@
     },
     {
       "id": "REQ-DNS-04-0027",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
           "path": "internal/measurement/dns04/run.go",
@@ -7336,15 +7404,26 @@
           "path": "internal/result/dns04.go",
           "selector": "file",
           "state": "planned"
+        },
+        {
+          "path": "internal/result/measurement.go",
+          "selector": "symbol:encryptedDNSOutcome",
+          "state": "existing"
+        },
+        {
+          "path": "internal/result/measurement.go",
+          "selector": "symbol:validPrimitive",
+          "state": "existing"
         }
       ],
       "case_ids": [
-        "M-DNS-04-NORMALIZATION"
+        "M-DNS-04-NORMALIZATION",
+        "UT.internal.result.TestInitialPayloadSchemasAndEvidence"
       ],
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "All owners/cases are planned; every linked unit and schema/table row requires complete applicable coverage. No executed evidence or support is claimed."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No DoT measurement implementation exists; outcomes response, bootstrap_failure, tcp_refused, tcp_reset, tls_failure, dns_nxdomain, dns_servfail, malformed_dns_response, query_mismatch, timeout and inconclusive have no positive test case. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-DNS-04-0023",
@@ -8515,21 +8594,27 @@
     },
     {
       "id": "REQ-TCP-01-0024",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
           "path": "internal/result/tcp01.go",
           "selector": "file",
           "state": "planned"
+        },
+        {
+          "path": "internal/result/measurement.go",
+          "selector": "symbol:validPrimitive",
+          "state": "existing"
         }
       ],
       "case_ids": [
-        "M-TCP-01-OUTPUT"
+        "M-TCP-01-OUTPUT",
+        "UT.internal.result.TestInitialPayloadSchemasAndEvidence"
       ],
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "All owners/cases are planned; every linked unit and schema/table row requires complete applicable coverage. No executed evidence or support is claimed."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No TCP-01 measurement implementation exists; omission of ip_address and port from the observation is not explicitly tested. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-TCP-01-0026",
@@ -9651,21 +9736,32 @@
     },
     {
       "id": "REQ-TLS-01-0025",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
           "path": "internal/result/tls01.go",
           "selector": "file",
           "state": "planned"
+        },
+        {
+          "path": "internal/result/measurement.go",
+          "selector": "symbol:validPrimitive",
+          "state": "existing"
+        },
+        {
+          "path": "internal/result/measurement.go",
+          "selector": "symbol:tlsOutcome",
+          "state": "existing"
         }
       ],
       "case_ids": [
-        "M-TLS-01-OUTPUT"
+        "M-TLS-01-OUTPUT",
+        "UT.internal.result.TestInitialPayloadSchemasAndEvidence"
       ],
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "All owners/cases are planned; every linked unit and schema/table row requires complete applicable coverage. No executed evidence or support is claimed."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No TLS-01 measurement implementation exists; only result validation of observation order is evidenced. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-TLS-01-0027",
@@ -11017,7 +11113,7 @@
     },
     {
       "id": "REQ-HTTP-01-0036",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
           "path": "internal/measurement/http01/run.go",
@@ -11028,15 +11124,27 @@
           "path": "internal/result/http01.go",
           "selector": "file",
           "state": "planned"
+        },
+        {
+          "path": "internal/result/measurement.go",
+          "selector": "symbol:httpOutcome",
+          "state": "existing"
+        },
+        {
+          "path": "internal/result/measurement.go",
+          "selector": "symbol:validPrimitive",
+          "state": "existing"
         }
       ],
       "case_ids": [
-        "M-HTTP-01-NORMALIZATION"
+        "M-HTTP-01-NORMALIZATION",
+        "UT.internal.result.TestInitialPayloadSchemasAndEvidence",
+        "UT.internal.result.TestDNSCollectionAndHTTPEvidence"
       ],
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "All owners/cases are planned; every linked unit and schema/table row requires complete applicable coverage. No executed evidence or support is claimed."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No HTTP-01 measurement implementation exists; redirect, status, header, body, encoding, dns_failure, tcp_failure, http_timeout, protocol_error and inconclusive outcomes have no positive test case. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-HTTP-01-0037",
@@ -12802,6 +12910,71 @@
       "scope": "Review every baseline/factor row and separately exercise each normative safety action using synthetic targets and recording transports. Keep effective risk at least the registered baseline and preserve host/local-policy qualification and final probe authority; no identifiers, unsafe target expansion or distinctive scheduling is introduced. Native capabilities, actual traffic patterns, host scheduling/consent and deployment review require separate scoped evidence; explanatory rationales are not new runtime data. Separately reviewed integration/interpretation evidence; portable tests cannot complete this family alone.",
       "status": "planned",
       "evidence_ids": []
+    },
+    {
+      "id": "UT.internal.result.TestCompositeCompletionAndPartialBoundaries",
+      "location": {
+        "path": "internal/result/payload_test.go",
+        "selector": "symbol:TestCompositeCompletionAndPartialBoundaries",
+        "state": "existing"
+      },
+      "scope": "Existing synthetic Go unit test TestCompositeCompletionAndPartialBoundaries in package internal/result, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "status": "passed",
+      "evidence_ids": [
+        "EV.UT.internal.result.TestCompositeCompletionAndPartialBoundaries"
+      ]
+    },
+    {
+      "id": "UT.internal.result.TestCompositeVersionPrecisionAndMarkerPresence",
+      "location": {
+        "path": "internal/result/payload_test.go",
+        "selector": "symbol:TestCompositeVersionPrecisionAndMarkerPresence",
+        "state": "existing"
+      },
+      "scope": "Existing synthetic Go unit test TestCompositeVersionPrecisionAndMarkerPresence in package internal/result, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "status": "passed",
+      "evidence_ids": [
+        "EV.UT.internal.result.TestCompositeVersionPrecisionAndMarkerPresence"
+      ]
+    },
+    {
+      "id": "UT.internal.result.TestDNSCollectionAndHTTPEvidence",
+      "location": {
+        "path": "internal/result/payload_test.go",
+        "selector": "symbol:TestDNSCollectionAndHTTPEvidence",
+        "state": "existing"
+      },
+      "scope": "Existing synthetic Go unit test TestDNSCollectionAndHTTPEvidence in package internal/result, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "status": "passed",
+      "evidence_ids": [
+        "EV.UT.internal.result.TestDNSCollectionAndHTTPEvidence"
+      ]
+    },
+    {
+      "id": "UT.internal.result.TestDoHNonSuccessResponseAndRedirectBounds",
+      "location": {
+        "path": "internal/result/payload_test.go",
+        "selector": "symbol:TestDoHNonSuccessResponseAndRedirectBounds",
+        "state": "existing"
+      },
+      "scope": "Existing synthetic Go unit test TestDoHNonSuccessResponseAndRedirectBounds in package internal/result, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "status": "passed",
+      "evidence_ids": [
+        "EV.UT.internal.result.TestDoHNonSuccessResponseAndRedirectBounds"
+      ]
+    },
+    {
+      "id": "UT.internal.result.TestInitialPayloadSchemasAndEvidence",
+      "location": {
+        "path": "internal/result/payload_test.go",
+        "selector": "symbol:TestInitialPayloadSchemasAndEvidence",
+        "state": "existing"
+      },
+      "scope": "Existing synthetic Go unit test TestInitialPayloadSchemasAndEvidence in package internal/result, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "status": "passed",
+      "evidence_ids": [
+        "EV.UT.internal.result.TestInitialPayloadSchemasAndEvidence"
+      ]
     }
   ],
   "issues": [
@@ -12818,5 +12991,129 @@
       "notes": "Public strict JSON clarification and shared Go infrastructure are adopted; downstream consumer/schema/model, admission, binding and producer evidence remains open. Measurement mapping does not close the finding."
     }
   ],
-  "evidence": []
+  "evidence": [
+    {
+      "id": "EV.UT.internal.result.TestCompositeCompletionAndPartialBoundaries",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
+        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "selector": "anchor:UT.internal.result.TestCompositeCompletionAndPartialBoundaries"
+      },
+      "specification_revision": "59d49364d85e48cc8e69c762d130a7a86dc1fe65",
+      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "requirement_ids": [
+        "REQ-NET-05-0046",
+        "REQ-NET-05-0040",
+        "REQ-NET-05-0041",
+        "REQ-NET-05-0044",
+        "REQ-NET-05-0045"
+      ],
+      "scope": "Existing synthetic Go unit test TestCompositeCompletionAndPartialBoundaries in package internal/result, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "case_results": [
+        {
+          "case_id": "UT.internal.result.TestCompositeCompletionAndPartialBoundaries",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "EV.UT.internal.result.TestCompositeVersionPrecisionAndMarkerPresence",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
+        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "selector": "anchor:UT.internal.result.TestCompositeVersionPrecisionAndMarkerPresence"
+      },
+      "specification_revision": "59d49364d85e48cc8e69c762d130a7a86dc1fe65",
+      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "requirement_ids": [
+        "REQ-NET-05-0041"
+      ],
+      "scope": "Existing synthetic Go unit test TestCompositeVersionPrecisionAndMarkerPresence in package internal/result, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "case_results": [
+        {
+          "case_id": "UT.internal.result.TestCompositeVersionPrecisionAndMarkerPresence",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "EV.UT.internal.result.TestDNSCollectionAndHTTPEvidence",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
+        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "selector": "anchor:UT.internal.result.TestDNSCollectionAndHTTPEvidence"
+      },
+      "specification_revision": "59d49364d85e48cc8e69c762d130a7a86dc1fe65",
+      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "requirement_ids": [
+        "REQ-NET-03-0027",
+        "REQ-DNS-01-0038",
+        "REQ-HTTP-01-0036"
+      ],
+      "scope": "Existing synthetic Go unit test TestDNSCollectionAndHTTPEvidence in package internal/result, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "case_results": [
+        {
+          "case_id": "UT.internal.result.TestDNSCollectionAndHTTPEvidence",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "EV.UT.internal.result.TestDoHNonSuccessResponseAndRedirectBounds",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
+        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "selector": "anchor:UT.internal.result.TestDoHNonSuccessResponseAndRedirectBounds"
+      },
+      "specification_revision": "59d49364d85e48cc8e69c762d130a7a86dc1fe65",
+      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "requirement_ids": [
+        "REQ-DNS-03-0027"
+      ],
+      "scope": "Existing synthetic Go unit test TestDoHNonSuccessResponseAndRedirectBounds in package internal/result, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "case_results": [
+        {
+          "case_id": "UT.internal.result.TestDoHNonSuccessResponseAndRedirectBounds",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "EV.UT.internal.result.TestInitialPayloadSchemasAndEvidence",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
+        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "selector": "anchor:UT.internal.result.TestInitialPayloadSchemasAndEvidence"
+      },
+      "specification_revision": "59d49364d85e48cc8e69c762d130a7a86dc1fe65",
+      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "requirement_ids": [
+        "REQ-NET-01-0023",
+        "REQ-NET-03-0027",
+        "REQ-DNS-01-0037",
+        "REQ-DNS-03-0027",
+        "REQ-DNS-04-0027",
+        "REQ-TCP-01-0024",
+        "REQ-TLS-01-0025",
+        "REQ-HTTP-01-0036"
+      ],
+      "scope": "Existing synthetic Go unit test TestInitialPayloadSchemasAndEvidence in package internal/result, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "case_results": [
+        {
+          "case_id": "UT.internal.result.TestInitialPayloadSchemasAndEvidence",
+          "result": "passed"
+        }
+      ]
+    }
+  ]
 }

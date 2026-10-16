@@ -23,7 +23,6 @@ func candidate() task.Candidate {
 // requirement-ref: REQ-LABEL-0005
 // requirement-ref: REQ-LABEL-0010
 // requirement-ref: REQ-LABEL-0014
-// requirement-ref: REQ-JSON-0010
 func TestCommonLabelInvariants(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
@@ -72,7 +71,6 @@ func labelCount(n int) []task.Label {
 }
 
 // requirement-ref: REQ-LABEL-0001
-// requirement-ref: REQ-EXECUTION-0010
 // requirement-ref: REQ-EXECUTION-0013
 func TestCommonNormalizationIsIdempotentAndConservative(t *testing.T) {
 	c := candidate()

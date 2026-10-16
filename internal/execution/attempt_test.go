@@ -194,7 +194,6 @@ func TestAttemptRejectsJSON(t *testing.T) {
 	}
 }
 
-// requirement-ref: REQ-JSON-0011
 func TestStopValidationPrecedence(t *testing.T) {
 	terminal, err := execution.NewAttempt().Stop(task.CancelledByHost)
 	if err != nil {
