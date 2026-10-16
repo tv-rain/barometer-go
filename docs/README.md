@@ -2,6 +2,8 @@
 
 ## Directory Index
 
+- [`foundation-validation.md`](foundation-validation.md) — delivered Foundation helper/runner/model evidence, deferred runtime harness ownership and separate-assessment limits.
+
 - [Sanitized API examples](../internal/examples/README.md) — executable non-normative Foundation model examples and scripted intended lifecycle/clearing calls, with explicit runtime and evidence limits.
 
 - [`traceability-ci.md`](traceability-ci.md) — reproducible pinned CI checks, mapping-loss gates, historical metadata reports and evidence limits.

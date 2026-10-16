@@ -2,6 +2,8 @@
 
 ## Scope and Baseline
 
+Current adoption summaries below were reconciled on October 16, 2026 against verified merged Foundation code. Dated findings and preparation-stage paragraphs are historical evidence, including their then-pending statements. The latest disposition and addenda control current adoption status; no historical source baseline is relabelled as current conformance.
+
 This record holds Go implementation findings that need public specification clarification. It is not a local specification or an approval to choose behavior. Issue identifiers below belong to this Go findings record; they are not public requirement IDs, conformance-case IDs, or ClickUp task IDs.
 
 Sources are pinned to public specification Draft `0.1.0`, revision `95dfeef1367f4c320bca7c7ae91b13ca7608b37f`, as recorded in the [Normative Source Inventory](normative-sources.md#reviewed-baseline). The source-discovery review found no missing contract file. This record is not an exhaustive semantic audit of all requirements.
@@ -16,7 +18,7 @@ The open finding below exercises the template without choosing decoding behavior
 
 ## GO-SPEC-ISSUE-001: Duplicate JSON Member Names Outside Labels
 
-**Status:** Public contract merged; shared Go decoder adoption prepared under DEV-477, with downstream model/admission/binding evidence pending. The historical finding below records the pre-resolution baseline and is retained unchanged; the adoption addendum supersedes its implementation-blocking statements.
+**Status:** Public contract, required internal alignment and shared Go decoder adoption are merged. Foundation model consumers are delivered, with their scope recorded in the model documentation. Applicable production-schema, admission, runtime, producer and binding/host evidence remains pending under the [downstream adoption task](https://app.clickup.com/t/124kk1zc4ag). The finding remains open; historical pending statements below do not describe the current Foundation merge state.
 
 ### Identity, Ownership, and Affected Versions
 
@@ -73,9 +75,17 @@ DEV-477 aligns internal task-trust/resource validation plans before Go adoption,
 
 Merge internal alignment before the dependent Go change. No public wording or version change is needed. Work is prepared on `agent/dev-477-strict-decoding-infrastructure`; implementation commits and human PR links await final approval and handoff. Later consumer claims must pin their own reviewed model and local-bound baselines and retain exact task bytes for integrity/replay checks.
 
+### Foundation Merge Evidence — October 16, 2026
+
+The accepted public contract remains Draft `0.1.0` at [05c1364af4f9a604b617fca45f060949b557d265](https://github.com/tv-rain/barometer-spec/commit/05c1364af4f9a604b617fca45f060949b557d265). Required internal review-plan alignment was verified merged before Go adoption; its private immutable evidence is retained in the [implementation task](https://app.clickup.com/t/86cbb8f0x), without copying private review material here or inferring completed specialist review.
+
+Shared Go adoption [PR #14](https://github.com/tv-rain/barometer-go/pull/14) merged approved implementation `834e52a5a23e85c4f7e35de498432381979ed0e9` at [e267ac370716f93c850b8e539d17d37f06359941](https://github.com/tv-rain/barometer-go/commit/e267ac370716f93c850b8e539d17d37f06359941). The merge and head are ancestors of the refreshed integrated Foundation baseline. Subsequent configuration, task, observation, result and bundle consumers are recorded in their linked model documentation and [model-validation map](model-validation.md).
+
+This resolves the stale “prepared/uncommitted” Foundation adoption state. It does not resolve every downstream obligation. [Downstream strict-JSON adoption](https://app.clickup.com/t/124kk1zc4ag) must inventory applicable production schemas, admission/no-side-effect integration, producer and binding/host consumers, and record durable evidence or reviewed non-applicability before this finding closes. Existing historical manifests and source inventories remain unchanged.
+
 ## GO-SPEC-ISSUE-002: Missing Registered Observation Vocabularies
 
-**Current state:** Public resolution and required internal alignment are merged and verified. DEV-481 Go model adoption and local validation are prepared; final implementation approval, commit/push and applicable downstream evidence remain pending. The original finding below is historical evidence.
+**Current state:** Public resolution, required internal alignment and DEV-481 Go model adoption are merged and verified. Actual runtime producer, protocol/API, result-integration and applicable binding/host evidence remains pending under the [runtime vocabulary adoption task](https://app.clickup.com/t/124kk1zc4aj). The finding remains open. The original finding and dated preparation-stage statements below are historical evidence.
 
 ### Identity and Ownership
 
@@ -147,3 +157,11 @@ Required internal alignment was verified merged into its remote main branch, wit
 DEV-481 now prepares DNS/TLS models and the fixed producer mappings in `internal/model/observation` against that accepted public baseline. The [model documentation and test traceability](observation-models.md) identify the replacement/new requirements, strict serialized-value acceptance, exact absence-versus-coarse behavior, answer bounds and separate trusted answer-retention gate, local IP filter, certificate/peer-alert separation and incomplete-failure prohibition. The prior finding and pending statements remain historical records of the pre-resolution/adoption stages.
 
 Go implementation is uncommitted pending final approval; the accepted finding remains open for durable downstream implementation evidence and applicable runtime/binding/producer validation or explicit non-applicability. Local model tests cannot establish packet/API evidence, measurement execution, native lifecycle, field support or a released library. No additional specification mutation is needed for this adoption.
+
+### Foundation Merge Evidence — October 16, 2026
+
+The accepted public contract is [a944ed6c389fec9f0d089f0044ead6fe845328b1](https://github.com/tv-rain/barometer-spec/commit/a944ed6c389fec9f0d089f0044ead6fe845328b1), retaining Draft `0.1.0`. Required internal alignment was verified merged before Go adoption; private PR/commit evidence remains in the [observation model task](https://app.clickup.com/t/86cbb8f2n), without claiming completed specialist review.
+
+Go [PR #22](https://github.com/tv-rain/barometer-go/pull/22) merged approved implementation `84ccd5c2d4003183d21ffe225a4479b6b572c53e` at [dea8351f618d48f916c1fd9f2576765460b84309](https://github.com/tv-rain/barometer-go/commit/dea8351f618d48f916c1fd9f2576765460b84309). The merge and head are ancestors of the refreshed integrated Foundation baseline. Bounded models, accepted fixed vocabulary mappings and their synthetic tests are delivered; the [observation model record](observation-models.md) remains canonical for that scope.
+
+The [runtime vocabulary adoption task](https://app.clickup.com/t/124kk1zc4aj) owns actual DNS/TLS producer normalization, protocol/API and result integration, applicable bindings, compatibility and evidence or reviewed non-applicability. This finding stays open for that work; merged models and passing compiler checks do not establish protocol execution or platform support.

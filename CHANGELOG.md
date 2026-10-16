@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Foundation validation-boundary documentation links delivered synthetic tooling to owned downstream runtime harness tasks; current specification-adoption summaries distinguish merged Foundation code from pending runtime/binding evidence. No runtime behavior, historical traceability report or support status changes.
+
 - Executable sanitized Foundation examples for configuration preparation, strict task decoding, cancellation-state handling and result serialization, plus scripted test-only intended client lifecycle and clearing calls. Existing CI validation runs their output assertions; runtime lifecycle and clearing remain pending.
 
 - Pinned public traceability tooling in CI, independent mapping-loss checks, requirement-reference validation and synthetic conformance smoke cases, with reproducible local commands and full gap reports; no runtime or support promotion.
