@@ -168,11 +168,11 @@ The [runtime vocabulary adoption task](https://app.clickup.com/t/124kk1zc4aj) ow
 
 ## GO-SPEC-ISSUE-003: Local Host-Configuration Decoding Bounds
 
-**Current state:** Open. A public no-text-change proposal is prepared as [Local Host-Configuration Decoding Bounds](https://github.com/tv-rain/barometer-spec/blob/main/specification-issues/configuration-bounds.md). That link resolves after the human-created public PR merges, and maintainer disposition is pending. Go behavior is unchanged.
+**Current state:** Closed October 16, 2026. The public maintainer accepted the no-text-change clarification recorded in [Local Host-Configuration Decoding Bounds — Maintainer Disposition](https://github.com/tv-rain/barometer-spec/blob/main/specification-issues/configuration-bounds.md#maintainer-disposition--october-16-2026). The Go bounds are local and non-normative under REQ-JSON-0009. Go behavior is unchanged. The finding and ordering sections before the disposition addendum keep their original wording as historical evidence.
 
 ### Identity, Baselines and Requirements
 
-- **Disposition:** Open, raised October 16, 2026 under [DEV-571](https://app.clickup.com/t/124kk1zc521). The Go implementation agent reports under the task owner's instruction; public maintainers own disposition.
+- **Disposition:** Closed; see the [disposition addendum](#disposition-addendum--october-16-2026). Original disposition (historical): open, raised October 16, 2026 under [DEV-571](https://app.clickup.com/t/124kk1zc521). The Go implementation agent reports under the task owner's instruction; public maintainers own disposition.
 - **Public baseline:** Draft `0.1.0` at [83d0b10cffb37a53de120b56825b42eb226568d9](https://github.com/tv-rain/barometer-spec/tree/83d0b10cffb37a53de120b56825b42eb226568d9). [REQ-JSON-0009](https://github.com/tv-rain/barometer-spec/blob/83d0b10cffb37a53de120b56825b42eb226568d9/data-formats/json-decoding.md#REQ-JSON-0009) requires a finite reviewed local input bound for models without a registered complete-input maximum. The Proxy, Network Context and Result Linkage sections register no complete host-configuration maximum or URL length maximum.
 - **Implementation baseline:** `internal/config` at `374c8bd7a8db634ddac5f799b2894ce3d96856d5` selects 16,384 encoded bytes, 8 value levels, 64 value nodes, 2,048-byte endpoint URLs and 64-entry trusted approval lists, as recorded in [Initialization and Configuration Models](configuration-models.md#defaults-validation-and-local-bounds). The approval-list bound applies to trusted internal inputs, not a public serialized model.
 
@@ -185,3 +185,12 @@ No work is stopped. The bounds stay as implemented and fail atomically before pa
 ### Ordering and Closure
 
 Merge the public record first, then this entry. A coordination decision is not required. If maintainers register public maxima, that wording change follows its own reviewed public PR, then any internal alignment, Go adoption and conformance cases, then bindings and hosts. Closure requires the recorded maintainer disposition and its immutable public revision; under the proposed clarification no Go behavior change follows.
+
+### Disposition Addendum — October 16, 2026
+
+The public record merged through barometer-spec [PR #10](https://github.com/tv-rain/barometer-spec/pull/10) at [d3ed5cbcc02cecac371bc897598b903c70d0fcfc](https://github.com/tv-rain/barometer-spec/commit/d3ed5cbcc02cecac371bc897598b903c70d0fcfc), and this entry merged through Go [PR #32](https://github.com/tv-rain/barometer-go/pull/32) at [1fa1e6edfa019e62e391191294e2fc81376a455c](https://github.com/tv-rain/barometer-go/commit/1fa1e6edfa019e62e391191294e2fc81376a455c). The project owner and public maintainer, Lev, then accepted alternative 1: a no-text-change clarification citing the existing [REQ-JSON-0009](https://github.com/tv-rain/barometer-spec/blob/83d0b10cffb37a53de120b56825b42eb226568d9/data-formats/json-decoding.md#REQ-JSON-0009) rule. The disposition is recorded in the public record's maintainer-disposition section; its merged public revision is recorded as evidence on [DEV-571](https://app.clickup.com/t/124kk1zc521).
+
+- Draft `0.1.0` text, requirement IDs and versions are unchanged. No internal alignment, Go behavior change, conformance case, binding or host change is required.
+- The bounds remain the documented local envelope in [Initialization and Configuration Models](configuration-models.md#defaults-validation-and-local-bounds). They are not public maxima, measured device limits or a guarantee to hosts.
+- Existing `internal/config` bound tests remain synthetic regression evidence only.
+- Registering public maxima would need a new specification issue; none is open.
