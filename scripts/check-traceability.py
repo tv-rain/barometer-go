@@ -15,10 +15,16 @@ TOOLING_REVISION = "a944ed6c389fec9f0d089f0044ead6fe845328b1"
 # Independent reviewed inventory; never infer required mappings from the input under test.
 INVENTORY_REVISION = "c06ce6b7b73b8520f35ce10982315fcb4d05615b"
 BASELINES = {
-    "cross-cutting.json": ("47d75925b3829fccfb6954b545c15f695375b76f",
-                           "a9136f34fad00ecc2171cbc29e835c5c50b340df"),
+    "cross-cutting.json": ("a944ed6c389fec9f0d089f0044ead6fe845328b1",
+                           "cc7e0a4c9a72e6f5d309af6faa94eaf457dafd65"),
     "measurements.json": ("59d49364d85e48cc8e69c762d130a7a86dc1fe65",
                           "4aafb0e94d5e13411d1f76521ece989a03aee617"),
+}
+# Superseded manifests: byte-identical to their inventory original and checked at their original baselines.
+HISTORICAL = {
+    "historical/cross-cutting-47d7592.json": ("cross-cutting.json",
+                                              "47d75925b3829fccfb6954b545c15f695375b76f",
+                                              "a9136f34fad00ecc2171cbc29e835c5c50b340df"),
 }
 
 
@@ -27,16 +33,32 @@ def git(root, *args):
                                    env=dict(os.environ, GIT_NO_LAZY_FETCH="1"))
 
 
-def inventory_errors(manifests, expected):
-    """Partial evidence is permitted; removal of an allocated mapping is not."""
+def retired_successors(catalog):
+    """Return retired catalog IDs and their declared successors."""
+    return {item["id"]: item["successors"] for item in catalog["requirements"] if item["status"] == "retired"}
+
+
+def inventory_errors(manifests, expected, retired=None):
+    """Partial evidence is permitted; removal of an allocated mapping is not.
+
+    An allocated ID may leave a manifest only when it is retired at that manifest's
+    public baseline and every declared successor keeps a target/case mapping.
+    """
+    retired = retired or {}
     errors = []
     if set(manifests) != set(expected):
         errors.append("Manifest inventory changed; review CI inventory and baseline policy.")
     for name in sorted(set(manifests) & set(expected)):
         required = {item["id"] for item in expected[name]["requirements"]}
+        mapped = {item["id"] for item in manifests[name]["requirements"]
+                  if item["implementation_locations"] and item["case_ids"]}
         actual = {item["id"] for item in manifests[name]["requirements"]}
         for identity in sorted(required - actual):
-            errors.append(f"{name}: missing required mapping {identity}")
+            successors = retired.get(name, {}).get(identity)
+            if not successors:
+                errors.append(f"{name}: missing required mapping {identity}")
+            for successor in sorted(set(successors or ()) - mapped):
+                errors.append(f"{name}: retired {identity} lacks successor mapping {successor}")
         # A retained ID with an empty target/case list is also a lost mapping.
         for item in manifests[name]["requirements"]:
             if item["id"] in required and (not item["implementation_locations"] or not item["case_ids"]):
@@ -87,14 +109,35 @@ def run(args):
             failed |= not report["valid"]
             if report["valid"]:
                 parsed[name] = checker.strict_json(raw)
+        for name, (original, spec_revision, impl_revision) in HISTORICAL.items():
+            raw = (root / "traceability" / name).read_bytes()
+            # Preservation means no in-place rewrite of the reviewed original.
+            if raw != git(root, "show", f"{INVENTORY_REVISION}:traceability/{original}"):
+                print(f"{name}: differs from {original} at the inventory revision.", flush=True)
+                failed = True
+            report = checker.check(raw, {SPEC_URL: spec, IMPL_URL: root}, spec_revision,
+                                   impl_revision, "historical", tools / "traceability/manifest.schema.json", helper)
+            (reports / name.replace("/", "-")).write_text(json.dumps(report, sort_keys=True, indent=2) + "\n",
+                                                          encoding="utf-8")
+            counts = Counter(f"{f['level']}:{f['code']}" for f in report["findings"])
+            print(f"{name}: valid={report['valid']}; findings={dict(sorted(counts.items()))}", flush=True)
+            for finding in report["findings"]:
+                if finding["level"] == "error":
+                    print(f"{finding['code']} {finding['pointer']} {finding['related_id']}", flush=True)
+            failed |= not report["valid"]
         expected = {name: checker.strict_json(git(root, "show", f"{INVENTORY_REVISION}:traceability/{name}"))
                     for name in BASELINES}
-        actual_names = {p.name for p in (root / "traceability").glob("*.json")}
-        if actual_names != set(BASELINES):
+        retired = {name: retired_successors(checker.strict_json(
+                       git(spec, "show", f"{spec_revision}:requirements/catalog.json")))
+                   for name, (spec_revision, _) in BASELINES.items()}
+        actual_names = {p.relative_to(root / "traceability").as_posix()
+                        for p in (root / "traceability").rglob("*.json")
+                        if "reports" not in p.relative_to(root / "traceability").parts}
+        if actual_names != set(BASELINES) | set(HISTORICAL):
             print("Manifest inventory changed; review CI inventory and baseline policy.", flush=True)
             failed = True
         if len(parsed) == len(BASELINES):
-            errors = inventory_errors(parsed, expected)
+            errors = inventory_errors(parsed, expected, retired)
             for error in errors:
                 print(error, flush=True)
             failed |= bool(errors)

@@ -2,12 +2,12 @@
   "format_version": 1,
   "specification": {
     "repository": "https://github.com/tv-rain/barometer-spec",
-    "revision": "47d75925b3829fccfb6954b545c15f695375b76f",
+    "revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
     "version": "0.1.0"
   },
   "implementation": {
     "repository": "https://github.com/tv-rain/barometer-go",
-    "revision": "a9136f34fad00ecc2171cbc29e835c5c50b340df"
+    "revision": "cc7e0a4c9a72e6f5d309af6faa94eaf457dafd65"
   },
   "coverage": {
     "mode": "partial",
@@ -31,7 +31,7 @@
       "threat-model.md",
       "measurement-limitations.md"
     ],
-    "notes": "DEV-471 maps all 565 allocated shared format/library requirements at the public PR #6 merge. Each has planned ownership and a planned case family; every family must exercise each linked unit independently. The sole omitted catalog ID, REQ-TCP-01-0001, belongs to separately scoped measurement mapping. Coverage remains partial: residual unmarked authoritative prose in shared sources, threat-model and interpretation requirements require continued semantic inventory/allocation review; registered test-specific mappings are separate. No implementation, executed conformance, platform or field support is claimed. GO-SPEC-ISSUE-001 remains open for downstream evidence."
+    "notes": "DEV-568 updates the DEV-471 mapping to public baseline a944ed6. It maps all 573 active allocated shared format/library requirements: REQ-OBS-0042 and REQ-OBS-0043 succeed retired REQ-OBS-0011 and REQ-OBS-0021 in their former case families, and REQ-OBS-0044 to REQ-OBS-0051 map to six new planned vocabulary families. Each has planned ownership and a planned case family; every family must exercise each linked unit independently. Retired IDs are not current obligations; their historical mapping is preserved unchanged in traceability/historical/cross-cutting-47d7592.json. Registered test-specific catalog IDs, including REQ-TCP-01-0001, belong to the separately scoped measurement mapping. Coverage remains partial: residual unmarked authoritative prose in shared sources, threat-model and interpretation requirements require continued semantic inventory/allocation review; registered test-specific mappings are separate. No implementation, executed conformance, platform or field support is claimed. GO-SPEC-ISSUE-001 remains open for downstream evidence."
   },
   "requirements": [
     {
@@ -215,7 +215,7 @@
       "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
     },
     {
-      "id": "REQ-OBS-0011",
+      "id": "REQ-OBS-0042",
       "implementation_status": "planned",
       "implementation_locations": [
         {
@@ -230,7 +230,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. Successor of retired REQ-OBS-0011; the historical mapping is preserved separately."
     },
     {
       "id": "REQ-OBS-0012",
@@ -395,7 +395,7 @@
       "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
     },
     {
-      "id": "REQ-OBS-0021",
+      "id": "REQ-OBS-0043",
       "implementation_status": "planned",
       "implementation_locations": [
         {
@@ -410,7 +410,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. Successor of retired REQ-OBS-0021; the historical mapping is preserved separately."
     },
     {
       "id": "REQ-OBS-0022",
@@ -604,6 +604,156 @@
       ],
       "case_ids": [
         "CC-OBS-VALIDATION-AND-BOUNDS"
+      ],
+      "issue_ids": [],
+      "review_evidence_ids": [],
+      "support": [],
+      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+    },
+    {
+      "id": "REQ-OBS-0044",
+      "implementation_status": "planned",
+      "implementation_locations": [
+        {
+          "path": "internal/result/observations.go",
+          "selector": "file",
+          "state": "planned"
+        }
+      ],
+      "case_ids": [
+        "CC-OBS-VOCAB-CONTRACT-SELECTION"
+      ],
+      "issue_ids": [],
+      "review_evidence_ids": [],
+      "support": [],
+      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+    },
+    {
+      "id": "REQ-OBS-0045",
+      "implementation_status": "planned",
+      "implementation_locations": [
+        {
+          "path": "internal/result/observations.go",
+          "selector": "file",
+          "state": "planned"
+        }
+      ],
+      "case_ids": [
+        "CC-OBS-VOCAB-CONTRACT-SELECTION"
+      ],
+      "issue_ids": [],
+      "review_evidence_ids": [],
+      "support": [],
+      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+    },
+    {
+      "id": "REQ-OBS-0046",
+      "implementation_status": "planned",
+      "implementation_locations": [
+        {
+          "path": "internal/result/observations.go",
+          "selector": "file",
+          "state": "planned"
+        }
+      ],
+      "case_ids": [
+        "CC-OBS-VOCAB-DNS-RESPONSE-CODE"
+      ],
+      "issue_ids": [],
+      "review_evidence_ids": [],
+      "support": [],
+      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+    },
+    {
+      "id": "REQ-OBS-0047",
+      "implementation_status": "planned",
+      "implementation_locations": [
+        {
+          "path": "internal/result/observations.go",
+          "selector": "file",
+          "state": "planned"
+        }
+      ],
+      "case_ids": [
+        "CC-OBS-VOCAB-DNS-RESPONSE-CODE"
+      ],
+      "issue_ids": [],
+      "review_evidence_ids": [],
+      "support": [],
+      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+    },
+    {
+      "id": "REQ-OBS-0048",
+      "implementation_status": "planned",
+      "implementation_locations": [
+        {
+          "path": "internal/result/observations.go",
+          "selector": "file",
+          "state": "planned"
+        }
+      ],
+      "case_ids": [
+        "CC-OBS-VOCAB-TLS-NEGOTIATED-PROPERTIES"
+      ],
+      "issue_ids": [],
+      "review_evidence_ids": [],
+      "support": [],
+      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+    },
+    {
+      "id": "REQ-OBS-0049",
+      "implementation_status": "planned",
+      "implementation_locations": [
+        {
+          "path": "internal/result/observations.go",
+          "selector": "file",
+          "state": "planned"
+        },
+        {
+          "path": "internal/validation/options.go",
+          "selector": "file",
+          "state": "planned"
+        }
+      ],
+      "case_ids": [
+        "CC-OBS-VOCAB-TLS-NEGOTIATED-PROPERTIES",
+        "CC-OBS-VOCAB-TLS-OFFERED-ALPN"
+      ],
+      "issue_ids": [],
+      "review_evidence_ids": [],
+      "support": [],
+      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. Mixed owner: negotiated-output normalization in result observations; offered-identifier admission in task option validation."
+    },
+    {
+      "id": "REQ-OBS-0050",
+      "implementation_status": "planned",
+      "implementation_locations": [
+        {
+          "path": "internal/result/observations.go",
+          "selector": "file",
+          "state": "planned"
+        }
+      ],
+      "case_ids": [
+        "CC-OBS-VOCAB-TLS-PEER-ALERT"
+      ],
+      "issue_ids": [],
+      "review_evidence_ids": [],
+      "support": [],
+      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+    },
+    {
+      "id": "REQ-OBS-0051",
+      "implementation_status": "planned",
+      "implementation_locations": [
+        {
+          "path": "internal/result/observations.go",
+          "selector": "file",
+          "state": "planned"
+        }
+      ],
+      "case_ids": [
+        "CC-OBS-VOCAB-INCOMPLETE-OBSERVATIONS"
       ],
       "issue_ids": [],
       "review_evidence_ids": [],
@@ -10279,7 +10429,7 @@
         "selector": "symbol:TestCcObsDnsQueryDnsResponse",
         "state": "planned"
       },
-      "scope": "Synthetic core contract cases; Exercise sequential arrival indexes, quantized timing, registered rcode and bounded answer/CNAME counts.",
+      "scope": "Synthetic core contract cases; Exercise sequential arrival indexes, quantized timing, closed normalized rcode values and bounded answer/CNAME counts.",
       "status": "planned",
       "evidence_ids": []
     },
@@ -10334,7 +10484,7 @@
         "selector": "symbol:TestCcObsTlsHandshakeDetails",
         "state": "planned"
       },
-      "scope": "Synthetic core contract cases; Exercise conditional negotiated fields and bounded ALPN; exclude every prohibited certificate/handshake/key/session field.",
+      "scope": "Synthetic core contract cases; Exercise conditional negotiated fields with closed version/ALPN/alert vocabularies and bounded ALPN; exclude every prohibited certificate/handshake/key/session field.",
       "status": "planned",
       "evidence_ids": []
     },
@@ -10390,6 +10540,72 @@
         "state": "planned"
       },
       "scope": "Synthetic core contract cases; Test kind/index/matched associations without retaining expected or actual header/body/digest values.",
+      "status": "planned",
+      "evidence_ids": []
+    },
+    {
+      "id": "CC-OBS-VOCAB-CONTRACT-SELECTION",
+      "location": {
+        "path": "internal/result/cross_cutting_conformance_test.go",
+        "selector": "symbol:TestCcObsVocabContractSelection",
+        "state": "planned"
+      },
+      "scope": "Synthetic core contract cases; Test that vocabularies are closed with no runtime registry lookup; decoders reject aliases, wrong case, numeric strings and raw library messages without repairing them into coarse markers; keep missing evidence, malformed data and out-of-subset values distinct.",
+      "status": "planned",
+      "evidence_ids": []
+    },
+    {
+      "id": "CC-OBS-VOCAB-DNS-RESPONSE-CODE",
+      "location": {
+        "path": "internal/result/cross_cutting_conformance_test.go",
+        "selector": "symbol:TestCcObsVocabDnsResponseCode",
+        "state": "planned"
+      },
+      "scope": "Synthetic core contract cases; Map each effective code 0-5 and an out-of-subset code including extended bits; omit responses without a reliable code; exclude raw codes/diagnostics; keep OTHER distinct from success/no-data and map unregistered nonzero codes conservatively to inconclusive.",
+      "status": "planned",
+      "evidence_ids": []
+    },
+    {
+      "id": "CC-OBS-VOCAB-TLS-NEGOTIATED-PROPERTIES",
+      "location": {
+        "path": "internal/result/cross_cutting_conformance_test.go",
+        "selector": "symbol:TestCcObsVocabTlsNegotiatedProperties",
+        "state": "planned"
+      },
+      "scope": "Synthetic core contract cases; Map negotiated 0x0303/0x0304/other versions and http/1.1, h2, dot and other negotiated ALPN; absent fields when nothing reliable was negotiated; ignore record-layer/offered versions; never copy unregistered identifiers or let coarse markers override failures.",
+      "status": "planned",
+      "evidence_ids": []
+    },
+    {
+      "id": "CC-OBS-VOCAB-TLS-OFFERED-ALPN",
+      "location": {
+        "path": "internal/validation/cross_cutting_conformance_test.go",
+        "selector": "symbol:TestCcObsVocabTlsOfferedAlpn",
+        "state": "planned"
+      },
+      "scope": "Synthetic core contract cases; Accept only offered http/1.1, h2 and dot; reject unknown, h2c, case variants and other registry entries alongside existing count, length and duplicate bounds.",
+      "status": "planned",
+      "evidence_ids": []
+    },
+    {
+      "id": "CC-OBS-VOCAB-TLS-PEER-ALERT",
+      "location": {
+        "path": "internal/result/cross_cutting_conformance_test.go",
+        "selector": "symbol:TestCcObsVocabTlsPeerAlert",
+        "state": "planned"
+      },
+      "scope": "Synthetic core contract cases; Map every listed received peer description code and an unlisted code; omit alert when the description is unavailable; exclude local cancellation, deadline, validation failures, sent alerts and post-handshake closure; serialize no raw alert data.",
+      "status": "planned",
+      "evidence_ids": []
+    },
+    {
+      "id": "CC-OBS-VOCAB-INCOMPLETE-OBSERVATIONS",
+      "location": {
+        "path": "internal/result/cross_cutting_conformance_test.go",
+        "selector": "symbol:TestCcObsVocabIncompleteObservations",
+        "state": "planned"
+      },
+      "scope": "Synthetic core contract cases; For each observation type, omit failure on incomplete status and reject null, empty or registered failure values; keep termination in execution.reason.",
       "status": "planned",
       "evidence_ids": []
     },

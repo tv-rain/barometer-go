@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- Rebaselined the cross-cutting traceability mapping to public specification `a944ed6`: successors of retired REQ-OBS-0011/0021 and new observation-vocabulary requirements are mapped to planned case families, the prior mapping is preserved as a byte-identical historical manifest, and the CI inventory gate permits removal only of catalog-retired IDs whose successors are mapped. No implementation, conformance, historical report or support status changes.
+
 ### Added
 
 - Foundation validation-boundary documentation links delivered synthetic tooling to owned downstream runtime harness tasks; current specification-adoption summaries distinguish merged Foundation code from pending runtime/binding evidence. No runtime behavior, historical traceability report or support status changes.
