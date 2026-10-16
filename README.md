@@ -32,6 +32,8 @@ Reusable [negative and boundary-test helpers](docs/testkit.md) provide bounded s
 
 Executable, non-normative [sanitized API examples](internal/examples/README.md) cover existing Foundation models and intended lifecycle failure handling. Client lifecycle and clearing examples use an explicit test-only script; runtime implementation remains pending.
 
+The [Foundation validation boundary](docs/foundation-validation.md) records which test infrastructure exists and which runtime harness extensions remain with later implementation tasks. The Foundation package is being prepared for separate assessment; that process does not promote runtime, measurement or platform support.
+
 ## Versions and Releases
 
 Repository versioning, compatibility, changelog, tag, artifact-naming, and experimental-release rules are defined in [Versioning and Releases](docs/versioning-and-releases.md). Notable changes are recorded in the [Changelog](CHANGELOG.md).

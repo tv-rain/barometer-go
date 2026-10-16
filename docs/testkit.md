@@ -43,6 +43,8 @@ The runner copies inputs and tests both rejection and the expected class. It can
 
 ## Bounds and Deterministic Controls
 
+The [Foundation validation boundary](foundation-validation.md) records delivered helper capabilities and owned downstream harness extensions. Foundation completion does not establish runtime deadline, effective lower-layer accounting, retention or clearing coverage.
+
 All construction checks happen before generated allocations. Individual fixtures and aggregate scripted response bodies are capped at 1 MiB; encoded member names are limited to 4,096 source bytes, nesting generation to 1,024 levels, and transports to 64 steps. These are test tooling caps, not runtime specification limits. Larger stress tests require separately reviewed tooling. `Bytes` may deliberately produce invalid data; `PaddedJSON` adds trailing JSON whitespace to an existing value for an exact encoded-byte length without changing its content. Byte fixtures at maximum minus one, maximum, and maximum plus one have independent storage.
 
 `Clock.Now` is safe for concurrent use. `Advance` refuses negative durations. Inject `Now` into the consumer and use `TimeBoundaries(at, quantum)` for before/at/after checks without sleeps. The clock has no timers and does not advance `context.WithDeadline`, host clocks, or operating-system timers; timer-driven execution harnesses remain separate work.

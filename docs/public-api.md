@@ -122,7 +122,7 @@ Run `python3 scripts/check-public-api.py android` and `python3 scripts/check-pub
 
 Before runtime implementation, separately validate trust adapter byte/generation binding; forged/missing source rejection; atomic replay and admission; concurrent due-run reservation; bounded cancellation/proxy transitions; polling/retransmission/acknowledgement; suspension/expiry/backpressure; failed/interrupted clearing; zero-value clients; and instance/handle invalidation. These are required future cases, not executed conformance evidence in this task. Complete native storage, lifecycle, and host tests before any platform-support claim.
 
-The unresolved [duplicate-member issue](specification-issues.md#go-spec-issue-001-duplicate-json-member-names-outside-labels) remains open; this design does not implement parsing or select a resolution. Public clarification precedes affected decoding implementation. This task changes only Go design/tooling documentation and fixture validation; no cross-repository runtime or release ordering is introduced. Any later deviation from a public contract follows the existing specification-issue workflow before implementation.
+The [duplicate-member adoption record](specification-issues.md#go-spec-issue-001-duplicate-json-member-names-outside-labels) now identifies the merged public clarification, shared decoder and Foundation model adoption. It remains open for applicable runtime/admission/producer/binding evidence; this API design does not implement those behaviors. The original design task changed only Go design/tooling documentation and fixture validation. Any later deviation from a public contract follows the existing specification-issue workflow before implementation.
 
 ## DEV-476 Validation Record
 
