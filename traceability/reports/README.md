@@ -1,7 +1,8 @@
 # Traceability Reports
 
 - [`measurements.json`](measurements.json) — DEV-473 valid partial metadata: 393 missing implementation claims, 393 missing conformance records, 565 shared catalog IDs outside this manifest's scope, and 19 unallocated-inventory findings. No runtime conformance or support claim.
-- [`cross-cutting.json`](cross-cutting.json) — valid partial metadata, not runtime conformance. It reports 565 missing implementation claims, 565 missing conformance records, one out-of-scope catalog mapping and 19 unallocated-inventory findings (18 source paths plus the general inventory-review finding).
+- [`cross-cutting-a944ed6.json`](cross-cutting-a944ed6.json) — DEV-568 valid partial metadata for the current cross-cutting manifest at public baseline `a944ed6`: 573 missing implementation claims, 573 missing conformance records, 393 registered-test IDs outside this manifest's scope and 19 unallocated-inventory findings. No runtime conformance or support claim.
+- [`cross-cutting.json`](cross-cutting.json) — historical DEV-471 report for the [preserved PR #6 mapping](../historical/cross-cutting-47d7592.json); valid partial metadata, not runtime conformance. It reports 565 missing implementation claims, 565 missing conformance records, one out-of-scope catalog mapping and 19 unallocated-inventory findings (18 source paths plus the general inventory-review finding).
 
 ## Provenance and Reproduction
 
@@ -44,3 +45,24 @@ python3 -B ../barometer-spec/scripts/check_traceability.py traceability/measurem
 The report is valid metadata with no errors or skipped checks. It retains 393 `MISSING_IMPLEMENTATION`, 393 `MISSING_CONFORMANCE`, 565 `MISSING_REQUIREMENT`, and 19 `UNALLOCATED_REQUIREMENTS` gaps. The 565 omitted IDs are the shared requirements already mapped separately by DEV-471 at its original baselines; the two manifests must not be summed as a single-baseline conformance report. All shared public source files and existing catalog records are unchanged through PR #7. The 19 inventory gaps cover 18 declared source paths plus unverified inventory completeness. Measurement annotation coverage does not close residual shared/threat-model/limitations allocation or semantic review.
 
 The [measurement plan](../../docs/measurement-requirements.md) records every measurement unit's disposition, owner, planned case family and reuse boundary. A family must exercise every linked unit and complete schema/bound/outcome vector; one example is insufficient. Native, host, analyst and deployment review remain separately required where applicable. Support/evidence arrays are empty; the open downstream JSON issue is retained for test-specific schema, option and version work. The earlier cross-cutting manifest/report is preserved unchanged. A deterministic report and successful repository checks do not execute these planned cases, prove semantic completeness, close the issue, promote Draft status or establish platform/field support.
+
+## Current Cross-cutting Report (DEV-568)
+
+Generated October 16, 2026 with Python 3.14, the public tooling's pinned dependencies and Go 1.26.0. Checker and schema are selected from public merge `a944ed6c389fec9f0d089f0044ead6fe845328b1`, which is also the selected source baseline: the verified [PR #8 merge](https://github.com/tv-rain/barometer-spec/pull/8), whose tree matches approved head `5869bc314c877e2ccd3426b82aadcd9c92414f02`. The schema SHA-256 is `2b8c3ce0aeecd55f602534b8e1318addd2ffb83bbc5e013cb3720e7c40ac9c93`. The Go baseline is `cc7e0a4c9a72e6f5d309af6faa94eaf457dafd65`, preceding this planning-only metadata. All case locations are planned, so no case is executed.
+
+From the Go repository with the public checker's pinned dependencies available, supply these exact baselines and two checkouts:
+
+```sh
+python3 -B ../barometer-spec/scripts/check_traceability.py traceability/cross-cutting.json \
+  --repository https://github.com/tv-rain/barometer-spec=../barometer-spec \
+  --repository https://github.com/tv-rain/barometer-go=. \
+  --expected-specification a944ed6c389fec9f0d089f0044ead6fe845328b1 \
+  --expected-implementation cc7e0a4c9a72e6f5d309af6faa94eaf457dafd65 \
+  --mode current \
+  --schema ../barometer-spec/traceability/manifest.schema.json \
+  --format json --output traceability/reports/cross-cutting-a944ed6.json
+```
+
+The report is valid metadata with no errors or skipped checks. It retains 573 `MISSING_IMPLEMENTATION`, 573 `MISSING_CONFORMANCE`, 393 `MISSING_REQUIREMENT` and 19 `UNALLOCATED_REQUIREMENTS` gaps. The 393 omitted IDs are the registered test-specific units mapped separately by DEV-473 at an earlier baseline. Together the two manifests account for all 966 active catalog IDs at `a944ed6`, but they must not be summed as a single-baseline conformance report. Retired REQ-OBS-0011 and REQ-OBS-0021 are absent; their successors REQ-OBS-0042 and REQ-OBS-0043 are mapped, and the prior mapping is preserved in the [historical manifest](../historical/cross-cutting-47d7592.json). The historical cross-cutting report above remains unchanged and canonical only for its original baselines.
+
+A deterministic report does not execute planned cases, prove semantic completeness, close GO-SPEC-ISSUE-001 or GO-SPEC-ISSUE-002, promote Draft status or establish platform/field support.
