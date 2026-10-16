@@ -10,9 +10,6 @@ import (
 	"github.com/tv-rain/barometer-go/internal/result"
 )
 
-// requirement-ref: REQ-JSON-0010
-// requirement-ref: REQ-JSON-0011
-// requirement-ref: REQ-BUNDLE-0003
 func TestBundleValidationPrecedence(t *testing.T) {
 	b := builder(t, true)
 	invalidLink := &model.RotatingLinkage{Scope: "unapproved", Epoch: -1}

@@ -24,6 +24,8 @@ For checked documentation citations, use a standalone HTML comment outside fence
 
 Also provide a navigable public link and state the applicable baseline for the traceability record. A completed implementation or conformance claim must record the public repository, specification version, immutable public commit or release tag, ID, and implementation/test evidence location. Do not infer a passing test or an implemented package from a reference comment. Historical citations use `requirement-history`, explain the historical context, and identify the immutable revision of the original obligation.
 
+Keep a Go `requirement-ref` only where the code implements, or the test asserts, part of that requirement. The [traceability CI job](traceability-ci.md#checks-and-failure-rules) fails when a Go reference names an unknown or retired ID, an ID absent from the current manifests, or a file the manifests do not link to that ID. Add the declaration as an implementation location, or the test as a mapped case, in the same change. A link does not make the requirement implemented or the case passed.
+
 ## Representative Planned Use
 
 These references target Draft `0.1.0` companion specification changes for DEV-466. They demonstrate lookup and intended ownership only; no implementation, runtime tests, or immutable conformance baseline are established here. The linked `main` URLs become available after the public specification branch is merged. During review, validate against the explicitly supplied companion checkout.

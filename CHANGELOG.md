@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Linked existing Foundation code and unit tests as partial traceability evidence at Go baseline `c5f4e92`: 129 IDs cited by reviewed `requirement-ref` comments are `partial` with existing locations and passing `UT.*` unit-test cases backed by a committed evidence report, 12 comments that did not demonstrate their requirement were removed, prior manifests are preserved as historical, and CI now fails on unknown, retired, unmapped or unlinked Go references. Planned family cases stay unexecuted; no implemented requirement, runtime, platform or field support is claimed.
+
 - Rebaselined the cross-cutting traceability mapping to public specification `a944ed6`: successors of retired REQ-OBS-0011/0021 and new observation-vocabulary requirements are mapped to planned case families, the prior mapping is preserved as a byte-identical historical manifest, and the CI inventory gate permits removal only of catalog-retired IDs whose successors are mapped. No implementation, conformance, historical report or support status changes.
 
 ### Added

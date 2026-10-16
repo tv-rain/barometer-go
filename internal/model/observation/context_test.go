@@ -79,7 +79,6 @@ func directPath(t *testing.T, g uint64) Path {
 	return p
 }
 
-// requirement-ref: REQ-CONTEXT-FORMAT-0004
 // requirement-ref: REQ-CONTEXT-FORMAT-0007
 // requirement-ref: REQ-CONTEXT-FORMAT-0008
 // requirement-ref: REQ-CONTEXT-FORMAT-0009

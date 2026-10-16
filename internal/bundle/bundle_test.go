@@ -165,8 +165,6 @@ func TestContractMembershipAndIdentity(t *testing.T) {
 // requirement-ref: REQ-BUNDLE-0023
 // requirement-ref: REQ-BUNDLE-0025
 // requirement-ref: REQ-BUNDLE-0026
-// requirement-ref: REQ-BUNDLE-0029
-// requirement-ref: REQ-LINKAGE-0016
 func TestTrustedOptionalLinkage(t *testing.T) {
 	r := []result.Value{notRun(t)}
 	l := model.RotatingLinkage{Scope: "org.example.production", Epoch: 0, Token: [32]byte{1, 2, 3}}

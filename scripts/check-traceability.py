@@ -5,6 +5,7 @@ from collections import Counter
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 import tempfile
@@ -16,16 +17,27 @@ TOOLING_REVISION = "a944ed6c389fec9f0d089f0044ead6fe845328b1"
 INVENTORY_REVISION = "c06ce6b7b73b8520f35ce10982315fcb4d05615b"
 BASELINES = {
     "cross-cutting.json": ("a944ed6c389fec9f0d089f0044ead6fe845328b1",
-                           "cc7e0a4c9a72e6f5d309af6faa94eaf457dafd65"),
+                           "c5f4e92e06936cb677c7a03e9769ff75b1f51874"),
     "measurements.json": ("59d49364d85e48cc8e69c762d130a7a86dc1fe65",
-                          "4aafb0e94d5e13411d1f76521ece989a03aee617"),
+                          "c5f4e92e06936cb677c7a03e9769ff75b1f51874"),
 }
-# Superseded manifests: byte-identical to their inventory original and checked at their original baselines.
+# Revision whose manifests DEV-569 preserved before linking unit-test evidence.
+DEV568_REVISION = "c5f4e92e06936cb677c7a03e9769ff75b1f51874"
+# Superseded manifests: byte-identical to the original at their recorded source revision and
+# checked at their original baselines.
 HISTORICAL = {
-    "historical/cross-cutting-47d7592.json": ("cross-cutting.json",
+    "historical/cross-cutting-47d7592.json": ("cross-cutting.json", INVENTORY_REVISION,
                                               "47d75925b3829fccfb6954b545c15f695375b76f",
                                               "a9136f34fad00ecc2171cbc29e835c5c50b340df"),
+    "historical/cross-cutting-a944ed6-cc7e0a4.json": ("cross-cutting.json", DEV568_REVISION,
+                                                      "a944ed6c389fec9f0d089f0044ead6fe845328b1",
+                                                      "cc7e0a4c9a72e6f5d309af6faa94eaf457dafd65"),
+    "historical/measurements-59d4936-4aafb0e.json": ("measurements.json", DEV568_REVISION,
+                                                     "59d49364d85e48cc8e69c762d130a7a86dc1fe65",
+                                                     "4aafb0e94d5e13411d1f76521ece989a03aee617"),
 }
+# Same standalone comment form as the public reference checker; history citations are excluded.
+REFERENCE = re.compile(r"// requirement-ref: (\S+)")
 
 
 def git(root, *args):
@@ -63,6 +75,49 @@ def inventory_errors(manifests, expected, retired=None):
         for item in manifests[name]["requirements"]:
             if item["id"] in required and (not item["implementation_locations"] or not item["case_ids"]):
                 errors.append(f"{name}: missing target/case mapping {item['id']}")
+    return errors
+
+
+def go_references(root):
+    """Return (path, line, ID) for every Go requirement-ref comment in the working tree."""
+    listed = git(root, "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", "*.go")
+    references = []
+    for path in sorted({p for p in listed.decode().split("\0") if p}):
+        if not (root / path).is_file():
+            continue
+        for number, line in enumerate((root / path).read_text(encoding="utf-8").splitlines(), 1):
+            references.extend((path, number, match.group(1)) for match in REFERENCE.finditer(line))
+    return references
+
+
+def reference_errors(references, manifests, catalog):
+    """Every Go requirement-ref must name an active ID linked from a current manifest to its file.
+
+    Source files must be an implementation location of that ID; test files must be the location
+    of a case mapped to that ID. A comment alone never establishes implementation or evidence.
+    """
+    status = {item["id"]: item["status"] for item in catalog["requirements"]}
+    records = {}
+    for name, manifest in sorted(manifests.items()):
+        cases = {case["id"]: case["location"]["path"] for case in manifest["cases"]}
+        for item in manifest["requirements"]:
+            records.setdefault(item["id"], []).append(
+                ({loc["path"] for loc in item["implementation_locations"]},
+                 {cases[c] for c in item["case_ids"] if c in cases}))
+    errors = []
+    for path, number, identity in references:
+        where = f"{path}:{number}: requirement-ref {identity}"
+        if identity not in status:
+            errors.append(f"{where} is unknown in the pinned public catalog")
+        elif status[identity] != "active":
+            errors.append(f"{where} is {status[identity]} in the pinned public catalog")
+        elif identity not in records:
+            errors.append(f"{where} is absent from the current manifests")
+        else:
+            kind = 1 if path.endswith("_test.go") else 0
+            if not any(path in linked[kind] for linked in records[identity]):
+                target = "a case location" if kind else "an implementation location"
+                errors.append(f"{where} is not linked from the manifests as {target}")
     return errors
 
 
@@ -109,11 +164,11 @@ def run(args):
             failed |= not report["valid"]
             if report["valid"]:
                 parsed[name] = checker.strict_json(raw)
-        for name, (original, spec_revision, impl_revision) in HISTORICAL.items():
+        for name, (original, source, spec_revision, impl_revision) in HISTORICAL.items():
             raw = (root / "traceability" / name).read_bytes()
             # Preservation means no in-place rewrite of the reviewed original.
-            if raw != git(root, "show", f"{INVENTORY_REVISION}:traceability/{original}"):
-                print(f"{name}: differs from {original} at the inventory revision.", flush=True)
+            if raw != git(root, "show", f"{source}:traceability/{original}"):
+                print(f"{name}: differs from {original} at {source}.", flush=True)
                 failed = True
             report = checker.check(raw, {SPEC_URL: spec, IMPL_URL: root}, spec_revision,
                                    impl_revision, "historical", tools / "traceability/manifest.schema.json", helper)
@@ -140,6 +195,13 @@ def run(args):
             errors = inventory_errors(parsed, expected, retired)
             for error in errors:
                 print(error, flush=True)
+            failed |= bool(errors)
+            # Reference comments are checked against the working-tree current manifests.
+            errors = reference_errors(go_references(root), parsed,
+                                      checker.strict_json((tools / "requirements/catalog.json").read_bytes()))
+            for error in errors:
+                print(error, flush=True)
+            print(f"Go requirement-ref consistency: {len(errors)} error(s).", flush=True)
             failed |= bool(errors)
         (reports / "provenance.json").write_text(json.dumps({
             "tooling_revision": TOOLING_REVISION,

@@ -99,8 +99,6 @@ type RejectionCase struct {
 // a starter corpus, not exhaustive conformance evidence. Object-type, version,
 // unknown-field, duplicate-name, and range cases belong to the selected schema.
 func InvalidJSON() []RejectionCase {
-	// requirement-ref: REQ-JSON-0001
-	// requirement-ref: REQ-JSON-0002
 	return []RejectionCase{
 		{"empty", "REQ-JSON-0001", "syntax", nil},
 		{"trailing-value", "REQ-JSON-0001", "syntax", []byte("{} {}")},

@@ -140,7 +140,6 @@ func DecodeProtocol(contract string, input []byte, limits ProtocolLimits) (Obser
 	return o, nil
 }
 
-// requirement-ref: REQ-OBS-0036
 // requirement-ref: REQ-OBS-0037
 // requirement-ref: REQ-OBS-0038
 func validateHTTP(o Observation, v *jsondecode.Value, d HTTPDetails, l ProtocolLimits) error {
