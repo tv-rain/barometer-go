@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Open specification findings GO-SPEC-ISSUE-004 to GO-SPEC-ISSUE-007 (DEV-573): the `not_run`/`incomplete` boundary, the byte-limit accounting layer, NET-03 over-bound classification, and undefined `risk_factors`/`timezone` value domains, including that current task validation accepts an empty `risk_factors` array. Records only; no runtime, traceability or support change.
+
 - Foundation validation-boundary documentation links delivered synthetic tooling to owned downstream runtime harness tasks; current specification-adoption summaries distinguish merged Foundation code from pending runtime/binding evidence. No runtime behavior, historical traceability report or support status changes.
 
 - Executable sanitized Foundation examples for configuration preparation, strict task decoding, cancellation-state handling and result serialization, plus scripted test-only intended client lifecycle and clearing calls. Existing CI validation runs their output assertions; runtime lifecycle and clearing remain pending.
