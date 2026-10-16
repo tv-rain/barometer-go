@@ -215,6 +215,8 @@ The [Measurement Result models](result-models.md) implement detached typed value
 
 The package must operate without a mandatory collector. It must not accept account identity, source IP metadata, task selection state, or arbitrary stable identifiers as linkage inputs.
 
+The [Result Bundle and linkage models](bundle-models.md) implement detached projections in `model/result` and the bounded producer in `internal/bundle`. The producer composes validated immutable `internal/result.Value` members and copies policy from prepared `internal/config.Initialization`; it depends on those model boundaries and shared decoder error classes, never execution, transport or concrete platform implementations. Only locally enabled, capability-gated rotating linkage projections may serialize. Runtime derivation, epoch/retention/clearing enforcement, pending-state restoration and delivery transitions remain pending.
+
 ### Persistence Ports
 
 `internal/persistence` owns narrow capabilities and transactional semantics for Barometer-owned state, including:

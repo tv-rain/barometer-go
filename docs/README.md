@@ -2,6 +2,8 @@
 
 ## Directory Index
 
+- [`bundle-models.md`](bundle-models.md) — bounded Result Bundle production, immutable retry identity/bytes, trusted optional linkage projections and remaining runtime obligations.
+
 - [`result-models.md`](result-models.md) — bounded Measurement Result models and serialization, exact output selection, context binding, partial results and synthetic evidence limits.
 
 - [`observation-models.md`](observation-models.md) — bounded DNS/TCP/TLS/HTTP observations, immutable Network Context path binding, accepted vocabulary adoption and synthetic evidence limits.
