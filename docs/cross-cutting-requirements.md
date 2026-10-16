@@ -8,6 +8,8 @@ The immutable public baseline is `a944ed6c389fec9f0d089f0044ead6fe845328b1` (Dra
 
 DEV-569 moves the Go baseline to `c5f4e92e06936cb677c7a03e9769ff75b1f51874` and links existing Foundation code and tests as partial evidence. The 115 shared requirements cited by reviewed `requirement-ref` comments are `partial`: each maps the existing declarations that implement part of the obligation and one or more `UT.*` cases. A `UT.*` case selects an existing top-level Go unit test, passed at that baseline, with a conformance record in the [unit-test evidence report](../traceability/evidence/go-unit-c5f4e92.md). That report states the narrow aspect each test exercises; the requirement notes state what remains. The planned families below stay planned and unexecuted and are still mapped, so every requirement retains its missing-conformance gap. The other 458 requirements stay `planned`. A planned location becomes existing only where review found that its file implements part of that obligation; otherwise it stays planned even where the file exists. The [DEV-568 mapping](../traceability/historical/cross-cutting-a944ed6-cc7e0a4.json) at Go baseline `cc7e0a4c9a72e6f5d309af6faa94eaf457dafd65` is preserved byte-for-byte with its unchanged [report](../traceability/reports/cross-cutting-a944ed6.json); the current [report](../traceability/reports/cross-cutting-a944ed6-c5f4e92.json) is a new baseline-dated record.
 
+DEV-572 expands the thin and mixed plans at the same baselines. One-line plans now name inputs, below/at/above-boundary values from the public text, the expected outcome and the covered requirement IDs; `CC-LIMIT-PURPOSE` defines the counted layer as encoded application data per REQ-LIMIT-0003 and the Attempt Limits table and plans a scripted transport that reports application bytes and lower-layer overhead separately. The judgement-based parts of mixed plans move to typed [review cases](traceability-manifest.md#typed-review-cases) `RV-CC-*` linked from the same requirements; `CC-TASK-DESIGN-PRINCIPLES-STABLE-STRUCTURE` and `CC-LINKAGE-INGESTION-SEPARATION`, which had no automated part, become `RV-CC-TASK-DESIGN-PRINCIPLES-STABLE-STRUCTURE` and `RV-CC-LINKAGE-INGESTION-SEPARATION`. This leaves 189 automated families and 25 review cases; review cases are not automated coverage, and no requirement status or allocation changes. Where the public text is silent (for example which reason an undetectable network or a blocked exclusive attempt records), plans defer to the public rules rather than select behavior, and these points need specification-issue triage before implementation. The [DEV-569 manifest](../traceability/historical/cross-cutting-a944ed6-c5f4e92.json) is preserved byte-for-byte, and the current [report](../traceability/reports/cross-cutting-a944ed6-c5f4e92-dev572.json) keeps its gap counts.
+
 The earlier DEV-471 mapping at public baseline `47d75925b3829fccfb6954b545c15f695375b76f` and Go baseline `a9136f34fad00ecc2171cbc29e835c5c50b340df` is preserved byte-for-byte as [historical manifest](../traceability/historical/cross-cutting-47d7592.json) with its unchanged [report](../traceability/reports/cross-cutting.json). It mapped 565 requirements to 185 families. It remains valid metadata only for those original baselines and is not a current claim.
 
 ## Boundaries and Maintenance
@@ -54,15 +56,17 @@ The 13 previously allocated shared IDs brought the PR #6 plan to 565 requirement
 
 Public source: `data-formats/measurement-observations.md`, section **Overview**. Intended target: `internal/result/observations.go`. Planned case location: `internal/result/cross_cutting_conformance_test.go`, `symbol:TestCcObsOverview`.
 
-Case plan: Review output/schema APIs for ordered bounded normalized stage observations without raw traffic or local censorship classifications.
+Case plan: Exercise TCP-01, TLS-01 and HTTP-01 style attempts against scripted transports that perform a known sequence of DNS, TCP, TLS and HTTP operations on a deterministic clock, each stage carrying synthetic raw-traffic canaries (DNS message bytes, TCP payload, TLS ClientHello/ServerHello bytes, HTTP header values and body bytes). Assert the observations array follows the injected execution order, omits stages that were never attempted, and stays within the registered observation and encoded-size limits; assert each serialized observation carries only the registered common fields (type, status, duration_ms, failure, details) and the registered details schema for its type, and that no canary byte sequence appears anywhere in the serialized result. Reject decoding of a synthetic observation that adds an unregistered field carrying raw bytes, a debug-log string or a censorship classification label. Assert the measurement outcome comes only from the registered test outcome rules, with no observation-level verdict. Requirements: REQ-OBS-0001, REQ-OBS-0002.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
+
+Review case `RV-CC-OBS-OVERVIEW` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-OBS-OVERVIEW`): Human review case; not automated coverage. Reviewer role: Measurement interpretation reviewer (analyst role independent of the implementer). Reviewed artifact: Go observation types, exported documentation and host/analyst guidance for measurement observations at the reviewed implementation revision. Checklist: (1) Does the documentation describe observations as normalized, bounded stage records of one Measurement Result rather than packet traces or debug logs? (2) Does no exported API, type name or doc comment present an observation as an independent censorship classification? (3) Does the guidance state that the registered test, not the observation, defines how observations determine the test-specific outcome? (4) Are any documented diagnostic or logging paths kept separate from observation output and free of raw traffic? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
 <!-- requirement-ref: REQ-OBS-0001 -->
 <!-- requirement-ref: REQ-OBS-0002 -->
 
-- [REQ-OBS-0001](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/measurement-observations.md#REQ-OBS-0001) → `CC-OBS-OVERVIEW`.
-- [REQ-OBS-0002](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/measurement-observations.md#REQ-OBS-0002) → `CC-OBS-OVERVIEW`.
+- [REQ-OBS-0001](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/measurement-observations.md#REQ-OBS-0001) → `CC-OBS-OVERVIEW`, `RV-CC-OBS-OVERVIEW`.
+- [REQ-OBS-0002](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/measurement-observations.md#REQ-OBS-0002) → `CC-OBS-OVERVIEW`, `RV-CC-OBS-OVERVIEW`.
 
 ### CC-OBS-COMMON-STRUCTURE
 
@@ -157,7 +161,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/measurement-observations.md`, section **TCP Connect / Details**. Intended target: `internal/result/observations.go`. Planned case location: `internal/result/cross_cutting_conformance_test.go`, `symbol:TestCcObsTcpConnectDetails`.
 
-Case plan: Validate address family and exclude target address/port canaries.
+Case plan: Exercise tcp_connect observations from a scripted transport for synthetic IPv4 (192.0.2.10) and IPv6 (2001:db8::10) destinations on synthetic port 8443, for succeeded and failed (connection_refused, timeout) operations. Assert details contains exactly address_family with ipv4 or ipv6 matching the attempted destination family, and that neither the destination address in any textual or byte form nor the port number appears anywhere in the serialized observation or result. Iterate decoder inputs and reject: details without address_family, address_family values unknown, IPv4, ipv4-mapped and empty string, and details carrying an extra address or port field. Accept the two valid values. Requirements: REQ-OBS-0017, REQ-OBS-0018.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -171,7 +175,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/measurement-observations.md`, section **TLS Handshake / Failures**. Intended target: `internal/result/observations.go`. Planned case location: `internal/result/cross_cutting_conformance_test.go`, `symbol:TestCcObsTlsHandshakeFailures`.
 
-Case plan: Test all registered TLS failures, preceding TCP failure and no TLS observation before TLS activity.
+Case plan: Drive a scripted transport through synthetic TCP and TLS stages and assert the serialized observation list. Iterate every registered tls_handshake failure value (timeout, connection_reset, alert, protocol_error, certificate_untrusted, certificate_name_mismatch, certificate_time_invalid, alpn_no_overlap, inconclusive): each yields a tcp_connect observation with status succeeded followed by one tls_handshake observation with status failed and that exact failure value. Reject an unregistered failure string (for example tls_reset) in a tls_handshake observation at validation. Inject a TCP-stage failure (timeout, then connection_refused) and assert it is emitted only as a preceding tcp_connect observation with status failed and the TCP failure value, with no tls_handshake observation present because TLS activity never began. Inject a successful TCP connect followed by cancellation before any TLS bytes are written and assert no tls_handshake observation is emitted. Requirements: REQ-OBS-0019, REQ-OBS-0020.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -214,7 +218,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/measurement-observations.md`, section **HTTP Exchange / Details**. Intended target: `internal/result/observations.go`. Planned case location: `internal/result/cross_cutting_conformance_test.go`, `symbol:TestCcObsHttpExchangeDetails`.
 
-Case plan: Validate conditional status/redirect/body/checks/content-encoding fields and count limits.
+Case plan: Construct synthetic http_exchange observations and validate their details object against the public table. Required fields: omit address_family or protocol and assert rejection; iterate address_family over ipv4, ipv6 and unknown and protocol over http/1.1, h2 and unknown and assert acceptance, and reject out-of-vocabulary values (for example h3). Conditional fields: status_code accepted only as an integer valid HTTP status code and absent when no valid status was received; redirect present only when at least one redirect was observed and only as a complete minimized redirect object; body present only when body processing began and only as a complete body summary; content_encoding accepted only as identity, unsupported or unknown. Checks count: accept a checks array of 17 entries (one status, 8 header, 8 body) and reject 18 entries, a second status check, a ninth header check and a ninth body check; assert checks is absent when no checks were configured. Requirements: REQ-OBS-0025.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -240,7 +244,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/measurement-observations.md`, section **HTTP Exchange / Body**. Intended target: `internal/result/observations.go`. Planned case location: `internal/result/cross_cutting_conformance_test.go`, `symbol:TestCcObsHttpExchangeBody`.
 
-Case plan: Test processed-byte/truncation boundaries and omit raw body/digests.
+Case plan: Exercise HTTP-01 against a scripted HTTP server on a deterministic clock with identity-encoded synthetic bodies carrying canary bytes, using the registered terminal-body bound of 4,096 bytes (default) and a configured 65,536 bytes (maximum). Iterate body lengths 0, 4,095, 4,096 and 4,097 under the default bound and 65,535, 65,536 and 65,537 under the maximum. Assert bytes_processed is non-negative and never exceeds the configured bound, equals the full body length when the body completed within the bound with truncated false, and equals the bound with truncated true when the bound stopped processing before the body completed (the exactly-at-bound case follows the public table). Configure a synthetic expected body digest and assert only the check result (kind body, index, matched) is reported, while the body bytes, the computed digest and the expected digest are absent from the serialized result. Reject decoding of a body object with bytes_processed above the configured bound, negative bytes_processed, missing truncated, or an extra body-content or digest field. Requirements: REQ-OBS-0028, REQ-OBS-0029.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -374,13 +378,15 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/measurement-observations.md`, section **Privacy and Interpretation**. Intended target: `internal/result/observations.go`. Planned case location: `internal/result/cross_cutting_conformance_test.go`, `symbol:TestCcObsPrivacyAndInterpretation`.
 
-Case plan: Review downstream examples for source-layer interpretation without attributing intent or definitive interference.
+Case plan: Exercise a scripted TLS-01 style attempt where the TCP connect succeeds and the TLS handshake then fails with injected failures (timeout, alert, certificate_untrusted). Assert the serialized observations are exactly a succeeded tcp_connect followed by one failed tls_handshake carrying the injected registered failure, that the result records the terminal outcome registered by the test rather than any additional field naming a cause, actor or intent, and that the output is byte-identical whether the scripted failure is labelled as a synthetic outage or a synthetic interference scenario. Requirements: REQ-OBS-0033.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
+Review case `RV-CC-OBS-PRIVACY-AND-INTERPRETATION` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-OBS-PRIVACY-AND-INTERPRETATION`): Human review case; not automated coverage. Reviewer role: Measurement interpretation reviewer (analyst role independent of the implementer). Reviewed artifact: Go result documentation, examples and downstream analyst guidance describing stage-ordered observations at the reviewed implementation revision. Checklist: (1) Does each example of a failed later stage after a successful earlier stage claim only that the earlier stage completed and the later stage did not complete normally under that test configuration? (2) Does no example or guidance attribute intent, an actor or definitive interference to an observation order or stage failure? (3) Does the guidance list non-censorship explanations (for example outages, congestion, routing, server or CDN failures, proxy behavior) for stage failures? (4) Does the guidance recommend repeated measurements or independent observations before stronger conclusions? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
+
 <!-- requirement-ref: REQ-OBS-0033 -->
 
-- [REQ-OBS-0033](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/measurement-observations.md#REQ-OBS-0033) → `CC-OBS-PRIVACY-AND-INTERPRETATION`.
+- [REQ-OBS-0033](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/measurement-observations.md#REQ-OBS-0033) → `CC-OBS-PRIVACY-AND-INTERPRETATION`, `RV-CC-OBS-PRIVACY-AND-INTERPRETATION`.
 
 ### CC-RESULT-OVERVIEW
 
@@ -592,9 +598,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/measurement-result.md`, section **Privacy, Safety, and Interpretation**. Intended target: `internal/result/result.go`. Planned case location: `internal/result/cross_cutting_conformance_test.go`, `symbol:TestCcResultPrivacySafetyAndInterpretation`.
 
-Case plan: Canary every prohibited identifier/raw-data sink; review aggregate retention and separate versioned derived analysis from source observations.
+Case plan: Inject distinct synthetic canaries through the fake platform, host configuration and scripted transports for every prohibited class: person, account, application-user, advertising, device, SIM, subscriber, push and stable installation identifiers; task input and label values; raw packets, HTTP bodies, HTTP header values, certificate chains, cookies, credentials, system log lines, stack traces (from an injected internal panic) and unrelated resolver state. Run completed, incomplete and not_run attempts and assert no canary, in raw or base64url/hex form, appears in the serialized Measurement Result. Assert the result for a completed negative outcome (for example a TCP timeout) contains only the registered outcome and observations, and reject decoding of a result carrying an unregistered top-level field holding a synthetic derived anomaly or interference analysis object. Requirements: REQ-RESULT-0035, REQ-RESULT-0045, REQ-RESULT-0046, REQ-RESULT-0047, REQ-RESULT-0048, REQ-RESULT-0049, REQ-RESULT-0050.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
+
+Review case `RV-CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`): Human review case; not automated coverage. Reviewer role: Privacy and measurement interpretation reviewer (independent of the implementer). Reviewed artifact: Go result documentation, host integration guidance and analyst guidance for Measurement Results at the reviewed implementation revision. Checklist: (1) Does the guidance state that coarse platform, time, Network Context, connection code, task and run metadata can become identifying in combination and require bounded retention and aggregate reporting? (2) Does the guidance state that a matching task or run identifier establishes only measurement workflow membership, not that results belong to one person? (3) Does the guidance describe a completed negative outcome as one observation on one path and context that does not prove censorship or identify intent? (4) Does the guidance require derived anomaly or interference analysis to remain separate from the source result, identify its method and version, and preserve links to the source observations? (5) Is any documented retention or export path for results bounded and free of per-person aggregation? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
 <!-- requirement-ref: REQ-RESULT-0035 -->
 <!-- requirement-ref: REQ-RESULT-0045 -->
@@ -604,19 +612,19 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-RESULT-0049 -->
 <!-- requirement-ref: REQ-RESULT-0050 -->
 
-- [REQ-RESULT-0035](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/measurement-result.md#REQ-RESULT-0035) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-RESULT-0045](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/measurement-result.md#REQ-RESULT-0045) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-RESULT-0046](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/measurement-result.md#REQ-RESULT-0046) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-RESULT-0047](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/measurement-result.md#REQ-RESULT-0047) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-RESULT-0048](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/measurement-result.md#REQ-RESULT-0048) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-RESULT-0049](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/measurement-result.md#REQ-RESULT-0049) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-RESULT-0050](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/measurement-result.md#REQ-RESULT-0050) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-RESULT-0035](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/measurement-result.md#REQ-RESULT-0035) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-RESULT-0045](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/measurement-result.md#REQ-RESULT-0045) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-RESULT-0046](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/measurement-result.md#REQ-RESULT-0046) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-RESULT-0047](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/measurement-result.md#REQ-RESULT-0047) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-RESULT-0048](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/measurement-result.md#REQ-RESULT-0048) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-RESULT-0049](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/measurement-result.md#REQ-RESULT-0049) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-RESULT-0050](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/measurement-result.md#REQ-RESULT-0050) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
 
 ### CC-CONTEXT-FORMAT-OVERVIEW
 
 Public source: `data-formats/network-context.md`, section **Overview**. Intended target: `internal/networkcontext/model.go`. Planned case location: `internal/networkcontext/cross_cutting_conformance_test.go`, `symbol:TestCcContextFormatOverview`.
 
-Case plan: Keep one access generation and selected path; reject raw IP/persistent context identity.
+Case plan: Exercise context capture with a fake platform that reports access-network generation G1, then switches to generation G2 during the attempt, and a fake egress endpoint, for both direct and proxy selected paths. Assert the result carries exactly one Network Context with one access object taken from the attempt's snapshot (network_changed true after the injected switch) and an egress object whose network_path equals the selected path, with no second access snapshot or path. Inject canaries for the public egress address (203.0.113.7, 2001:db8::7), local addresses (192.168.0.2, fe80::2) and persistent network identifiers (a synthetic platform network handle and generation token) and assert none appears in the serialized context. Reject decoding of a context carrying any additional address or identifier field. Requirements: REQ-CONTEXT-FORMAT-0001.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -628,7 +636,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/network-context.md`, section **Top-level Fields**. Intended target: `internal/networkcontext/model.go`. Planned case location: `internal/networkcontext/cross_cutting_conformance_test.go`, `symbol:TestCcContextFormatTopLevelFields`.
 
-Case plan: Require access/egress objects and reject unknown top-level fields.
+Case plan: Iterate synthetic Network Context JSON under the strict decoding contract: accept an object with valid access and egress objects, including egress status unavailable with lookup_source none; reject objects with access missing, egress missing, either set to null or to a non-object, and objects with one additional unknown top-level field. Assert every encoded context produced by the library, including when egress lookup fails, contains both access and egress and no other top-level key. Requirements: REQ-CONTEXT-FORMAT-0002, REQ-CONTEXT-FORMAT-0003.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -642,7 +650,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/network-context.md`, section **Access Object**. Intended target: `internal/networkcontext/model.go`. Planned case location: `internal/networkcontext/cross_cutting_conformance_test.go`, `symbol:TestCcContextFormatAccessObject`.
 
-Case plan: Exercise exact coarse enums/types and reject every prohibited platform identifier.
+Case plan: Iterate every registered access value and accept each: network_type wifi, cellular, ethernet, other, unknown; vpn_state detected, not_detected, unknown; ipv4_available, ipv6_available and validated yes, no, unknown; network_changed true and false. Reject case variants (WIFI, Yes), unregistered strings, network_changed as the string false or as null, and objects missing each required field in turn. Configure the fake platform to expose canaries for interface names, addresses, Wi-Fi identifiers, DNS server addresses, cell information, SIM information, carrier names, subscriber identifiers and location, and assert none appears in the encoded access object or result; reject decoding of an access object carrying any extra field for those items. Requirements: REQ-CONTEXT-FORMAT-0004, REQ-CONTEXT-FORMAT-0005.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -674,17 +682,19 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/network-context.md`, section **Provider and Operator**. Intended target: `internal/networkcontext/model.go`. Planned case location: `internal/networkcontext/cross_cutting_conformance_test.go`, `symbol:TestCcContextFormatProviderAndOperator`.
 
-Case plan: Reject free-form provider/operator data; review analysis labels and any proposed operator extension for required specialist review.
+Case plan: Configure the fake egress endpoint and fake platform to return a synthetic provider organization name and a synthetic mobile operator/carrier name as canaries alongside a valid asn. Assert the encoded Network Context contains only the registered numeric asn and no provider or operator text in any field, and reject decoding of a context carrying a provider or operator field at the top level, in access or in egress. Requirements: REQ-CONTEXT-FORMAT-0010, REQ-CONTEXT-FORMAT-0011, REQ-CONTEXT-FORMAT-0012.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
+
+Review case `RV-CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR`): Human review case; not automated coverage. Reviewer role: Privacy and measurement interpretation reviewer (independent of the implementer). Reviewed artifact: Go Network Context documentation, analyst guidance and any proposed format extension touching provider or operator data at the reviewed implementation revision. Checklist: (1) Does any guidance on deriving a provider organization from asn name a documented mapping dataset? (2) Does the guidance present a derived provider label as contextual rather than a verified access-provider identity? (3) Is mobile operator information absent from the baseline implementation and documentation? (4) If an operator extension is proposed, does it record separate consent, platform, privacy, safety and legal review before adoption? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0010 -->
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0011 -->
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0012 -->
 
-- [REQ-CONTEXT-FORMAT-0010](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0010) → `CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR`.
-- [REQ-CONTEXT-FORMAT-0011](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0011) → `CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR`.
-- [REQ-CONTEXT-FORMAT-0012](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0012) → `CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR`.
+- [REQ-CONTEXT-FORMAT-0010](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0010) → `CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR`, `RV-CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR`.
+- [REQ-CONTEXT-FORMAT-0011](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0011) → `CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR`, `RV-CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR`.
+- [REQ-CONTEXT-FORMAT-0012](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0012) → `CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR`, `RV-CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR`.
 
 ### CC-CONTEXT-FORMAT-USE-IN-EXECUTION
 
@@ -756,7 +766,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/result-bundle.md`, section **JSON Structure**. Intended target: `internal/bundle/bundle.go`. Planned case location: `internal/bundle/cross_cutting_conformance_test.go`, `symbol:TestCcBundleJsonStructure`.
 
-Case plan: Disable linkage and assert the linkage object is absent.
+Case plan: Build bundles with linkage disabled (default configuration and an explicit disable) from a synthetic not_run TCP-01 result with reason constraints_unsatisfied and from a completed result. Assert the encoded bundle has exactly the top-level keys schema_version, bundle_id and results, with the linkage key absent (not null and not an empty object), and that the public disabled-linkage example decodes successfully. Reject decoding of a disabled-linkage bundle that carries linkage as null or an empty object, per the strict decoding contract. Requirements: REQ-BUNDLE-0003.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -872,9 +882,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/result-bundle.md`, section **Privacy and Safety Requirements**. Intended target: `internal/bundle/bundle.go`. Planned case location: `internal/bundle/cross_cutting_conformance_test.go`, `symbol:TestCcBundlePrivacyAndSafetyRequirements`.
 
-Case plan: Use synthetic canaries to check prohibited IDs and traffic leakage; review sensitive-token access/retention, aggregation and separation from task selection/transport metadata.
+Case plan: Assert a bundle built under the default configuration omits linkage. Inject canaries through the fake platform and host for advertising IDs, vendor IDs, device serials, hardware IDs, push tokens, account IDs, email addresses, phone numbers, SIM and subscriber identifiers and host application user IDs, plus hashed forms of each, and assert none appears in the encoded bundle. With linkage enabled, record all measurement traffic (DNS queries, TCP and TLS payloads, HTTP request lines, headers and bodies, HTTP CONNECT requests) and all Network Context endpoint requests, and assert neither bundle_id nor linkage.token appears in raw or base64url form. Run the same task set with linkage disabled, enabled with token T1 and enabled with token T2 and assert the delivered and executed task set is identical. Derive tokens from two different synthetic random installation secrets with identical host and platform identifiers and assert the tokens differ, and from one secret with different host and platform identifiers and assert the token is unchanged. Requirements: REQ-BUNDLE-0018, REQ-BUNDLE-0029, REQ-BUNDLE-0030, REQ-BUNDLE-0031, REQ-BUNDLE-0032, REQ-BUNDLE-0033, REQ-BUNDLE-0034, REQ-BUNDLE-0035, REQ-BUNDLE-0036.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
+
+Review case `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`): Human review case; not automated coverage. Reviewer role: Privacy and collector-operations reviewer (independent of the implementer). Reviewed artifact: Go bundle and linkage documentation plus host and collector integration guidance at the reviewed implementation revision. Checklist: (1) Does the collector guidance require linkage tokens to be treated as sensitive pseudonymous data rather than anonymous data? (2) Does the guidance advise against retaining source IP address, precise arrival time or transport logs together with a linkage token, and recommend separating transport handling from research storage where feasible? (3) Does the guidance require raw-token access to be restricted, audited and limited in retention? (4) Does the analysis and publication guidance require aggregation of linkage, time, region, ASN, network type and connection_code combinations? (5) Does the documentation state that hashing a host or platform identifier does not make it acceptable as a token source? (6) Does no documented host or collector path use linkage for task selection or delivery? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
 <!-- requirement-ref: REQ-BUNDLE-0018 -->
 <!-- requirement-ref: REQ-BUNDLE-0029 -->
@@ -886,29 +898,31 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-BUNDLE-0035 -->
 <!-- requirement-ref: REQ-BUNDLE-0036 -->
 
-- [REQ-BUNDLE-0018](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/result-bundle.md#REQ-BUNDLE-0018) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-BUNDLE-0029](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/result-bundle.md#REQ-BUNDLE-0029) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-BUNDLE-0030](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/result-bundle.md#REQ-BUNDLE-0030) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-BUNDLE-0031](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/result-bundle.md#REQ-BUNDLE-0031) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-BUNDLE-0032](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/result-bundle.md#REQ-BUNDLE-0032) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-BUNDLE-0033](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/result-bundle.md#REQ-BUNDLE-0033) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-BUNDLE-0034](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/result-bundle.md#REQ-BUNDLE-0034) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-BUNDLE-0035](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/result-bundle.md#REQ-BUNDLE-0035) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-BUNDLE-0036](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/result-bundle.md#REQ-BUNDLE-0036) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-BUNDLE-0018](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/result-bundle.md#REQ-BUNDLE-0018) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-BUNDLE-0029](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/result-bundle.md#REQ-BUNDLE-0029) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-BUNDLE-0030](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/result-bundle.md#REQ-BUNDLE-0030) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-BUNDLE-0031](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/result-bundle.md#REQ-BUNDLE-0031) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-BUNDLE-0032](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/result-bundle.md#REQ-BUNDLE-0032) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-BUNDLE-0033](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/result-bundle.md#REQ-BUNDLE-0033) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-BUNDLE-0034](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/result-bundle.md#REQ-BUNDLE-0034) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-BUNDLE-0035](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/result-bundle.md#REQ-BUNDLE-0035) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-BUNDLE-0036](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/result-bundle.md#REQ-BUNDLE-0036) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
 
 ### CC-BUNDLE-INTERPRETATION
 
 Public source: `data-formats/result-bundle.md`, section **Interpretation**. Intended target: `internal/bundle/bundle.go`. Planned case location: `internal/bundle/cross_cutting_conformance_test.go`, `symbol:TestCcBundleInterpretation`.
 
-Case plan: Review analysis examples for installation/scope/epoch-only correlation; resets and missing tokens cannot be counted as new people.
+Case plan: Exercise bundle construction with a fake clock, fake secure storage and a synthetic installation secret: two bundles with the same secret, scope and epoch carry matching tokens; then trigger each locally reproducible cause in turn (linkage disabled, epoch rotation, explicit privacy reset, application data clearing via empty storage, key loss and storage failure via fake storage errors) and assert the token is absent or changed while the bundle schema is otherwise unchanged, with no added field or counter marking a new installation, person or account. Requirements: REQ-BUNDLE-0019, REQ-BUNDLE-0020.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
+
+Review case `RV-CC-BUNDLE-INTERPRETATION` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-BUNDLE-INTERPRETATION`): Human review case; not automated coverage. Reviewer role: Measurement interpretation reviewer (analyst role independent of the implementer). Reviewed artifact: Go linkage documentation and analyst guidance with correlation examples at the reviewed implementation revision. Checklist: (1) Do the examples treat matching tokens only as the same locally stored installation secret, deployment scope and rotation epoch? (2) Does no example claim that matching tokens identify the same person, device owner, account, physical location or access network? (3) Does the guidance list disabled linkage, epoch rotation, data clearing, reinstall detection, key loss, storage failure, device migration and privacy reset as causes of a missing or changed token? (4) Does no example count a missing or changed token as a new person? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
 <!-- requirement-ref: REQ-BUNDLE-0019 -->
 <!-- requirement-ref: REQ-BUNDLE-0020 -->
 
-- [REQ-BUNDLE-0019](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/result-bundle.md#REQ-BUNDLE-0019) → `CC-BUNDLE-INTERPRETATION`.
-- [REQ-BUNDLE-0020](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/result-bundle.md#REQ-BUNDLE-0020) → `CC-BUNDLE-INTERPRETATION`.
+- [REQ-BUNDLE-0019](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/result-bundle.md#REQ-BUNDLE-0019) → `CC-BUNDLE-INTERPRETATION`, `RV-CC-BUNDLE-INTERPRETATION`.
+- [REQ-BUNDLE-0020](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/result-bundle.md#REQ-BUNDLE-0020) → `CC-BUNDLE-INTERPRETATION`, `RV-CC-BUNDLE-INTERPRETATION`.
 
 ### CC-EXECUTION-ENVELOPE
 
@@ -928,7 +942,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-execution.md`, section **Execution Model**. Intended target: `internal/execution/attempt.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcExecutionExecutionModel`.
 
-Case plan: Evaluate each retry independently and assert no extra run is created by constraint evaluation.
+Case plan: Use a deterministic clock and a synthetic task with retry.max_attempts 2 and retry_on platform_suspended, with a fake constraint evaluator whose result is scripted per call. Assert the evaluator is invoked immediately before each execution attempt, including the retry attempt: script satisfied for attempt 1 (which ends with platform_suspended) and unsatisfied for attempt 2, and assert attempt 2 is delayed or skipped according to the schedule while attempt 1's result is unchanged. Script unsatisfied for the first attempt of a run and assert the run is delayed or skipped, never executed. Assert across all scenarios that the count of runs equals the count of schedule-due runs: constraint evaluation, delay or skip never increments the run counter or creates a new run identity. Requirements: REQ-EXECUTION-0003, REQ-EXECUTION-0004.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -942,7 +956,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-execution.md`, section **Fields**. Intended target: `internal/execution/attempt.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcExecutionFields`.
 
-Case plan: Validate required limits object and optional typed network/device/concurrency/path configuration.
+Case plan: Decode synthetic execution objects through the strict task decoder. Reject an execution object without limits. Accept limits as an empty object (registered defaults applied: max_duration_ms 30000, max_bytes_sent 32768, max_bytes_received 131072, max_connections 8) and assert omitted network_path decodes as direct. Accept network_path direct and proxy and reject any other value. Accept network, device and concurrency when absent or present as typed objects of their defined schemas, and reject each when supplied as a non-object (string, array, null) or with an unknown field. Reject an unknown top-level execution field. Requirements: REQ-EXECUTION-0005.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -974,7 +988,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-execution.md`, section **Fields / Limits**. Intended target: `internal/execution/attempt.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcExecutionFieldsLimits`.
 
-Case plan: Reset budgets per attempt.
+Case plan: Exercise an accepted task with limits max_duration_ms 30000, max_bytes_sent 32768, max_bytes_received 131072 and max_connections 8 on a deterministic clock and scripted transport, with a retry bound permitting a second attempt of the same run. In attempt 1 consume exactly 8 connections, 32,768 application bytes sent and 131,072 received and terminate it with a cross-cutting reason that the public retry rules make retryable. Assert attempt 2 (same run_id, attempt 2) starts with full budgets: it can open 8 connections and send and receive the full byte limits, a 9th connection or one byte beyond either byte limit stops it with resource_limit, and its duration deadline is measured from its own start rather than from attempt 1. Requirements: REQ-EXECUTION-0011.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1002,7 +1016,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-execution.md`, section **Fields / Network**. Intended target: `internal/execution/attempt.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcExecutionFieldsNetwork`.
 
-Case plan: Simulate unavailable required platform network information; do not assume eligibility.
+Case plan: Configure the fake platform so required network information is unavailable: network_type unknown with allowed_transports [wifi, cellular], vpn_state unknown under vpn_policy exclude and require, and context required_fields [country_code] with the egress classification unavailable. Assert for each case that no network operation is issued on the recording transport and the attempt does not run (not_run with the applicable registered reason, network_context_unavailable for the missing required context field), and that unknown is never treated as satisfying a constraint. Assert the same task runs when the fake platform reports the required values. Requirements: REQ-EXECUTION-0015.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1014,7 +1028,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-execution.md`, section **Fields / Network / Fields**. Intended target: `internal/execution/attempt.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcExecutionFieldsNetworkFields`.
 
-Case plan: Test wifi/cellular transport filtering and each typed network constraint.
+Case plan: Iterate allowed_transports [wifi], [cellular] and [wifi, cellular] against fake-platform network_type wifi, cellular, ethernet, other and unknown, and assert the task runs only when the reported type is in the list. Reject a task whose allowed_transports contains a value outside the initial list (wifi, cellular). Iterate vpn_policy any, exclude and require (and the omitted default any) against vpn_state detected, not_detected and unknown and assert run or do-not-run exactly per the public VPN eligibility table. Exercise require_validated true with validated yes, no and unknown, using the fake system method when available and the fake library internal check otherwise, and assert execution only on confirmed validation. Exercise context required_fields and allowed_country_codes with present, missing and non-matching values. Assert every do-not-run case issues no network operation. Requirements: REQ-EXECUTION-0016, REQ-EXECUTION-0017.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1028,7 +1042,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-execution.md`, section **Fields / Network / Fields / VPN Policy**. Intended target: `internal/execution/attempt.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcExecutionFieldsNetworkFieldsVpnPolicy`.
 
-Case plan: Exercise all nine policy/state combinations, preserving unknown independently of not_detected.
+Case plan: Use a fake platform that reports VPN state as detected, not_detected or unknown and evaluate each vpn_policy value (any, exclude, require) for all nine combinations. Expected: any runs for detected, not_detected and unknown; exclude runs only for not_detected and does not run for detected or unknown; require runs only for detected and does not run for not_detected or unknown. Assert omitted vpn_policy behaves as any. Assert the unknown state is carried through evaluation as unknown and is never mapped to not_detected, so exclude with unknown does not run. Reject an unregistered vpn_policy value (for example prefer) at validation. Requirements: REQ-EXECUTION-0018, REQ-EXECUTION-0019, REQ-EXECUTION-0020.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1076,7 +1090,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-execution.md`, section **Fields / Concurrency**. Intended target: `internal/execution/attempt.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcExecutionFieldsConcurrency`.
 
-Case plan: Interleave shared and exclusive attempts and assert an exclusive attempt runs alone.
+Case plan: Schedule synthetic tasks on a deterministic clock with scripted transports that record start and end times: two shared tasks S1 and S2 and one exclusive task E, submitted in the orders S1,S2,E and E,S1,S2 and with E submitted while S1 is running. Assert S1 and S2 may overlap, that E's execution interval never overlaps any other measurement's interval, and that no shared task starts while E is active. Assert that when E cannot run alone it either waits or ends not_run per the public constraint-evaluation rules, without starting any network operation while another measurement is active. Requirements: REQ-EXECUTION-0027.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1104,7 +1118,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-input.md`, section **Envelope**. Intended target: `internal/validation/input.go`. Planned case location: `internal/validation/cross_cutting_conformance_test.go`, `symbol:TestCcInputEnvelope`.
 
-Case plan: Select exact test ID/version; distinguish schemas for two versions with different fields.
+Case plan: Register two synthetic local test implementations with the same test_id and different test_version values whose input schemas define different fields (version A requires field a, version B requires field b). Submit a task for version A with input containing a and assert acceptance; submit the same input under version B and assert rejection; submit input containing b under version A and assert rejection as an unknown field. Assert schema selection uses the exact (test_id, test_version) pair: an unregistered test_version, or an unregistered test_id with otherwise valid input, is rejected as a task-validation failure. Assert the generic task decoder accepts input only as an object and defines no input fields of its own. Requirements: REQ-INPUT-0001.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1128,7 +1142,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-input.md`, section **JSON Structure**. Intended target: `internal/validation/input.go`. Planned case location: `internal/validation/cross_cutting_conformance_test.go`, `symbol:TestCcInputJsonStructure`.
 
-Case plan: Accept empty object only for a test permitting it; reject every non-object JSON type.
+Case plan: Decode otherwise valid synthetic tasks through task admission, varying only the top-level `input` value. Accept `input: {}` for NET-01, whose registered input schema accepts an empty object, and assert the task is admitted. Reject `input: {}` for DNS-01, whose registered input schema requires `hostname` and `record_type`, with a bounded non-measurement admission error. For both NET-01 and DNS-01, iterate the non-object values `null`, `[]`, `[{}]`, `""`, `"{}"`, `0`, `1.5`, `true` and `false` as top-level `input`, and assert each is rejected at admission with a non-measurement admission error, no run or attempt is created and no Measurement Result is emitted. Verify a DNS-01 task with `input: {"hostname": "example.org", "record_type": "A"}` decodes to a JSON object value. Requirements: REQ-INPUT-0003, REQ-INPUT-0004.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1282,7 +1296,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-labels.md`, section **Envelope**. Intended target: `internal/taskdecode/labels.go`. Planned case location: `internal/taskdecode/cross_cutting_conformance_test.go`, `symbol:TestCcLabelEnvelope`.
 
-Case plan: Compare executions with different unreserved labels; labels cannot alter typed control fields.
+Case plan: Execute the same synthetic task against a recording transport and deterministic clock twice, once with labels {"campaign": "a"} and once with labels {"campaign": "b", "measurement_group": "baseline"}. Assert identical network operations, schedule due times, execution-constraint decisions, limits and safety-policy outcomes; only the labels carried through to output may differ. Supply labels whose keys resemble typed control fields (for example network_path with value proxy, max_runs with value 28, vpn_policy with value require) and assert the typed execution and schedule values remain those of the typed fields, with no behavior change. Requirements: REQ-LABEL-0001, REQ-LABEL-0002.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1296,7 +1310,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-labels.md`, section **JSON Structure**. Intended target: `internal/taskdecode/labels.go`. Planned case location: `internal/taskdecode/cross_cutting_conformance_test.go`, `symbol:TestCcLabelJsonStructure`.
 
-Case plan: Compare absent and empty labels; reject non-flat or non-string key/value representations.
+Case plan: Decode synthetic tasks with labels omitted and with labels {} and assert they are equivalent in the decoded task and in downstream behavior. Accept a flat object with string keys and string values (for example {"campaign": "x"}). Reject labels as an array, string, number or null, a nested object value, an array value, and non-string values (number, boolean, null). Requirements: REQ-LABEL-0003, REQ-LABEL-0004.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1444,7 +1458,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-options.md`, section **JSON Structure**. Intended target: `internal/validation/options.go`. Planned case location: `internal/validation/cross_cutting_conformance_test.go`, `symbol:TestCcOptionsJsonStructure`.
 
-Case plan: Test required object presence, empty-object defaults and every non-object type.
+Case plan: Decode otherwise valid synthetic NET-01 and DNS-01 tasks through task admission, varying only `options`. Reject a task with the `options` member omitted, for both tests, with a bounded non-measurement admission error, even though every DNS-01 option property is optional. Accept `options: {}` for NET-01 (no test-specific options defined) and for DNS-01, and assert the DNS-01 effective configuration equals its documented defaults: `resolver_mode` `system`, `transport` `udp`, `collect_additional_responses` `false`. For both tests, iterate the top-level values `null`, `[]`, `[{}]`, `""`, `"{}"`, `0`, `1.5`, `true` and `false` and assert each is rejected at admission with no run, attempt or Measurement Result created. Verify a DNS-01 task with `options: {"resolver_mode": "system"}` is accepted, so individual properties remain optional while the object is required. Requirements: REQ-OPTIONS-0003, REQ-OPTIONS-0004, REQ-OPTIONS-0005.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1608,25 +1622,27 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-safety.md`, section **Risk Level**. Intended target: `internal/validation/safety.go`. Planned case location: `internal/validation/cross_cutting_conformance_test.go`, `symbol:TestCcSafetyRiskLevel`.
 
-Case plan: Test all registered levels, reject none, and exercise unknown with absent and explicit reviewed permission. Review UI/docs for risk-free guarantees.
+Case plan: Admit synthetic NET-01 tasks (registered baseline `low`) under a fake local policy and deterministic clock, varying `safety.risk_level` with consistent `risk_factors` where required. Iterate `low`, `medium`, `high` and `unknown` and assert each is decoded as a supported value. Reject `none`, `""`, `"LOW"`, `"Unknown"`, `null`, `0` and a missing `risk_level` at admission with a bounded non-measurement admission error. Exercise `unknown` (with a `risk_factors` entry of level `unknown`) under a local policy with no unknown-risk permission and assert no execution attempt starts and no Measurement Result is produced (fail closed); repeat with a policy explicitly marked reviewed and permitting `unknown` and assert the run becomes eligible. Exercise `high` under a default policy and assert it is not executed, then under a reviewed policy explicitly permitting `high` and assert it becomes eligible. Assert no serialized task, admission status or result value represents a risk level of `none` or any risk-free value. Requirements: REQ-SAFETY-0008, REQ-SAFETY-0009, REQ-SAFETY-0010, REQ-SAFETY-0011.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
+
+Review case `RV-CC-SAFETY-RISK-LEVEL` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-SAFETY-RISK-LEVEL`): Human review case; not automated coverage. Reviewer role: Safety and privacy reviewer (independent of the implementer). Reviewed artifact: Go public API documentation, host integration guidance and any host-facing risk-level descriptions at the reviewed implementation revision. Checklist: (1) Does any documentation or host-facing text describe a measurement or task as risk-free or as having no risk? (2) Is `low` described as a conservative classification under assessed deployment assumptions rather than a guarantee that execution is safe in every environment? (3) Is `unknown` documented as failing closed by default, runnable only under an explicit, reviewed local policy? (4) Is `high` documented as normally rejected unless explicitly permitted by a reviewed local policy? (5) Does guidance avoid presenting risk levels as guarantees to hosts or end users? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
 <!-- requirement-ref: REQ-SAFETY-0008 -->
 <!-- requirement-ref: REQ-SAFETY-0009 -->
 <!-- requirement-ref: REQ-SAFETY-0010 -->
 <!-- requirement-ref: REQ-SAFETY-0011 -->
 
-- [REQ-SAFETY-0008](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/task-safety.md#REQ-SAFETY-0008) → `CC-SAFETY-RISK-LEVEL`.
-- [REQ-SAFETY-0009](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/task-safety.md#REQ-SAFETY-0009) → `CC-SAFETY-RISK-LEVEL`.
-- [REQ-SAFETY-0010](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/task-safety.md#REQ-SAFETY-0010) → `CC-SAFETY-RISK-LEVEL`.
-- [REQ-SAFETY-0011](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/task-safety.md#REQ-SAFETY-0011) → `CC-SAFETY-RISK-LEVEL`.
+- [REQ-SAFETY-0008](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/task-safety.md#REQ-SAFETY-0008) → `CC-SAFETY-RISK-LEVEL`, `RV-CC-SAFETY-RISK-LEVEL`.
+- [REQ-SAFETY-0009](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/task-safety.md#REQ-SAFETY-0009) → `CC-SAFETY-RISK-LEVEL`, `RV-CC-SAFETY-RISK-LEVEL`.
+- [REQ-SAFETY-0010](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/task-safety.md#REQ-SAFETY-0010) → `CC-SAFETY-RISK-LEVEL`, `RV-CC-SAFETY-RISK-LEVEL`.
+- [REQ-SAFETY-0011](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/task-safety.md#REQ-SAFETY-0011) → `CC-SAFETY-RISK-LEVEL`, `RV-CC-SAFETY-RISK-LEVEL`.
 
 ### CC-SAFETY-RISK-FACTORS
 
 Public source: `data-formats/task-safety.md`, section **Risk Factors**. Intended target: `internal/validation/safety.go`. Planned case location: `internal/validation/cross_cutting_conformance_test.go`, `symbol:TestCcSafetyRiskFactors`.
 
-Case plan: Require factors for medium/high/unknown and allow omission for low.
+Case plan: Admit synthetic tasks under a fake local policy, varying `risk_level` and the presence of `risk_factors`. Accept `risk_level: low` with `risk_factors` omitted, and accept `low` with `risk_factors: [{"type": "network_observability", "level": "low"}]`. Reject `medium`, `high` and `unknown` each with `risk_factors` omitted, with a bounded non-measurement admission error and no run or attempt created. Accept `medium` with `[{"type": "traffic_distinctiveness", "level": "medium"}]`, `high` with `[{"type": "target_sensitivity", "level": "high"}]` and `unknown` with `[{"type": "data_sensitivity", "level": "unknown"}]` as structurally valid declarations (execution permission for `high` and `unknown` still depends on local policy). Requirements: REQ-SAFETY-0012.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1638,7 +1654,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-safety.md`, section **Risk Factors / Risk Factor Fields**. Intended target: `internal/validation/safety.go`. Planned case location: `internal/validation/cross_cutting_conformance_test.go`, `symbol:TestCcSafetyRiskFactorsRiskFactorFields`.
 
-Case plan: Test required type/level fields and exact risk enums for each factor.
+Case plan: Admit synthetic tasks with `risk_level: unknown` (so every factor level is consistent) containing one risk factor, varying the factor object. Reject a factor missing `type` and a factor missing `level`, each with a bounded non-measurement admission error. Iterate factor `level` over `low`, `medium`, `high` and `unknown` and assert each is accepted; reject `none`, `""`, `"Medium"`, `null`, `1` and `true`. Iterate `type` over each initial registered type (`network_observability`, `traffic_distinctiveness`, `target_sensitivity`, `data_sensitivity`, `legal_or_social_context`) with `level: low` and assert each is accepted. Verify the decoded factor exposes exactly the `type` and `level` values supplied. Requirements: REQ-SAFETY-0013, REQ-SAFETY-0014.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1734,7 +1750,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-schedule.md`, section **Envelope**. Intended target: `internal/execution/schedule.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcScheduleEnvelope`.
 
-Case plan: Delay eligible work under simulated suspension; never promise exact firing times.
+Case plan: Drive the scheduler with a deterministic clock and a fake platform that can report the application as suspended. Admit a NET-01 task with `starts_at` T and `not_after` T+24h. Keep the fake platform suspended from T-1h to T+2h and assert no attempt starts during suspension and the run is not marked failed or missed at T. On resume at T+2h assert the run becomes eligible and its attempt starts after T+2h, and assert the result `started_at` reflects the actual start, not `starts_at`. Repeat with suspension lasting until after `not_after` and assert no run or attempt starts after resume. Assert no API return value or status describes `starts_at` as a guaranteed or exact execution time. Requirements: REQ-SCHEDULE-0001.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1758,7 +1774,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-schedule.md`, section **Scheduling Model**. Intended target: `internal/execution/schedule.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcScheduleSchedulingModel`.
 
-Case plan: Distinguish repeated runs from retry attempts using deterministic identities and counters.
+Case plan: Use a deterministic clock and a synthetic task with repeat.mode interval, interval 21600, jitter 300, max_runs 3, a not_after after the third due run and retry.max_attempts 2 with retry_on internal_error and backoff mode fixed, initial_delay_ms 30000, max_delay_ms 30000. Script attempt 1 of run 1 to end with internal_error and every other attempt to complete. Assert three distinct run identities, run 1 holding attempts 1 and 2 and runs 2 and 3 holding attempt 1 only, the run counter reaching 3 and attempt numbering scoped to each run. Assert a retry attempt shares its run identity and never creates a new run, and that each interval-due run receives a new run identity. With repeat.mode none and the same retry policy, assert exactly one run whose attempt count is at most 2. Requirements: REQ-SCHEDULE-0003, REQ-SCHEDULE-0004, REQ-SCHEDULE-0005, REQ-SCHEDULE-0006.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1806,7 +1822,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-schedule.md`, section **Scheduling Model / Time Window**. Intended target: `internal/execution/schedule.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcScheduleSchedulingModelTimeWindow`.
 
-Case plan: Start attempts only in allowed local windows.
+Case plan: Drive the scheduler with a deterministic clock and fake platform timezone UTC, admitting NET-01 tasks whose runs are otherwise eligible. With `time_window` `{"timezone": "local", "ranges": [{"start": "12:00", "end": "18:00"}]}`, advance the clock to local 11:59, 12:00, 17:59 and 18:00 and assert a run starts only at 12:00 and 17:59 (start inclusive, end exclusive) and not at 11:59 or 18:00. With the midnight-crossing range `22:00`-`06:00`, assert no start at 21:59 and 06:00 and a start at 22:00 and 05:59. With two ranges `08:00`-`10:00` and `14:00`-`16:00`, assert no start at 12:00 and a start at 14:00. Assert a run that becomes due outside the window is delayed to the next allowed range start before `not_after` rather than started early. Requirements: REQ-SCHEDULE-0012.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1818,7 +1834,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-schedule.md`, section **Scheduling Model / Time Window / Fields**. Intended target: `internal/execution/schedule.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcScheduleSchedulingModelTimeWindowFields`.
 
-Case plan: Test local timezone changes, range count/uniqueness/overlap and default timezone.
+Case plan: Validate synthetic `time_window` objects at admission and evaluate accepted ones with a deterministic clock and a fake platform timezone. Reject `ranges` omitted and `ranges: []` (0 ranges), accept 1 range and 4 non-overlapping ranges (`00:00`-`02:00`, `04:00`-`06:00`, `08:00`-`10:00`, `12:00`-`14:00`) and reject 5 ranges, with a bounded non-measurement admission error. Reject two identical ranges `08:00`-`12:00`, overlapping ranges `08:00`-`12:00` and `11:00`-`14:00`, and a midnight-crossing overlap `22:00`-`06:00` with `05:00`-`07:00`. Accept `timezone` omitted and assert it is treated as `local`. With range `12:00`-`18:00` and `timezone: local`, set the fake device timezone to UTC at fixed instant 10:30Z (local 10:30, no start), then switch it to UTC+03:00 at the same instant (local 13:30) and assert a run starts, demonstrating `local` uses the current device-reported timezone. Requirements: REQ-SCHEDULE-0013, REQ-SCHEDULE-0014.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1912,7 +1928,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-schedule.md`, section **Scheduling Model / Limits / Fields**. Intended target: `internal/execution/schedule.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcScheduleSchedulingModelLimitsFields`.
 
-Case plan: Test max_runs default and bounds, repeat requirement and retries excluded from the run count.
+Case plan: Decode synthetic schedules: omitted max_runs with repeat.mode none defaults to 1; max_runs 0 rejected, 1 accepted, 28 accepted, 29 rejected; non-integer max_runs rejected. With repeat.mode interval, omitted max_runs is rejected and max_runs 28 accepted. Execute with a deterministic clock, repeat.mode interval (interval 21600, jitter 300), max_runs 2, a valid not_after and retry.max_attempts 2 with retry_on platform_suspended and backoff mode fixed, initial_delay_ms 30000, max_delay_ms 30000, scripting a retry in run 1: assert two runs complete and the retry does not count toward max_runs. Configure max_runs 28 with a not_after reached after 2 runs, and separately max_runs 2 with a later not_after, and assert the schedule terminates at whichever limit is reached first. Requirements: REQ-SCHEDULE-0030, REQ-SCHEDULE-0031, REQ-SCHEDULE-0032.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1968,7 +1984,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task.md`, section **Overview**. Intended target: `internal/taskdecode/decode.go`. Planned case location: `internal/taskdecode/cross_cutting_conformance_test.go`, `symbol:TestCcTaskOverview`.
 
-Case plan: Verify task admission produces no Measurement Result from supplied task data.
+Case plan: Submit synthetic tasks to admission with a recording result sink and deterministic clock: a valid NET-01 task, a task with invalid `input`, a task with an expired `not_after`, and a task carrying an extra top-level `results` member containing a canary result-like object. Assert the valid task is admitted and that admission alone writes zero Measurement Results to the sink; assert each invalid task returns a bounded non-measurement admission error and also writes zero Measurement Results. Assert the canary result content never appears in any later Measurement Result, log or status output, and that the only Measurement Result for the valid task is produced after its execution attempt. Requirements: REQ-TASK-0002.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1996,15 +2012,15 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-TASK-DESIGN-PRINCIPLES-STABLE-STRUCTURE
 
-Public source: `data-formats/task.md`, section **Design Principles / Stable Structure**. Intended target: `docs/conformance/host-delivery-review.md`. Planned case location: `docs/conformance/host-delivery-review.md`, `heading:CC-TASK-DESIGN-PRINCIPLES-STABLE-STRUCTURE`.
+Public source: `data-formats/task.md`, section **Design Principles / Stable Structure**. Intended target: `docs/conformance/host-delivery-review.md`. Planned case location: `docs/conformance/host-delivery-review.md`, `heading:RV-CC-TASK-DESIGN-PRINCIPLES-STABLE-STRUCTURE`.
 
-Case plan: Review proposed schema extensions against the stable nested-object evolution rule; this is a documentation review, not a runtime test.
+Case plan: no automated case; review case `RV-CC-TASK-DESIGN-PRINCIPLES-STABLE-STRUCTURE`: Human review case; not automated coverage. Reviewer role: Specification maintainer reviewer (independent of the change author). Reviewed artifact: Proposed task schema changes and their specification diffs at the reviewed specification revision. Checklist: (1) Does the proposal add a new top-level task field? (2) If a new top-level field is proposed, does the change record why the extension cannot be placed inside an existing nested object (`input`, `options`, `schedule`, `execution`, `safety` or `labels`)? (3) Are extensions that fit an existing nested object placed there? (4) Is the change frequency of the top-level schema kept rare, with the change recorded in the specification change history? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
 Scope: Host, collector or specification review; no runtime enforcement claim. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-TASK-0006 -->
 
-- [REQ-TASK-0006](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/task.md#REQ-TASK-0006) → `CC-TASK-DESIGN-PRINCIPLES-STABLE-STRUCTURE`.
+- [REQ-TASK-0006](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/task.md#REQ-TASK-0006) → `RV-CC-TASK-DESIGN-PRINCIPLES-STABLE-STRUCTURE`.
 
 ### CC-CONTEXT-OVERVIEW
 
@@ -2022,7 +2038,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `library/network-context.md`, section **Context Layers / Access Context**. Intended target: `internal/networkcontext/acquire.go`. Planned case location: `internal/networkcontext/cross_cutting_conformance_test.go`, `symbol:TestCcContextContextLayersAccessContext`.
 
-Case plan: Expose only normalized coarse platform fields and inspect every listed forbidden identifier sink.
+Case plan: Feed the Go core access context through a fake platform that also offers canary values for every forbidden item: interface name, local IPv4 and IPv6 addresses, DNS server address, SSID, BSSID, cell identifier, SIM information, subscriber identifier, carrier account information and physical location. Iterate `network_type` over `wifi`, `cellular`, `ethernet`, `other` and `unknown`, `vpn_state` over `detected`, `not_detected` and `unknown`, `ipv4_available`, `ipv6_available` and `validated` over `yes`, `no` and `unknown`, and `network_changed` over `true` and `false`. Assert the serialized access object contains exactly these six fields with the supplied normalized values. Assert serialized output of the access object, the Measurement Result, logs, cache entries and egress-endpoint requests contains none of the canary values. Reject an access input carrying any additional field. Requirements: REQ-CONTEXT-0002, REQ-CONTEXT-0003.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -2036,17 +2052,19 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `library/network-context.md`, section **Context Layers / Egress Context**. Intended target: `internal/networkcontext/acquire.go`. Planned case location: `internal/networkcontext/cross_cutting_conformance_test.go`, `symbol:TestCcContextContextLayersEgressContext`.
 
-Case plan: Use a synthetic endpoint observing source addresses; retain only coarse classification, and review endpoint logging and geographic/operator interpretation.
+Case plan: Run synthetic attempts against a local synthetic classification endpoint that records the observed source address and returns `{"country_code": "NL", "region_code": "NL-NH", "asn": 64500, "classification_version": "0.1.0"}`. For a `direct` attempt, assert the egress object contains `status`, `lookup_source`, `network_path: direct`, the classification fields and `classification_version`, and no `connection_code`. For a `proxy` attempt through a scripted loopback CONNECT proxy with `connection_code` `outline_mobileproxy`, assert the lookup goes through the proxy and the egress object includes that `connection_code`. Configure the endpoint to additionally return a field carrying the observed source address and assert the response is rejected and egress reports `status: unavailable`. Assert the recorded source address never appears in serialized results, cache keys, logs or status output. Requirements: REQ-CONTEXT-0004, REQ-CONTEXT-0005, REQ-CONTEXT-0006.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
+
+Review case `RV-CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT`): Human review case; not automated coverage. Reviewer role: Privacy reviewer and measurement interpretation reviewer (independent of the implementer and endpoint operator). Reviewed artifact: Egress-classification endpoint operating documentation and Go result documentation and analyst guidance for egress context at the reviewed revision. Checklist: (1) Does the endpoint operator documentation state that the source IP is classified without being returned and that its retention is minimized or avoided? (2) Is the endpoint logging configuration consistent with that minimization statement? (3) Does result and analyst guidance describe country and region as IP classification, not the user's physical location? (4) Does guidance state that ASN describes the observed egress network and may not identify the access operator, especially with VPN, proxy, carrier-grade NAT or circumvention paths? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
 <!-- requirement-ref: REQ-CONTEXT-0004 -->
 <!-- requirement-ref: REQ-CONTEXT-0005 -->
 <!-- requirement-ref: REQ-CONTEXT-0006 -->
 
-- [REQ-CONTEXT-0004](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0004) → `CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT`.
-- [REQ-CONTEXT-0005](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0005) → `CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT`.
-- [REQ-CONTEXT-0006](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0006) → `CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT`.
+- [REQ-CONTEXT-0004](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0004) → `CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT`, `RV-CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT`.
+- [REQ-CONTEXT-0005](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0005) → `CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT`, `RV-CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT`.
+- [REQ-CONTEXT-0006](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0006) → `CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT`, `RV-CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT`.
 
 ### CC-CONTEXT-HOST-INITIALIZATION
 
@@ -2146,25 +2164,29 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `library/network-context.md`, section **Provider and Operator Interpretation**. Intended target: `internal/networkcontext/acquire.go`. Planned case location: `internal/networkcontext/cross_cutting_conformance_test.go`, `symbol:TestCcContextProviderAndOperatorInterpretation`.
 
-Case plan: Reject inferred provider/operator data from locale/SIM/profile; retain only permitted ASN classifications and review analysis mappings.
+Case plan: Configure a fake platform with canary device locale, timezone, language, SIM country, application store region and user-profile values, and a synthetic classification endpoint. With the endpoint returning only `{"classification_version": "0.1.0"}`, assert the egress object omits `country_code`, `region_code` and `asn` and no provider or operator value appears anywhere in serialized output, so nothing is inferred from the canaries. With the endpoint returning `asn` 64500, assert the ASN and `classification_version` are retained and no free-form provider name field is produced. Configure the endpoint to also return a free-form operator name and assert the response is rejected. Iterate `network_type` `wifi` and `cellular` and assert no mobile operator or SIM carrier field is collected. Requirements: REQ-CONTEXT-0029, REQ-CONTEXT-0030, REQ-CONTEXT-0031.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
+
+Review case `RV-CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION`): Human review case; not automated coverage. Reviewer role: Measurement interpretation reviewer (analyst role independent of the implementer). Reviewed artifact: Analysis documentation describing ASN-to-organization mapping at the reviewed revision. Checklist: (1) Does analysis map ASN to an organization only using the recorded `classification_version` or another documented dataset? (2) Is the mapping dataset and its version documented for each analysis? (3) Is a mapped organization presented as contextual rather than as a verified access-provider identity? (4) Does any analysis derive provider or operator values from locale, timezone, language, SIM country, application store or user profile? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
 <!-- requirement-ref: REQ-CONTEXT-0029 -->
 <!-- requirement-ref: REQ-CONTEXT-0030 -->
 <!-- requirement-ref: REQ-CONTEXT-0031 -->
 
-- [REQ-CONTEXT-0029](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0029) → `CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION`.
-- [REQ-CONTEXT-0030](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0030) → `CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION`.
-- [REQ-CONTEXT-0031](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0031) → `CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION`.
+- [REQ-CONTEXT-0029](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0029) → `CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION`, `RV-CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION`.
+- [REQ-CONTEXT-0030](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0030) → `CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION`, `RV-CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION`.
+- [REQ-CONTEXT-0031](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0031) → `CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION`, `RV-CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION`.
 
 ### CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS
 
 Public source: `library/network-context.md`, section **Privacy and Safety Requirements**. Intended target: `internal/networkcontext/acquire.go`. Planned case location: `internal/networkcontext/cross_cutting_conformance_test.go`, `symbol:TestCcContextPrivacyAndSafetyRequirements`.
 
-Case plan: Canary prohibited data in requests/results and review endpoint approval/log minimization/region necessity/aggregate reporting without censorship claims.
+Case plan: Run synthetic attempts with canary installation, account, device and session identifiers, `task_id`, `test_id`, measurement target hostname, `connection_code`, cookies and a local address present in host and task state, against a recording classification endpoint. Assert each request is a single `GET` to the configured fixed URL with `Accept: application/json` and contains none of the canaries in path, query, headers or body, and carries no `Cookie` or `Authorization` header. Configure the endpoint to return a field carrying the observed IP address and assert the response is rejected. Feed fake platform canaries for GPS location, Wi-Fi identifiers, interface names, cell identifiers, SIM identifiers, phone numbers, subscriber identifiers and carrier account data and assert none appear in any serialized output. Assert a response without `region_code` is accepted with `region_code` absent. Assert that when `asn` is present no provider name field is emitted. Inject endpoint failure (unreachable primary and fallback) and assert egress reports `status: unavailable` with `lookup_source: none`, and the result carries no censorship-indicating outcome attributable to the failure. Requirements: REQ-CONTEXT-0032, REQ-CONTEXT-0035, REQ-CONTEXT-0036, REQ-CONTEXT-0037, REQ-CONTEXT-0038, REQ-CONTEXT-0039, REQ-CONTEXT-0040, REQ-CONTEXT-0041, REQ-CONTEXT-0042.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
+
+Review case `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`): Human review case; not automated coverage. Reviewer role: Privacy and safety reviewer (independent of the implementer and endpoint operator). Reviewed artifact: Host deployment configuration, endpoint privacy review records, endpoint operator logging configuration and public-reporting methodology at the reviewed revision. Checklist: (1) Are the configured primary and fallback endpoints each covered by a recorded privacy review? (2) Does the endpoint operator disable or minimize raw access logs and avoid combining source IP and request time with unrelated user or application data? (3) Does the deployed endpoint return only coarse classifications and never the observed IP address? (4) Is region collection enabled only where its necessity and reliability are documented? (5) Does public reporting aggregate context into sufficiently broad groups rather than raw combinations of region, ASN, network type, connection code and time? (6) Does reporting avoid treating endpoint or classification failure as evidence of censorship? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
 <!-- requirement-ref: REQ-CONTEXT-0032 -->
 <!-- requirement-ref: REQ-CONTEXT-0035 -->
@@ -2176,15 +2198,15 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-CONTEXT-0041 -->
 <!-- requirement-ref: REQ-CONTEXT-0042 -->
 
-- [REQ-CONTEXT-0032](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0032) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-CONTEXT-0035](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0035) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-CONTEXT-0036](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0036) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-CONTEXT-0037](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0037) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-CONTEXT-0038](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0038) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-CONTEXT-0039](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0039) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-CONTEXT-0040](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0040) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-CONTEXT-0041](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0041) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-CONTEXT-0042](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0042) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-CONTEXT-0032](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0032) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-CONTEXT-0035](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0035) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-CONTEXT-0036](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0036) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-CONTEXT-0037](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0037) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-CONTEXT-0038](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0038) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-CONTEXT-0039](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0039) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-CONTEXT-0040](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0040) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-CONTEXT-0041](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0041) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-CONTEXT-0042](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/network-context.md#REQ-CONTEXT-0042) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
 
 ### CC-CONTEXT-PLATFORM-COLLECTION
 
@@ -2204,7 +2226,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `library/proxy.md`, section **Overview**. Intended target: `internal/execution/proxy.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcProxyOverview`.
 
-Case plan: Reject transports beyond the registered single local HTTP/1.1 CONNECT stream capability.
+Case plan: Configure a scripted local proxy listener on `127.0.0.1` and accept the configuration `{"host": "127.0.0.1", "port": 54321, "connection_code": "outline_mobileproxy"}` with no test identifiers or test capability declaration. Run a TCP-01 proxy attempt and assert the library opens one TCP connection to the loopback endpoint and sends an HTTP/1.1 `CONNECT` request line for the target authority, and nothing else is used as proxy transport. Reject configurations adding a transport selector such as `"type": "socks5"`, a declared supported-tests list, or a non-loopback `host` such as `192.0.2.1`, leaving the previous configuration unchanged. Script the listener to reply with a SOCKS handshake reply or a non-HTTP/1.1 status line and assert the attempt fails per the public outcome table without direct fallback. Reject a DNS-01 task with `network_path: proxy` using UDP transport, which needs a non-stream capability. Requirements: REQ-PROXY-0001.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -2216,17 +2238,19 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `library/proxy.md`, section **Host Integration**. Intended target: `internal/execution/proxy.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcProxyHostIntegration`.
 
-Case plan: Exercise initialize/replace/clear via serializable values, and keep egress endpoint configuration separate; review bindings for prohibited native objects/callbacks.
+Case plan: Exercise the Go binding-facing initialization, replacement and clearing entry points using only ordinary serializable values: initialize with a proxy object {host "127.0.0.1", port 54321, connection_code "outline_mobileproxy"}, replace it with {host "127.0.0.1", port 55001, connection_code "outline_mobileproxy"}, then clear it. Assert after each call that the active configuration equals exactly the supplied object (or no proxy after clearing) and that a recording fake proxy listener receives new proxy-task tunnels only on the port of the current configuration. Run a concurrent reader during replacement and assert it observes either the complete previous or the complete new object, never a mixed host/port/connection_code combination, so replacement is atomic. Assert the exported initialization, setProxy-equivalent and clearProxy-equivalent signatures take only strings, integers and maps/JSON bytes, with no callback, interface, socket or object parameter. Initialize with both a proxy object and a separate top-level network_context object {primary_endpoint, fallback_endpoint} and assert both are configured independently; a proxy object carrying primary_endpoint or fallback_endpoint is rejected, and replacing or clearing the proxy leaves the configured egress endpoints unchanged. Requirements: REQ-PROXY-0002, REQ-PROXY-0003, REQ-PROXY-0004.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
+
+Review case `RV-CC-PROXY-HOST-INTEGRATION` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-PROXY-HOST-INTEGRATION`): Human review case; not automated coverage. Reviewer role: Mobile binding reviewer (independent of the binding implementer). Reviewed artifact: Android, Apple and Flutter binding source and integration documentation for proxy initialization, replacement and clearing at the reviewed revision. Checklist: (1) Do the Android, Apple and Flutter bindings accept the proxy only as ordinary serializable values (host, port, connection_code)? (2) Is the host free of any requirement to supply native callbacks, interfaces, sockets or complex objects to configure, replace or clear the proxy? (3) Does each binding's method naming map to initialization, atomic replacement and clearing with semantics equivalent to the Go core contract? (4) Do the bindings and documentation configure the egress-classification endpoints separately at initialization rather than as properties of the proxy object? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
 <!-- requirement-ref: REQ-PROXY-0002 -->
 <!-- requirement-ref: REQ-PROXY-0003 -->
 <!-- requirement-ref: REQ-PROXY-0004 -->
 
-- [REQ-PROXY-0002](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/proxy.md#REQ-PROXY-0002) → `CC-PROXY-HOST-INTEGRATION`.
-- [REQ-PROXY-0003](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/proxy.md#REQ-PROXY-0003) → `CC-PROXY-HOST-INTEGRATION`.
-- [REQ-PROXY-0004](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/proxy.md#REQ-PROXY-0004) → `CC-PROXY-HOST-INTEGRATION`.
+- [REQ-PROXY-0002](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/proxy.md#REQ-PROXY-0002) → `CC-PROXY-HOST-INTEGRATION`, `RV-CC-PROXY-HOST-INTEGRATION`.
+- [REQ-PROXY-0003](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/proxy.md#REQ-PROXY-0003) → `CC-PROXY-HOST-INTEGRATION`, `RV-CC-PROXY-HOST-INTEGRATION`.
+- [REQ-PROXY-0004](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/proxy.md#REQ-PROXY-0004) → `CC-PROXY-HOST-INTEGRATION`, `RV-CC-PROXY-HOST-INTEGRATION`.
 
 ### CC-PROXY-PROXY-CONFIGURATION
 
@@ -2364,7 +2388,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `library/proxy.md`, section **Result Metadata**. Intended target: `internal/execution/proxy.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcProxyResultMetadata`.
 
-Case plan: Produce direct/proxy success/failure results and inspect normalized path/category while excluding endpoint/generation/CONNECT/raw transport configuration.
+Case plan: Use a scripted transport and a fake local HTTP CONNECT proxy configured with synthetic canary values (host "127.0.0.1", a distinctive canary port, connection_code "outline_mobileproxy") to produce four attempts: direct success, direct failure, proxied success after a scripted 2xx CONNECT response, and proxied failures recorded as proxy_connect_failed (scripted non-2xx CONNECT response carrying canary response headers and a canary body) and proxy_unavailable (closed listener port). Assert every proxied result records network_context.egress.network_path "proxy" and connection_code "outline_mobileproxy", including when no network_context endpoints are configured and egress status is unavailable, and every direct result records network_path "direct" with connection_code absent. Assert the serialized results and bundle contain no proxy host or port field or value, no proxy generation value, no CONNECT request line or authority echo, none of the canary proxy response headers or body, and no Outline transport configuration canary passed to the host fake; assert no CONNECT status class field is present unless the pinned result schema defines one. Requirements: REQ-PROXY-0031, REQ-PROXY-0032, REQ-PROXY-0033.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -2380,9 +2404,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `library/proxy.md`, section **Privacy, Safety, and Interpretation**. Intended target: `internal/execution/proxy.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcProxyPrivacySafetyAndInterpretation`.
 
-Case plan: Attempt task-driven endpoint/target/policy/identity bypasses; review path-comparison claims against repeated equivalent inputs and independent evidence.
+Case plan: Submit synthetic tasks that attempt to choose or alter the proxy endpoint through execution, input, options, labels or unknown fields (proxy, host, port, endpoint, connection_code) and assert each is rejected at admission with a bounded admission error before any network activity, while the host-configured proxy remains unchanged. Configure a valid proxy with trusted local policy that disallows proxy use and assert a network_path "proxy" task ends not_run with reason proxy_not_permitted and opens no connection. Drive proxy_unavailable, proxy_connect_failed and proxy_reconfigured with a scripted proxy and a recording direct transport and assert zero direct dials to the target and no automatic retry through the direct path. Iterate loopback, private, link-local and other targets prohibited by target validation on both direct and proxy paths and assert identical rejection; assert connection_code in results is copied byte-for-byte from host configuration, never extended with session, installation or endpoint material, and cannot be set by a task. Produce a direct failure followed by a proxied success for the same synthetic target and assert the library emits two independent results with no derived comparison, censorship or path-verdict field. Requirements: REQ-PROXY-0034, REQ-PROXY-0035, REQ-PROXY-0036, REQ-PROXY-0037, REQ-PROXY-0038, REQ-PROXY-0039, REQ-PROXY-0040, REQ-PROXY-0041.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
+
+Review case `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`): Human review case; not automated coverage. Reviewer role: Measurement interpretation reviewer (analyst role independent of the implementer). Reviewed artifact: Go result documentation and host/analyst guidance for direct versus proxied path comparison at the reviewed implementation revision. Checklist: (1) Does the guidance state that a successful proxied result does not prove the direct path is censored? (2) Does the guidance list outages, DNS-path differences, endpoint changes, proxy behavior and transient network conditions as alternative explanations for a direct failure followed by proxied success? (3) Does the guidance require repeated observations, stable network context, equivalent test inputs and independent supporting signals before any stronger interpretation? (4) Does the guidance note that hostname-based CONNECT moves destination resolution behind the proxy, so proxied HTTP results are not pure transport-only comparisons? (5) Does host integration guidance require connection_code values coarse enough not to identify a user, account, server, session or installation? (6) Does the guidance avoid describing local-policy proxy rejections or proxy execution states as evidence of censorship? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
 <!-- requirement-ref: REQ-PROXY-0034 -->
 <!-- requirement-ref: REQ-PROXY-0035 -->
@@ -2393,30 +2419,32 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-PROXY-0040 -->
 <!-- requirement-ref: REQ-PROXY-0041 -->
 
-- [REQ-PROXY-0034](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/proxy.md#REQ-PROXY-0034) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-PROXY-0035](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/proxy.md#REQ-PROXY-0035) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-PROXY-0036](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/proxy.md#REQ-PROXY-0036) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-PROXY-0037](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/proxy.md#REQ-PROXY-0037) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-PROXY-0038](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/proxy.md#REQ-PROXY-0038) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-PROXY-0039](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/proxy.md#REQ-PROXY-0039) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-PROXY-0040](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/proxy.md#REQ-PROXY-0040) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-PROXY-0041](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/proxy.md#REQ-PROXY-0041) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-PROXY-0034](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/proxy.md#REQ-PROXY-0034) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-PROXY-0035](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/proxy.md#REQ-PROXY-0035) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-PROXY-0036](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/proxy.md#REQ-PROXY-0036) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-PROXY-0037](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/proxy.md#REQ-PROXY-0037) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-PROXY-0038](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/proxy.md#REQ-PROXY-0038) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-PROXY-0039](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/proxy.md#REQ-PROXY-0039) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-PROXY-0040](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/proxy.md#REQ-PROXY-0040) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-PROXY-0041](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/proxy.md#REQ-PROXY-0041) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
 
 ### CC-LIMIT-PURPOSE
 
 Public source: `library/registered-limits.md`, section **Purpose**. Intended target: `internal/validation/limits.go`. Planned case location: `internal/validation/cross_cutting_conformance_test.go`, `symbol:TestCcLimitPurpose`.
 
-Case plan: Apply stricter local/registered values; exceed limits without silent clamping. Review application-byte versus lower-layer overhead interpretation.
+Case plan: Registry and stricter values: with no local override, assert a task requesting max_bytes_sent 65,536 is accepted with that exact effective value and 65,537 is rejected at admission; with trusted local policy setting a stricter max_bytes_sent of 16,384, assert 16,384 is accepted unchanged and 16,385 is rejected, and repeat for max_duration_ms (60,000 accepted, 60,001 rejected) and max_connections (12 accepted, 13 rejected). Assert no rejected task is accepted with a reduced (clamped) effective value and no accepted task's effective limits differ from the requested values. Counted layer: per registered-limits.md Purpose (REQ-LIMIT-0003) byte limits count UTF-8 or encoded application data and are not exact on-wire limits, and per the Attempt Limits table max_bytes_sent counts application bytes supplied to network APIs excluding lower-layer framing and max_bytes_received counts application bytes accepted from network APIs before parsing stops; operating-system, DNS, TCP, TLS, HTTP and proxy overhead is not counted. Use a scripted transport that reports application bytes and lower-layer overhead bytes (TCP/TLS record framing and proxy CONNECT exchange) as separate counters. With default max_bytes_sent 32,768, assert 32,768 application bytes plus 40,000 overhead bytes completes without a byte-limit stop, 32,769 application bytes stops the attempt with reason resource_limit, and 1,000 application bytes plus 100,000 overhead bytes is not stopped; repeat for max_bytes_received at the default 131,072 (131,072 accepted, 131,073 stops). Assert only the application-byte counter is compared with the limit. Requirements: REQ-LIMIT-0001, REQ-LIMIT-0002, REQ-LIMIT-0003.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
+
+Review case `RV-CC-LIMIT-PURPOSE` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-LIMIT-PURPOSE`): Human review case; not automated coverage. Reviewer role: Specification and measurement-safety reviewer (independent of the implementer). Reviewed artifact: Go limit-accounting documentation and per-test byte-accounting mapping at the reviewed implementation revision. Checklist: (1) For each registered test, does the documented mapping state which bytes (for example HTTP request headers, DNS message bytes, TLS handshake bytes) are treated as application data versus lower-layer overhead, consistently with registered-limits.md Purpose and the Attempt Limits table? (2) Is the classification of the proxy CONNECT exchange as lower-layer proxy overhead consistent with the public text, or is the ambiguity recorded in Specification Issues? (3) Does the documentation avoid presenting byte limits as exact on-wire limits? (4) Where a public test specification defines a value stricter than the registry, does the implementation document and apply the stricter value? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
 <!-- requirement-ref: REQ-LIMIT-0001 -->
 <!-- requirement-ref: REQ-LIMIT-0002 -->
 <!-- requirement-ref: REQ-LIMIT-0003 -->
 
-- [REQ-LIMIT-0001](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0001) → `CC-LIMIT-PURPOSE`.
-- [REQ-LIMIT-0002](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0002) → `CC-LIMIT-PURPOSE`.
-- [REQ-LIMIT-0003](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0003) → `CC-LIMIT-PURPOSE`.
+- [REQ-LIMIT-0001](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0001) → `CC-LIMIT-PURPOSE`, `RV-CC-LIMIT-PURPOSE`.
+- [REQ-LIMIT-0002](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0002) → `CC-LIMIT-PURPOSE`, `RV-CC-LIMIT-PURPOSE`.
+- [REQ-LIMIT-0003](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0003) → `CC-LIMIT-PURPOSE`, `RV-CC-LIMIT-PURPOSE`.
 
 ### CC-LIMIT-TASK-AND-IDENTIFIER-LIMITS
 
@@ -2530,25 +2558,29 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `library/registered-limits.md`, section **Context, Linkage, and Retention Limits**. Intended target: `internal/persistence/retention.go`. Planned case location: `internal/persistence/cross_cutting_conformance_test.go`, `symbol:TestCcLimitContextLinkageAndRetentionLimits`.
 
-Case plan: Exercise every endpoint/cache/rotation/retention/replay maximum with deterministic time; durable ack deletes immediately, expiry prevents late upload, and deployment retention needs separate review.
+Case plan: Use a deterministic clock, fake Network Context endpoints, fake private-state storage and a recording uploader. Network Context endpoint response: 4,096 bytes accepted, 4,097 bytes not accepted as context (fallback or unavailable egress per network-context.md). Endpoint operation: response at 4,999 ms accepted, at 5,001 ms the operation is stopped. In-memory context freshness: with the default 300 seconds, cached context reused at 300 seconds and not reused at 301 seconds; where freshness is configurable, 900 seconds accepted and 901 rejected. Linkage rotation period: 86,399 rejected, 86,400 and 604,800 accepted, 604,801 rejected, and absent configuration yields no linkage. Unacknowledged bundle retention: with 86,400 seconds, a pending bundle is uploadable before expiry and, once older than 86,400 seconds, is deleted and the recording uploader sees no upload attempt; a configured retention of 86,401 is rejected. Accepted-task replay state: for a task with validity V, the replay record exists until V plus 86,400 seconds and is gone afterwards, and never exists beyond 691,200 seconds. Durable acknowledgement: after acknowledgement processing returns, assert the acknowledged bundle is absent from storage and that no canary result bytes remain in any library-owned storage. Requirements: REQ-LIMIT-0023, REQ-LIMIT-0024, REQ-LIMIT-0025.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
+
+Review case `RV-CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`): Human review case; not automated coverage. Reviewer role: Deployment privacy reviewer (independent of the deployment operator). Reviewed artifact: Deployment retention documentation for collector, host analytics, crash reporting and research storage at the reviewed revision. Checklist: (1) Does each of collector, host analytics, crash reporting and research storage have an explicit documented retention period? (2) Does any documented period rely on the 86,400-second local bundle retention or the 691,200-second replay-state cap as permission to retain data for that duration or longer? (3) Is each documented period justified independently of the library's local maxima? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
 <!-- requirement-ref: REQ-LIMIT-0023 -->
 <!-- requirement-ref: REQ-LIMIT-0024 -->
 <!-- requirement-ref: REQ-LIMIT-0025 -->
 
-- [REQ-LIMIT-0023](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0023) → `CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`.
-- [REQ-LIMIT-0024](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0024) → `CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`.
-- [REQ-LIMIT-0025](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0025) → `CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`.
+- [REQ-LIMIT-0023](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0023) → `CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`, `RV-CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`.
+- [REQ-LIMIT-0024](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0024) → `CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`, `RV-CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`.
+- [REQ-LIMIT-0025](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0025) → `CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`, `RV-CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`.
 
 ### CC-LIMIT-LIMIT-HANDLING
 
 Public source: `library/registered-limits.md`, section **Limit Handling**. Intended target: `internal/execution/budget.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcLimitLimitHandling`.
 
-Case plan: Inject admission and runtime limit violations; close each resource class, emit only registered outcomes/fields, deny task bypasses and review increases against version/threat-model gates.
+Case plan: Admission: with a recording transport, submit tasks that each exceed one registered maximum by one unit (complete Task JSON 65,537 bytes, task_id 129 bytes, input 49,153 bytes, options 8,193 bytes, 17 labels, 29 runs per task, max_duration_ms 60,001, max_bytes_sent 65,537, max_bytes_received 262,145, max_connections 13, a NET-05 profile with 9 primitive steps) and assert each is rejected with a bounded admission error such as task_limit_exceeded and zero network activity, while the at-maximum variant is accepted. Runtime: with fake clocks and scripted transports, drive the outer deadline (reason attempt_deadline_exceeded), received bytes beyond max_bytes_received and a connection beyond max_connections (reason resource_limit), and an HTTP-01 body reaching its bound (registered body_limit_reached observation) and assert the active operation stops with that registered outcome. Assert a resource tracker shows every socket, body, timer, callback and temporary file closed after each stop, and assert serialized results contain no limit values or raw counters beyond fields the applicable result schema defines. Iterate attempts to raise a limit through labels, input, options, schedule, execution, safety and an unknown field, and through host configuration above a registered maximum, and assert rejection with effective limits unchanged. Requirements: REQ-LIMIT-0026, REQ-LIMIT-0027, REQ-LIMIT-0028, REQ-LIMIT-0029, REQ-LIMIT-0030, REQ-LIMIT-0031.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
+
+Review case `RV-CC-LIMIT-LIMIT-HANDLING` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-LIMIT-LIMIT-HANDLING`): Human review case; not automated coverage. Reviewer role: Specification governance and threat-model reviewer. Reviewed artifact: Change history of the Go limit constants and the corresponding public registered-limits.md versions at the reviewed revision. Checklist: (1) Do the implementation's registered maxima match registered-limits.md at the pinned specification version? (2) Is every increase of a registered maximum in the history accompanied by a new reviewed public specification version? (3) Is a threat-model review recorded for every such increase? (4) Does no documented host or deployment configuration path allow raising a value above the registered maximum? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
 <!-- requirement-ref: REQ-LIMIT-0026 -->
 <!-- requirement-ref: REQ-LIMIT-0027 -->
@@ -2557,24 +2589,26 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-LIMIT-0030 -->
 <!-- requirement-ref: REQ-LIMIT-0031 -->
 
-- [REQ-LIMIT-0026](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0026) → `CC-LIMIT-LIMIT-HANDLING`.
-- [REQ-LIMIT-0027](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0027) → `CC-LIMIT-LIMIT-HANDLING`.
-- [REQ-LIMIT-0028](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0028) → `CC-LIMIT-LIMIT-HANDLING`.
-- [REQ-LIMIT-0029](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0029) → `CC-LIMIT-LIMIT-HANDLING`.
-- [REQ-LIMIT-0030](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0030) → `CC-LIMIT-LIMIT-HANDLING`.
-- [REQ-LIMIT-0031](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0031) → `CC-LIMIT-LIMIT-HANDLING`.
+- [REQ-LIMIT-0026](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0026) → `CC-LIMIT-LIMIT-HANDLING`, `RV-CC-LIMIT-LIMIT-HANDLING`.
+- [REQ-LIMIT-0027](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0027) → `CC-LIMIT-LIMIT-HANDLING`, `RV-CC-LIMIT-LIMIT-HANDLING`.
+- [REQ-LIMIT-0028](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0028) → `CC-LIMIT-LIMIT-HANDLING`, `RV-CC-LIMIT-LIMIT-HANDLING`.
+- [REQ-LIMIT-0029](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0029) → `CC-LIMIT-LIMIT-HANDLING`, `RV-CC-LIMIT-LIMIT-HANDLING`.
+- [REQ-LIMIT-0030](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0030) → `CC-LIMIT-LIMIT-HANDLING`, `RV-CC-LIMIT-LIMIT-HANDLING`.
+- [REQ-LIMIT-0031](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0031) → `CC-LIMIT-LIMIT-HANDLING`, `RV-CC-LIMIT-LIMIT-HANDLING`.
 
 ### CC-LINKAGE-OVERVIEW
 
 Public source: `library/result-linkage.md`, section **Overview**. Intended target: `internal/bundle/linkage.go`. Planned case location: `internal/bundle/cross_cutting_conformance_test.go`, `symbol:TestCcLinkageOverview`.
 
-Case plan: Initialize without linkage; verify no cross-bundle token and review pseudonymous terminology.
+Case plan: Initialize once without result_linkage and once with mode "none", then build at least three bundles across two rotation epochs using a deterministic clock and a fake LinkageKeyStore. Assert no bundle contains a linkage object, each bundle_id is distinct and single-use, no bundle-level value other than schema constants and task-defined fields repeats across bundles, and the fake key store records zero DeriveHMACSHA256 calls and no secret creation. Enable rotating_installation with synthetic scope "org.example.app.test" and assert the linkage object contains only mode, scope, epoch and token, with no person, account, device or access-network field. Requirements: REQ-LINKAGE-0001.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
+Review case `RV-CC-LINKAGE-OVERVIEW` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-LINKAGE-OVERVIEW`): Human review case; not automated coverage. Reviewer role: Privacy documentation reviewer (independent of the implementer). Reviewed artifact: Go linkage API documentation and host integration guidance at the reviewed implementation revision. Checklist: (1) Does the documentation describe linkage as pseudonymous and never as anonymous? (2) Does the documentation state that linkage does not identify a person, host application account, device or access network? (3) Does the documentation state that the default mode is no cross-bundle linkage? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
+
 <!-- requirement-ref: REQ-LINKAGE-0001 -->
 
-- [REQ-LINKAGE-0001](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0001) → `CC-LINKAGE-OVERVIEW`.
+- [REQ-LINKAGE-0001](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0001) → `CC-LINKAGE-OVERVIEW`, `RV-CC-LINKAGE-OVERVIEW`.
 
 ### CC-LINKAGE-GOALS-AND-NON-GOALS
 
@@ -2592,19 +2626,21 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `library/result-linkage.md`, section **Initialization Configuration**. Intended target: `internal/bundle/linkage.go`. Planned case location: `internal/bundle/cross_cutting_conformance_test.go`, `symbol:TestCcLinkageInitializationConfiguration`.
 
-Case plan: Exercise mode-dependent fields, scope syntax/non-user-specific review, period bounds, default none and trusted reinitialization/local-policy control.
+Case plan: Iterate result_linkage initialization values: mode "none" and "rotating_installation" accepted; other strings and wrong case rejected. For rotating_installation, missing scope or missing rotation_period_seconds rejected; scope of 1 and 128 allowed characters accepted, empty and 129 characters rejected, uppercase letters, spaces, "/" and non-ASCII rejected; rotation_period_seconds 86,399 rejected, 86,400 and 604,800 accepted, 604,801 rejected. For mode "none", scope or rotation_period_seconds present is rejected. Absent result_linkage behaves as mode "none" with no linkage object and no key derivation. Assert tasks, scripted server responses and runtime task configuration carrying result_linkage, scope or rotation fields cannot enable linkage, change scope or lengthen rotation; that no runtime setter changes linkage configuration and a changed configuration takes effect only after reinitialization; and that trusted local safety policy disabling linkage yields no linkage object even when initialization requests rotating_installation. Requirements: REQ-LINKAGE-0003, REQ-LINKAGE-0004, REQ-LINKAGE-0005, REQ-LINKAGE-0006.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
+
+Review case `RV-CC-LINKAGE-INITIALIZATION-CONFIGURATION` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-LINKAGE-INITIALIZATION-CONFIGURATION`): Human review case; not automated coverage. Reviewer role: Deployment privacy reviewer (independent of the deployment operator). Reviewed artifact: Deployment result_linkage configuration and its documented scope rationale at the reviewed revision. Checklist: (1) Does the configured scope identify one reviewed Barometer deployment, such as one application environment? (2) Is the scope fixed for the deployment rather than varying per user or installation? (3) Is the scope free of, and not derived from, any user, account, installation, device, access network, proxy endpoint, experiment participant or other high-cardinality value? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
 <!-- requirement-ref: REQ-LINKAGE-0003 -->
 <!-- requirement-ref: REQ-LINKAGE-0004 -->
 <!-- requirement-ref: REQ-LINKAGE-0005 -->
 <!-- requirement-ref: REQ-LINKAGE-0006 -->
 
-- [REQ-LINKAGE-0003](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0003) → `CC-LINKAGE-INITIALIZATION-CONFIGURATION`.
-- [REQ-LINKAGE-0004](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0004) → `CC-LINKAGE-INITIALIZATION-CONFIGURATION`.
-- [REQ-LINKAGE-0005](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0005) → `CC-LINKAGE-INITIALIZATION-CONFIGURATION`.
-- [REQ-LINKAGE-0006](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0006) → `CC-LINKAGE-INITIALIZATION-CONFIGURATION`.
+- [REQ-LINKAGE-0003](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0003) → `CC-LINKAGE-INITIALIZATION-CONFIGURATION`, `RV-CC-LINKAGE-INITIALIZATION-CONFIGURATION`.
+- [REQ-LINKAGE-0004](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0004) → `CC-LINKAGE-INITIALIZATION-CONFIGURATION`, `RV-CC-LINKAGE-INITIALIZATION-CONFIGURATION`.
+- [REQ-LINKAGE-0005](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0005) → `CC-LINKAGE-INITIALIZATION-CONFIGURATION`, `RV-CC-LINKAGE-INITIALIZATION-CONFIGURATION`.
+- [REQ-LINKAGE-0006](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0006) → `CC-LINKAGE-INITIALIZATION-CONFIGURATION`, `RV-CC-LINKAGE-INITIALIZATION-CONFIGURATION`.
 
 ### CC-LINKAGE-INSTALLATION-SECRET
 
@@ -2662,9 +2698,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `library/result-linkage.md`, section **Go Core and Mobile Binding Architecture**. Intended target: `docs/conformance/native-linkage.md`. Planned case location: `docs/conformance/native-linkage.md`, `heading:CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`.
 
-Case plan: Inspect Go/native/Flutter boundary for internal non-exporting capabilities and plain configuration/lifecycle only; reject hidden mobile in-memory fallbacks.
+Case plan: Run automated native device-validation suites on Android and Apple release-configuration builds and through the Flutter package. Initialize through Flutter with only the plain result_linkage map (mode "rotating_installation", synthetic scope, rotation_period_seconds 604,800), create a bundle, then call clearMeasurementData, and assert both calls succeed with equivalent semantics on Android and Apple. Attempt to pass a callback, native interface, key handle, byte array or platform storage object inside or alongside result_linkage and assert rejection. Restart the process within one epoch and assert the token is unchanged, demonstrating the persistent platform adapter is connected rather than an in-memory store. Inject protected-storage unavailability and assert bundles omit the linkage object instead of silently using an in-memory implementation. In a Go desktop test build, assert the ephemeral in-memory implementation is explicitly marked and loses linkage after process exit. Requirements: REQ-LINKAGE-0018, REQ-LINKAGE-0019, REQ-LINKAGE-0020, REQ-LINKAGE-0021, REQ-LINKAGE-0022.
 
 Scope: Native adapter and device release validation; planned outside portable Go runtime. No execution evidence or support claim.
+
+Review case `RV-CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE` (`docs/conformance/native-linkage.md`, `heading:RV-CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`): Human review case; not automated coverage. Reviewer role: Mobile binding architecture reviewer (independent of the binding implementer). Reviewed artifact: Go core, gomobile export surface, Android and Apple binding source and Flutter package API at the reviewed revision. Checklist: (1) Do measurement and bundle logic remain in the Go core? (2) Is the LinkageKeyStore-equivalent capability internal, never accepted from Flutter or the host application, and absent from the gomobile and Flutter exported surface? (3) Is the raw installation secret absent from the capability interface, with derivation performed without exporting the key where the platform supports it? (4) Do the Android and Apple bindings own the concrete storage adapter and connect it during native initialization? (5) Is the ephemeral in-memory implementation unreachable as an unnoticed fallback in mobile builds? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
 <!-- requirement-ref: REQ-LINKAGE-0018 -->
 <!-- requirement-ref: REQ-LINKAGE-0019 -->
@@ -2672,11 +2710,11 @@ Scope: Native adapter and device release validation; planned outside portable Go
 <!-- requirement-ref: REQ-LINKAGE-0021 -->
 <!-- requirement-ref: REQ-LINKAGE-0022 -->
 
-- [REQ-LINKAGE-0018](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0018) → `CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`.
-- [REQ-LINKAGE-0019](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0019) → `CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`.
-- [REQ-LINKAGE-0020](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0020) → `CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`.
-- [REQ-LINKAGE-0021](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0021) → `CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`.
-- [REQ-LINKAGE-0022](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0022) → `CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`.
+- [REQ-LINKAGE-0018](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0018) → `CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`, `RV-CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`.
+- [REQ-LINKAGE-0019](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0019) → `CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`, `RV-CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`.
+- [REQ-LINKAGE-0020](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0020) → `CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`, `RV-CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`.
+- [REQ-LINKAGE-0021](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0021) → `CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`, `RV-CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`.
+- [REQ-LINKAGE-0022](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0022) → `CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`, `RV-CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`.
 
 ### CC-LINKAGE-CLEAR-DATA-CONTRACT
 
@@ -2700,7 +2738,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `library/result-linkage.md`, section **Android Storage**. Intended target: `docs/conformance/native-linkage.md`. Planned case location: `docs/conformance/native-linkage.md`, `heading:CC-LINKAGE-ANDROID-STORAGE`.
 
-Case plan: Plan device checks for non-exporting application Keystore and no-backup state, matching generations/orphan recovery; run explicit/system clear, reinstall, backup/restore/migration and interruption matrix without token continuity.
+Case plan: Run an automated Android device-validation matrix on supported device and OS versions with linkage enabled using a synthetic scope; before each case record the current-epoch token T1. Assert the application-scoped Android Keystore HMAC-SHA-256 key is non-exportable where the platform supports it, associated non-secret state is in the no-backup directory (Context.getNoBackupFilesDir()), no Barometer state exists in shared preferences, Auto Backup or device-to-device-eligible files, external storage or host analytics storage, and backup rules explicitly exclude all Barometer state with no cloud or cross-device synchronization enabled. Iterate explicit clearMeasurementData; system Settings Clear storage or Clear data; uninstall then reinstall; backup and restore to the same and to a different device where supported; device-to-device migration; and interrupted deletion. After each case assert T1 is never emitted again within the same epoch and no case depends on token continuity. For orphan recovery, delete only the key or only the no-backup state and assert initialization detects the generation mismatch, deletes the orphaned material and creates no new secret until linkage is next required. Requirements: REQ-LINKAGE-0027, REQ-LINKAGE-0028, REQ-LINKAGE-0029, REQ-LINKAGE-0030, REQ-LINKAGE-0031.
 
 Scope: Native adapter and device release validation; planned outside portable Go runtime. No execution evidence or support claim.
 
@@ -2720,9 +2758,11 @@ Scope: Native adapter and device release validation; planned outside portable Go
 
 Public source: `library/result-linkage.md`, section **Apple Platform Storage**. Intended target: `docs/conformance/native-linkage.md`. Planned case location: `docs/conformance/native-linkage.md`, `heading:CC-LINKAGE-APPLE-PLATFORM-STORAGE`.
 
-Case plan: Plan device checks for required accessibility/private non-sync Keychain, sentinel truth table and restored-container ambiguity; run uninstall, backup/restore, migration, iCloud settings and interrupted deletion matrix, preferring reset.
+Case plan: Run an automated Apple device-validation matrix with linkage enabled using a synthetic scope; before each case record the current-epoch token T1. Assert the Keychain item uses kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly when background derivation is configured (or kSecAttrAccessibleWhenUnlockedThisDeviceOnly for a foreground-only configuration), kSecAttrSynchronizable false and an application-private access group, and that a separate test application or extension cannot read it. Assert the non-secret reinstall sentinel is in the application sandbox container and not in Keychain, iCloud key-value storage, CloudKit, a shared app group or NSUbiquitousKeyValueStore. Exercise the sentinel truth table: both present, existing state continues; sentinel absent with surviving Keychain item, item deleted, sentinel created and no new secret until linkage is required; sentinel present with Keychain item absent or invalid, inconsistent state removed and no new secret until required. Iterate explicit clearMeasurementData, uninstall then reinstall, encrypted and unencrypted backup/restore, migration to another device, iCloud Keychain enabled and disabled, missing sentinel, missing Keychain item and interrupted deletion, and assert T1 is never accepted or emitted again after reinstall, restore or migration, with linkage reset when a restored container is detected. Requirements: REQ-LINKAGE-0032, REQ-LINKAGE-0033, REQ-LINKAGE-0034, REQ-LINKAGE-0035, REQ-LINKAGE-0036.
 
 Scope: Native adapter and device release validation; planned outside portable Go runtime. No execution evidence or support claim.
+
+Review case `RV-CC-LINKAGE-APPLE-PLATFORM-STORAGE` (`docs/conformance/native-linkage.md`, `heading:RV-CC-LINKAGE-APPLE-PLATFORM-STORAGE`): Human review case; not automated coverage. Reviewer role: Apple platform storage reviewer (independent of the binding implementer). Reviewed artifact: Apple binding storage design notes and device-validation results across the tested OS versions at the reviewed revision. Checklist: (1) Is the choice between kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly and kSecAttrAccessibleWhenUnlockedThisDeviceOnly justified by whether the integration derives tokens in the background? (2) For each tested OS version, is it documented whether a restored container can be reliably distinguished from the original installation? (3) Where it cannot be reliably distinguished, does the integration reset linkage rather than preserve it? (4) Is the Keychain item not shared with unrelated applications, extensions, analytics components or host account services in the shipped entitlement configuration? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
 <!-- requirement-ref: REQ-LINKAGE-0032 -->
 <!-- requirement-ref: REQ-LINKAGE-0033 -->
@@ -2730,11 +2770,11 @@ Scope: Native adapter and device release validation; planned outside portable Go
 <!-- requirement-ref: REQ-LINKAGE-0035 -->
 <!-- requirement-ref: REQ-LINKAGE-0036 -->
 
-- [REQ-LINKAGE-0032](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0032) → `CC-LINKAGE-APPLE-PLATFORM-STORAGE`.
-- [REQ-LINKAGE-0033](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0033) → `CC-LINKAGE-APPLE-PLATFORM-STORAGE`.
-- [REQ-LINKAGE-0034](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0034) → `CC-LINKAGE-APPLE-PLATFORM-STORAGE`.
-- [REQ-LINKAGE-0035](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0035) → `CC-LINKAGE-APPLE-PLATFORM-STORAGE`.
-- [REQ-LINKAGE-0036](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0036) → `CC-LINKAGE-APPLE-PLATFORM-STORAGE`.
+- [REQ-LINKAGE-0032](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0032) → `CC-LINKAGE-APPLE-PLATFORM-STORAGE`, `RV-CC-LINKAGE-APPLE-PLATFORM-STORAGE`.
+- [REQ-LINKAGE-0033](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0033) → `CC-LINKAGE-APPLE-PLATFORM-STORAGE`, `RV-CC-LINKAGE-APPLE-PLATFORM-STORAGE`.
+- [REQ-LINKAGE-0034](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0034) → `CC-LINKAGE-APPLE-PLATFORM-STORAGE`, `RV-CC-LINKAGE-APPLE-PLATFORM-STORAGE`.
+- [REQ-LINKAGE-0035](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0035) → `CC-LINKAGE-APPLE-PLATFORM-STORAGE`, `RV-CC-LINKAGE-APPLE-PLATFORM-STORAGE`.
+- [REQ-LINKAGE-0036](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0036) → `CC-LINKAGE-APPLE-PLATFORM-STORAGE`, `RV-CC-LINKAGE-APPLE-PLATFORM-STORAGE`.
 
 ### CC-LINKAGE-STORAGE-FAILURE
 
@@ -2754,9 +2794,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-LINKAGE-INGESTION-SEPARATION
 
-Public source: `library/result-linkage.md`, section **Ingestion Separation**. Intended target: `docs/conformance/host-delivery-review.md`. Planned case location: `docs/conformance/host-delivery-review.md`, `heading:CC-LINKAGE-INGESTION-SEPARATION`.
+Public source: `library/result-linkage.md`, section **Ingestion Separation**. Intended target: `docs/conformance/host-delivery-review.md`. Planned case location: `docs/conformance/host-delivery-review.md`, `heading:RV-CC-LINKAGE-INGESTION-SEPARATION`.
 
-Case plan: Review a synthetic deployment flow for source-IP/header/account separation, rate/schema/idempotency bounds and required privacy/safety review for account-authenticated delivery.
+Case plan: no automated case; review case `RV-CC-LINKAGE-INGESTION-SEPARATION`: Human review case; not automated coverage. Reviewer role: Collector and deployment privacy/safety reviewer (independent of the collector operator). Reviewed artifact: Synthetic deployment delivery-flow description and collector ingress and research-storage configuration at the reviewed revision. Checklist: (1) Is the network-facing ingress component separated from research storage so transport metadata is removed before bundles reach analysis? (2) Does ingress avoid or minimize source-IP logging? (3) Does ingress remove forwarding headers and other transport identifiers before forwarding? (4) Does the bundle endpoint avoid application account authentication where the deployment permits? (5) Is bundle_id retained only as long as needed for idempotency and retry handling? (6) Are size, rate and schema limits enforced without building a persistent device profile? (7) If bundles are delivered through an API authenticated to a user account, is a separate privacy and safety review recorded and is the integration not described as anonymous? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
 Scope: Host, collector or specification review; no runtime enforcement claim. No execution evidence or support claim.
 
@@ -2764,17 +2804,19 @@ Scope: Host, collector or specification review; no runtime enforcement claim. No
 <!-- requirement-ref: REQ-LINKAGE-0041 -->
 <!-- requirement-ref: REQ-LINKAGE-0042 -->
 
-- [REQ-LINKAGE-0040](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0040) → `CC-LINKAGE-INGESTION-SEPARATION`.
-- [REQ-LINKAGE-0041](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0041) → `CC-LINKAGE-INGESTION-SEPARATION`.
-- [REQ-LINKAGE-0042](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0042) → `CC-LINKAGE-INGESTION-SEPARATION`.
+- [REQ-LINKAGE-0040](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0040) → `RV-CC-LINKAGE-INGESTION-SEPARATION`.
+- [REQ-LINKAGE-0041](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0041) → `RV-CC-LINKAGE-INGESTION-SEPARATION`.
+- [REQ-LINKAGE-0042](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0042) → `RV-CC-LINKAGE-INGESTION-SEPARATION`.
 
 ### CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS
 
 Public source: `library/result-linkage.md`, section **Privacy and Safety Requirements**. Intended target: `internal/bundle/linkage.go`. Planned case location: `internal/bundle/cross_cutting_conformance_test.go`, `symbol:TestCcLinkagePrivacyAndSafetyRequirements`.
 
-Case plan: Inspect all default/control/export/use/context/target/log/retention/reset boundaries with synthetic canaries and review re-identification combinations.
+Case plan: Use a fake LinkageKeyStore holding a synthetic secret canary, a deterministic clock, and recording fakes for logs, diagnostics, crash/analytics hooks, the Network Context endpoints, measurement targets and the local proxy. Assert initialization without result_linkage emits no linkage and creates no key, and that tasks carrying linkage-enabling fields cannot enable it. With rotating_installation enabled, assert the secret canary never appears in any API return value, error, log, diagnostic or hook output, and the token appears only in bundle linkage.token. Assert Network Context requests contain no bundle_id, scope, epoch or token, and target and proxy traffic (including CONNECT requests) contains no linkage material. Assert task admission and scheduling decisions are identical for linkage disabled and for two different tokens. Assert the previous epoch's token is not retained in memory after rotation and that clearMeasurementData removes cached tokens so the next bundle in the same epoch carries a new token. Requirements: REQ-LINKAGE-0043, REQ-LINKAGE-0044, REQ-LINKAGE-0045, REQ-LINKAGE-0046, REQ-LINKAGE-0047, REQ-LINKAGE-0048, REQ-LINKAGE-0049, REQ-LINKAGE-0050, REQ-LINKAGE-0051, REQ-LINKAGE-0052.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
+
+Review case `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`): Human review case; not automated coverage. Reviewer role: Privacy and safety reviewer (independent of the implementer and deployment operator). Reviewed artifact: Go linkage documentation, host integration guidance and deployment analysis/retention plan at the reviewed revision. Checklist: (1) Does all documentation describe the token as installation-scoped and never as a user identifier? (2) Does the deployment plan exclude linkage use for per-installation task selection, retaliation, access control, advertising, product analytics and account enforcement? (3) Is raw token retention bounded to a documented research need? (4) Are combinations of the token with precise timestamps, source IP addresses, rare ASN and region combinations or host account data prevented, or separately reviewed? (5) Does the host expose an explicit user-reachable reset path wherever linkage is enabled? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
 <!-- requirement-ref: REQ-LINKAGE-0043 -->
 <!-- requirement-ref: REQ-LINKAGE-0044 -->
@@ -2787,16 +2829,16 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-LINKAGE-0051 -->
 <!-- requirement-ref: REQ-LINKAGE-0052 -->
 
-- [REQ-LINKAGE-0043](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0043) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-LINKAGE-0044](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0044) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-LINKAGE-0045](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0045) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-LINKAGE-0046](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0046) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-LINKAGE-0047](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0047) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-LINKAGE-0048](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0048) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-LINKAGE-0049](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0049) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-LINKAGE-0050](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0050) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-LINKAGE-0051](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0051) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-LINKAGE-0052](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0052) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-LINKAGE-0043](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0043) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-LINKAGE-0044](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0044) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-LINKAGE-0045](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0045) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-LINKAGE-0046](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0046) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-LINKAGE-0047](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0047) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-LINKAGE-0048](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0048) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-LINKAGE-0049](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0049) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-LINKAGE-0050](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0050) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-LINKAGE-0051](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0051) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-LINKAGE-0052](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/result-linkage.md#REQ-LINKAGE-0052) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
 
 ### CC-TRUST-OVERVIEW
 
@@ -2898,21 +2940,23 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `library/task-trust.md`, section **Task Identifier Rules**. Intended target: `internal/admission/admit.go`. Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustTaskIdentifierRules`.
 
-Case plan: Test exact issuer-scoped replay key, identifier syntax/length and campaign-wide identity; review no participant-specific derivation or targeting.
+Case plan: Iterate task_id values: 1 and 128 bytes of allowed characters (lowercase ASCII letters, digits, ".", "_", "-") accepted; empty and 129 bytes rejected; uppercase, space, "/" and non-ASCII characters rejected, all before any network activity. Replay key: deliver the same task_id from two admitted issuers and assert both are accepted as distinct replay keys; deliver the same task_id from one issuer with identical bytes and assert idempotent redelivery, and with different bytes assert task_id_conflict. Campaign-wide identity: admit identical task bytes on two fake installations with different linkage tokens and assert each accepts the identical task_id and emits it unchanged in results, with no installation-specific rewriting or interpolation. Requirements: REQ-TRUST-0019, REQ-TRUST-0020.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
+
+Review case `RV-CC-TRUST-TASK-IDENTIFIER-RULES` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-TRUST-TASK-IDENTIFIER-RULES`): Human review case; not automated coverage. Reviewer role: Task issuer campaign reviewer (independent of the task author). Reviewed artifact: Issuer task-generation procedure and a sample of issued campaign task definitions at the reviewed revision. Checklist: (1) Does each task_id identify one campaign task definition within the issuer namespace? (2) Is each task_id identical for every installation receiving the same task definition? (3) Is no task_id derived from a person, account, installation, device, advertising ID, push token, linkage token, IP address or other participant-specific value? (4) Is no task_id used to select an individual installation or reconstruct cross-bundle linkage? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
 <!-- requirement-ref: REQ-TRUST-0019 -->
 <!-- requirement-ref: REQ-TRUST-0020 -->
 
-- [REQ-TRUST-0019](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/task-trust.md#REQ-TRUST-0019) → `CC-TRUST-TASK-IDENTIFIER-RULES`.
-- [REQ-TRUST-0020](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/task-trust.md#REQ-TRUST-0020) → `CC-TRUST-TASK-IDENTIFIER-RULES`.
+- [REQ-TRUST-0019](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/task-trust.md#REQ-TRUST-0019) → `CC-TRUST-TASK-IDENTIFIER-RULES`, `RV-CC-TRUST-TASK-IDENTIFIER-RULES`.
+- [REQ-TRUST-0020](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/task-trust.md#REQ-TRUST-0020) → `CC-TRUST-TASK-IDENTIFIER-RULES`, `RV-CC-TRUST-TASK-IDENTIFIER-RULES`.
 
 ### CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING
 
 Public source: `library/task-trust.md`, section **Replay, Duplicate, and Rollback Handling**. Intended target: `internal/admission/state.go`. Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustReplayDuplicateAndRollbackHandling`.
 
-Case plan: Exercise every replay decision with exact bytes/digests, conflicting reuse, rollback, expiry and unavailable state. Inspect minimal bounded persisted record and reset behavior.
+Case plan: Exercise every replay-table row with a deterministic clock and fake persistent storage: a new replay key continues admission; the same key with identical bytes is idempotent redelivery with no duplicate runs and unchanged expiry; the same key with one changed byte (including whitespace only) is rejected as task_id_conflict; a lower policy generation than the active one is rejected as policy_rollback; an expired task is rejected as task_expired and never reactivated on later redelivery; unavailable or corrupted replay state for a remote task fails closed with task_trust_unavailable. Assert the persisted record contains only the (issuer_id, task_id) key, a SHA-256 digest equal to an independently computed digest of the exact accepted bytes, the accepted policy generation and acceptance/expiry classes, and that synthetic canary input, target, label, participant and result strings are absent from stored bytes. After clearMeasurementData, assert a redelivered unexpired task is evaluated as new and an expired one is still rejected as task_expired. Requirements: REQ-TRUST-0021, REQ-TRUST-0022, REQ-TRUST-0023, REQ-TRUST-0024, REQ-TRUST-0025.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -2932,17 +2976,19 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `library/task-trust.md`, section **Targeted Delivery**. Intended target: `internal/admission/admit.go`. Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustTargetedDelivery`.
 
-Case plan: Attempt each prohibited recipient selector and interpolation path; review broad-group host policy and deny linkage-influenced task selection.
+Case plan: Submit synthetic tasks attempting recipient selection by linkage or installation token, bundle_id or run_id, account, advertising, device, SIM, subscriber or push identifiers, exact IP address or precise location, or prior per-installation outcomes, through any selector, label, eligibility or unknown field, and assert each is rejected at admission before network activity. Submit tasks whose task_id, labels, targets or payload contain placeholder syntax for deployment, application version, cohort, country or network values and assert the library performs no local interpolation: values stay literal or the task is rejected. With linkage disabled and with two different synthetic tokens, deliver the same task set and assert identical admission and scheduling decisions, with no token exposed to task-selection or host-policy hooks. Requirements: REQ-TRUST-0026, REQ-TRUST-0027, REQ-TRUST-0028.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
+
+Review case `RV-CC-TRUST-TARGETED-DELIVERY` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-TRUST-TARGETED-DELIVERY`): Human review case; not automated coverage. Reviewer role: Host deployment policy reviewer (independent of the deployment operator). Reviewed artifact: Host task-eligibility policy and its reviewed criteria at the reviewed revision. Checklist: (1) Is eligibility limited to broad deployment, application-version, consented cohort, country or network criteria? (2) Are the criteria non-user-specific and the groups sufficiently broad? (3) Has the policy itself been reviewed and is that review recorded? (4) Does any deployment need participant-specific longitudinal research, and if so is it excluded from claims of compliance with this baseline? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
 <!-- requirement-ref: REQ-TRUST-0026 -->
 <!-- requirement-ref: REQ-TRUST-0027 -->
 <!-- requirement-ref: REQ-TRUST-0028 -->
 
-- [REQ-TRUST-0026](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/task-trust.md#REQ-TRUST-0026) → `CC-TRUST-TARGETED-DELIVERY`.
-- [REQ-TRUST-0027](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/task-trust.md#REQ-TRUST-0027) → `CC-TRUST-TARGETED-DELIVERY`.
-- [REQ-TRUST-0028](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/task-trust.md#REQ-TRUST-0028) → `CC-TRUST-TARGETED-DELIVERY`.
+- [REQ-TRUST-0026](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/task-trust.md#REQ-TRUST-0026) → `CC-TRUST-TARGETED-DELIVERY`, `RV-CC-TRUST-TARGETED-DELIVERY`.
+- [REQ-TRUST-0027](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/task-trust.md#REQ-TRUST-0027) → `CC-TRUST-TARGETED-DELIVERY`, `RV-CC-TRUST-TARGETED-DELIVERY`.
+- [REQ-TRUST-0028](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/task-trust.md#REQ-TRUST-0028) → `CC-TRUST-TARGETED-DELIVERY`, `RV-CC-TRUST-TARGETED-DELIVERY`.
 
 ### CC-TRUST-LOCAL-POLICY-LIFECYCLE
 
@@ -3054,13 +3100,15 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/json-decoding.md`, section **Unit 0007**. Intended target: `internal/jsondecode/decode.go`. Planned case location: `internal/jsondecode/cross_cutting_conformance_test.go`, `symbol:TestCcJsonUnit0007`.
 
-Case plan: Test exact integers around floating-point and machine-width boundaries and finite representation endpoints; reject overflow/rounding/clamping and review full domain coverage.
+Case plan: Iterate integer tokens for bounded fields at their exact endpoints and one beyond: port 0, 1, 65535, 65536; rotation_period_seconds 86,399, 86,400, 604,800, 604,801; max_bytes_received 262,144 and 262,145; assert in-range endpoints decode to exactly their decimal value and out-of-range values are rejected. Inject machine-width and floating-point boundary tokens into each integer field: 4294967296 and 4294967297 (2^32, 2^32+1), 9007199254740992 and 9007199254740993 (2^53, 2^53+1), 9223372036854775807 and 9223372036854775808 (2^63-1, 2^63), 18446744073709551617 (2^64+1) and -1 for non-negative fields; assert each is rejected by range or representation, never wrapped, rounded, truncated or clamped to an in-range value. For each bounded integer field, assert both declared domain endpoints are accepted. For each integer field without a finite public upper bound, assert the documented representation maximum is accepted exactly and maximum plus one is rejected. Requirements: REQ-JSON-0007.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
+Review case `RV-CC-JSON-UNIT-0007` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-JSON-UNIT-0007`): Human review case; not automated coverage. Reviewer role: Data-format reviewer (independent of the decoder implementer). Reviewed artifact: Go decoder integer-representation documentation and the field inventory of public integer fields at the reviewed revision. Checklist: (1) Does the documented exact representation for every bounded integer field cover the field's entire declared domain? (2) Is every integer field lacking a finite public upper bound identified, with a documented and reviewed finite exact representation? (3) Does the field inventory used by the automated case include every integer field in the pinned public schemas? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
+
 <!-- requirement-ref: REQ-JSON-0007 -->
 
-- [REQ-JSON-0007](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/json-decoding.md#REQ-JSON-0007) → `CC-JSON-UNIT-0007`.
+- [REQ-JSON-0007](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/json-decoding.md#REQ-JSON-0007) → `CC-JSON-UNIT-0007`, `RV-CC-JSON-UNIT-0007`.
 
 ### CC-JSON-UNIT-0008
 

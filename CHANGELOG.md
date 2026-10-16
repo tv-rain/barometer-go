@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Made every traceability case plan measurable or explicitly a human review case (DEV-572): templated measurement termination, minimization, version, interpretation and safety plans are replaced with per-measurement specifics; thin cross-cutting plans gain inputs, boundary values, expected outcomes and requirement IDs; judgement-based remainders become 48 typed `RV-*` review cases that are not automated coverage; and the CI traceability driver rejects vague, shared or untyped plans, with negative tests. Baselines, requirement statuses and allocations are unchanged, the DEV-569 manifests are preserved as historical, and no case is executed and no support claimed.
+
 - Reconciled the GO-SPEC-ISSUE-002 disposition with its current state: the public vocabulary resolution merged at public `a944ed6`, while the finding stays open pending runtime and applicable binding/host adoption evidence. Documentation only; no runtime, traceability or support status changes.
 
 - Linked existing Foundation code and unit tests as partial traceability evidence at Go baseline `c5f4e92`: 129 IDs cited by reviewed `requirement-ref` comments are `partial` with existing locations and passing `UT.*` unit-test cases backed by a committed evidence report, 12 comments that did not demonstrate their requirement were removed, prior manifests are preserved as historical, and CI now fails on unknown, retired, unmapped or unlinked Go references. Planned family cases stay unexecuted; no implemented requirement, runtime, platform or field support is claimed.
