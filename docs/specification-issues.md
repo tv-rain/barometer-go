@@ -6,7 +6,7 @@ Current adoption summaries below were reconciled on October 16, 2026 against ver
 
 This record holds Go implementation findings that need public specification clarification. It is not a local specification or an approval to choose behavior. Issue identifiers below belong to this Go findings record; they are not public requirement IDs, conformance-case IDs, or ClickUp task IDs.
 
-Sources are pinned to public specification Draft `0.1.0`, revision `95dfeef1367f4c320bca7c7ae91b13ca7608b37f`, as recorded in the [Normative Source Inventory](normative-sources.md#reviewed-baseline). The source-discovery review found no missing contract file. This record is not an exhaustive semantic audit of all requirements.
+Sources are pinned to public specification Draft `0.1.0`, revision `95dfeef1367f4c320bca7c7ae91b13ca7608b37f`, as recorded in the [Normative Source Inventory](normative-sources.md#reviewed-baseline). The source-discovery review found no missing contract file. This record is not an exhaustive semantic audit of all requirements. Findings from GO-SPEC-ISSUE-003 onward cite their own immutable public baselines.
 
 ## Recording and Reviewing Findings
 
@@ -194,3 +194,131 @@ The public record merged through barometer-spec [PR #10](https://github.com/tv-r
 - The bounds remain the documented local envelope in [Initialization and Configuration Models](configuration-models.md#defaults-validation-and-local-bounds). They are not public maxima, measured device limits or a guarantee to hosts.
 - Existing `internal/config` bound tests remain synthetic regression evidence only.
 - Registering public maxima would need a new specification issue; none is open.
+
+## GO-SPEC-ISSUE-004: Boundary Between `not_run` and `incomplete`
+
+**Current state:** Open, raised October 16, 2026 under [DEV-573](https://app.clickup.com/t/124kk1zc613) from the [DEV-572](https://app.clickup.com/t/124kk1zc5xp) case-plan triage. No public record exists yet. Public maintainers own disposition.
+
+### Identity, Baselines and Requirements
+
+- **Reporter:** the Go implementation agent, under the task owner's instruction. **Duplicates:** none. GO-SPEC-ISSUE-001 and GO-SPEC-ISSUE-002 do not cover execution states.
+- **Shared baseline:** Draft `0.1.0` at [a944ed6c389fec9f0d089f0044ead6fe845328b1](https://github.com/tv-rain/barometer-spec/tree/a944ed6c389fec9f0d089f0044ead6fe845328b1). [REQ-RESULT-0019](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/measurement-result.md#REQ-RESULT-0019) defines `completed`, `incomplete` and `not_run`, with a required reason for the last two. [REQ-RESULT-0021](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/measurement-result.md#REQ-RESULT-0021) gives the state rules. [REQ-RESULT-0023](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/measurement-result.md#REQ-RESULT-0023) and [REQ-RESULT-0024](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/measurement-result.md#REQ-RESULT-0024) make Network Context required for `completed` and `incomplete` remote tests and omissible for `not_run` before a snapshot. [REQ-EXECUTION-0015](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/task-execution.md#REQ-EXECUTION-0015) says only that a task "may not run" when network conditions cannot be detected.
+- **Test baseline:** registered tests at [59d49364d85e48cc8e69c762d130a7a86dc1fe65](https://github.com/tv-rain/barometer-spec/tree/59d49364d85e48cc8e69c762d130a7a86dc1fe65). Each termination rule maps outer interruptions to an incomplete state: REQ-NET-01-0027, REQ-NET-03-0029, REQ-DNS-01-0039, REQ-DNS-03-0028, REQ-DNS-04-0028, REQ-TCP-01-0026, REQ-TLS-01-0027 and REQ-HTTP-01-0038. The NET-05 outcome rules are [REQ-NET-05-0046](https://github.com/tv-rain/barometer-spec/blob/59d49364d85e48cc8e69c762d130a7a86dc1fe65/tests/net-05.md#REQ-NET-05-0046) and [REQ-NET-05-0047](https://github.com/tv-rain/barometer-spec/blob/59d49364d85e48cc8e69c762d130a7a86dc1fe65/tests/net-05.md#REQ-NET-05-0047).
+- **Implementation:** `tv-rain/barometer-go` at `58e03a1f65600371960f735595f0a3c84550611f`. `internal/execution` and `internal/result` model the three states and validate state/reason/measurement combinations. No runner selects a state for a real interruption yet.
+
+### Finding and Interim Handling
+
+No public rule says when an attempt stops being `not_run` and becomes `incomplete`. Four cases are open:
+
+1. An interruption after admission and context capture but before any test traffic.
+2. An interruption after a test's terminal observation is recorded but before its connection is closed.
+3. The execution state that accompanies the NET-05 composite outcomes `network_not_validated` and `inconclusive`.
+4. The state and reason when a required network condition cannot be detected (REQ-EXECUTION-0015), where neither `constraints_unsatisfied` nor `network_context_unavailable` is clearly specified.
+
+The choice matters because it decides whether Network Context must be retained under REQ-RESULT-0023/0024, so it affects data minimization as well as interpretation.
+
+**Blocked:** selecting the state and reason for these four cases in runner, execution and result code ([DEV-561](https://app.clickup.com/t/124kk1zc4a9)), and the corresponding expected values in the `M-*-TERMINATION` case plans. **Interim handling:** existing models keep validating only the documented combinations. Case plans keep deferring to the public table. No fallback state is chosen. **Unaffected:** interruptions during an active protocol operation, which every termination rule already maps to `incomplete` with no `measurement`.
+
+### Impact, Reviews and Alternatives
+
+- **Safety and privacy:** affects whether a context snapshot is retained for an attempt that sent no traffic. Privacy review is required for any rule that retains more context.
+- **Interpretation:** analysts must be able to separate "never started" from "interrupted". Neither state is evidence of interference.
+- **Alternatives:** (a) `not_run` until the first test-specific network operation starts, then `incomplete`; (b) `not_run` only before admission completes; (c) per-test definitions. For cases 2 and 3, choose whether a recorded terminal observation makes the attempt `completed`. For case 4, name one reason.
+- **Compatibility:** a no-text-change clarification is possible only if maintainers find an existing rule that settles each case. Otherwise the change is a Draft `0.1.0` wording change with requirement-ID review.
+
+### Ordering and Closure
+
+A coordination decision is not expected. Prepare a public record first. Once maintainers accept wording, merge it, align internal reviews, then adopt it in Go execution/result code and termination cases. Bindings and hosts follow. Closure requires the public disposition, the merged revision if text changes, and Go adoption evidence.
+
+## GO-SPEC-ISSUE-005: Which Bytes Count Toward Attempt Byte Limits
+
+**Current state:** Open, raised October 16, 2026 under [DEV-573](https://app.clickup.com/t/124kk1zc613) from the DEV-572 triage. No public record exists yet.
+
+### Identity, Baselines and Requirements
+
+- **Reporter:** the Go implementation agent, under the task owner's instruction. **Duplicates:** none.
+- **Baseline:** Draft `0.1.0` at [a944ed6c389fec9f0d089f0044ead6fe845328b1](https://github.com/tv-rain/barometer-spec/tree/a944ed6c389fec9f0d089f0044ead6fe845328b1). [REQ-LIMIT-0006](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0006) counts `max_bytes_sent` as "application bytes supplied to network APIs, excluding lower-layer framing" and `max_bytes_received` as "application bytes accepted from network APIs before parsing stops". [REQ-LIMIT-0003](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0003) says byte limits are not exact on-wire limits because operating-system, DNS, TCP, TLS, HTTP and proxy layers may add overhead. [REQ-LIMIT-0016](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0016) and [REQ-LIMIT-0019](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/library/registered-limits.md#REQ-LIMIT-0019) add separate header, prefix and composite byte bounds.
+- **Implementation:** no byte-budget enforcement exists at `58e03a1f65600371960f735595f0a3c84550611f`.
+
+### Finding and Interim Handling
+
+REQ-LIMIT-0003 lists HTTP and DNS among the layers whose overhead is outside the counted data. But for HTTP-01, NET-03 and DNS-03 the HTTP request line and headers are what the test supplies to an HTTP API, and for DNS tests the DNS message is the payload. The text does not say whether these count as application bytes:
+
+- HTTP request lines and headers, and HTTP response headers, already bounded separately at 16,384 bytes;
+- DoH HTTP framing and DoT two-byte length prefixes;
+- the proxy CONNECT exchange, which REQ-LIMIT-0003 names as proxy overhead, while `max_connections` counts CONNECT tunnels.
+
+Two conforming implementations could therefore stop the same task at different points.
+
+**Blocked:** byte-budget accounting in [DEV-562](https://app.clickup.com/t/124kk1zc4ab) for HTTP-01, NET-03, DNS-03, DNS-04 and NET-05 aggregation, and the expected boundary values in the `CC-LIMIT-PURPOSE` case plan. **Interim handling:** no accounting layer is chosen; plans keep the open question visible in the `RV-CC-LIMIT-PURPOSE` review case. **Unaffected:** connection, duration, body-prefix and header-size bounds, which have their own units.
+
+### Impact, Reviews and Alternatives
+
+- **Safety:** under-counting lets a task send or receive more than a reviewer approved. Over-counting can make small registered targets fail. Resource and traffic-distinctiveness review is required.
+- **Alternatives:** (a) count everything the test hands to the TLS/TCP or system HTTP API, including HTTP headers and DNS messages, and exclude only TLS records, TCP/IP framing and the CONNECT exchange; (b) count only the HTTP message body and DNS message payload; (c) per-test accounting tables.
+- **Compatibility:** registered numbers stay unchanged under (a) and (b). Either changes which tasks reach the limit, so record a version decision.
+
+### Ordering and Closure
+
+Public record and disposition first, then internal alignment, then Go accounting with scripted-transport cases, then bindings. Closure requires the public disposition and Go adoption evidence.
+
+## GO-SPEC-ISSUE-006: NET-03 Over-Bound Response Classification
+
+**Current state:** Open, raised October 16, 2026 under [DEV-573](https://app.clickup.com/t/124kk1zc613) from the DEV-572 triage. No public record exists yet.
+
+### Identity, Baselines and Requirements
+
+- **Reporter:** the Go implementation agent, under the task owner's instruction. **Duplicates:** none.
+- **Baseline:** NET-03 at [59d49364d85e48cc8e69c762d130a7a86dc1fe65](https://github.com/tv-rain/barometer-spec/blob/59d49364d85e48cc8e69c762d130a7a86dc1fe65/tests/net-03.md). The data row of [REQ-NET-03-0021](https://github.com/tv-rain/barometer-spec/blob/59d49364d85e48cc8e69c762d130a7a86dc1fe65/tests/net-03.md#REQ-NET-03-0021) says that on reaching the header or prefix bound the test must "stop reading and classify the response as exceeding the registered validation bound". [REQ-NET-03-0025](https://github.com/tv-rain/barometer-spec/blob/59d49364d85e48cc8e69c762d130a7a86dc1fe65/tests/net-03.md#REQ-NET-03-0025) allows only `expected`, `redirect`, `content_mismatch` and `unexpected`. [REQ-NET-03-0027](https://github.com/tv-rain/barometer-spec/blob/59d49364d85e48cc8e69c762d130a7a86dc1fe65/tests/net-03.md#REQ-NET-03-0027) has no matching outcome. [REQ-NET-03-0029](https://github.com/tv-rain/barometer-spec/blob/59d49364d85e48cc8e69c762d130a7a86dc1fe65/tests/net-03.md#REQ-NET-03-0029) makes a resource limit an incomplete state with no `measurement`.
+- **Implementation:** no NET-03 runner exists at `58e03a1f65600371960f735595f0a3c84550611f`.
+
+### Finding and Interim Handling
+
+The over-bound path has three possible readings: an existing value (`unexpected` or `inconclusive`), a missing new value, or an incomplete execution under REQ-NET-03-0029. The readings differ in whether a measurement exists at all.
+
+**Blocked:** the NET-03 header/prefix bound path, and the matching rows of the `M-NET-03-LIMITS` and `M-NET-03-OUTPUT` plans. **Interim handling:** no value is chosen and no response is classified. **Unaffected:** all other NET-03 paths.
+
+### Impact, Reviews and Alternatives
+
+- **Interpretation:** an oversized validation response could be a captive portal or an ordinary large page. Neither reading is evidence of interference. Measurement review is required.
+- **Alternatives:** (a) map it to `response_class: unexpected` and outcome `unexpected_response`; (b) add a registered value; (c) treat it as `resource_limit` under REQ-NET-03-0029 and drop the classification wording.
+- **Compatibility:** (b) adds a value to Draft output and needs a version decision. (a) and (c) are wording clarifications.
+
+### Ordering and Closure
+
+Public record and disposition first, then Go adoption when the NET-03 runner is implemented. Closure requires the public disposition and Go adoption evidence.
+
+## GO-SPEC-ISSUE-007: Undefined Allowed Values for `risk_factors` and `timezone`
+
+**Current state:** Open, raised October 16, 2026 under [DEV-573](https://app.clickup.com/t/124kk1zc613) from the DEV-572 triage. No public record exists yet. This finding affects merged Foundation code.
+
+### Identity, Baselines and Requirements
+
+- **Reporter:** the Go implementation agent, under the task owner's instruction. **Duplicates:** none. Strict JSON decoding ([GO-SPEC-ISSUE-001](#go-spec-issue-001-duplicate-json-member-names-outside-labels)) fixes member handling, not these value domains.
+- **Baseline:** Draft `0.1.0` at [a944ed6c389fec9f0d089f0044ead6fe845328b1](https://github.com/tv-rain/barometer-spec/tree/a944ed6c389fec9f0d089f0044ead6fe845328b1). [REQ-SAFETY-0012](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/task-safety.md#REQ-SAFETY-0012) requires `risk_factors` for `medium`, `high` and `unknown` risk, and [REQ-SAFETY-0013](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/task-safety.md#REQ-SAFETY-0013) defines the factor fields; neither sets a minimum count. [REQ-SCHEDULE-0013](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/task-schedule.md#REQ-SCHEDULE-0013) describes `timezone` as the timezone used to interpret ranges, "`local` is default", and [REQ-SCHEDULE-0014](https://github.com/tv-rain/barometer-spec/blob/a944ed6c389fec9f0d089f0044ead6fe845328b1/data-formats/task-schedule.md#REQ-SCHEDULE-0014) defines only `local`.
+- **Implementation:** `tv-rain/barometer-go` at `58e03a1f65600371960f735595f0a3c84550611f`:
+  - `internal/taskdecode/schema.go` decodes `risk_factors` as an array with no minimum length. `internal/taskdecode/decode.go` builds an empty, non-nil factor list for `[]`. `internal/validation/task.go` (`validSafety`) rejects only a missing list, so a `medium`, `high` or `unknown` task with `risk_factors: []` is accepted.
+  - `internal/validation/task.go` accepts only `timezone: "local"` and rejects any other value. Its comment records this as the only documented value.
+- **Synthetic reproduction:** on October 16, 2026, a temporary local test using the existing `taskdecode` fixture decoder (not committed) decoded synthetic tasks with `risk_level` `medium`, `high` and `unknown` and `risk_factors: []` without error, and rejected the same tasks with `risk_factors` absent.
+
+### Finding and Interim Handling
+
+Two value domains are unspecified:
+
+- whether an empty `risk_factors` array satisfies "required";
+- which `timezone` values besides `local` exist, and whether others must be rejected.
+
+The current Go choices were made without a public disposition. The `timezone` choice is the conservative one. The `risk_factors` choice is not: it lets a higher-risk task arrive with no machine-readable explanation of its risk.
+
+**Blocked:** further adoption that depends on either domain, and any claim that these validators conform. **Interim handling:** this task does not change Go behavior. Maintainers should decide first. The finding records the more conservative option of rejecting `[]` for `medium`, `high` and `unknown`. Changing merged validation needs its own approved task. **Unaffected:** other safety and schedule validation.
+
+### Impact, Reviews and Alternatives
+
+- **Safety:** `risk_factors` explains effective risk to hosts and reviewers. Safety review is required. Accepting `[]` does not lower effective risk, which is still bounded by the registered baseline, but it weakens review.
+- **Alternatives for `risk_factors`:** (a) require at least one factor, the recommended conservative reading; (b) allow `[]` explicitly.
+- **Alternatives for `timezone`:** (a) close the domain to `local` in Draft `0.1.0`; (b) define an IANA timezone domain with bounds.
+- **Compatibility:** (a) for both matches or tightens current Go behavior. (b) for either is a schema extension that needs a version decision.
+
+### Ordering and Closure
+
+Public record and disposition first. If `risk_factors` must contain at least one factor, a separate Go task changes `validSafety` and adds negative tests. Bindings and hosts follow. Closure requires the public disposition and, where applicable, Go adoption evidence.
