@@ -140,6 +140,89 @@ class ReferenceTests(unittest.TestCase):
                                                       ("internal/a_test.go", 3, "REQ-TASK-0004")])
 
 
+AUTOMATED_PLAN = ("Synthetic core contract cases; Exercise attempt byte budgets of 0, 1, the registered maximum and "
+                  "maximum plus one across three sequential attempts with a scripted transport; assert each attempt "
+                  "starts from the full budget and the over-limit attempt stops with the registered reason. "
+                  "Requirements: REQ-TASK-0001.")
+REVIEW_PLAN = ("Human review case; not automated coverage. Reviewer role: interpretation reviewer. Reviewed artifact: "
+               "host guidance. Checklist: (1) no verdict wording. Evidence record: a review record for REQ-TASK-0001.")
+
+
+class CasePlanTests(unittest.TestCase):
+    def setUp(self):
+        self.manifests = {"a.json": {
+            "requirements": [{"id": "REQ-TASK-0001", "case_ids": ["CC-A", "RV-CC-A", "UT.a.TestA"]}],
+            "cases": [
+                {"id": "CC-A", "scope": AUTOMATED_PLAN, "location": {"path": "internal/a/a_test.go",
+                                                                      "selector": "symbol:TestA"}},
+                {"id": "RV-CC-A", "scope": REVIEW_PLAN, "location": {"path": "docs/review.md",
+                                                                      "selector": "heading:RV-CC-A"}},
+                # Unit-test scopes are bound to their evidence and exempt from the wording rules.
+                {"id": "UT.a.TestA", "scope": "Short evidence scope.", "location": {"path": "internal/a/a_test.go",
+                                                                                    "selector": "symbol:TestA"}},
+            ],
+        }}
+
+    def case(self, identity):
+        return next(case for case in self.manifests["a.json"]["cases"] if case["id"] == identity)
+
+    def test_measurable_and_typed_review_plans_pass(self):
+        self.assertEqual(ci.case_plan_errors(self.manifests), [])
+        self.assertEqual(ci.case_counts(self.manifests["a.json"]), {"automated": 1, "review": 1, "unit_test": 1})
+
+    def test_vague_lead_fails_unless_typed_review(self):
+        for text in ("Review every row of the table and assert the registered reason for each row and boundary value.",
+                     "Exercise rows; inspect retained fields for leakage of every synthetic canary in every result.",
+                     "Exercise the boundaries and review interpretation of overhead versus application bytes later.",
+                     "Plan device checks for every storage class and interruption point on each supported platform."):
+            with self.subTest(text=text):
+                self.case("CC-A")["scope"] = "Synthetic core contract cases; " + text * 2
+                errors = ci.case_plan_errors(self.manifests)
+                self.assertEqual(len(errors), 1)
+                self.assertIn("move review work to an RV- case", errors[0])
+
+    def test_short_plan_fails(self):
+        self.case("CC-A")["scope"] = "Synthetic core contract cases; Reset budgets per attempt."
+        [error] = ci.case_plan_errors(self.manifests)
+        self.assertIn("at least 100 are required", error)
+
+    def test_shared_plan_text_fails(self):
+        self.manifests["a.json"]["cases"].append(dict(self.case("CC-A"), id="CC-B"))
+        self.manifests["a.json"]["requirements"][0]["case_ids"].append("CC-B")
+        errors = ci.case_plan_errors(self.manifests)
+        self.assertEqual(len(errors), 2)
+        self.assertTrue(all("shares its plan text" in error for error in errors))
+
+    def test_named_requirement_must_be_mapped(self):
+        self.case("CC-A")["scope"] = AUTOMATED_PLAN.replace("REQ-TASK-0001.", "REQ-TASK-0001, REQ-TASK-0002.")
+        self.assertEqual(ci.case_plan_errors(self.manifests),
+                         ["a.json: case CC-A names REQ-TASK-0002 but is not mapped to it"])
+
+    def test_review_case_requires_structure(self):
+        for change, problem in (
+                ({"scope": REVIEW_PLAN.replace("Human review case; not automated coverage. ", "")}, "must open with"),
+                ({"scope": REVIEW_PLAN.replace("Checklist: ", "Items: ")}, "lacks 'Checklist:'"),
+                ({"scope": REVIEW_PLAN.replace("Reviewer role: interpretation reviewer. Reviewed artifact: host guidance.",
+                                               "Reviewed artifact: host guidance. Reviewer role: interpretation reviewer.")},
+                 "in that order"),
+                ({"location": {"path": "internal/a/a_test.go", "selector": "symbol:TestA"}}, "own Markdown heading"),
+                ({"location": {"path": "docs/review.md", "selector": "heading:Other"}}, "own Markdown heading")):
+            with self.subTest(problem=problem):
+                case = self.case("RV-CC-A")
+                original = dict(case)
+                case.update(change)
+                errors = ci.case_plan_errors(self.manifests)
+                case.clear()
+                case.update(original)
+                self.assertEqual(len(errors), 1)
+                self.assertIn(problem, errors[0])
+
+    def test_untyped_review_text_cannot_hide_behind_review_prefix_only(self):
+        # An RV- ID with an automated-style plan is still rejected for missing review structure.
+        self.case("RV-CC-A")["scope"] = AUTOMATED_PLAN
+        self.assertTrue(ci.case_plan_errors(self.manifests))
+
+
 class PreflightTests(unittest.TestCase):
     root = Path(__file__).resolve().parents[1]
 

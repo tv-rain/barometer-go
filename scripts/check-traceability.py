@@ -24,6 +24,8 @@ BASELINES = {
 }
 # Revision whose manifests DEV-569 preserved before linking unit-test evidence.
 DEV568_REVISION = "c5f4e92e06936cb677c7a03e9769ff75b1f51874"
+# Revision whose manifests DEV-572 preserved before making case plans measurable.
+DEV569_REVISION = "60d64a606bdd19fa5d326c68a6157e7760b28ff1"
 # Superseded manifests: byte-identical to the original at their recorded source revision and
 # checked at their original baselines.
 HISTORICAL = {
@@ -36,6 +38,12 @@ HISTORICAL = {
     "historical/measurements-59d4936-4aafb0e.json": ("measurements.json", DEV568_REVISION,
                                                      "59d49364d85e48cc8e69c762d130a7a86dc1fe65",
                                                      "4aafb0e94d5e13411d1f76521ece989a03aee617"),
+    "historical/cross-cutting-a944ed6-c5f4e92.json": ("cross-cutting.json", DEV569_REVISION,
+                                                      "a944ed6c389fec9f0d089f0044ead6fe845328b1",
+                                                      "c5f4e92e06936cb677c7a03e9769ff75b1f51874"),
+    "historical/measurements-59d4936-c5f4e92.json": ("measurements.json", DEV569_REVISION,
+                                                     "59d49364d85e48cc8e69c762d130a7a86dc1fe65",
+                                                     "c5f4e92e06936cb677c7a03e9769ff75b1f51874"),
 }
 # Same standalone comment form as the public reference checker; history citations are excluded.
 REFERENCE = re.compile(r"// requirement-ref: (\S+)")
@@ -122,6 +130,83 @@ def reference_errors(references, manifests, catalog):
     return errors
 
 
+# DEV-572 case-plan specificity. The public case record has no type field, so a human review case is
+# typed by its ID prefix, a fixed opening and labelled fields, and is never automated coverage.
+REVIEW_PREFIX = "RV-"
+REVIEW_OPENING = "Human review case; not automated coverage."
+REVIEW_FIELDS = ("Reviewer role: ", "Reviewed artifact: ", "Checklist: ", "Evidence record: ")
+# Passing unit-test cases keep the scope their evidence records match.
+UNIT_TEST_PREFIX = "UT."
+FAMILY_PREFIXES = ("Synthetic core contract cases; ",
+                   "Native adapter and device release validation; planned outside portable Go runtime; ")
+# A sentence or coordinated clause led by these verbs defers work to judgement rather than a test.
+VAGUE_SENTENCE = re.compile(r"(?:^|[.;:]\s+|\b(?:and|or|then)\s+)(Review|Inspect|Plan)\b", re.IGNORECASE)
+MINIMUM_PLAN = 100
+REQUIREMENT_ID = re.compile(r"\bREQ-(?:[A-Z0-9]+-)+\d{4}\b")
+
+
+def review_case_errors(case):
+    """Return the ways a typed review case lacks its required structure."""
+    scope, location = case["scope"], case["location"]
+    errors = []
+    if not scope.startswith(REVIEW_OPENING + " "):
+        errors.append(f"must open with {REVIEW_OPENING!r}")
+    positions = [scope.find(field) for field in REVIEW_FIELDS]
+    for field, position in zip(REVIEW_FIELDS, positions):
+        if position < 0:
+            errors.append(f"lacks {field.strip()!r}")
+    found = [position for position in positions if position >= 0]
+    if found != sorted(found):
+        errors.append("must list reviewer role, reviewed artifact, checklist and evidence record in that order")
+    if not location["path"].endswith(".md") or location["selector"] != f"heading:{case['id']}":
+        errors.append("must be located at its own Markdown heading")
+    return errors
+
+
+def case_plan_errors(manifests):
+    """Reject vague or shared automated plans and untyped review work in the current manifests.
+
+    A length floor and wording rules cannot prove a plan complete; completeness stays a review assertion.
+    """
+    errors = []
+    for name, manifest in sorted(manifests.items()):
+        linked = {}
+        for item in manifest["requirements"]:
+            for case_id in item["case_ids"]:
+                linked.setdefault(case_id, set()).add(item["id"])
+        scopes = Counter(case["scope"] for case in manifest["cases"])
+        for case in manifest["cases"]:
+            where = f"{name}: case {case['id']}"
+            scope = case["scope"]
+            if scopes[scope] > 1:
+                errors.append(f"{where} shares its plan text with another case")
+            if case["id"].startswith(UNIT_TEST_PREFIX):
+                continue
+            for identity in sorted(set(REQUIREMENT_ID.findall(scope)) - linked.get(case["id"], set())):
+                errors.append(f"{where} names {identity} but is not mapped to it")
+            if case["id"].startswith(REVIEW_PREFIX):
+                errors.extend(f"{where} review case {problem}" for problem in review_case_errors(case))
+                continue
+            plan = scope
+            for prefix in FAMILY_PREFIXES:
+                plan = plan.removeprefix(prefix)
+            match = VAGUE_SENTENCE.search(plan)
+            if match:
+                errors.append(f"{where} has a sentence led by {match.group(1)!r}; move review work to an "
+                              f"{REVIEW_PREFIX} case")
+            if len(plan) < MINIMUM_PLAN:
+                errors.append(f"{where} plan has {len(plan)} characters; at least {MINIMUM_PLAN} are required")
+    return errors
+
+
+def case_counts(manifest):
+    """Count automated, review and unit-test cases separately; review cases are not automated coverage."""
+    kinds = Counter("review" if case["id"].startswith(REVIEW_PREFIX) else
+                    "unit_test" if case["id"].startswith(UNIT_TEST_PREFIX) else "automated"
+                    for case in manifest["cases"])
+    return dict(sorted(kinds.items()))
+
+
 def run(args):
     root = Path(__file__).resolve().parents[1]
     spec = args.spec_checkout.resolve()
@@ -203,6 +288,14 @@ def run(args):
             for error in errors:
                 print(error, flush=True)
             print(f"Go requirement-ref consistency: {len(errors)} error(s).", flush=True)
+            failed |= bool(errors)
+            # Plan specificity applies to the current manifests; historical manifests stay unchanged.
+            errors = case_plan_errors(parsed)
+            for error in errors:
+                print(error, flush=True)
+            for name, manifest in sorted(parsed.items()):
+                print(f"{name}: cases={case_counts(manifest)}", flush=True)
+            print(f"Case-plan specificity: {len(errors)} error(s).", flush=True)
             failed |= bool(errors)
         (reports / "provenance.json").write_text(json.dumps({
             "tooling_revision": TOOLING_REVISION,
