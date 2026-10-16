@@ -89,7 +89,7 @@ This resolves the stale “prepared/uncommitted” Foundation adoption state. It
 
 ### Identity and Ownership
 
-- **Disposition:** Open, October 15, 2026; no public resolution or downstream adoption.
+- **Disposition:** Open. The public resolution merged on October 15, 2026 at [a944ed6c389fec9f0d089f0044ead6fe845328b1](https://github.com/tv-rain/barometer-spec/commit/a944ed6c389fec9f0d089f0044ead6fe845328b1); runtime and applicable binding/host adoption remains pending as described under **Current state** above. Original disposition (October 15, 2026, historical): no public resolution or downstream adoption.
 - **Discovering role:** Go implementation agent for [DEV-481 — Implement observation and Network Context models](https://app.clickup.com/t/86cbb8f2n). Public maintainer/reviewer assignment and public issue/PR are pending human direction. No public review is claimed.
 - **Related findings:** GO-SPEC-ISSUE-001 supplies strict JSON infrastructure but does not resolve vocabulary membership. The public `specification-issues` directory contains no matching vocabulary finding at the baseline below.
 
