@@ -165,3 +165,23 @@ The accepted public contract is [a944ed6c389fec9f0d089f0044ead6fe845328b1](https
 Go [PR #22](https://github.com/tv-rain/barometer-go/pull/22) merged approved implementation `84ccd5c2d4003183d21ffe225a4479b6b572c53e` at [dea8351f618d48f916c1fd9f2576765460b84309](https://github.com/tv-rain/barometer-go/commit/dea8351f618d48f916c1fd9f2576765460b84309). The merge and head are ancestors of the refreshed integrated Foundation baseline. Bounded models, accepted fixed vocabulary mappings and their synthetic tests are delivered; the [observation model record](observation-models.md) remains canonical for that scope.
 
 The [runtime vocabulary adoption task](https://app.clickup.com/t/124kk1zc4aj) owns actual DNS/TLS producer normalization, protocol/API and result integration, applicable bindings, compatibility and evidence or reviewed non-applicability. This finding stays open for that work; merged models and passing compiler checks do not establish protocol execution or platform support.
+
+## GO-SPEC-ISSUE-003: Local Host-Configuration Decoding Bounds
+
+**Current state:** Open. A public no-text-change proposal is prepared as [Local Host-Configuration Decoding Bounds](https://github.com/tv-rain/barometer-spec/blob/main/specification-issues/configuration-bounds.md). That link resolves after the human-created public PR merges, and maintainer disposition is pending. Go behavior is unchanged.
+
+### Identity, Baselines and Requirements
+
+- **Disposition:** Open, raised October 16, 2026 under [DEV-571](https://app.clickup.com/t/124kk1zc521). The Go implementation agent reports under the task owner's instruction; public maintainers own disposition.
+- **Public baseline:** Draft `0.1.0` at [83d0b10cffb37a53de120b56825b42eb226568d9](https://github.com/tv-rain/barometer-spec/tree/83d0b10cffb37a53de120b56825b42eb226568d9). [REQ-JSON-0009](https://github.com/tv-rain/barometer-spec/blob/83d0b10cffb37a53de120b56825b42eb226568d9/data-formats/json-decoding.md#REQ-JSON-0009) requires a finite reviewed local input bound for models without a registered complete-input maximum. The Proxy, Network Context and Result Linkage sections register no complete host-configuration maximum or URL length maximum.
+- **Implementation baseline:** `internal/config` at `374c8bd7a8db634ddac5f799b2894ce3d96856d5` selects 16,384 encoded bytes, 8 value levels, 64 value nodes, 2,048-byte endpoint URLs and 64-entry trusted approval lists, as recorded in [Initialization and Configuration Models](configuration-models.md#defaults-validation-and-local-bounds). The approval-list bound applies to trusted internal inputs, not a public serialized model.
+
+### Finding and Interim Handling
+
+Whether REQ-JSON-0009's "reviewed" local bound is satisfied by implementation-local review, or whether public maxima should be registered for host interoperability, needs a public disposition. The proposal recommends a no-text-change clarification that the Go bounds are explicitly local and non-normative. Registering public maxima remains the reviewed alternative.
+
+No work is stopped. The bounds stay as implemented and fail atomically before parsing. They are not normative maxima, measured device limits or a guarantee to hosts. Existing synthetic tests in `internal/config` cover the byte bound at the maximum and maximum-plus-one; they are regression evidence only.
+
+### Ordering and Closure
+
+Merge the public record first, then this entry. A coordination decision is not required. If maintainers register public maxima, that wording change follows its own reviewed public PR, then any internal alignment, Go adoption and conformance cases, then bindings and hosts. Closure requires the recorded maintainer disposition and its immutable public revision; under the proposed clarification no Go behavior change follows.

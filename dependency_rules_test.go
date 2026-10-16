@@ -1,0 +1,298 @@
+package barometer_test
+
+import (
+	"go/parser"
+	"go/token"
+	"io/fs"
+	"path/filepath"
+	"sort"
+	"strconv"
+	"strings"
+	"testing"
+)
+
+// The import rules below mechanically enforce the subset of
+// docs/package-architecture.md "Allowed Dependency Direction" and
+// "Forbidden Dependencies and Shortcuts" that is visible in import graphs.
+// Behavioral rules (no clamping, no network activity during validation, and
+// similar) remain review rules; passing this check does not establish them.
+
+const modulePath = "github.com/tv-rain/barometer-go"
+
+type importFile struct {
+	path    string // repository-relative file path, for diagnostics only
+	pkg     string // importing package path
+	test    bool   // _test.go file
+	imports []string
+}
+
+type importRule struct {
+	name string
+	// tests reports whether _test.go files are also subject to the rule.
+	tests     bool
+	applies   func(pkg string) bool
+	forbidden func(pkg, imp string) bool
+}
+
+func internalPath(name string) string { return modulePath + "/internal/" + name }
+
+// under reports whether p is the package prefix or one of its subpackages.
+func under(p, prefix string) bool { return p == prefix || strings.HasPrefix(p, prefix+"/") }
+
+func underAny(p string, names ...string) bool {
+	for _, name := range names {
+		if under(p, internalPath(name)) {
+			return true
+		}
+	}
+	return false
+}
+
+func moduleImport(imp string) bool { return under(imp, modulePath) }
+
+// standardLibrary uses the Go convention that standard-library paths have no
+// dot in their first element.
+func standardLibrary(imp string) bool {
+	first, _, _ := strings.Cut(imp, "/")
+	return !strings.Contains(first, ".")
+}
+
+// networkIO reports network packages. net/netip and net/url are pure value
+// parsers and remain allowed.
+func networkIO(imp string) bool {
+	return under(imp, "net") && imp != "net/netip" && imp != "net/url"
+}
+
+// directIO approximates I/O and network access that pure models and
+// validation must not perform.
+func directIO(imp string) bool {
+	return networkIO(imp) || imp == "os" || under(imp, "os/exec") || under(imp, "syscall") || under(imp, "io/fs")
+}
+
+func measurementName(p string) string {
+	rest, ok := strings.CutPrefix(p, internalPath("measurement")+"/")
+	if !ok {
+		return ""
+	}
+	name, _, _ := strings.Cut(rest, "/")
+	return name
+}
+
+var importRules = []importRule{
+	{
+		name:      "production packages must not import testkit",
+		applies:   func(pkg string) bool { return !underAny(pkg, "testkit") },
+		forbidden: func(_, imp string) bool { return underAny(imp, "testkit") },
+	},
+	{
+		name:      "internal packages must not import the root package",
+		tests:     true,
+		applies:   func(pkg string) bool { return under(pkg, modulePath+"/internal") },
+		forbidden: func(_, imp string) bool { return imp == modulePath },
+	},
+	{
+		name:    "domain models import only other models and the shared strict JSON leaf",
+		applies: func(pkg string) bool { return underAny(pkg, "model") },
+		forbidden: func(_, imp string) bool {
+			if moduleImport(imp) {
+				return !underAny(imp, "model", "jsondecode")
+			}
+			return !standardLibrary(imp) || directIO(imp)
+		},
+	},
+	{
+		name:      "observation models must not depend on result envelopes",
+		applies:   func(pkg string) bool { return underAny(pkg, "model/observation") },
+		forbidden: func(_, imp string) bool { return underAny(imp, "model/result", "result", "bundle") },
+	},
+	{
+		name:      "jsondecode is a standard-library leaf",
+		applies:   func(pkg string) bool { return underAny(pkg, "jsondecode") },
+		forbidden: func(_, imp string) bool { return !standardLibrary(imp) || directIO(imp) },
+	},
+	{
+		name:    "validation is pure and must not reach runtime or I/O owners",
+		applies: func(pkg string) bool { return underAny(pkg, "validation") },
+		forbidden: func(_, imp string) bool {
+			return underAny(imp, "admission", "execution", "measurement", "protocol", "networkcontext", "persistence", "platform", "result", "bundle") || directIO(imp)
+		},
+	},
+	{
+		name:    "measurement packages must not import one another or bundles",
+		applies: func(pkg string) bool { return measurementName(pkg) != "" },
+		forbidden: func(pkg, imp string) bool {
+			other := measurementName(imp)
+			return other != "" && other != measurementName(pkg) || underAny(imp, "bundle")
+		},
+	},
+	{
+		name:    "protocol primitives must not schedule, persist, or build results",
+		applies: func(pkg string) bool { return underAny(pkg, "protocol") },
+		forbidden: func(_, imp string) bool {
+			return underAny(imp, "admission", "execution", "measurement", "registry", "persistence", "result", "bundle")
+		},
+	},
+	{
+		name:    "result and bundle construction must not import execution or network implementations",
+		applies: func(pkg string) bool { return underAny(pkg, "result", "bundle") },
+		forbidden: func(_, imp string) bool {
+			return underAny(imp, "admission", "execution", "measurement", "protocol", "networkcontext") || networkIO(imp)
+		},
+	},
+	{
+		name: "capability contracts must not import adapters or orchestration",
+		// Concrete adapters in subpackages may import the contract they implement.
+		applies: func(pkg string) bool { return pkg == internalPath("platform") || pkg == internalPath("persistence") },
+		forbidden: func(_, imp string) bool {
+			if moduleImport(imp) {
+				return !underAny(imp, "model")
+			}
+			return !standardLibrary(imp)
+		},
+	},
+}
+
+func checkImports(files []importFile) []string {
+	var violations []string
+	for _, f := range files {
+		for _, rule := range importRules {
+			if f.test && !rule.tests || !rule.applies(f.pkg) {
+				continue
+			}
+			for _, imp := range f.imports {
+				if rule.forbidden(f.pkg, imp) {
+					violations = append(violations, f.path+": imports "+imp+": "+rule.name)
+				}
+			}
+		}
+	}
+	sort.Strings(violations)
+	return violations
+}
+
+// loadImports parses every Go file in the module regardless of build tags,
+// so tagged files such as the mobile smoke facade are also checked.
+func loadImports(t *testing.T, root string) []importFile {
+	t.Helper()
+	var files []importFile
+	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		name := d.Name()
+		if d.IsDir() {
+			if path != root && (strings.HasPrefix(name, ".") || strings.HasPrefix(name, "_") || name == "testdata") {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !strings.HasSuffix(name, ".go") {
+			return nil
+		}
+		parsed, err := parser.ParseFile(token.NewFileSet(), path, nil, parser.ImportsOnly)
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(root, path)
+		if err != nil {
+			return err
+		}
+		rel = filepath.ToSlash(rel)
+		pkg := modulePath
+		if dir := filepath.ToSlash(filepath.Dir(rel)); dir != "." {
+			pkg += "/" + dir
+		}
+		f := importFile{path: rel, pkg: pkg, test: strings.HasSuffix(name, "_test.go")}
+		for _, spec := range parsed.Imports {
+			imp, err := strconv.Unquote(spec.Path.Value)
+			if err != nil {
+				return err
+			}
+			f.imports = append(f.imports, imp)
+		}
+		files = append(files, f)
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("load imports: %v", err)
+	}
+	return files
+}
+
+func TestDependencyRules(t *testing.T) {
+	files := loadImports(t, ".")
+	// Guard against a vacuous pass if the walk stops finding the package tree.
+	seen := map[string]bool{}
+	for _, f := range files {
+		seen[f.pkg] = true
+	}
+	for _, want := range []string{modulePath, internalPath("jsondecode"), internalPath("model/task"), internalPath("taskdecode"), internalPath("validation"), internalPath("testkit/conformance")} {
+		if !seen[want] {
+			t.Fatalf("dependency check did not load %s", want)
+		}
+	}
+	for _, v := range checkImports(files) {
+		t.Error(v)
+	}
+}
+
+func TestDependencyRulesRejectForbiddenImports(t *testing.T) {
+	file := func(pkg string, test bool, imports ...string) importFile {
+		return importFile{path: "synthetic.go", pkg: internalPath(pkg), test: test, imports: imports}
+	}
+	cases := []struct {
+		name string
+		file importFile
+		rule string
+	}{
+		{"production imports testkit", file("result", false, internalPath("testkit")), importRules[0].name},
+		{"production imports testkit subpackage", file("taskdecode", false, internalPath("testkit/conformance")), importRules[0].name},
+		{"internal imports root", file("config", false, modulePath), importRules[1].name},
+		{"internal test imports root", file("config", true, modulePath), importRules[1].name},
+		{"model imports validation", file("model/task", false, internalPath("validation")), importRules[2].name},
+		{"model imports platform", file("model/result", false, internalPath("platform")), importRules[2].name},
+		{"model performs network I/O", file("model/observation", false, "net"), importRules[2].name},
+		{"model imports third party", file("model/task", false, "example.com/dependency"), importRules[2].name},
+		{"observation imports result model", file("model/observation", false, internalPath("model/result")), importRules[3].name},
+		{"jsondecode imports module package", file("jsondecode", false, internalPath("model/task")), importRules[4].name},
+		{"jsondecode reads files", file("jsondecode", false, "os"), importRules[4].name},
+		{"validation imports admission", file("validation", false, internalPath("admission")), importRules[5].name},
+		{"validation performs network I/O", file("validation", false, "net/http"), importRules[5].name},
+		{"measurement imports another measurement", file("measurement/dns01", false, internalPath("measurement/tcp01")), importRules[6].name},
+		{"measurement builds bundles", file("measurement/tls01", false, internalPath("bundle")), importRules[6].name},
+		{"protocol persists state", file("protocol/dns", false, internalPath("persistence")), importRules[7].name},
+		{"protocol schedules retries", file("protocol/http", false, internalPath("execution")), importRules[7].name},
+		{"result imports execution", file("result", false, internalPath("execution")), importRules[8].name},
+		{"bundle imports protocol", file("bundle", false, internalPath("protocol/http")), importRules[8].name},
+		{"capability imports adapter", file("platform", false, internalPath("platform/android")), importRules[9].name},
+		{"persistence imports orchestration", file("persistence", false, internalPath("admission")), importRules[9].name},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			violations := checkImports([]importFile{tc.file})
+			found := false
+			for _, v := range violations {
+				found = found || strings.HasSuffix(v, ": "+tc.rule)
+			}
+			if !found {
+				t.Fatalf("expected rule %q, got %q", tc.rule, violations)
+			}
+		})
+	}
+
+	allowed := []importFile{
+		file("testkit/conformance", false, internalPath("testkit"), internalPath("taskdecode")),
+		file("taskdecode", true, internalPath("testkit")),
+		file("taskdecode", false, internalPath("validation"), internalPath("jsondecode"), internalPath("model/task")),
+		file("model/observation", false, internalPath("jsondecode"), "strings", "net/netip", "net/url"),
+		file("model/result", false, internalPath("model/observation"), internalPath("model/task")),
+		file("measurement/dns01", false, internalPath("measurement"), internalPath("protocol/dns"), internalPath("model/observation")),
+		file("bundle", false, internalPath("config"), internalPath("result"), internalPath("model/result")),
+		file("platform", false, "context", "time"),
+		file("platform/android", false, internalPath("platform")),
+		{path: "synthetic.go", pkg: modulePath, imports: []string{internalPath("execution")}},
+	}
+	if v := checkImports(allowed); len(v) != 0 {
+		t.Fatalf("allowed imports rejected: %q", v)
+	}
+}

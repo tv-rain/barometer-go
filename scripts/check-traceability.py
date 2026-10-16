@@ -2,6 +2,7 @@
 
 import argparse
 from collections import Counter
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -213,11 +214,78 @@ def run(args):
         return int(failed)
 
 
+MINIMUM_PYTHON = (3, 10)
+INSTALL_HINT = "Install the pinned public tooling dependencies as shown in docs/traceability-ci.md."
+
+
+def version_tuple(text):
+    """Parse a Go version such as 1.26.0, go1.26 or go1.26rc1; prereleases sort before the release."""
+    match = re.fullmatch(r"(?:go)?(\d+)\.(\d+)(?:\.(\d+))?((?:rc|beta)\d+)?", text)
+    if not match:
+        return None
+    major, minor, patch, prerelease = match.groups()
+    return int(major), int(minor), -1 if prerelease else int(patch or 0)
+
+
+def required_go(root):
+    """Return the go directive from go.mod."""
+    match = re.search(r"^go (\S+)$", (root / "go.mod").read_text(encoding="utf-8"), re.MULTILINE)
+    if not match or not version_tuple(match.group(1)):
+        raise ValueError("go.mod has no parseable go directive.")
+    return match.group(1)
+
+
+def go_toolchain_error(output, required):
+    """Explain a `go version` result older than the module's go directive, or return None."""
+    match = re.match(r"go version (go\S+) ", output)
+    found = version_tuple(match.group(1)) if match else None
+    if found is None:
+        return "Cannot determine the Go version on PATH; `go version` printed unexpected output."
+    if found < version_tuple(required):
+        return (f"{match.group(1)} is first on PATH, but this module requires Go {required} or later. The public "
+                "tooling builds with GOTOOLCHAIN=local, so automatic toolchain switching does not apply. Put a "
+                f"Go {required}+ toolchain first on PATH.")
+    return None
+
+
+def preflight(root, run_go=None, python_version=None, has_module=None):
+    """Return setup errors detectable before any traceability work starts."""
+    errors = []
+    if run_go is None:
+        def run_go():
+            # Run outside the module so an old toolchain reports its version instead of a go.mod error.
+            return subprocess.run(["go", "version"], cwd=tempfile.gettempdir(), capture_output=True, text=True,
+                                  env=dict(os.environ, GOTOOLCHAIN="local"), check=True).stdout
+    try:
+        error = go_toolchain_error(run_go(), required_go(root))
+    except FileNotFoundError:
+        error = "No `go` command found on PATH."
+    except subprocess.CalledProcessError:
+        error = "`go version` failed for the Go toolchain on PATH."
+    if error:
+        errors.append(error)
+    version = python_version or sys.version_info[:2]
+    if tuple(version) < MINIMUM_PYTHON:
+        errors.append(f"Python {version[0]}.{version[1]} ({sys.executable}) is older than the required "
+                      f"{MINIMUM_PYTHON[0]}.{MINIMUM_PYTHON[1]}. Select another interpreter with PYTHON=.")
+    if has_module is None:
+        def has_module(name):
+            return importlib.util.find_spec(name) is not None
+    if not has_module("jsonschema"):
+        errors.append(f"Python {sys.executable} cannot import jsonschema. {INSTALL_HINT}")
+    return errors
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--spec-checkout", type=Path, required=True)
     parser.add_argument("--report-dir", type=Path, required=True)
     args = parser.parse_args()
+    errors = preflight(Path(__file__).resolve().parents[1])
+    for error in errors:
+        print(f"Traceability prerequisite missing: {error}", file=sys.stderr)
+    if errors:
+        return 2
     try:
         return run(args)
     except (OSError, ValueError, KeyError, ImportError, subprocess.CalledProcessError) as exc:

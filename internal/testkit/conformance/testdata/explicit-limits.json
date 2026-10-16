@@ -1,0 +1,27 @@
+{
+  "format_version": 1,
+  "case_id": "explicit-limits",
+  "adapter": "common-task-v1",
+  "requirements": [
+    "REQ-JSON-0005",
+    "REQ-JSON-0006"
+  ],
+  "task_base64": "eyJzY2hlbWFfdmVyc2lvbiI6IjAuMS4wIiwidGFza19pZCI6InN5bnRoZXRpYy1leHBsaWNpdCIsInRlc3RfaWQiOiJTWU4tMDEiLCJ0ZXN0X3ZlcnNpb24iOiIwLjEuMCIsImlucHV0Ijp7InN1YmplY3QiOiJNaXhlZC5FeGFtcGxlIn0sIm9wdGlvbnMiOnsiZW5hYmxlZCI6dHJ1ZX0sInNjaGVkdWxlIjp7Im5vdF9hZnRlciI6IjIwMjYtMTAtMTZUMDA6MDA6MDBaIiwibGltaXRzIjp7Im1heF9ydW5zIjoxfX0sImV4ZWN1dGlvbiI6eyJuZXR3b3JrX3BhdGgiOiJkaXJlY3QiLCJsaW1pdHMiOnsibWF4X2R1cmF0aW9uX21zIjoxMDAwMCwibWF4X2J5dGVzX3NlbnQiOjQwOTYsIm1heF9ieXRlc19yZWNlaXZlZCI6MTYzODQsIm1heF9jb25uZWN0aW9ucyI6Mn19LCJzYWZldHkiOnsicmlza19sZXZlbCI6ImxvdyIsInJlcXVpcmVzX3VzZXJfY29uc2VudCI6ZmFsc2V9LCJsYWJlbHMiOnsiY2FtcGFpZ24iOiJzeW50aGV0aWMifX0=",
+  "trusted_context": "remote-fixed-v1",
+  "local_policy": "synthetic-local-v1",
+  "expected": {
+    "rejection": "",
+    "normalized": {
+      "task_id": "synthetic-explicit",
+      "subject": "mixed.example",
+      "enabled": true,
+      "network_path": "direct",
+      "duration_ms": 10000,
+      "bytes_sent": 4096,
+      "bytes_received": 16384,
+      "connections": 2,
+      "max_runs": 1,
+      "max_attempts": 1
+    }
+  }
+}
