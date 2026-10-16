@@ -2,6 +2,8 @@
 
 ## Directory Index
 
+- [Sanitized API examples](../internal/examples/README.md) — executable non-normative Foundation model examples and scripted intended lifecycle/clearing calls, with explicit runtime and evidence limits.
+
 - [`traceability-ci.md`](traceability-ci.md) — reproducible pinned CI checks, mapping-loss gates, historical metadata reports and evidence limits.
 
 - [`model-validation.md`](model-validation.md) — Foundation model validation order, conservative normalization, acceptance-test mapping and serialization boundaries.
