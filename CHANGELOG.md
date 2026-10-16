@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Foundation model validation-order and normalization documentation, with combined-error precedence, canonical round-trip and typed-reconstruction regressions across model owners.
+
 - Internal bounded Result Bundle production from validated Measurement Results, random single-use logical IDs, immutable exact retry bytes and trusted-initialization-gated rotating-linkage projections, with synthetic privacy, size-boundary and fuzz tests. Derivation, epoch lifecycle, transport, persistence, retention and clearing remain pending.
 
 - Internal Measurement Result models and strict bounded serialization with independent envelope/test/result versions, exact local task/context binding, initial output schemas, NET-05 partial-step validation and synthetic boundary/fuzz tests. Runtime execution, bundling, persistence, delivery and platform support remain pending.
@@ -34,5 +36,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Repository guidance, canonical validation commands, continuous integration, race testing, and repository-integrity checks.
 - MIT licensing for code and documentation, with separate trademark terms for the Barometer name and brand assets.
 - Versioning, compatibility, changelog, tagging, artifact-naming, and experimental-release conventions.
+
+### Fixed
+
+- Common candidate validation now rejects duplicate, excessive or invalid UTF-8 labels and normalizes a copied label slice consistently with decoded tasks. Network Context rejects non-ASCII country/region spellings before case conversion can map them onto reviewed ASCII codes. Zero-value result decoders now reject with a binding error before processing input or producer records.
 
 No release tag or implementation-support claim is created by these unreleased entries.

@@ -4,8 +4,10 @@ package validation
 import (
 	"errors"
 	"regexp"
+	"slices"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/tv-rain/barometer-go/internal/model/task"
 )
@@ -15,7 +17,8 @@ var taskID = regexp.MustCompile(`^[a-z0-9][a-z0-9._-]{0,127}$`)
 var labelKey = regexp.MustCompile(`^[a-z][a-z0-9_.-]{0,63}$`)
 
 // Common checks candidate invariants without making policy/trust decisions.
-// It applies only the documented default for an omitted max_runs.
+// It applies the documented max_runs default and canonical label ordering.
+// Original encoded byte bounds remain the decoder's responsibility.
 func Common(c task.Candidate) (task.Candidate, error) {
 	if !taskID.MatchString(c.ID) || c.SchemaVersion != "0.1.0" {
 		return task.Candidate{}, ErrTask
@@ -23,10 +26,18 @@ func Common(c task.Candidate) (task.Candidate, error) {
 	if !validSchedule(c.Schedule) || !validExecution(c.Execution, c.TestID == "NET-01") || !validSafety(c.Safety) {
 		return task.Candidate{}, ErrTask
 	}
+	// requirement-ref: REQ-LABEL-0005
+	// requirement-ref: REQ-LABEL-0010
+	// requirement-ref: REQ-LABEL-0014
+	if len(c.Labels) > 16 {
+		return task.Candidate{}, ErrTask
+	}
+	seen := make(map[string]bool, len(c.Labels))
 	for _, l := range c.Labels {
-		if !labelKey.MatchString(l.Key) || strings.HasPrefix(l.Key, "barometer.") || len(l.Value) > 128 {
+		if !labelKey.MatchString(l.Key) || strings.HasPrefix(l.Key, "barometer.") || len(l.Value) > 128 || !utf8.ValidString(l.Value) || seen[l.Key] {
 			return task.Candidate{}, ErrTask
 		}
+		seen[l.Key] = true
 		for _, r := range l.Value {
 			if unicode.IsControl(r) {
 				return task.Candidate{}, ErrTask
@@ -36,6 +47,14 @@ func Common(c task.Candidate) (task.Candidate, error) {
 	if c.Schedule.MaxRuns == nil {
 		n := 1
 		c.Schedule.MaxRuns = &n
+	}
+	// requirement-ref: REQ-LABEL-0004
+	// Copy before sorting: normalization must not rewrite caller-owned values.
+	if len(c.Labels) == 0 {
+		c.Labels = nil
+	} else {
+		c.Labels = slices.Clone(c.Labels)
+		slices.SortFunc(c.Labels, func(a, b task.Label) int { return strings.Compare(a.Key, b.Key) })
 	}
 	return c, nil
 }

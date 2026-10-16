@@ -213,12 +213,21 @@ func (d *ContextDecoder) Decode(input []byte, path Path) (NetworkContext, error)
 			return NetworkContext{}, ErrValue
 		}
 		if _, ok := eValue.Lookup("country_code"); ok {
+			// ISO codes use ASCII. Reject other scripts before case conversion
+			// can map them onto an approved ASCII assignment (for example ſ/S).
+			// requirement-ref: REQ-CONTEXT-FORMAT-0006
+			if !asciiToken(e.CountryCode, 2) {
+				return NetworkContext{}, ErrValue
+			}
 			e.CountryCode = strings.ToUpper(e.CountryCode)
 			if !slices.Contains(d.approvals.CountryCodes, e.CountryCode) {
 				return NetworkContext{}, ErrValue
 			}
 		}
 		if _, ok := eValue.Lookup("region_code"); ok {
+			if !asciiToken(e.RegionCode, 6) {
+				return NetworkContext{}, ErrValue
+			}
 			e.RegionCode = strings.ToUpper(e.RegionCode)
 			if !slices.Contains(d.approvals.RegionCodes, e.RegionCode) || e.CountryCode == "" || !strings.HasPrefix(e.RegionCode, e.CountryCode+"-") {
 				return NetworkContext{}, ErrValue
