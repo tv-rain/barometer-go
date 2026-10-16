@@ -2,7 +2,7 @@
 
 **Status date:** October 16, 2026
 
-**Status:** Foundation infrastructure delivered; assessment-preparation documentation pending publication and separate assessment.
+**Status:** Foundation infrastructure delivered, assessed and accepted on October 16, 2026. Runtime harness extensions remain with the deferred implementation tasks below.
 
 ## Scope and Authority
 
@@ -51,3 +51,4 @@ Preserve historical committed traceability reports. Fresh reports must retain ev
 | Date | Change |
 |---|---|
 | October 16, 2026 | Recorded delivered Foundation tooling, deferred runtime harness ownership and separate-assessment evidence boundaries without changing runtime behavior or historical reports. |
+| October 16, 2026 | Recorded Foundation acceptance after the assessment corrections (DEV-568 to DEV-573). Documentation only; deferred ownership, runtime behavior and support status are unchanged. |
