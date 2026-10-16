@@ -26,6 +26,8 @@ Reusable [negative and boundary-test helpers](docs/testkit.md) provide bounded s
 
 [Measurement Result models](docs/result-models.md) add internal typed attempt values, strict bounded serialization, independently selected versions, initial test-output validation and NET-05 partial-result handling. Runtime execution, bundling, persistence and delivery remain pending.
 
+[Result Bundle and linkage models](docs/bundle-models.md) add bounded internal bundle production from validated results, random logical-bundle identifiers, immutable retry bytes and optional rotating-linkage projections gated by trusted initialization. Token derivation, epoch lifecycle, persistence, delivery and clearing remain pending.
+
 ## Versions and Releases
 
 Repository versioning, compatibility, changelog, tag, artifact-naming, and experimental-release rules are defined in [Versioning and Releases](docs/versioning-and-releases.md). Notable changes are recorded in the [Changelog](CHANGELOG.md).
