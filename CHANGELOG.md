@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Pinned public traceability tooling in CI, independent mapping-loss checks, requirement-reference validation and synthetic conformance smoke cases, with reproducible local commands and full gap reports; no runtime or support promotion.
+
 - Foundation model validation-order and normalization documentation, with combined-error precedence, canonical round-trip and typed-reconstruction regressions across model owners.
 
 - Internal bounded Result Bundle production from validated Measurement Results, random single-use logical IDs, immutable exact retry bytes and trusted-initialization-gated rotating-linkage projections, with synthetic privacy, size-boundary and fuzz tests. Derivation, epoch lifecycle, transport, persistence, retention and clearing remain pending.

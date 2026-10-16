@@ -2,6 +2,8 @@
 
 ## Directory Index
 
+- [`traceability-ci.md`](traceability-ci.md) — reproducible pinned CI checks, mapping-loss gates, historical metadata reports and evidence limits.
+
 - [`model-validation.md`](model-validation.md) — Foundation model validation order, conservative normalization, acceptance-test mapping and serialization boundaries.
 
 - [`bundle-models.md`](bundle-models.md) — bounded Result Bundle production, immutable retry identity/bytes, trusted optional linkage projections and remaining runtime obligations.

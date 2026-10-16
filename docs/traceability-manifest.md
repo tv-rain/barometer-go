@@ -31,3 +31,7 @@ When changing checked requirement comments, use the public requirement checker w
 ## Compatibility and Review Order
 
 The DEV-468 format and DEV-469 public tooling are adopted. DEV-471 consumes the verified public PR #6 merge, which contains the shared requirement allocations. That public prerequisite is merged before this Go mapping. The Python checker dependencies and Go parser helper belong to the public development tooling, not this runtime module. No Go dependency, public API, runtime serialization, specification version, release tag, or support status changes. Future manifests reject unknown format versions and require an explicit mapping/evidence review when their public or Go baseline changes.
+
+## CI Integration
+
+The separate [traceability CI job](traceability-ci.md) now runs pinned public tooling, manifest/reference checks and synthetic conformance smoke cases through `make traceability`. Its explicit Python/public-checkout prerequisites remain separate from `make check`. Historical manifests retain their baselines and visible gaps; CI adds no implementation or support claim.

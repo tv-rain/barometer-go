@@ -55,3 +55,7 @@ For standalone work, supply the actual public checkout path instead of assuming 
 ## Compatibility and Review
 
 Merge the public convention and catalog before this consumer guidance. No Go API, module dependency, schema, or runtime behavior changes in this adoption. Recheck affected consumers when public source locations or lifecycle state change. Update current references to successor IDs where applicable; preserve historical references with their original immutable baseline. Specification ambiguities still follow the existing cross-repository review procedure.
+
+## CI Integration
+
+The separate [traceability CI job](traceability-ci.md) now runs pinned public tooling, manifest/reference checks and synthetic conformance smoke cases through `make traceability`. Its explicit Python/public-checkout prerequisites remain separate from `make check`. Historical manifests retain their baselines and visible gaps; CI adds no implementation or support claim.
