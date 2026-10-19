@@ -154,6 +154,8 @@ Validation returns explicit failures and never clamps an excessive value, drops 
 
 Admission does not execute network activity and cannot be bypassed by the root facade, a measurement runner, a binding, or the host application.
 
+DEV-585 creates the package with the delivery-record seam only, described in [Delivery-Record Seam](admission.md#delivery-record-seam). `admission.DeliveryStore` is an instance-owned, bounded store of adapter-installed `task.DeliveryRecord` values resolved by an opaque reference. It has an embedded-origin installer and a `RemoteVerifier` seam with no production implementation; the only verifier is the synthetic one in the test-only `internal/testkit/delivery` package. The ordered admission pipeline is added by later tasks.
+
 ### Execution
 
 `internal/execution` owns deterministic execution attempts after admission. It is responsible for:
@@ -286,7 +288,7 @@ More specifically:
 - The root facade may import internal orchestration packages.
 - Task decoding may import the shared strict JSON decoder, task models, and pure validation; it invokes common and timing validation before publishing a candidate (see [Task Models](task-models.md)).
 - The registry may import task models, task decoding codec types and the shared strict JSON decoder. Validation must not import it, because task decoding already imports validation; admission passes registry metadata to validation as values.
-- Admission may import task decoding, validation, task models, registry metadata, and the narrow persistence capabilities it consumes.
+- Admission may import task decoding, validation, task models, registry metadata, the `internal/platform` capability contracts (for the trusted clock) and the narrow persistence capabilities it consumes. It must not import configuration, execution, measurement, protocol, Network Context, result, bundle or concrete adapter packages, and measurement packages must not import it.
 - Execution may import admitted task models, the measurement contract, registry composition, Network Context, result construction, bundle construction, platform capabilities, and persistence capabilities.
 - Registered measurement packages may import task and observation models, protocol primitives, and narrow capabilities needed by that test.
 - Protocol packages may import observation models and small budget or cancellation value types owned by their consumer-facing contract.
