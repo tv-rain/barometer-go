@@ -170,6 +170,7 @@ func common(v *jsondecode.Value) (task.Candidate, error) {
 	c.Schedule.Repeat = task.Repeat{Mode: text(member(s, "repeat"), "mode", "none"), IntervalSeconds: numberPtr(member(s, "repeat"), "interval"), JitterSeconds: numberPtr(member(s, "repeat"), "jitter")}
 	c.Schedule.MaxRuns = numberPtr(member(s, "limits"), "max_runs")
 	if w := member(s, "time_window"); w != nil {
+		// requirement-ref: REQ-SCHEDULE-0013
 		c.Schedule.Window = &task.TimeWindow{Timezone: text(w, "timezone", "local")}
 		for _, r := range member(w, "ranges").Elements() {
 			start, e := minute(text(r, "start", ""))

@@ -1,0 +1,15 @@
+{
+  "format_version": 1,
+  "case_id": "risk-factors-high-empty",
+  "adapter": "common-task-v1",
+  "requirements": [
+    "REQ-SAFETY-0012",
+    "REQ-SAFETY-0031"
+  ],
+  "task_base64": "eyJzY2hlbWFfdmVyc2lvbiI6IjAuMS4wIiwidGFza19pZCI6InN5bnRoZXRpYy10YXNrIiwidGVzdF9pZCI6IlNZTi0wMSIsInRlc3RfdmVyc2lvbiI6IjAuMS4wIiwiaW5wdXQiOnsic3ViamVjdCI6IkVYQU1QTEUifSwib3B0aW9ucyI6e30sInNjaGVkdWxlIjp7Im5vdF9hZnRlciI6IjIwMjYtMTAtMTZUMDA6MDA6MDBaIn0sImV4ZWN1dGlvbiI6eyJsaW1pdHMiOnt9fSwic2FmZXR5Ijp7InJpc2tfbGV2ZWwiOiJoaWdoIiwicmVxdWlyZXNfdXNlcl9jb25zZW50IjpmYWxzZSwicmlza19mYWN0b3JzIjpbXX19",
+  "trusted_context": "remote-fixed-v1",
+  "local_policy": "synthetic-local-v1",
+  "expected": {
+    "rejection": "task"
+  }
+}

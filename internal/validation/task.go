@@ -64,7 +64,10 @@ func validSchedule(s task.Schedule) bool {
 		return false
 	}
 	if s.Window != nil {
-		// Only the documented device-local timezone is implemented initially.
+		// requirement-ref: REQ-SCHEDULE-0013
+		// requirement-ref: REQ-SCHEDULE-0014
+		// requirement-ref: REQ-SCHEDULE-0043
+		// local is the only defined timezone; decoding defaults an omitted value to it.
 		if s.Window.Timezone != "local" || len(s.Window.Ranges) < 1 || len(s.Window.Ranges) > 4 {
 			return false
 		}
@@ -175,9 +178,13 @@ func validExecution(e task.Execution, zeroTraffic bool) bool {
 	return e.ConcurrencyMode == "" || e.ConcurrencyMode == "shared" || e.ConcurrencyMode == "exclusive"
 }
 
+// requirement-ref: REQ-SAFETY-0012
+// requirement-ref: REQ-SAFETY-0013
+// requirement-ref: REQ-SAFETY-0031
 func validSafety(s task.Safety) bool {
 	rank := map[string]int{"low": 1, "medium": 2, "high": 3, "unknown": 4}
-	if rank[s.RiskLevel] == 0 || (s.RiskLevel != "low" && s.Factors == nil) {
+	// Any risk other than low needs at least one factor; an empty list does not explain it.
+	if rank[s.RiskLevel] == 0 || (s.RiskLevel != "low" && len(s.Factors) == 0) {
 		return false
 	}
 	for _, f := range s.Factors {

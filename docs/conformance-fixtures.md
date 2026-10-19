@@ -17,7 +17,7 @@ Every top-level field below is required:
 | `format_version` | Integer `1`; independent of runtime/specification/module versions. |
 | `case_id` | Unique within the corpus; lowercase letter followed by at most 63 lowercase letters, digits or hyphens. Used as the Go subtest name. |
 | `adapter` | Exact string `common-task-v1`. No latest/compatible fallback. |
-| `requirements` | 1–64 distinct IDs from the pinned initial allowlist: `REQ-TASK-0001` and `REQ-JSON-0001` through `REQ-JSON-0011`. This is an assertion reference, not complete coverage. |
+| `requirements` | 1–64 distinct IDs from the pinned allowlist: `REQ-TASK-0001` and `REQ-JSON-0001` through `REQ-JSON-0011`, plus, from DEV-582 at public `5a37e82865a08922c4821c7318656286933421e5`, `REQ-SAFETY-0012`, `REQ-SAFETY-0013`, `REQ-SAFETY-0031`, `REQ-SCHEDULE-0013`, `REQ-SCHEDULE-0014` and `REQ-SCHEDULE-0043`. This is an assertion reference, not complete coverage. |
 | `task_base64` | Canonical padded standard base64 containing 0–65,537 exact task bytes. Empty/malformed/oversized runtime input can be a negative case. |
 | `trusted_context` | Exact synthetic profile reference `remote-fixed-v1`, defined below. |
 | `local_policy` | Exact synthetic profile reference `synthetic-local-v1`, defined below. |
