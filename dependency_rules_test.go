@@ -165,6 +165,21 @@ var importRules = []importRule{
 			return !standardLibrary(imp)
 		},
 	},
+	{
+		name:    "admission imports only task models, decoding, validation, registry and capability contracts",
+		applies: func(pkg string) bool { return underAny(pkg, "admission") },
+		forbidden: func(_, imp string) bool {
+			if moduleImport(imp) {
+				return !underAny(imp, "model/task", "taskdecode", "validation", "registry", "jsondecode") && imp != internalPath("platform") && imp != internalPath("persistence")
+			}
+			return !standardLibrary(imp) || directIO(imp)
+		},
+	},
+	{
+		name:      "measurement packages must not import admission",
+		applies:   func(pkg string) bool { return underAny(pkg, "measurement") },
+		forbidden: func(_, imp string) bool { return underAny(imp, "admission") },
+	},
 }
 
 func checkImports(files []importFile) []string {
@@ -241,7 +256,7 @@ func TestDependencyRules(t *testing.T) {
 	for _, f := range files {
 		seen[f.pkg] = true
 	}
-	for _, want := range []string{modulePath, internalPath("jsondecode"), internalPath("model/task"), internalPath("taskdecode"), internalPath("validation"), internalPath("registry"), internalPath("testkit/conformance")} {
+	for _, want := range []string{modulePath, internalPath("jsondecode"), internalPath("model/task"), internalPath("taskdecode"), internalPath("validation"), internalPath("registry"), internalPath("admission"), internalPath("testkit/conformance"), internalPath("testkit/delivery")} {
 		if !seen[want] {
 			t.Fatalf("dependency check did not load %s", want)
 		}
@@ -291,6 +306,19 @@ func TestDependencyRulesRejectForbiddenImports(t *testing.T) {
 		{"bundle imports protocol", file("bundle", false, internalPath("protocol/http")), importRules[10].name},
 		{"capability imports adapter", file("platform", false, internalPath("platform/android")), importRules[11].name},
 		{"persistence imports orchestration", file("persistence", false, internalPath("admission")), importRules[11].name},
+		{"admission imports execution", file("admission", false, internalPath("execution")), importRules[12].name},
+		{"admission imports a measurement", file("admission", false, internalPath("measurement/tcp01")), importRules[12].name},
+		{"admission imports network context", file("admission", false, internalPath("networkcontext")), importRules[12].name},
+		{"admission imports results", file("admission", false, internalPath("result")), importRules[12].name},
+		{"admission imports configuration", file("admission", false, internalPath("config")), importRules[12].name},
+		{"admission imports a platform adapter", file("admission", false, internalPath("platform/android")), importRules[12].name},
+		{"admission imports testkit", file("admission", false, internalPath("testkit/delivery")), importRules[0].name},
+		{"admission opens sockets", file("admission", false, "net"), importRules[12].name},
+		{"admission reads files", file("admission", false, "os"), importRules[12].name},
+		{"admission imports third party", file("admission", false, "example.com/dependency"), importRules[12].name},
+		{"model imports admission", file("model/task", false, internalPath("admission")), importRules[2].name},
+		{"measurement imports admission", file("measurement/tcp01", false, internalPath("admission")), importRules[13].name},
+		{"protocol imports admission", file("protocol/http", false, internalPath("admission")), importRules[9].name},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -310,7 +338,9 @@ func TestDependencyRulesRejectForbiddenImports(t *testing.T) {
 		file("taskdecode", true, internalPath("testkit")),
 		file("taskdecode", false, internalPath("validation"), internalPath("jsondecode"), internalPath("model/task")),
 		file("registry", false, internalPath("model/task"), internalPath("taskdecode"), "errors"),
-		file("admission", false, internalPath("registry")),
+		file("admission", false, internalPath("registry"), internalPath("model/task"), internalPath("taskdecode"), internalPath("validation"), internalPath("platform"), internalPath("persistence"), "context", "crypto/rand", "sync"),
+		file("admission", true, internalPath("testkit"), internalPath("testkit/delivery")),
+		file("testkit/delivery", false, internalPath("model/task"), "crypto/hmac"),
 		file("execution", false, internalPath("registry")),
 		file("model/observation", false, internalPath("jsondecode"), "strings", "net/netip", "net/url"),
 		file("model/result", false, internalPath("model/observation"), internalPath("model/task")),

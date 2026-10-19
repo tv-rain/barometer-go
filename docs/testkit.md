@@ -8,6 +8,8 @@ These helpers support later model and protocol cases without creating a competin
 
 The separate test-only [`internal/testkit/conformance`](conformance-fixtures.md) subpackage owns the versioned fixture wrapper and task-decoding adapter. Unlike the parent helpers, it consumes existing internal decoding and model packages. Production code must not import either package.
 
+The test-only [`internal/testkit/delivery`](admission.md#delivery-record-seam) subpackage owns a synthetic remote-delivery verifier for admission tests. It imports only task models, its HMAC envelope is a test format rather than a reviewed authentication mechanism, and production code must not import it.
+
 ## Public Baseline and References
 
 Fixture categories follow Draft `0.1.0` at public revision [`05c1364af4f9a604b617fca45f060949b557d265`](https://github.com/tv-rain/barometer-spec/commit/05c1364af4f9a604b617fca45f060949b557d265):
