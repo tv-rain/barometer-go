@@ -25,9 +25,10 @@ var ErrAdmitterConfig = errors.New("admission: invalid admitter configuration")
 // Admitter runs the ordered admission steps of REQ-TRUST-0017 for one client
 // instance. It implements steps 1 to 6 (DEV-586), issuer and policy resolution
 // in step 7, the input, options and path-authority parts of step 8 and the
-// issuer and local risk bounds of step 9 (DEV-587). Target registration
-// matching, locally determined risk and consent, replay (step 10) and
-// acceptance (step 11) are added by later tasks; nothing here persists state,
+// issuer and local risk bounds of step 9 (DEV-587), and target registration
+// matching in step 8 (DEV-588). Proxy compatibility, composite steps, locally
+// determined risk and consent, replay (step 10) and acceptance (step 11) are
+// added by later tasks; nothing here persists state,
 // publishes a handle or performs DNS, Network Context, proxy or measurement
 // activity. It is safe for concurrent use.
 type Admitter struct {
@@ -159,13 +160,16 @@ func (a *Admitter) Gate(ctx context.Context, sourceRef string, exactTask []byte)
 	if class != 0 {
 		return Gated{}, admissionError(class)
 	}
-	// Step 8: input and options through the registry-selected codec, then the
-	// path permitted by issuer and local policy. Proxy compatibility, target
-	// tuples, redirect registrations and composite steps are added here later.
+	// Step 8: input and options through the registry-selected codec, the path
+	// permitted by issuer and local policy, then every target tuple and redirect
+	// registration. Proxy compatibility and composite steps are added later.
 	if candidate.Parameters, err = envelope.Parameters(); err != nil {
 		return Gated{}, admissionError(fieldClass(err))
 	}
 	if class = authority.authorizePath(candidate.Execution.NetworkPath); class != 0 {
+		return Gated{}, admissionError(class)
+	}
+	if class = authority.matchTargets(a.policy, entry.Targets, entry.Test, candidate.Parameters, now); class != 0 {
 		return Gated{}, admissionError(class)
 	}
 	// Step 9, issuer and local bounds only: the registered baseline and the

@@ -1,6 +1,6 @@
 // Package registry holds the reviewed mapping from an exact registered test ID
-// and version to the codec, baseline risk, proxy compatibility and composite
-// eligibility admission needs. It performs no I/O, holds no participant data
+// and version to the codec, baseline risk, target rule, proxy compatibility and
+// composite eligibility admission needs. It performs no I/O, holds no participant data
 // and has no runtime registration. Presence of an entry is not evidence of
 // released, conformant or field-validated support.
 package registry
@@ -31,12 +31,31 @@ type NoProxy struct{}
 
 func (NoProxy) Compatible(task.Parameters) bool { return false }
 
-// Entry is one reviewed test version. Codec and Proxy must remain immutable
-// for the registry's lifetime.
+// Target is one destination or name a task would contact, with the role its
+// local registration must have.
+type Target struct {
+	Role  task.TargetRole
+	Tuple task.TargetTuple
+}
+
+// TargetRule is the test-owned extraction of every destination or name that
+// normalized parameters of its test would contact, each as that test's
+// complete safety-relevant tuple (REQ-TRUST-0014) in the normalized typed form
+// registrations use. Implementations must be immutable, pure and bounded, must
+// report false for parameters of an unexpected type or an incomplete tuple, and
+// must not resolve, fetch or rewrite a target. A rule never grants authority:
+// admission matches every tuple exactly against local registrations.
+type TargetRule interface {
+	Targets(task.Parameters) ([]Target, bool)
+}
+
+// Entry is one reviewed test version. Codec, Targets and Proxy must remain
+// immutable for the registry's lifetime.
 type Entry struct {
 	Test         task.TestVersion
 	Codec        taskdecode.TestCodec
 	BaselineRisk task.Risk
+	Targets      TargetRule
 	Proxy        ProxyRule
 	// Composite marks the NET-05 composite, which also requires explicit
 	// composite permission. Step marks a primitive permitted as a NET-05 step.
@@ -68,7 +87,7 @@ func New(entries []Entry) (*Registry, error) {
 	r := &Registry{entries: make([]Entry, 0, len(entries)), index: make(map[task.TestVersion]int, len(entries))}
 	codecs := make([]taskdecode.TestCodec, 0, len(entries))
 	for _, e := range entries {
-		if e.Codec == nil || e.Proxy == nil || e.BaselineRisk < task.LowRisk || e.BaselineRisk > task.UnknownRisk {
+		if e.Codec == nil || e.Targets == nil || e.Proxy == nil || e.BaselineRisk < task.LowRisk || e.BaselineRisk > task.UnknownRisk {
 			return nil, ErrInvalid
 		}
 		if def := e.Codec.Definition(); def.TestID != e.Test.ID || def.TestVersion != e.Test.Version {
