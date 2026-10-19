@@ -154,7 +154,7 @@ DEV-588 implements the target part of step 8 ([REQ-TRUST-0013](https://github.co
 
   This obligation belongs to Measurement implementation (DEV-454) and Network paths and context (DEV-578) and has no implementation yet.
 
-Registrations with credentials, interpolation syntax, wildcard or noncanonical hosts, or IPv4-mapped addresses are already refused when the policy snapshot is built ([Trusted Context and Local Policy Models](trusted-policy-models.md#target-representation-and-limits)). Registry proxy compatibility and NET-05 composite steps remain unimplemented parts of step 8. The public text does not assign a class to proxy-incompatible parameters, and composite steps need the NET-05 codec (DEV-454).
+Registrations with credentials, interpolation syntax, wildcard or noncanonical hosts, or IPv4-mapped addresses are already refused when the policy snapshot is built ([Trusted Context and Local Policy Models](trusted-policy-models.md#target-representation-and-limits)). Registry proxy compatibility and NET-05 composite steps remain unimplemented parts of step 8. The public text does not assign a class to proxy-incompatible parameters, which is recorded as [GO-SPEC-ISSUE-009](specification-issues.md#go-spec-issue-009-admission-class-for-proxy-incompatible-task-parameters), and composite steps need the NET-05 codec (DEV-454).
 
 Synthetic tests in `internal/admission/target_test.go` use test-scoped codecs and rules under the TCP-01, TLS-01, HTTP-01 and DNS-01 IDs. These are not the public test schemas or production codecs. The tests cover:
 
