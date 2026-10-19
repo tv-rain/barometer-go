@@ -26,6 +26,8 @@ DEV-586 adds the first admission gates and rebaselines the cross-cutting manifes
 
 DEV-587 adds issuer authorization at admission and rebaselines the cross-cutting manifest to Go `aab88f59cbcf62208c9ebfa025fa795354dd072d` at the unchanged public baseline, preserving the DEV-586 mapping as a [historical manifest](../traceability/README.md). Six new `UT.*` cases make REQ-TRUST-0010, REQ-TRUST-0011, REQ-TRUST-0012, REQ-LIMIT-0026 and REQ-LIMIT-0030 `partial` and add aspects to REQ-TRUST-0037. All 76 cross-cutting `UT.*` cases were executed at the new Go baseline and recorded in a [new evidence report](../traceability/evidence/go-unit-aab88f5.md). `CC-TRUST-ISSUER-AUTHORIZATION` and `CC-LIMIT-LIMIT-HANDLING` also cover target matching, acceptance and runtime behavior that do not exist yet, so they stay `planned`. No requirement is `implemented`.
 
+DEV-588 adds target registration matching at admission and rebaselines the cross-cutting manifest to Go `cb672923cdd7668324f6ac4802d6c60edca5572c` at the unchanged public baseline, preserving the DEV-587 mapping as a [historical manifest](../traceability/README.md). Eight new `UT.*` cases make REQ-TRUST-0013, REQ-TRUST-0014 and REQ-TRUST-0015 `partial` and add aspects to REQ-TRUST-0011 and REQ-TRUST-0037. All 84 cross-cutting `UT.*` cases were executed at the new Go baseline and recorded in a [new evidence report](../traceability/evidence/go-unit-cb67292.md). `CC-TRUST-TARGET-REGISTRATION` also covers acceptance and execution-time behavior that do not exist yet, so it stays `planned`, and REQ-TRUST-0016 stays `planned`. No requirement is `implemented`.
+
 ### Typed Review Cases
 
 The public case record has no type field, so this repository types a human review case by convention within the existing format:
