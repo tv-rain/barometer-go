@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Recorded the admission design (DEV-583) in `docs/admission.md`: ordered admission steps and error classes, consumed capabilities and owners, atomic replay persistence, execution outputs and package-creation checklists for `internal/admission` and `internal/registry`. Opened GO-SPEC-ISSUE-008 for admission error classes the public text does not assign, including rejection of unsupported features. Rewrote 17 thin admission-related cross-cutting case plans as measurable plans with `Requirements:` lists, preserving the DEV-582 manifest as historical. Documentation and traceability only; no package, behavior, requirement status or support change.
+
 - Adopted the GO-SPEC-ISSUE-007 disposition (DEV-582). Task validation now rejects a missing or empty `risk_factors` list for `medium`, `high` and `unknown` risk (REQ-SAFETY-0031). The existing `local`-only time-window `timezone` rule is unchanged and now evidenced (REQ-SCHEDULE-0043). Validation, decoding and conformance-fixture cases are added, and the cross-cutting traceability manifest, CI tooling pin and unit-test evidence are rebaselined to public `5a37e82` and Go `4575079`, with the DEV-572 mapping preserved as historical. The six affected requirements are `partial`, not `implemented`. GO-SPEC-ISSUE-007 stays open for admission, binding and host evidence. Producers that send `risk_factors: []` for non-`low` risk are now rejected; no runtime, platform or field support is claimed.
 
 - Recorded Foundation acceptance (DEV-450) in the README and the Foundation validation boundary. Documentation only; no code, traceability, runtime or support status changes.

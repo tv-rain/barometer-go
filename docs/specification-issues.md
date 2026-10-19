@@ -347,3 +347,43 @@ This finding stays open until DEV-582 records adoption evidence for `risk_factor
 - **Remaining scope:** admission under local policy, and the planned `CC-SAFETY-RISK-FACTORS` and `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-FIELDS` family cases, which need the pending admission and runtime work. Binding and host adoption is unassessed until those components exist. External producers and stored tasks are unassessed. No specialist safety review is claimed.
 
 The finding stays open until the remaining scope records evidence or explicit non-applicability.
+
+## GO-SPEC-ISSUE-008: Admission Error Classes for Unsupported and Unmapped Rejections
+
+**Current state:** Open, raised October 19, 2026 under [DEV-583](https://app.clickup.com/t/124kk1zcadk) while recording the [admission design](admission.md). No public record exists yet.
+
+### Identity, Baselines and Requirements
+
+- **Reporter:** the Go implementation agent, under the task owner's instruction. **Duplicates:** none. [GO-SPEC-ISSUE-004](#go-spec-issue-004-boundary-between-not_run-and-incomplete) concerns execution states, not admission classes.
+- **Baseline:** Draft `0.1.0` at [5a37e82865a08922c4821c7318656286933421e5](https://github.com/tv-rain/barometer-spec/tree/5a37e82865a08922c4821c7318656286933421e5). [REQ-TRUST-0034](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0034) lists ten "initial" admission classes, and [REQ-TRUST-0017](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0017) orders the admission steps without assigning classes to them. [REQ-SAFETY-0017](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0017) permits rejecting an unknown risk factor type "as unsupported". [REQ-EXECUTION-0021](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0021), [REQ-EXECUTION-0023](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0023), [REQ-CONTEXT-0026](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0026) and [REQ-CONTEXT-0028](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0028) treat an unavailable required egress field as an unsatisfied execution constraint recorded per attempt as `network_context_unavailable`.
+- **Implementation:** no admission package exists at `dea88adaa87e1191a745643478f8e0c02eddad3c`. `task.AdmissionError` holds the ten codes; `validation.Common` rejects unknown risk factor types with `validation.ErrTask`, which has no admission class yet.
+
+### Finding and Interim Handling
+
+No public class covers a task that is valid under the public schema but uses a feature this implementation does not provide. The [Admission and local policy sub-epic](https://app.clickup.com/t/124kk1zca7y) plans to reject tasks that require egress Network Context until egress acquisition exists ([DEV-590](https://app.clickup.com/t/124kk1zcae4)). The public text instead admits such a task and lets each attempt end with `network_context_unavailable`. REQ-SAFETY-0017's "unsupported" rejection likewise has no class.
+
+The public text also leaves these admission mappings open; the [admission design](admission.md#ordered-steps-and-error-classes) marks each as *open*:
+
+- a missing, expired or mismatched delivery record, and unavailable trusted time: `task_source_unauthenticated` or `task_trust_unavailable`;
+- remote `issued_at` more than 300 seconds in the future;
+- `task_id` over 128 bytes: `task_schema_invalid` or `task_limit_exceeded`;
+- a well-formed but unregistered test or version;
+- a source policy generation higher than the active one;
+- a path or proxy the issuer or local policy does not permit;
+- effective risk above a local-only bound, or `unknown` without a reviewed exception;
+- precedence when several steps would fail. The design reports the first failing step in REQ-TRUST-0017 order.
+
+The design also applies the fail-closed replay rule, which the public table states for remote tasks, to embedded tasks.
+
+**Blocked:** DEV-590, and the *open* rows of DEV-586, DEV-587 and DEV-589 and of the `CC-TRUST-ADMISSION-PROCEDURE`, `CC-TRUST-ADMISSION-ERRORS`, `CC-SAFETY-RISK-FACTORS-INITIAL-RISK-FACTOR-TYPES` and `CC-LIMIT-TASK-AND-IDENTIFIER-LIMITS` plans. **Interim handling:** no class is chosen and no Go behavior changes; plans assert only that rejection happens, that the class is one of the ten public classes and that no network activity occurs. **Unaffected:** mappings the public names determine, such as `task_expired`, `task_id_conflict`, `policy_rollback` and `target_not_registered`.
+
+### Impact, Reviews and Alternatives
+
+- **Safety and interoperability:** every option rejects or skips before network activity, so the safety difference is small. Hosts and issuers that branch on admission classes would diverge between implementations. Admitting an unsupported task can also produce a stream of `not_run` results that look like network failures. Safety review of the chosen mapping is required.
+- **Alternatives for unsupported features:** (a) reuse `task_schema_invalid`; (b) add a class such as `task_unsupported`; (c) admit and let execution record `network_context_unavailable`, with no admission rejection; this already conforms for egress but not for REQ-SAFETY-0017.
+- **Alternatives for the other mappings:** (a) a normative step-to-class table in `library/task-trust.md`; (b) state that classes are advisory and only rejection is normative.
+- **Compatibility:** a new class extends the operational vocabulary and needs a version decision. A mapping table without new classes is a clarification.
+
+### Ordering and Closure
+
+Public record and disposition first, then internal alignment if the task-trust review covers error classes, then Go adoption in the admission tasks, then bindings. Closure requires the public disposition and Go adoption evidence.
