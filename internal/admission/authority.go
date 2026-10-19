@@ -16,8 +16,8 @@ import (
 type Authority struct {
 	generation uint64
 	paths      task.Paths
-	// Registration IDs permitted by both the issuer and local policy. Matching
-	// task destinations against them is target registration (DEV-588).
+	// Registration IDs permitted by both the issuer and local policy, narrowed
+	// by target matching to those the task's destinations matched.
 	registrationIDs []string
 	// Ceilings after intersection, narrowed to the task's declared values.
 	limits                                    task.PolicyLimits
@@ -81,8 +81,8 @@ func resolve(policy task.LocalPolicy, source task.SourceContext, test task.TestV
 
 // authorizePath is the authority part of step 8: the task's single network
 // path must be permitted by both issuer and local policy (REQ-TRUST-0037).
-// Proxy compatibility and the matched registration's paths stay with later
-// step-8 work.
+// The matched registration's paths are checked by matchTargets; registry
+// proxy compatibility stays with later step-8 work.
 func (a *Authority) authorizePath(path string) task.AdmissionCode {
 	switch {
 	case path == "direct" && a.paths.Direct:

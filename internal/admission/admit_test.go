@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -54,6 +55,22 @@ func (c synCodec) Normalize(input, _ *jsondecode.Value) (task.Parameters, error)
 	return synParameters{Subject: subject.Text()}, nil
 }
 
+// fixedTargets reports the same tuples for any SYN-01 parameters, so gate tests
+// that do not exercise target matching resolve to one registration.
+type fixedTargets []registry.Target
+
+func (f fixedTargets) Targets(p task.Parameters) ([]registry.Target, bool) {
+	if _, ok := p.(synParameters); !ok {
+		return nil, false
+	}
+	return slices.Clone(f), true
+}
+
+var (
+	synTargets   = fixedTargets{{Role: task.MeasurementTarget, Tuple: task.TargetTuple{Hostname: "reg-a.example.test"}}}
+	net05Targets = fixedTargets{{Role: task.MeasurementTarget, Tuple: task.TargetTuple{Hostname: "reg-net05.example.test"}}}
+)
+
 // stepClock fails from the given call onward, so a test can make trusted time
 // unavailable after delivery resolution, at step 3. The raw error is a canary.
 type stepClock struct {
@@ -90,7 +107,7 @@ func newHarnessWith(t *testing.T, policy task.LocalPolicy) *harness {
 	if h.store, err = admission.NewDeliveryStore(h.clock, admission.DeliveryLimits{Capacity: 256, Lifetime: lifetime}, 2); err != nil {
 		t.Fatal("store rejected")
 	}
-	reg, err := registry.New([]registry.Entry{{Test: task.TestVersion{ID: "SYN-01", Version: "0.1.0"}, Codec: synCodec{calls: h.normalize}, BaselineRisk: task.MediumRisk, Proxy: registry.NoProxy{}}})
+	reg, err := registry.New([]registry.Entry{{Test: task.TestVersion{ID: "SYN-01", Version: "0.1.0"}, Codec: synCodec{calls: h.normalize}, BaselineRisk: task.MediumRisk, Targets: synTargets, Proxy: registry.NoProxy{}}})
 	if err != nil {
 		t.Fatal("registry rejected")
 	}
@@ -563,7 +580,7 @@ func TestGateOwnershipAndConcurrency(t *testing.T) {
 
 func TestNewAdmitterRejectsIncompleteConfiguration(t *testing.T) {
 	h := newHarness(t)
-	reg, _ := registry.New([]registry.Entry{{Test: task.TestVersion{ID: "SYN-01", Version: "0.1.0"}, Codec: synCodec{}, BaselineRisk: task.LowRisk, Proxy: registry.NoProxy{}}})
+	reg, _ := registry.New([]registry.Entry{{Test: task.TestVersion{ID: "SYN-01", Version: "0.1.0"}, Codec: synCodec{}, BaselineRisk: task.LowRisk, Targets: synTargets, Proxy: registry.NoProxy{}}})
 	for name, build := range map[string]func() (*admission.Admitter, error){
 		"no store": func() (*admission.Admitter, error) {
 			return admission.NewAdmitter(nil, h.clock, reg, mustPolicy(t, permissive()))
@@ -596,7 +613,7 @@ func FuzzGate(f *testing.F) {
 	if err != nil {
 		f.Fatal("store rejected")
 	}
-	reg, err := registry.New([]registry.Entry{{Test: task.TestVersion{ID: "SYN-01", Version: "0.1.0"}, Codec: synCodec{}, BaselineRisk: task.LowRisk, Proxy: registry.NoProxy{}}})
+	reg, err := registry.New([]registry.Entry{{Test: task.TestVersion{ID: "SYN-01", Version: "0.1.0"}, Codec: synCodec{}, BaselineRisk: task.LowRisk, Targets: synTargets, Proxy: registry.NoProxy{}}})
 	if err != nil {
 		f.Fatal("registry rejected")
 	}

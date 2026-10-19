@@ -39,8 +39,18 @@ func (tcpOnly) Compatible(p task.Parameters) bool {
 	return ok && f.TCP
 }
 
+// fixedTarget reports one measurement tuple, for fixture parameters only.
+type fixedTarget struct{ host string }
+
+func (r fixedTarget) Targets(p task.Parameters) ([]Target, bool) {
+	if _, ok := p.(fixtureParameters); !ok {
+		return nil, false
+	}
+	return []Target{{Role: task.MeasurementTarget, Tuple: task.TargetTuple{Hostname: r.host}}}, true
+}
+
 func entry(id, ver string) Entry {
-	return Entry{Test: task.TestVersion{ID: id, Version: ver}, Codec: codec(id, ver), BaselineRisk: task.LowRisk, Proxy: NoProxy{}}
+	return Entry{Test: task.TestVersion{ID: id, Version: ver}, Codec: codec(id, ver), BaselineRisk: task.LowRisk, Targets: fixedTarget{host: "example.test"}, Proxy: NoProxy{}}
 }
 
 func fixtureEntries() []Entry {
@@ -106,6 +116,12 @@ func TestEntryMetadata(t *testing.T) {
 	if syn.Proxy.Compatible(fixtureParameters{TCP: true}) || syn.Composite || syn.Step {
 		t.Fatal("NoProxy entry must never be compatible or composite-eligible")
 	}
+	if got, ok := syn.Targets.Targets(fixtureParameters{}); !ok || len(got) != 1 || got[0].Tuple.Hostname != "example.test" {
+		t.Fatal("target rule not preserved")
+	}
+	if _, ok := syn.Targets.Targets(nil); ok {
+		t.Fatal("target rule accepted parameters of an unexpected type")
+	}
 	syn2, _ := r.Lookup(task.TestVersion{ID: "SYN-01", Version: "0.2.0"})
 	if syn.BaselineRisk != task.LowRisk || syn2.BaselineRisk != task.MediumRisk {
 		t.Fatal("baseline risk must be per exact version")
@@ -135,6 +151,7 @@ func TestNewRejectsInvalidSetsAtomically(t *testing.T) {
 		"over bound":             tooMany,
 		"duplicate":              append(fixtureEntries(), entry("SYN-01", "0.1.0")),
 		"missing codec":          mutate(0, func(e *Entry) { e.Codec = nil }),
+		"missing target rule":    mutate(0, func(e *Entry) { e.Targets = nil }),
 		"missing proxy rule":     mutate(0, func(e *Entry) { e.Proxy = nil }),
 		"missing risk":           mutate(0, func(e *Entry) { e.BaselineRisk = 0 }),
 		"out-of-range risk":      mutate(0, func(e *Entry) { e.BaselineRisk = task.UnknownRisk + 1 }),

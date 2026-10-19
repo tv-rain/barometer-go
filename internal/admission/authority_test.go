@@ -41,7 +41,7 @@ func permissions() task.Permissions {
 
 func registration(id string) task.TargetRegistration {
 	return task.TargetRegistration{ID: id, Test: task.TestVersion{ID: "SYN-01", Version: "0.1.0"}, Role: task.MeasurementTarget,
-		Tuple: task.TargetTuple{Hostname: id + ".example.test"}, Paths: task.Paths{Direct: true}, BaselineRisk: task.LowRisk,
+		Tuple: task.TargetTuple{Hostname: id + ".example.test"}, Paths: task.Paths{Direct: true, Proxy: true}, BaselineRisk: task.LowRisk,
 		Owner: "synthetic", Purpose: "synthetic", ReviewGeneration: 1, ExpiresAt: task.TimestampFromTime(epoch.Add(48 * time.Hour))}
 }
 
@@ -90,7 +90,7 @@ func rebind(t *testing.T, h *harness, policy task.LocalPolicy, entries ...regist
 }
 
 func synEntry(h *harness, baseline task.Risk) registry.Entry {
-	return registry.Entry{Test: task.TestVersion{ID: "SYN-01", Version: "0.1.0"}, Codec: synCodec{calls: h.normalize}, BaselineRisk: baseline, Proxy: registry.NoProxy{}}
+	return registry.Entry{Test: task.TestVersion{ID: "SYN-01", Version: "0.1.0"}, Codec: synCodec{calls: h.normalize}, BaselineRisk: baseline, Targets: synTargets, Proxy: registry.NoProxy{}}
 }
 
 func retry(initial, maxDelay, jitter int) map[string]any {
@@ -300,8 +300,12 @@ func TestGateIssuerAuthorization(t *testing.T) {
 			in := permissive()
 			// NET-05 needs explicit composite enablement on both sides; the
 			// "composite disabled" row then removes it from one side.
+			reg := registration("reg-net05")
+			reg.Test = net05
+			in.Targets = append(in.Targets, reg)
 			for _, p := range []*task.Permissions{&in.Permissions, &in.Issuers[0].Permissions} {
 				p.Tests, p.AllowComposite = append(p.Tests, net05), true
+				p.RegistrationIDs = append(p.RegistrationIDs, reg.ID)
 			}
 			if side == "issuer" {
 				c.edit(&in.Issuers[0].Permissions)
@@ -311,11 +315,12 @@ func TestGateIssuerAuthorization(t *testing.T) {
 			for _, p := range []*task.Permissions{&in.Permissions, &in.Issuers[0].Permissions} {
 				if !p.AllowComposite {
 					p.Tests = slices.DeleteFunc(p.Tests, func(tv task.TestVersion) bool { return tv == net05 })
+					p.RegistrationIDs = slices.DeleteFunc(p.RegistrationIDs, func(id string) bool { return id == reg.ID })
 				}
 			}
 			h := newHarness(t)
 			rebind(t, h, mustPolicy(t, in), synEntry(h, c.baseline),
-				registry.Entry{Test: net05, Codec: synCodec{calls: h.normalize, id: "NET-05"}, BaselineRisk: c.baseline, Proxy: registry.NoProxy{}, Composite: true})
+				registry.Entry{Test: net05, Codec: synCodec{calls: h.normalize, id: "NET-05"}, BaselineRisk: c.baseline, Targets: net05Targets, Proxy: registry.NoProxy{}, Composite: true})
 			_, err := h.embedded(t, taskWith(c.task))
 			expect(t, side+" "+c.name, err, c.want)
 		}
