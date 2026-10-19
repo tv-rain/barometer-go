@@ -187,6 +187,8 @@ Protocol primitives return observations and budget usage. They do not construct 
 
 Adding an identifier to the registry requires a corresponding public registered test, internal review alignment, implementation, and conformance evidence. Registry presence alone must not be presented as released or field-validated support.
 
+DEV-584 implements the admission subset. `registry.New` builds an immutable registry from a bounded list of entries. Each entry pairs an exact `(test_id, test_version)` with its `taskdecode.TestCodec`, registered baseline risk, a proxy-compatibility rule over normalized parameters, and whether the test is the NET-05 composite or a permitted NET-05 step. Construction rejects the whole set with one fixed error when any entry is incomplete, duplicated, malformed or inconsistent with its codec. `Lookup` matches exact strings only, with no latest-version fallback, case folding or partial match, and is safe for concurrent reads. `Codecs` returns the same reviewed codec set for building the task decoder. There is no global registry or runtime registration method. Only test-scoped synthetic entries exist; production entries, runner composition and effective-risk evaluation are added by later tasks.
+
 ### Network Context
 
 `internal/networkcontext` owns normalized access and egress context, cache rules, primary and fallback acquisition, path consistency, coarse failure states, and privacy filtering. It consumes platform and network capabilities but does not expose raw platform objects or unrestricted endpoint responses.
@@ -262,10 +264,10 @@ The high-level dependency flow is:
 root facade
     ↓
 admission ──────────────→ taskdecode ──→ model/task
-    │                      │     │
-    │                      │     └──────→ jsondecode (standard-library leaf)
-    │                      ↓
-    └──────────────────→ validation → registry metadata
+    │                      ↑  │  │
+    ├──────→ registry ─────┘  │  └──────→ jsondecode (standard-library leaf)
+    │                         ↓
+    └──────────────────→ validation
                               ↓
 execution ─────────────→ measurement runners → protocol primitives
     │                         │                       │
@@ -283,6 +285,7 @@ More specifically:
 
 - The root facade may import internal orchestration packages.
 - Task decoding may import the shared strict JSON decoder, task models, and pure validation; it invokes common and timing validation before publishing a candidate (see [Task Models](task-models.md)).
+- The registry may import task models, task decoding codec types and the shared strict JSON decoder. Validation must not import it, because task decoding already imports validation; admission passes registry metadata to validation as values.
 - Admission may import task decoding, validation, task models, registry metadata, and the narrow persistence capabilities it consumes.
 - Execution may import admitted task models, the measurement contract, registry composition, Network Context, result construction, bundle construction, platform capabilities, and persistence capabilities.
 - Registered measurement packages may import task and observation models, protocol primitives, and narrow capabilities needed by that test.
@@ -291,7 +294,7 @@ More specifically:
 - Concrete adapters may import the capability contract they implement; capability packages must not import concrete adapters.
 - Tests may import production packages and `testkit`; production packages may not import `testkit`.
 
-`TestDependencyRules` in [`dependency_rules_test.go`](../dependency_rules_test.go) enforces the import-visible rules in this section and the next through `go test ./...`, and therefore `make check` and CI. It parses every Go file regardless of build tags. Production files outside `internal/testkit` must not import `internal/testkit` or its subpackages; internal packages, including their tests, must not import the root package; domain models import only other models, `jsondecode` and standard-library packages without network or filesystem access; `jsondecode` imports only the standard library; validation, measurement, protocol, result, bundle and capability-contract packages must not import the owners forbidden below. A synthetic negative test shows that each rule rejects a forbidden import. Behavioral rules, such as no clamping, no proxy-to-direct fallback, no replay mutation and no indirect network activity, are not visible in imports and remain review rules; a passing check does not establish them.
+`TestDependencyRules` in [`dependency_rules_test.go`](../dependency_rules_test.go) enforces the import-visible rules in this section and the next through `go test ./...`, and therefore `make check` and CI. It parses every Go file regardless of build tags. Production files outside `internal/testkit` must not import `internal/testkit` or its subpackages; internal packages, including their tests, must not import the root package; domain models import only other models, `jsondecode` and standard-library packages without network or filesystem access; `jsondecode` imports only the standard library; `registry` imports only task models, `taskdecode`, `jsondecode` and standard-library packages without network or filesystem access, and measurement packages must not import it; validation, measurement, protocol, result, bundle and capability-contract packages must not import the owners forbidden below. A synthetic negative test shows that each rule rejects a forbidden import. Behavioral rules, such as no clamping, no proxy-to-direct fallback, no replay mutation and no indirect network activity, are not visible in imports and remain review rules; a passing check does not establish them.
 
 If implementing a rule would require an import cycle, ownership must be reconsidered. A cycle must not be hidden through global registries, service locators, untyped maps, or callback bags.
 
