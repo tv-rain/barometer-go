@@ -11,8 +11,10 @@ var (
 )
 
 // AdmissionCode is separate from ExecutionReason and protocol observations.
-// These are the ten initial classes in REQ-TRUST-0034.
+// These are the ten initial classes in REQ-TRUST-0034 and task_unsupported
+// (REQ-TRUST-0036).
 // requirement-ref: REQ-TRUST-0034
+// requirement-ref: REQ-TRUST-0036
 type AdmissionCode uint8
 
 const (
@@ -26,6 +28,7 @@ const (
 	TargetNotRegistered
 	LimitExceeded
 	SchemaInvalid
+	Unsupported
 )
 
 func (c AdmissionCode) code() string {
@@ -50,6 +53,8 @@ func (c AdmissionCode) code() string {
 		return "task_limit_exceeded"
 	case SchemaInvalid:
 		return "task_schema_invalid"
+	case Unsupported:
+		return "task_unsupported"
 	}
 	return ""
 }
