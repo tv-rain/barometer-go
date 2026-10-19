@@ -23,22 +23,27 @@ const (
 var ErrAdmitterConfig = errors.New("admission: invalid admitter configuration")
 
 // Admitter runs the ordered admission steps of REQ-TRUST-0017 for one client
-// instance. It currently implements steps 1 to 6 and the input and options
-// part of step 8 (DEV-586). Issuer, policy and target resolution (step 7), the
-// rest of step 8, risk and consent (step 9), replay (step 10) and acceptance
-// (step 11) are added by later tasks; nothing here persists state, publishes a
-// handle or performs DNS, Network Context, proxy or measurement activity.
-// It is safe for concurrent use.
+// instance. It implements steps 1 to 6 (DEV-586), issuer and policy resolution
+// in step 7, the input, options and path-authority parts of step 8 and the
+// issuer and local risk bounds of step 9 (DEV-587). Target registration
+// matching, locally determined risk and consent, replay (step 10) and
+// acceptance (step 11) are added by later tasks; nothing here persists state,
+// publishes a handle or performs DNS, Network Context, proxy or measurement
+// activity. It is safe for concurrent use.
 type Admitter struct {
 	deliveries *DeliveryStore
 	clock      platform.Clock
 	registry   *registry.Registry
 	decoder    *taskdecode.Decoder
+	policy     task.LocalPolicy
 }
 
-// NewAdmitter binds the instance's delivery store, trusted clock and reviewed
-// registry. The task decoder is built from exactly the registry's codecs.
-func NewAdmitter(deliveries *DeliveryStore, clock platform.Clock, reg *registry.Registry) (*Admitter, error) {
+// NewAdmitter binds the instance's delivery store, trusted clock, reviewed
+// registry and active policy snapshot. The task decoder is built from exactly
+// the registry's codecs. An invalid (zero) policy is accepted and fails every
+// task closed at step 7 as task_policy_unavailable; activating and replacing
+// policy belongs to the lifecycle owner.
+func NewAdmitter(deliveries *DeliveryStore, clock platform.Clock, reg *registry.Registry, policy task.LocalPolicy) (*Admitter, error) {
 	if deliveries == nil || clock == nil || reg == nil {
 		return nil, ErrAdmitterConfig
 	}
@@ -46,7 +51,7 @@ func NewAdmitter(deliveries *DeliveryStore, clock platform.Clock, reg *registry.
 	if err != nil {
 		return nil, ErrAdmitterConfig
 	}
-	return &Admitter{deliveries: deliveries, clock: clock, registry: reg, decoder: decoder}, nil
+	return &Admitter{deliveries: deliveries, clock: clock, registry: reg, decoder: decoder, policy: policy}, nil
 }
 
 // Gated is the unpublished outcome of the implemented gates: owned values for
@@ -57,6 +62,7 @@ type Gated struct {
 	acceptedAt time.Time
 	entry      registry.Entry
 	candidate  task.Candidate
+	authority  Authority
 }
 
 // String and GoString keep source context, labels and parameters out of
@@ -79,6 +85,9 @@ func (Gated) GoString() string { return "admission.Gated" }
 // requirement-ref: REQ-TRUST-0035
 // requirement-ref: REQ-TRUST-0036
 // requirement-ref: REQ-TRUST-0037
+// requirement-ref: REQ-TRUST-0010
+// requirement-ref: REQ-TRUST-0012
+// requirement-ref: REQ-LIMIT-0026
 func (a *Admitter) Gate(ctx context.Context, sourceRef string, exactTask []byte) (Gated, error) {
 	if a == nil {
 		return Gated{}, admissionError(task.TrustUnavailable)
@@ -101,6 +110,7 @@ func (a *Admitter) Gate(ctx context.Context, sourceRef string, exactTask []byte)
 		return Gated{}, admissionError(task.TrustUnavailable)
 	}
 	timing := validation.TimingContext{Origin: "embedded", AcceptedAt: now}
+	base := now // validity reference, as in validation.ScheduleAt
 	if remote {
 		// requirement-ref: REQ-LIMIT-0010
 		issued, ok := source.IssuedAt()
@@ -109,6 +119,9 @@ func (a *Admitter) Gate(ctx context.Context, sourceRef string, exactTask []byte)
 		}
 		whole := issued.Whole
 		timing.Origin, timing.IssuedAt = "remote", &whole
+		if whole.Before(base) {
+			base = whole
+		}
 	}
 	// requirement-ref: REQ-LIMIT-0004
 	// requirement-ref: REQ-LIMIT-0005
@@ -140,12 +153,27 @@ func (a *Admitter) Gate(ctx context.Context, sourceRef string, exactTask []byte)
 	if err != nil {
 		return Gated{}, admissionError(fieldClass(err))
 	}
-	// Step 8, input and options only: the registry-selected codec. Step 7 and
-	// the target, proxy and composite parts of step 8 are inserted around it.
+	// Step 7: active policy generation, issuer authority and the intersected
+	// test, composite, numeric and label bounds.
+	authority, class := resolve(a.policy, source, entry.Test, candidate, base)
+	if class != 0 {
+		return Gated{}, admissionError(class)
+	}
+	// Step 8: input and options through the registry-selected codec, then the
+	// path permitted by issuer and local policy. Proxy compatibility, target
+	// tuples, redirect registrations and composite steps are added here later.
 	if candidate.Parameters, err = envelope.Parameters(); err != nil {
 		return Gated{}, admissionError(fieldClass(err))
 	}
-	return Gated{record: record, acceptedAt: now, entry: entry, candidate: candidate}, nil
+	if class = authority.authorizePath(candidate.Execution.NetworkPath); class != 0 {
+		return Gated{}, admissionError(class)
+	}
+	// Step 9, issuer and local bounds only: the registered baseline and the
+	// task-declared risk.
+	if class = authority.authorizeRisk(entry.BaselineRisk, candidate.Safety.RiskLevel); class != 0 {
+		return Gated{}, admissionError(class)
+	}
+	return Gated{record: record, acceptedAt: now, entry: entry, candidate: candidate, authority: authority}, nil
 }
 
 // fieldClass maps a decoding or validation failure to its public class. A value

@@ -27,11 +27,18 @@ type synParameters struct{ Subject string }
 
 func (synParameters) TaskParameters() {}
 
-type synCodec struct{ calls *atomic.Int32 }
+type synCodec struct {
+	calls *atomic.Int32
+	id    string // defaults to SYN-01
+}
 
-func (synCodec) Definition() taskdecode.Definition {
+func (c synCodec) Definition() taskdecode.Definition {
 	text := &jsondecode.Schema{Kind: jsondecode.String}
-	return taskdecode.Definition{TestID: "SYN-01", TestVersion: "0.1.0",
+	id := c.id
+	if id == "" {
+		id = "SYN-01"
+	}
+	return taskdecode.Definition{TestID: id, TestVersion: "0.1.0",
 		Input:   &jsondecode.Schema{Kind: jsondecode.Object, Fields: map[string]jsondecode.Field{"subject": {Schema: text, Required: true}}},
 		Options: &jsondecode.Schema{Kind: jsondecode.Object, Fields: map[string]jsondecode.Field{"note": {Schema: text}}}}
 }
@@ -71,6 +78,13 @@ type harness struct {
 
 func newHarness(t *testing.T) *harness {
 	t.Helper()
+	return newHarnessWith(t, mustPolicy(t, permissive()))
+}
+
+// newHarnessWith binds the given policy snapshot; a zero snapshot models an
+// instance with no installed policy.
+func newHarnessWith(t *testing.T, policy task.LocalPolicy) *harness {
+	t.Helper()
 	h := &harness{clock: &stepClock{fakeClock: newClock()}, normalize: &atomic.Int32{}}
 	var err error
 	if h.store, err = admission.NewDeliveryStore(h.clock, admission.DeliveryLimits{Capacity: 256, Lifetime: lifetime}, 2); err != nil {
@@ -80,7 +94,7 @@ func newHarness(t *testing.T) *harness {
 	if err != nil {
 		t.Fatal("registry rejected")
 	}
-	if h.admitter, err = admission.NewAdmitter(h.store, h.clock, reg); err != nil {
+	if h.admitter, err = admission.NewAdmitter(h.store, h.clock, reg, policy); err != nil {
 		t.Fatal("admitter rejected")
 	}
 	// The recording transport is never given to admission; it must stay unused.
@@ -152,10 +166,11 @@ func padded(b []byte, n int) []byte {
 	return append(append([]byte(nil), b...), bytes.Repeat([]byte(" "), n-len(b))...)
 }
 
+// labels uses keys in the "t" namespace, which the permissive policy allows.
 func labels(n, valueBytes int) map[string]any {
 	m := map[string]any{}
 	for i := range n {
-		m[fmt.Sprintf("k%02d", i)] = strings.Repeat("v", valueBytes)
+		m[fmt.Sprintf("t.k%02d", i)] = strings.Repeat("v", valueBytes)
 	}
 	return m
 }
@@ -164,10 +179,10 @@ func labels(n, valueBytes int) map[string]any {
 // (2017 to 2193), with every value within the 128-byte label value maximum.
 func labelBytes(total int) map[string]any {
 	m := labels(16, 0)
-	rest := total - len(`{}`) - 15 - 16*len(`"k00":""`)
+	rest := total - len(`{}`) - 15 - 16*len(`"t.k00":""`)
 	for i := 0; rest > 0; i++ {
 		n := min(rest, 128)
-		m[fmt.Sprintf("k%02d", i)] = strings.Repeat("v", n)
+		m[fmt.Sprintf("t.k%02d", i)] = strings.Repeat("v", n)
 		rest -= n
 	}
 	return m
@@ -550,9 +565,15 @@ func TestNewAdmitterRejectsIncompleteConfiguration(t *testing.T) {
 	h := newHarness(t)
 	reg, _ := registry.New([]registry.Entry{{Test: task.TestVersion{ID: "SYN-01", Version: "0.1.0"}, Codec: synCodec{}, BaselineRisk: task.LowRisk, Proxy: registry.NoProxy{}}})
 	for name, build := range map[string]func() (*admission.Admitter, error){
-		"no store":    func() (*admission.Admitter, error) { return admission.NewAdmitter(nil, h.clock, reg) },
-		"no clock":    func() (*admission.Admitter, error) { return admission.NewAdmitter(h.store, nil, reg) },
-		"no registry": func() (*admission.Admitter, error) { return admission.NewAdmitter(h.store, h.clock, nil) },
+		"no store": func() (*admission.Admitter, error) {
+			return admission.NewAdmitter(nil, h.clock, reg, mustPolicy(t, permissive()))
+		},
+		"no clock": func() (*admission.Admitter, error) {
+			return admission.NewAdmitter(h.store, nil, reg, mustPolicy(t, permissive()))
+		},
+		"no registry": func() (*admission.Admitter, error) {
+			return admission.NewAdmitter(h.store, h.clock, nil, mustPolicy(t, permissive()))
+		},
 	} {
 		if a, err := build(); a != nil || !errors.Is(err, admission.ErrAdmitterConfig) {
 			t.Errorf("%s: incomplete admitter accepted", name)
@@ -567,7 +588,7 @@ func TestNewAdmitterRejectsIncompleteConfiguration(t *testing.T) {
 // FuzzGate checks that arbitrary bound bytes produce either a gate outcome or
 // exactly one code-only admission class, deterministically and without panics.
 func FuzzGate(f *testing.F) {
-	for _, seed := range [][]byte{[]byte(baseTask), taskWith(map[string]any{"private": 1}), taskWith(map[string]any{"test_version": "0.2.0"}), []byte(`{`), []byte(`[]`), []byte(`{"schema_version":"0.1.0"}`)} {
+	for _, seed := range [][]byte{[]byte(baseTask), taskWith(map[string]any{"private": 1}), taskWith(map[string]any{"test_version": "0.2.0"}), taskWith(map[string]any{"labels": map[string]any{"zzz": "x"}}), taskWith(map[string]any{"execution.network_path": "proxy", "safety.risk_level": "high"}), []byte(`{`), []byte(`[]`), []byte(`{"schema_version":"0.1.0"}`)} {
 		f.Add(seed)
 	}
 	h := &harness{clock: &stepClock{fakeClock: newClock()}}
@@ -579,7 +600,11 @@ func FuzzGate(f *testing.F) {
 	if err != nil {
 		f.Fatal("registry rejected")
 	}
-	admitter, err := admission.NewAdmitter(store, h.clock, reg)
+	policy, err := task.NewLocalPolicy(permissive())
+	if err != nil {
+		f.Fatal("policy rejected")
+	}
+	admitter, err := admission.NewAdmitter(store, h.clock, reg, policy)
 	if err != nil {
 		f.Fatal("admitter rejected")
 	}

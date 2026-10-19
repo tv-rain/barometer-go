@@ -12,3 +12,11 @@ func GatedAcceptedAt(g Gated) time.Time      { return g.acceptedAt }
 func GatedTest(g Gated) task.TestVersion     { return g.entry.Test }
 func GatedSource(g Gated) task.SourceContext { return g.record.Source() }
 func GatedBaselineRisk(g Gated) task.Risk    { return g.entry.BaselineRisk }
+
+// Test-only views of the effective authority.
+func GatedLimits(g Gated) task.PolicyLimits { return g.authority.limits }
+func GatedPaths(g Gated) task.Paths         { return g.authority.paths }
+func GatedRegistrations(g Gated) []string   { return g.authority.registrationIDs }
+func GatedRequiresConsent(g Gated) bool     { return g.authority.requireConsent }
+func GatedPolicyGeneration(g Gated) uint64  { return g.authority.generation }
+func GatedAuthority(g Gated) Authority      { return g.authority }
