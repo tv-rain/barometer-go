@@ -21,6 +21,9 @@ type TimingContext struct {
 }
 
 // ScheduleAt enforces expiry against explicit trusted time, never time.Now().
+// Every failure matches ErrTiming; a not_after at or before acceptance also
+// matches ErrExpired and one beyond the 7-day lifetime also matches ErrLimit
+// (REQ-LIMIT-0009).
 func ScheduleAt(s task.Schedule, ctx TimingContext) error {
 	if !validSchedule(s) || ctx.AcceptedAt.IsZero() {
 		return ErrTiming
@@ -44,8 +47,11 @@ func ScheduleAt(s task.Schedule, ctx TimingContext) error {
 	default:
 		return ErrTiming
 	}
-	if s.NotAfter != nil && (!s.NotAfter.AfterTime(ctx.AcceptedAt) || s.NotAfter.AfterTime(base.Add(604800*time.Second))) {
-		return ErrTiming
+	if s.NotAfter != nil && !s.NotAfter.AfterTime(ctx.AcceptedAt) {
+		return errExpired
+	}
+	if s.NotAfter != nil && s.NotAfter.AfterTime(base.Add(604800*time.Second)) {
+		return errTimingLimit
 	}
 	return nil
 }

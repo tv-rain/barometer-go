@@ -190,7 +190,7 @@ func TestRejectionCorpus(t *testing.T) {
 	entries := []entry{
 		{"unknown-top", "extra", true, false, jsondecode.ErrField},
 		{"schema-version", "schema_version", "0.2.0", false, jsondecode.ErrVersion},
-		{"version-type", "test_version", 1, false, jsondecode.ErrVersion},
+		{"version-type", "test_version", 1, false, jsondecode.ErrType},
 		{"identifier-empty", "task_id", "", false, validation.ErrTask},
 		{"identifier-case", "task_id", "Task", false, validation.ErrTask},
 		{"identifier-first", "task_id", "_task", false, validation.ErrTask},
@@ -244,9 +244,6 @@ func TestRejectionCorpus(t *testing.T) {
 	}
 	for _, path := range []string{"schema_version", "task_id", "test_id", "test_version", "input", "options", "schedule", "execution", "safety", "execution.limits", "safety.risk_level", "safety.requires_user_consent"} {
 		expected := jsondecode.ErrRequired
-		if path == "schema_version" || path == "test_id" || path == "test_version" {
-			expected = jsondecode.ErrVersion
-		}
 		entries = append(entries, entry{"missing-" + path, path, nil, true, expected})
 	}
 	for _, path := range []string{"input", "options", "schedule", "execution", "safety", "execution.limits", "labels"} {

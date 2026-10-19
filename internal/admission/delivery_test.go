@@ -305,9 +305,11 @@ func TestInstallRejectsUnprovenDeliveries(t *testing.T) {
 		"embedded invalid issuer":  func() (string, error) { return s.InstallEmbedded(ctx, "Issuer", 2, exact) },
 		"embedded zero generation": func() (string, error) { return s.InstallEmbedded(ctx, "embedded-issuer", 0, exact) },
 		"embedded empty task":      func() (string, error) { return s.InstallEmbedded(ctx, "embedded-issuer", 2, nil) },
-		"embedded oversized task":  func() (string, error) { return s.InstallEmbedded(ctx, "embedded-issuer", 2, make([]byte, 65537)) },
-		"nil verifier":             func() (string, error) { return s.InstallRemote(ctx, nil, v.Seal(exact)) },
-		"empty envelope":           func() (string, error) { return s.InstallRemote(ctx, v, nil) },
+		"embedded oversized task": func() (string, error) {
+			return s.InstallEmbedded(ctx, "embedded-issuer", 2, make([]byte, task.MaxDeliveryBytes+1))
+		},
+		"nil verifier":   func() (string, error) { return s.InstallRemote(ctx, nil, v.Seal(exact)) },
+		"empty envelope": func() (string, error) { return s.InstallRemote(ctx, v, nil) },
 		"oversized envelope": func() (string, error) {
 			return s.InstallRemote(ctx, v, make([]byte, admission.MaxRemoteDeliveryBytes+1))
 		},
@@ -316,7 +318,7 @@ func TestInstallRejectsUnprovenDeliveries(t *testing.T) {
 		"encryption without issuer": func() (string, error) { return s.InstallRemote(ctx, unauthenticated, unauthenticated.Seal(exact)) },
 		"verifier invalid issuer":   func() (string, error) { return s.InstallRemote(ctx, badIssuer, badIssuer.Seal(exact)) },
 		"verifier returns embedded": func() (string, error) { return s.InstallRemote(ctx, embeddedVerifier{}, exact) },
-		"verifier oversized task":   func() (string, error) { return s.InstallRemote(ctx, v, v.Seal(make([]byte, 65537))) },
+		"verifier oversized task":   func() (string, error) { return s.InstallRemote(ctx, v, v.Seal(make([]byte, task.MaxDeliveryBytes+1))) },
 		"verifier cancelled": func() (string, error) {
 			c, cancel := context.WithCancel(ctx)
 			cancel()

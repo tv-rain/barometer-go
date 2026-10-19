@@ -349,3 +349,50 @@ func FuzzParse(f *testing.F) {
 		}
 	})
 }
+
+// Limit-marked maxima additionally match ErrLimit; minima, unmarked maxima and
+// resource-envelope bounds do not. Any defers a value to a later schema.
+func TestLimitClassAndStagedValidation(t *testing.T) {
+	limited := &Schema{Kind: Object, Fields: map[string]Field{
+		"n":     {&Schema{Kind: Integer, Min: "1", Max: "10", Limit: true}, false},
+		"m":     {integer("1", "10"), false},
+		"items": {&Schema{Kind: Array, Element: &Schema{Kind: Integer, Min: "0", Max: "9"}, MaxCount: 2, Limit: true}, false},
+		"blob":  {&Schema{Kind: Object, Additional: &Schema{Kind: Any}, MaxBytes: 16, Limit: true}, false},
+	}}
+	for name, c := range map[string]struct {
+		input        string
+		class        error
+		limit, valid bool
+	}{
+		"limited-max":    {`{"n":10}`, nil, false, true},
+		"limited-above":  {`{"n":11}`, ErrRange, true, false},
+		"limited-below":  {`{"n":0}`, ErrRange, false, false},
+		"plain-above":    {`{"m":11}`, ErrRange, false, false},
+		"count-max":      {`{"items":[0,1]}`, nil, false, true},
+		"count-above":    {`{"items":[0,1,2]}`, ErrBounds, true, false},
+		"bytes-max":      {`{"blob":{"a":[1,{}]}}`, nil, false, true},
+		"bytes-above":    {`{"blob":{"a":[1,{"b":2}]}}`, ErrBounds, true, false},
+		"any-member":     {`{"blob":{"a":null}}`, nil, false, true},
+		"depth-envelope": {strings.Repeat("[", 33) + strings.Repeat("]", 33), ErrBounds, false, false},
+	} {
+		v, err := Decode([]byte(c.input), limited, testLimits)
+		if c.valid != (err == nil) || c.class != nil && !errors.Is(err, c.class) || errors.Is(err, ErrLimit) != c.limit {
+			t.Errorf("%s: unexpected class", name)
+		}
+		if err != nil && (v != nil || strings.Contains(err.Error(), "limit") && !c.limit) {
+			t.Errorf("%s: leaked value or class", name)
+		}
+	}
+	v, err := Decode([]byte(`{"blob":{"a":"x"}}`), limited, testLimits)
+	if err != nil {
+		t.Fatal("staged input rejected")
+	}
+	blob, _ := v.Lookup("blob")
+	member, _ := blob.Lookup("a")
+	if Validate(member, &Schema{Kind: String}) != nil || !errors.Is(Validate(member, &Schema{Kind: Integer, Min: "0", Max: "1"}), ErrType) {
+		t.Error("later-stage validation of a deferred value differs")
+	}
+	if !errors.Is(Validate(nil, &Schema{Kind: String}), ErrRequired) || !errors.Is(Validate(member, &Schema{Kind: Any, MaxCount: 1}), ErrConfig) || !errors.Is(Validate(member, nil), ErrConfig) {
+		t.Error("staged validation accepted a missing value or invalid schema")
+	}
+}

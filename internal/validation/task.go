@@ -18,19 +18,30 @@ var labelKey = regexp.MustCompile(`^[a-z][a-z0-9_.-]{0,63}$`)
 
 // Common checks candidate invariants without making policy/trust decisions.
 // It applies the documented max_runs default and canonical label ordering.
-// Original encoded byte bounds remain the decoder's responsibility.
+// Original encoded byte bounds remain the decoder's responsibility. Every
+// failure matches ErrTask; a value above a registered maximum also matches
+// ErrLimit and an unrecognized risk factor type also matches ErrUnsupported.
 func Common(c task.Candidate) (task.Candidate, error) {
-	if !taskID.MatchString(c.ID) || c.SchemaVersion != "0.1.0" {
+	if err := TaskID(c.ID); err != nil {
+		return task.Candidate{}, err
+	}
+	if c.SchemaVersion != "0.1.0" {
 		return task.Candidate{}, ErrTask
 	}
-	if !validSchedule(c.Schedule) || !validExecution(c.Execution, c.TestID == "NET-01") || !validSafety(c.Safety) {
-		return task.Candidate{}, ErrTask
+	if err := scheduleErr(c.Schedule); err != nil {
+		return task.Candidate{}, err
+	}
+	if err := executionErr(c.Execution, c.TestID == "NET-01"); err != nil {
+		return task.Candidate{}, err
+	}
+	if err := safetyErr(c.Safety); err != nil {
+		return task.Candidate{}, err
 	}
 	// requirement-ref: REQ-LABEL-0005
 	// requirement-ref: REQ-LABEL-0010
 	// requirement-ref: REQ-LABEL-0014
 	if len(c.Labels) > 16 {
-		return task.Candidate{}, ErrTask
+		return task.Candidate{}, errTaskLimit
 	}
 	seen := make(map[string]bool, len(c.Labels))
 	for _, l := range c.Labels {
@@ -59,151 +70,198 @@ func Common(c task.Candidate) (task.Candidate, error) {
 	return c, nil
 }
 
-func validSchedule(s task.Schedule) bool {
+func validSchedule(s task.Schedule) bool { return scheduleErr(s) == nil }
+
+// scheduleErr reports ErrTask, or errTaskLimit for a value above a registered
+// schedule or retry maximum (REQ-LIMIT-0011).
+func scheduleErr(s task.Schedule) error {
 	if s.StartsAt != nil && s.NotAfter != nil && !s.StartsAt.Before(*s.NotAfter) {
-		return false
+		return ErrTask
 	}
 	if s.Window != nil {
 		// requirement-ref: REQ-SCHEDULE-0013
 		// requirement-ref: REQ-SCHEDULE-0014
 		// requirement-ref: REQ-SCHEDULE-0043
 		// local is the only defined timezone; decoding defaults an omitted value to it.
-		if s.Window.Timezone != "local" || len(s.Window.Ranges) < 1 || len(s.Window.Ranges) > 4 {
-			return false
+		if s.Window.Timezone != "local" {
+			return ErrTask
+		}
+		if err := limit(len(s.Window.Ranges), 1, 4); err != nil {
+			return err
 		}
 		var covered [1440]bool
 		seen := map[task.TimeRange]bool{}
 		for _, r := range s.Window.Ranges {
 			if r.Start < 0 || r.Start >= 1440 || r.End < 0 || r.End >= 1440 || seen[r] {
-				return false
+				return ErrTask
 			}
 			seen[r] = true
 			for m := r.Start; m != r.End; m = (m + 1) % 1440 {
 				if covered[m] {
-					return false
+					return ErrTask
 				}
 				covered[m] = true
 			}
 		}
 	}
-	if s.MaxRuns != nil && (*s.MaxRuns < 1 || *s.MaxRuns > 28) {
-		return false
+	if s.MaxRuns != nil {
+		if err := limit(*s.MaxRuns, 1, 28); err != nil {
+			return err
+		}
 	}
 	switch s.Repeat.Mode {
 	case "none":
 		if s.Repeat.IntervalSeconds != nil || s.Repeat.JitterSeconds != nil {
-			return false
+			return ErrTask
 		}
 	case "interval":
 		if s.NotAfter == nil || s.MaxRuns == nil || s.Repeat.IntervalSeconds == nil || s.Repeat.JitterSeconds == nil {
-			return false
+			return ErrTask
 		}
 		i, j := *s.Repeat.IntervalSeconds, *s.Repeat.JitterSeconds
-		if i < 21600 || i > 604800 || j < 300 || j > 1800 || j > i/4 {
-			return false
+		if err := limit(i, 21600, 604800); err != nil {
+			return err
+		}
+		if err := limit(j, 300, min(1800, i/4)); err != nil {
+			return err
 		}
 	default:
-		return false
+		return ErrTask
 	}
 	r := s.Retry
 	if r.MaxAttempts == 1 {
-		return r.On == nil && r.Backoff == nil
+		if r.On != nil || r.Backoff != nil {
+			return ErrTask
+		}
+		return nil
 	}
-	if r.MaxAttempts != 2 || len(r.On) == 0 || len(r.On) > 4 || r.Backoff == nil {
-		return false
+	if err := limit(r.MaxAttempts, 1, 2); err != nil {
+		return err
+	}
+	if len(r.On) == 0 || len(r.On) > 4 || r.Backoff == nil {
+		return ErrTask
 	}
 	seen := map[task.ExecutionReason]bool{}
 	for _, reason := range r.On {
 		if !task.Retryable(reason) || seen[reason] {
-			return false
+			return ErrTask
 		}
 		seen[reason] = true
 	}
 	b := r.Backoff
-	if b.InitialDelayMS < 30000 || b.InitialDelayMS > 300000 || b.MaxDelayMS < b.InitialDelayMS || b.MaxDelayMS > 600000 || b.JitterMS < 0 || b.JitterMS > 60000 {
-		return false
+	if err := limit(b.InitialDelayMS, 30000, 300000); err != nil {
+		return err
+	}
+	if err := limit(b.MaxDelayMS, b.InitialDelayMS, 600000); err != nil {
+		return err
+	}
+	if err := limit(b.JitterMS, 0, 60000); err != nil {
+		return err
 	}
 	switch b.Mode {
 	case "fixed":
-		return b.Multiplier == nil
+		if b.Multiplier != nil {
+			return ErrTask
+		}
+		return nil
 	case "exponential":
-		return b.Multiplier != nil && *b.Multiplier == 2
+		if b.Multiplier == nil {
+			return ErrTask
+		}
+		return limit(*b.Multiplier, 2, 2)
 	}
-	return false
+	return ErrTask
 }
 
-func validExecution(e task.Execution, zeroTraffic bool) bool {
+// executionErr reports ErrTask, or errTaskLimit for an attempt limit above
+// its registered maximum (REQ-LIMIT-0006). NET-01 requires zero traffic limits.
+func executionErr(e task.Execution, zeroTraffic bool) error {
 	if e.NetworkPath != "direct" && e.NetworkPath != "proxy" {
-		return false
+		return ErrTask
 	}
 	l := e.Limits
-	if l.DurationMS < 1 || l.DurationMS > 60000 {
-		return false
+	if err := limit(l.DurationMS, 1, 60000); err != nil {
+		return err
 	}
 	if zeroTraffic {
 		if l.BytesSent != 0 || l.BytesReceived != 0 || l.Connections != 0 {
-			return false
+			return ErrTask
 		}
-	} else if l.BytesSent < 1 || l.BytesSent > 65536 || l.BytesReceived < 1 || l.BytesReceived > 262144 || l.Connections < 1 || l.Connections > 12 {
-		return false
+	} else {
+		for _, err := range []error{limit(l.BytesSent, 1, 65536), limit(l.BytesReceived, 1, 262144), limit(l.Connections, 1, 12)} {
+			if err != nil {
+				return err
+			}
+		}
 	}
 	for _, s := range e.Network.AllowedTransports {
 		if s != "wifi" && s != "cellular" {
-			return false
+			return ErrTask
 		}
 	}
 	if e.Network.VPNPolicy != "any" && e.Network.VPNPolicy != "exclude" && e.Network.VPNPolicy != "require" {
-		return false
+		return ErrTask
 	}
 	ctx := e.Network.Context
 	if !unique(ctx.RequiredFields) || !unique(ctx.AllowedCountryCodes) {
-		return false
+		return ErrTask
 	}
 	for _, f := range ctx.RequiredFields {
 		if f != "country_code" && f != "region_code" && f != "asn" {
-			return false
+			return ErrTask
 		}
 	}
 	if ctx.AllowedCountryCodes != nil && len(ctx.AllowedCountryCodes) == 0 {
-		return false
+		return ErrTask
 	}
 	for _, code := range ctx.AllowedCountryCodes {
 		if !countryCode(code) {
-			return false
+			return ErrTask
 		}
 	}
 	if e.Device.MinimumBatteryPercent != nil && (*e.Device.MinimumBatteryPercent < 0 || *e.Device.MinimumBatteryPercent > 100) {
-		return false
+		return ErrTask
 	}
-	return e.ConcurrencyMode == "" || e.ConcurrencyMode == "shared" || e.ConcurrencyMode == "exclusive"
+	if e.ConcurrencyMode != "" && e.ConcurrencyMode != "shared" && e.ConcurrencyMode != "exclusive" {
+		return ErrTask
+	}
+	return nil
 }
 
+// safetyErr reports ErrTask, or errUnsupported for a risk factor type this
+// build does not recognize: it rejects the task as unsupported rather than
+// treating that factor's risk as unknown (REQ-SAFETY-0017, REQ-TRUST-0036).
 // requirement-ref: REQ-SAFETY-0012
 // requirement-ref: REQ-SAFETY-0013
+// requirement-ref: REQ-SAFETY-0017
 // requirement-ref: REQ-SAFETY-0031
-func validSafety(s task.Safety) bool {
+func safetyErr(s task.Safety) error {
 	rank := map[string]int{"low": 1, "medium": 2, "high": 3, "unknown": 4}
 	// Any risk other than low needs at least one factor; an empty list does not explain it.
 	if rank[s.RiskLevel] == 0 || (s.RiskLevel != "low" && len(s.Factors) == 0) {
-		return false
+		return ErrTask
 	}
+	unsupported := false
 	for _, f := range s.Factors {
 		if rank[f.Level] == 0 {
-			return false
+			return ErrTask
 		}
 		switch f.Type {
 		case "network_observability", "traffic_distinctiveness", "target_sensitivity", "data_sensitivity", "legal_or_social_context":
 		default:
-			return false
+			unsupported = true
 		}
 		if f.Level == "unknown" && s.RiskLevel != "unknown" {
-			return false
+			return ErrTask
 		}
 		if s.RiskLevel != "unknown" && rank[f.Level] > rank[s.RiskLevel] {
-			return false
+			return ErrTask
 		}
 	}
-	return true
+	if unsupported {
+		return errUnsupported
+	}
+	return nil
 }
 
 func unique(values []string) bool {

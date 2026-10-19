@@ -23,6 +23,21 @@ var (
 	ErrVersion   = errors.New("jsondecode: version")
 	ErrBounds    = errors.New("jsondecode: bounds")
 	ErrConfig    = errors.New("jsondecode: configuration")
+	// ErrLimit is also matched by a value above a maximum of a schema marked
+	// Limit. That error still matches ErrRange or ErrBounds as before.
+	ErrLimit = errors.New("jsondecode: limit")
+)
+
+// limitError is a fixed class: it reports ErrLimit together with the bound
+// class it refines and carries no input or schema detail.
+type limitError struct{ bound error }
+
+func (e limitError) Error() string        { return e.bound.Error() }
+func (e limitError) Is(target error) bool { return target == ErrLimit || target == e.bound }
+
+var (
+	errAboveLimit = limitError{ErrRange}
+	errOverLimit  = limitError{ErrBounds}
 )
 
 type Kind uint8
@@ -34,6 +49,9 @@ const (
 	String
 	Boolean
 	Integer
+	// Any is a schema-only kind accepting every value subject to MaxBytes. A
+	// later stage must validate that value against its own schema.
+	Any
 )
 
 // Limits are required trusted local policy. MaxDepth counts all value levels,
@@ -45,11 +63,14 @@ type Limits struct{ MaxBytes, MaxDepth, MaxNodes int }
 // unless Additional is set for an explicitly dynamic-key object. Integer bounds
 // are mandatory finite canonical decimal strings, compared with math/big.
 // MaxBytes counts original encoded value bytes; MaxCount bounds members/elements.
-// Zero optional bounds mean the required enclosing Limits apply.
+// Zero optional bounds mean the required enclosing Limits apply. Limit marks
+// Max, MaxBytes and MaxCount as registered or local limits: exceeding one also
+// matches ErrLimit, while a value below Min does not.
 // Callers must not mutate schema/selection maps during decoding.
 type Schema struct {
 	Kind               Kind
 	Nullable           bool
+	Limit              bool
 	Fields             map[string]Field
 	Additional         *Schema
 	Element            *Schema
@@ -109,6 +130,18 @@ func Decode(input []byte, schema *Schema, limits Limits) (*Value, error) {
 		return nil, err
 	}
 	return v, nil
+}
+
+// Validate checks an already decoded value against another schema, for staged
+// decoding of one parsed representation. It does not modify the value.
+func Validate(v *Value, schema *Schema) error {
+	if !validSchema(schema) {
+		return ErrConfig
+	}
+	if v == nil {
+		return ErrRequired
+	}
+	return validate(v, schema)
 }
 
 // DecodeSelected parses once under the same resource envelope, selects exactly
@@ -187,7 +220,7 @@ func validSchema(s *Schema) bool {
 	var visit func(*Schema, int) bool
 	visit = func(s *Schema, depth int) bool {
 		nodes++
-		if s == nil || nodes > 4096 || depth > 128 || path[s] || s.Kind > Integer || s.MaxBytes < 0 || s.MaxCount < 0 {
+		if s == nil || nodes > 4096 || depth > 128 || path[s] || s.Kind > Any || s.MaxBytes < 0 || s.MaxCount < 0 {
 			return false
 		}
 		path[s] = true
@@ -225,9 +258,9 @@ func validSchema(s *Schema) bool {
 // requirement-ref: REQ-JSON-0005
 func validate(v *Value, s *Schema) error {
 	if s.MaxBytes > 0 && v.EncodedBytes() > s.MaxBytes {
-		return ErrBounds
+		return s.over()
 	}
-	if v.kind == Null && s.Nullable {
+	if s.Kind == Any || v.kind == Null && s.Nullable {
 		return nil
 	}
 	if v.kind != s.Kind {
@@ -236,7 +269,7 @@ func validate(v *Value, s *Schema) error {
 	switch s.Kind {
 	case Object:
 		if s.MaxCount > 0 && len(v.members) > s.MaxCount {
-			return ErrBounds
+			return s.over()
 		}
 		// Input order and sorted descriptor names make failure precedence stable.
 		for _, name := range v.order {
@@ -266,7 +299,7 @@ func validate(v *Value, s *Schema) error {
 		}
 	case Array:
 		if s.MaxCount > 0 && len(v.elements) > s.MaxCount {
-			return ErrBounds
+			return s.over()
 		}
 		for _, x := range v.elements {
 			if err := validate(x, s.Element); err != nil {
@@ -282,11 +315,25 @@ func validate(v *Value, s *Schema) error {
 		x, _ := new(big.Int).SetString(v.text, 10)
 		lo, _ := new(big.Int).SetString(s.Min, 10)
 		hi, _ := new(big.Int).SetString(s.Max, 10)
-		if x.Cmp(lo) < 0 || x.Cmp(hi) > 0 {
+		if x.Cmp(lo) < 0 {
+			return ErrRange
+		}
+		if x.Cmp(hi) > 0 {
+			if s.Limit {
+				return errAboveLimit
+			}
 			return ErrRange
 		}
 	}
 	return nil
+}
+
+// over is the error for exceeding MaxBytes or MaxCount.
+func (s *Schema) over() error {
+	if s.Limit {
+		return errOverLimit
+	}
+	return ErrBounds
 }
 
 func integerToken(s string) bool {

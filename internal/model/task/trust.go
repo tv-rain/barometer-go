@@ -78,6 +78,12 @@ func (s SourceContext) PolicyGeneration() uint64    { return s.generation }
 func (s SourceContext) Authenticated() bool         { return s.authenticated }
 func (s SourceContext) IssuedAt() (Timestamp, bool) { return s.issued, s.hasIssued }
 
+// MaxDeliveryBytes bounds the exact bytes a delivery record can bind. It is an
+// implementation-local receive bound, deliberately above the registered 65,536-byte
+// task limit so that admission, not the record, rejects an oversized task as
+// task_limit_exceeded before parsing (REQ-TRUST-0017 step 3).
+const MaxDeliveryBytes = 2 * 65536
+
 // DeliveryRecord binds metadata to byte identity without retaining payloads.
 // It does not verify signatures, check time, install a source reference, or
 // implement replay. A future reviewed delivery owner must perform those steps.
@@ -88,14 +94,14 @@ type DeliveryRecord struct {
 }
 
 func NewDeliveryRecord(source SourceContext, exactTask []byte) (DeliveryRecord, error) {
-	if !source.Valid() || len(exactTask) == 0 || len(exactTask) > 65536 {
+	if !source.Valid() || len(exactTask) == 0 || len(exactTask) > MaxDeliveryBytes {
 		return DeliveryRecord{}, ErrTrustModel
 	}
 	return DeliveryRecord{source: source, digest: sha256.Sum256(exactTask)}, nil
 }
 func (r DeliveryRecord) Source() SourceContext { return r.source }
 func (r DeliveryRecord) Matches(exactTask []byte) bool {
-	return r.source.Valid() && len(exactTask) > 0 && len(exactTask) <= 65536 && r.digest == sha256.Sum256(exactTask)
+	return r.source.Valid() && len(exactTask) > 0 && len(exactTask) <= MaxDeliveryBytes && r.digest == sha256.Sum256(exactTask)
 }
 
 func identifier(s string) bool {

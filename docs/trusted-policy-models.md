@@ -14,7 +14,7 @@ An internal reviewed adapter supplies `SourceInput` after establishing provenanc
 
 `SourceContext` stores private immutable values; zero values are invalid and the issuance pointer is copied. It is structurally separate from `Candidate`, task parameters, labels and initialization JSON.
 
-`NewDeliveryRecord` binds a valid context to the SHA-256 digest of 1–65,536 exact received bytes without retaining the payload. `Matches` distinguishes semantically equivalent JSON with different bytes. This value models the exact-byte association required by the future delivery owner. It does not verify integrity/authentication, parse the task, mint a public `sourceRef`, retain replay state or return an admitted task. The adapter must verify the same bytes it binds; admission must use that identity rather than reconstructing bytes from a candidate.
+`NewDeliveryRecord` binds a valid context to the SHA-256 digest of 1–131,072 exact received bytes (`task.MaxDeliveryBytes`) without retaining the payload. This implementation-local receive bound is deliberately above the registered 65,536-byte task limit so that admission rejects an oversized task as `task_limit_exceeded` before parsing instead of the record refusing it (DEV-586). `Matches` distinguishes semantically equivalent JSON with different bytes. This value models the exact-byte association required by the future delivery owner. It does not verify integrity/authentication, parse the task, mint a public `sourceRef`, retain replay state or return an admitted task. The adapter must verify the same bytes it binds; admission must use that identity rather than reconstructing bytes from a candidate.
 
 <!-- requirement-ref: REQ-TRUST-0001 -->
 
