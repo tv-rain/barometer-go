@@ -350,7 +350,7 @@ The finding stays open until the remaining scope records evidence or explicit no
 
 ## GO-SPEC-ISSUE-008: Admission Error Classes for Unsupported and Unmapped Rejections
 
-**Current state:** Open, raised October 19, 2026 under [DEV-583](https://app.clickup.com/t/124kk1zcadk) while recording the [admission design](admission.md). No public record exists yet.
+**Current state:** Open; public disposition and wording accepted October 19, 2026, public merge, internal alignment and Go adoption pending. The public maintainer accepted a new `task_unsupported` class and a normative condition-to-class table in [Admission Error Classes — Maintainer Disposition](https://github.com/tv-rain/barometer-spec/blob/main/specification-issues/admission-error-classes.md#maintainer-disposition--october-19-2026). See the [disposition addendum](#disposition-addendum--october-19-2026-1). The sections before the addendum keep their original wording as historical evidence. Originally raised October 19, 2026 under [DEV-583](https://app.clickup.com/t/124kk1zcadk) while recording the [admission design](admission.md).
 
 ### Identity, Baselines and Requirements
 
@@ -387,3 +387,16 @@ The design also applies the fail-closed replay rule, which the public table stat
 ### Ordering and Closure
 
 Public record and disposition first, then internal alignment if the task-trust review covers error classes, then Go adoption in the admission tasks, then bindings. Closure requires the public disposition and Go adoption evidence.
+
+### Disposition Addendum — October 19, 2026
+
+The public record [Admission Error Classes for Unsupported and Unmapped Rejections](https://github.com/tv-rain/barometer-spec/blob/main/specification-issues/admission-error-classes.md) was prepared under [DEV-596](https://app.clickup.com/t/124kk1zcb6g) against this finding's public baseline, Draft `0.1.0` at [5a37e82865a08922c4821c7318656286933421e5](https://github.com/tv-rain/barometer-spec/tree/5a37e82865a08922c4821c7318656286933421e5). The project owner and public maintainer, Lev, accepted alternative (b) for unsupported features and alternative (a) for the other mappings on October 19, 2026. The accepted wording, REQ-TRUST-0036 to REQ-TRUST-0038, is part of the same public change and retains Draft `0.1.0`. Its merged immutable revision is recorded as evidence on DEV-596.
+
+- **Unsupported features:** [REQ-TRUST-0036](https://github.com/tv-rain/barometer-spec/blob/main/library/task-trust.md#REQ-TRUST-0036) adds `task_unsupported` for a valid task that requires an unregistered test or version, an unrecognized risk factor type (when rejected under REQ-SAFETY-0017) or a capability the implementation does not provide, such as egress Network Context for `execution.context`. The DEV-590 rejection of egress-requiring tasks conforms with this class. `task.AdmissionError` lacks the code and must gain it before admission returns it.
+- **Mappings and precedence:** [REQ-TRUST-0037](https://github.com/tv-rain/barometer-spec/blob/main/library/task-trust.md#REQ-TRUST-0037) makes the first failing step in REQ-TRUST-0017 order normative and maps each *open* row of the [admission design](admission.md#ordered-steps-and-error-classes): unbound delivery record and future `issued_at` to `task_source_unauthenticated`; unavailable trusted time to `task_trust_unavailable`; `task_id` over 128 bytes to `task_limit_exceeded`; unregistered test or version, rejected risk factor type and missing capability to `task_unsupported`; higher source policy generation to `task_policy_unavailable`; path or proxy not permitted by issuer authority or local policy, and risk above a local bound or unpermitted `unknown`, to `task_issuer_not_authorized`; path not permitted by the matched target registration to `target_not_registered`.
+- **Embedded replay:** [REQ-TRUST-0038](https://github.com/tv-rain/barometer-spec/blob/main/library/task-trust.md#REQ-TRUST-0038) confirms the design's fail-closed replay handling for embedded tasks.
+- **Public wording:** REQ-TRUST-0017, REQ-TRUST-0024, REQ-TRUST-0033 and REQ-TRUST-0034 are unchanged. Go adoption must cite the merged immutable revision, not a branch.
+- **Internal alignment:** required. The internal task-trust review validation plan names admission classes and limits fail-closed replay to remote tasks; it must cite the merged wording.
+- **Go adoption:** after the public merge, a Go change rebaselines the admission design and the `CC-TRUST-ADMISSION-PROCEDURE`, `CC-TRUST-ADMISSION-ERRORS`, `CC-SAFETY-RISK-FACTORS-INITIAL-RISK-FACTOR-TYPES` and `CC-LIMIT-TASK-AND-IDENTIFIER-LIMITS` plans to exact classes, adds `task_unsupported` to `task.AdmissionError` and adds traceability entries for the three new requirement IDs. DEV-586, DEV-587, DEV-589 and DEV-590 then implement and test the rows. Go behavior is unchanged by this addendum.
+
+This finding stays open until the admission tasks record adoption evidence for every table row, precedence and embedded replay handling.
