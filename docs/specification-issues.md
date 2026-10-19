@@ -412,3 +412,7 @@ This finding stays open until the admission tasks record adoption evidence for e
 - **Remaining scope:** DEV-586, DEV-587, DEV-589 and DEV-590 implement and test the rows, and the replay task (DEV-591) implements embedded fail-closed handling. The internal task-trust review alignment is separate. Binding and host adoption is unassessed until those components exist. No specialist safety review is claimed.
 
 The finding stays open until the admission tasks record adoption evidence for every table row, precedence and embedded replay handling.
+
+### Gate Evidence Addendum — October 19, 2026
+
+[DEV-586](https://app.clickup.com/t/124kk1zcadx) implements the gates for admission steps 1 to 6 at Go `b25f107f393f531adb4a54d89b76364db4dda640` ([Implemented Gates](admission.md#implemented-gates)). Synthetic unit tests, recorded in the [evidence report](../traceability/evidence/go-unit-b25f107.md), exercise these REQ-TRUST-0037 rows: unbound delivery record and remote `issued_at` more than 300 seconds ahead, `task_source_unauthenticated`; unavailable trusted time, `task_trust_unavailable`; unregistered test or version, `task_unsupported`; `task_id` over 128 bytes, `task_limit_exceeded`; and, at step 6, a rejected risk factor type, `task_unsupported`. They also exercise first-failing-step precedence among steps 1 to 6 and the input and options part of step 8. The rows for a missing capability (DEV-590), steps 7 to 9 (DEV-587 to DEV-589) and embedded replay (DEV-591) have no runtime evidence yet. The finding stays open.
