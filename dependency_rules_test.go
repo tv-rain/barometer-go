@@ -118,6 +118,21 @@ var importRules = []importRule{
 		},
 	},
 	{
+		name:    "registry imports only task models, task decoding and strict JSON",
+		applies: func(pkg string) bool { return underAny(pkg, "registry") },
+		forbidden: func(_, imp string) bool {
+			if moduleImport(imp) {
+				return !underAny(imp, "model/task", "taskdecode", "jsondecode")
+			}
+			return !standardLibrary(imp) || directIO(imp)
+		},
+	},
+	{
+		name:      "measurement packages must not import the registry",
+		applies:   func(pkg string) bool { return underAny(pkg, "measurement") },
+		forbidden: func(_, imp string) bool { return underAny(imp, "registry") },
+	},
+	{
 		name:    "measurement packages must not import one another or bundles",
 		applies: func(pkg string) bool { return measurementName(pkg) != "" },
 		forbidden: func(pkg, imp string) bool {
@@ -226,7 +241,7 @@ func TestDependencyRules(t *testing.T) {
 	for _, f := range files {
 		seen[f.pkg] = true
 	}
-	for _, want := range []string{modulePath, internalPath("jsondecode"), internalPath("model/task"), internalPath("taskdecode"), internalPath("validation"), internalPath("testkit/conformance")} {
+	for _, want := range []string{modulePath, internalPath("jsondecode"), internalPath("model/task"), internalPath("taskdecode"), internalPath("validation"), internalPath("registry"), internalPath("testkit/conformance")} {
 		if !seen[want] {
 			t.Fatalf("dependency check did not load %s", want)
 		}
@@ -258,14 +273,24 @@ func TestDependencyRulesRejectForbiddenImports(t *testing.T) {
 		{"jsondecode reads files", file("jsondecode", false, "os"), importRules[4].name},
 		{"validation imports admission", file("validation", false, internalPath("admission")), importRules[5].name},
 		{"validation performs network I/O", file("validation", false, "net/http"), importRules[5].name},
-		{"measurement imports another measurement", file("measurement/dns01", false, internalPath("measurement/tcp01")), importRules[6].name},
-		{"measurement builds bundles", file("measurement/tls01", false, internalPath("bundle")), importRules[6].name},
-		{"protocol persists state", file("protocol/dns", false, internalPath("persistence")), importRules[7].name},
-		{"protocol schedules retries", file("protocol/http", false, internalPath("execution")), importRules[7].name},
-		{"result imports execution", file("result", false, internalPath("execution")), importRules[8].name},
-		{"bundle imports protocol", file("bundle", false, internalPath("protocol/http")), importRules[8].name},
-		{"capability imports adapter", file("platform", false, internalPath("platform/android")), importRules[9].name},
-		{"persistence imports orchestration", file("persistence", false, internalPath("admission")), importRules[9].name},
+		{"registry imports admission", file("registry", false, internalPath("admission")), importRules[6].name},
+		{"registry imports execution", file("registry", false, internalPath("execution")), importRules[6].name},
+		{"registry imports persistence", file("registry", false, internalPath("persistence")), importRules[6].name},
+		{"registry imports platform", file("registry", false, internalPath("platform")), importRules[6].name},
+		{"registry imports testkit", file("registry", false, internalPath("testkit")), importRules[6].name},
+		{"registry imports a measurement", file("registry", false, internalPath("measurement/tcp01")), importRules[6].name},
+		{"registry reads files", file("registry", false, "os"), importRules[6].name},
+		{"registry imports third party", file("registry", false, "example.com/dependency"), importRules[6].name},
+		{"measurement imports registry", file("measurement/tcp01", false, internalPath("registry")), importRules[7].name},
+		{"measurement primitive imports registry", file("measurement", false, internalPath("registry")), importRules[7].name},
+		{"measurement imports another measurement", file("measurement/dns01", false, internalPath("measurement/tcp01")), importRules[8].name},
+		{"measurement builds bundles", file("measurement/tls01", false, internalPath("bundle")), importRules[8].name},
+		{"protocol persists state", file("protocol/dns", false, internalPath("persistence")), importRules[9].name},
+		{"protocol schedules retries", file("protocol/http", false, internalPath("execution")), importRules[9].name},
+		{"result imports execution", file("result", false, internalPath("execution")), importRules[10].name},
+		{"bundle imports protocol", file("bundle", false, internalPath("protocol/http")), importRules[10].name},
+		{"capability imports adapter", file("platform", false, internalPath("platform/android")), importRules[11].name},
+		{"persistence imports orchestration", file("persistence", false, internalPath("admission")), importRules[11].name},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -284,6 +309,9 @@ func TestDependencyRulesRejectForbiddenImports(t *testing.T) {
 		file("testkit/conformance", false, internalPath("testkit"), internalPath("taskdecode")),
 		file("taskdecode", true, internalPath("testkit")),
 		file("taskdecode", false, internalPath("validation"), internalPath("jsondecode"), internalPath("model/task")),
+		file("registry", false, internalPath("model/task"), internalPath("taskdecode"), "errors"),
+		file("admission", false, internalPath("registry")),
+		file("execution", false, internalPath("registry")),
 		file("model/observation", false, internalPath("jsondecode"), "strings", "net/netip", "net/url"),
 		file("model/result", false, internalPath("model/observation"), internalPath("model/task")),
 		file("measurement/dns01", false, internalPath("measurement"), internalPath("protocol/dns"), internalPath("model/observation")),

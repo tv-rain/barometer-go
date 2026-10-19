@@ -26,6 +26,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Internal registered-test registry for admission (DEV-584). `internal/registry` maps an exact `(test_id, test_version)` to its task codec, registered baseline risk, a proxy-compatibility rule and NET-05 composite or step eligibility. It is immutable after construction, bounded to 256 entries and safe for concurrent reads. Lookup has no version fallback or partial match, and construction rejects incomplete, duplicate or codec-inconsistent entries atomically. The dependency check now restricts registry imports and forbids measurement packages from importing it; the architecture now states that validation cannot import the registry. Only test-scoped synthetic entries exist. No production entry, runner composition, admission behavior, requirement status or support claim is added.
+
 - Open specification findings GO-SPEC-ISSUE-004 to GO-SPEC-ISSUE-007 (DEV-573): the `not_run`/`incomplete` boundary, the byte-limit accounting layer, NET-03 over-bound classification, and undefined `risk_factors`/`timezone` value domains, including that current task validation accepts an empty `risk_factors` array. Records only; no runtime, traceability or support change.
 
 - Foundation validation-boundary documentation links delivered synthetic tooling to owned downstream runtime harness tasks; current specification-adoption summaries distinguish merged Foundation code from pending runtime/binding evidence. No runtime behavior, historical traceability report or support status changes.
