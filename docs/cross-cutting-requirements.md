@@ -12,6 +12,8 @@ DEV-572 expands the thin and mixed plans at the same baselines. One-line plans n
 
 DEV-582 adopts the [GO-SPEC-ISSUE-007](specification-issues.md#go-spec-issue-007-undefined-allowed-values-for-risk_factors-and-timezone) disposition and rebaselines this map to public `5a37e82865a08922c4821c7318656286933421e5`, the verified merge of [public PR #13](https://github.com/tv-rain/barometer-spec/pull/13), and Go `4575079b503467bff83c1175329be6cfa64cfb71`. Between `a944ed6` and `5a37e82` the shared catalog changes only by the new allocations REQ-SAFETY-0031 and REQ-SCHEDULE-0043, and no other requirement text changes. The new IDs join the `CC-SAFETY-RISK-FACTORS` and `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-FIELDS` families, whose plans now include the empty-list and undefined-timezone rejections. The [manifest](../traceability/cross-cutting.json) maps 575 active shared requirements to the same 191 families, and the public requirement links below are pinned to `5a37e82`. REQ-SAFETY-0012, REQ-SAFETY-0013, REQ-SAFETY-0031, REQ-SCHEDULE-0013, REQ-SCHEDULE-0014 and REQ-SCHEDULE-0043 are `partial`, each linked to three new passing `UT.*` cases at the validation, decoding and conformance-fixture levels. All 61 cross-cutting `UT.*` cases were re-executed at the new Go baseline, as recorded in the [evidence report](../traceability/evidence/go-unit-4575079.md). The [DEV-572 manifest](../traceability/historical/cross-cutting-a944ed6-c5f4e92-dev572.json) is preserved byte-for-byte, and the current [report](../traceability/reports/cross-cutting-5a37e82-4575079.json) is a new baseline-dated record. No requirement is `implemented`; the planned families stay unexecuted.
 
+DEV-583 rewrites the remaining thin admission-related plans at the same baselines, using the [admission design](admission.md): the eight `CC-TRUST-*` families other than `CC-TRUST-TASK-IDENTIFIER-RULES`, `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING` and `CC-TRUST-TARGETED-DELIVERY`; the eight `CC-SAFETY-*` families not expanded by DEV-572 or DEV-582; and `CC-LIMIT-TASK-AND-IDENTIFIER-LIMITS`. Each plan now names inputs, boundary values, expected classes or outcomes and its `Requirements:` list. Rows that only execution can check, such as per-attempt safety re-evaluation and pre-contact address checks, are marked execution-owned within the same family. Where the public text names no admission class, plans assert rejection with one of the ten public classes and defer the class to [GO-SPEC-ISSUE-008](specification-issues.md#go-spec-issue-008-admission-error-classes-for-unsupported-and-unmapped-rejections). No family is added or executed, and no requirement status or allocation changes. The [DEV-582 manifest](../traceability/historical/cross-cutting-5a37e82-4575079.json) is preserved byte-for-byte, and the current [report](../traceability/reports/cross-cutting-5a37e82-4575079-dev583.json) keeps its gap counts.
+
 The earlier DEV-471 mapping at public baseline `47d75925b3829fccfb6954b545c15f695375b76f` and Go baseline `a9136f34fad00ecc2171cbc29e835c5c50b340df` is preserved byte-for-byte as [historical manifest](../traceability/historical/cross-cutting-47d7592.json) with its unchanged [report](../traceability/reports/cross-cutting.json). It mapped 565 requirements to 185 families. It remains valid metadata only for those original baselines and is not a current claim.
 
 ## Boundaries and Maintenance
@@ -1580,7 +1582,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-safety.md`, section **Envelope**. Intended target: `internal/validation/safety.go`. Planned case location: `internal/validation/cross_cutting_conformance_test.go`, `symbol:TestCcSafetyEnvelope`.
 
-Case plan: Change trusted local consent/risk permission between attempts; re-evaluate declarations before each attempt without creating runs.
+Case plan: Admit a medium-risk synthetic task (registered baseline low) under a fake local policy that permits medium risk and schedules three attempts. Before each attempt change the trusted local inputs: attempt 1 permitted and started; attempt 2 with the local maximum lowered to low, not started; attempt 3 with the permission restored, started. Assert the declaration is evaluated before every attempt, not only at admission. Assert a fake host restriction can delay or skip an attempt even when every declared condition is satisfied. Count runs and attempts before and after each evaluation and assert none is created. Admission rows: a task declaring low risk with requires_user_consent false gains no permission over the same task declaring medium with consent required, and declaration fields cannot alter provenance, issuer authorization, target registration or policy. The per-attempt rows are execution-owned. Requirements: REQ-SAFETY-0001, REQ-SAFETY-0002, REQ-SAFETY-0003.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1596,7 +1598,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-safety.md`, section **Safety Model**. Intended target: `internal/validation/safety.go`. Planned case location: `internal/validation/cross_cutting_conformance_test.go`, `symbol:TestCcSafetySafetyModel`.
 
-Case plan: Combine registered, configured and local risk; a declaration cannot reduce baseline risk or create runs/attempts.
+Case plan: Use a synthetic registry with baselines low (NET-01) and medium (a synthetic medium-baseline test). For each baseline, declare low, medium, high and unknown with consistent risk_factors. Assert effective risk is never below the baseline: a low declaration on the medium baseline is rejected or evaluated as medium. Higher declarations raise effective risk to the declared level. Options or a schedule that a fake local assessment marks as increasing risk raise it further. Count runs and attempts with a fake scheduler before and after safety evaluation and assert evaluation adds none. Requirements: REQ-SAFETY-0004, REQ-SAFETY-0005, REQ-SAFETY-0006.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1612,7 +1614,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-safety.md`, section **Fields**. Intended target: `internal/validation/safety.go`. Planned case location: `internal/validation/cross_cutting_conformance_test.go`, `symbol:TestCcSafetyFields`.
 
-Case plan: Exercise required risk_level/consent fields and conditional risk_factors with wrong types and unknown fields.
+Case plan: Validate the safety object field by field. Accept {risk_level: low, requires_user_consent: false} and the public complete example. Reject: missing risk_level; missing requires_user_consent; risk_level as 1, null, true or an array; requires_user_consent as "true", 1 or null; risk_factors as an object, a string or null; a risk factor given as a string; an unknown member in safety (risk_score) and in a factor (weight); and a duplicate member name. Each rejection is task_schema_invalid, produces no candidate and causes zero transport calls. Requirements: REQ-SAFETY-0007.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1672,7 +1674,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-safety.md`, section **Risk Factors / Initial Risk Factor Types**. Intended target: `internal/validation/safety.go`. Planned case location: `internal/validation/cross_cutting_conformance_test.go`, `symbol:TestCcSafetyRiskFactorsInitialRiskFactorTypes`.
 
-Case plan: Test every known type and an unknown type; require rejection or conservative unknown handling, and keep resource/device requirements in execution.
+Case plan: With risk_level unknown and one factor of level unknown, iterate the five initial types and assert each is accepted and exposed unchanged. Submit unknown types (battery_drain, Network_observability, network-observability, an empty string and a 65-byte string) and assert each task is either rejected before scheduling (class per GO-SPEC-ISSUE-008) or treated as unknown risk, and is never accepted with the factor ignored; the current validator rejects them. Submit execution concerns as factor types (bandwidth, battery, runtime, network_availability, device_state) and assert they are rejected as unknown types, while the corresponding constraints in the execution object are accepted. Requirements: REQ-SAFETY-0015, REQ-SAFETY-0016, REQ-SAFETY-0017.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1688,7 +1690,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-safety.md`, section **Risk Factors / Risk Consistency**. Intended target: `internal/validation/safety.go`. Planned case location: `internal/validation/cross_cutting_conformance_test.go`, `symbol:TestCcSafetyRiskFactorsRiskConsistency`.
 
-Case plan: Exercise the risk ordering matrix and an unknown factor with/without trusted resolution; reject or conservatively elevate understated risk as permitted.
+Case plan: Iterate overall risk_level low, medium and high against a single factor at each of low, medium and high. Accept every pair where the overall level is at least the factor level, and reject low with medium, low with high and medium with high (overall with factor) as task_schema_invalid. Mixed factors low, medium and high are accepted under overall high and rejected under overall medium. With a factor of level unknown and no trusted local assessment, accept only overall unknown and reject low, medium and high. With a fake trusted assessment that resolves the unknown factor to medium, overall medium is accepted only through that trusted input, and the same bytes are rejected once the assessment is removed. Overall unknown with only known factors is accepted. Requirements: REQ-SAFETY-0018, REQ-SAFETY-0019.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1702,7 +1704,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-safety.md`, section **User Consent**. Intended target: `internal/validation/safety.go`. Planned case location: `internal/validation/cross_cutting_conformance_test.go`, `symbol:TestCcSafetyUserConsent`.
 
-Case plan: Test task consent true/false against trusted host consent and stricter local requirements; a false task flag grants no permission.
+Case plan: Combine task requires_user_consent true and false with a fake host consent provider reporting valid, absent, expired and unavailable consent, and with the local consent requirement off and on. Task true with valid consent: an attempt may start. Task true with absent, expired or unavailable consent: no attempt starts and no Measurement Result is produced. Task false with the local requirement on and absent consent: no attempt starts. Task false with the local requirement off: no consent requirement is added, and risk and target checks still apply. Admission records the consent requirement as required when the task, issuer permissions or local policy requires it, and a task value of false never clears an issuer or local requirement. Requirements: REQ-SAFETY-0020, REQ-SAFETY-0021, REQ-SAFETY-0022.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1718,7 +1720,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-safety.md`, section **Effective Risk**. Intended target: `internal/validation/safety.go`. Planned case location: `internal/validation/cross_cutting_conformance_test.go`, `symbol:TestCcSafetyEffectiveRisk`.
 
-Case plan: Vary registered/task/local risk independently, including a task below baseline; assert the most restrictive effective risk or permitted rejection.
+Case plan: Vary the registered baseline (low, medium), the task declaration (low, medium, high, unknown) and a fake local assessment (none, medium, high) independently. Assert effective risk equals the most restrictive of the three, with unknown dominating as unordered. Baseline medium with a low declaration is either rejected as invalid or admitted with effective risk of at least medium, and is never admitted as low. A high declaration on a low baseline gives effective risk high, and a local policy without high permission prevents execution. The admitted-task value exposes effective risk, and no task field lowers it. Requirements: REQ-SAFETY-0023, REQ-SAFETY-0024, REQ-SAFETY-0025, REQ-SAFETY-0026.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1736,7 +1738,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `data-formats/task-safety.md`, section **Safety Evaluation**. Intended target: `internal/validation/safety.go`. Planned case location: `internal/validation/cross_cutting_conformance_test.go`, `symbol:TestCcSafetySafetyEvaluation`.
 
-Case plan: Independently deny each required safety/consent/device predicate or make assessment unavailable; prevent execution and distinguish rejection from network outcomes.
+Case plan: Start from a task meeting all five public safety conditions and assert an attempt may start. Deny one condition at a time: an invalid declaration, an unsupported factor, effective risk not permitted by local policy, invalid required consent, and a fake host or device restriction. For each assert no attempt starts, no Measurement Result or bundle entry is produced, and the outcome is a non-measurement admission error or a local not-run state distinct from every network failure reason. Make the safety assessment unavailable (a fake local assessor returning an error) and assert execution fails closed. Give the task unknown fields and labels that try to relax local privacy, consent or safety settings and assert nothing is relaxed. Assert rejection outputs carry no censorship, blocking or interference interpretation. Admission rows cover the declaration, factor support and effective-risk conditions; consent and host or device conditions are execution-owned. Requirements: REQ-SAFETY-0027, REQ-SAFETY-0028, REQ-SAFETY-0029, REQ-SAFETY-0030.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -2456,7 +2458,7 @@ Review case `RV-CC-LIMIT-PURPOSE` (`docs/conformance/cross-cutting-review.md`, `
 
 Public source: `library/registered-limits.md`, section **Task and Identifier Limits**. Intended target: `internal/validation/limits.go`. Planned case location: `internal/validation/cross_cutting_conformance_test.go`, `symbol:TestCcLimitTaskAndIdentifierLimits`.
 
-Case plan: Parameterize every table row at below/equal/above bounds using original encoded bytes; include whitespace/unknown fields and stop parsing at task maximum.
+Case plan: Parameterize each row of the task and identifier table at below, equal and above its maximum, measured on original encoded bytes: complete task 65,535 and 65,536 bytes accepted, 65,537 rejected before parsing as task_limit_exceeded; task_id 127 and 128 ASCII bytes accepted, 129 rejected (class per GO-SPEC-ISSUE-008); input JSON 49,151 and 49,152 encoded bytes accepted, 49,153 rejected; options JSON 8,191 and 8,192 accepted, 8,193 rejected; labels with 16 entries accepted and 17 rejected, and 2,048 encoded bytes accepted and 2,049 rejected; a generic identifier such as a NET-05 step_id of 64 ASCII bytes accepted and 65 rejected. Pad with insignificant whitespace and with escape sequences so encoded and decoded lengths differ, and assert the encoded length is counted. An unknown field that takes a task from 65,536 to 65,537 bytes is rejected as task_limit_exceeded; an unknown field within the limit is rejected as task_schema_invalid. Feed 1 MiB through a counting reader and assert no more than 65,537 bytes are read. Requirements: REQ-LIMIT-0004, REQ-LIMIT-0005.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -2850,7 +2852,7 @@ Review case `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS` (`docs/conformance/c
 
 Public source: `library/task-trust.md`, section **Overview**. Intended target: `internal/admission/admit.go`. Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustOverview`.
 
-Case plan: Supply forged task-controlled authority fields; only separately established provenance, registered behavior and trusted policy can authorize admission.
+Case plan: Admit synthetic NET-01 tasks with a fake delivery-record store, local policy, registry, deterministic clock and recording transport. A baseline task with an embedded delivery record for its exact bytes, an issuer permitted NET-01 0.1.0 and a matching target registration is accepted. Remove one prerequisite at a time (the delivery record, the issuer permission, the target registration, the registry entry for the exact version, and a numeric value raised above its registered limit) and assert rejection with one of the ten public admission classes and zero transport calls. Add task-controlled authority claims: top-level authenticated, issuer_id, policy_generation and trusted fields are rejected as task_schema_invalid, and a permitted label with the text "authenticated: true" stays opaque, producing the same authority, effective risk, targets and policy decision as the same task without it. With a synthetic registry baseline of medium, a task declaring low cannot lower effective risk. Assert no task field changes the active policy generation or registrations. Requirements: REQ-TRUST-0002, REQ-TRUST-0003.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -2864,7 +2866,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `library/task-trust.md`, section **Accepted Task Origins**. Intended target: `internal/admission/admit.go`. Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustAcceptedTaskOrigins`.
 
-Case plan: Exercise reviewed embedded origin and authenticated remote origin, then independently remove authentication, integrity, required time and context; fail closed.
+Case plan: Admit the same synthetic task bytes through delivery records of each origin: embedded with authenticated false and no issued_at is accepted, and remote with authenticated true and issued_at equal to the fake clock is accepted. For remote origin, remove one input at a time: authenticated false is rejected as task_source_unauthenticated; a record bound to bytes differing by one byte (failed integrity) is rejected; a missing issued_at cannot produce a record; an unavailable trusted clock is rejected; no delivery record at all is rejected. The classes for the last three follow GO-SPEC-ISSUE-008. A test verifier that reports transport encryption without issuer authentication must yield no authenticated record, and admission then rejects. For every rejection assert no replay or admitted-task record is written and the recording transport sees zero calls. Requirements: REQ-TRUST-0001, REQ-TRUST-0004, REQ-TRUST-0005.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -2880,7 +2882,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `library/task-trust.md`, section **Trusted Source Context**. Intended target: `internal/admission/admit.go`. Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustTrustedSourceContext`.
 
-Case plan: Validate each origin/issuer/generation/authentication/issued_at relationship and separate trust boundary; reject task/Flutter supplied authentication and prevent source metadata in traffic/results.
+Case plan: Construct source contexts through the admission seam, varying one property at a time. origin: embedded and remote accepted, any other value rejected. issuer_id: 1 and 64 allowed bytes accepted; empty, 65 bytes, uppercase, space and "/" rejected. policy_generation: 1 and 2^64-1 accepted, 0 rejected. authenticated: true with embedded and false with remote rejected. issued_at: for remote, equal to the fake clock and 300 seconds ahead accepted, 301 seconds ahead rejected (class per GO-SPEC-ISSUE-008), missing rejected; for embedded, present rejected. Assert task JSON and initialization JSON have no field that sets any property (unknown fields rejected) and the trust models reject JSON import. Admit and run a task with canary issuer_id and generation values against a recording transport and fake result sink, and assert the canaries are absent from every transmitted byte, Measurement Result and bundle. Assert the facade signature fixture accepts no raw key or authenticated flag. Requirements: REQ-TRUST-0006, REQ-TRUST-0007, REQ-TRUST-0008, REQ-TRUST-0009.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -2898,7 +2900,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `library/task-trust.md`, section **Issuer Authorization**. Intended target: `internal/admission/admit.go`. Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustIssuerAuthorization`.
 
-Case plan: Narrow each authority dimension in turn; effective authority is the intersection and task data cannot widen any dimension.
+Case plan: Start from a fake configuration where registered behavior, issuer permission, local deployment permission, platform capability and task restrictions all allow a NET-01 0.1.0 direct-path task, which is accepted. Narrow one dimension at a time while the other four stay permissive, and assert rejection with zero transport calls: issuer lacks the test/version pair (task_issuer_not_authorized); issuer lacks the registration reference (target_not_registered); issuer permits only the proxy path for a direct task (class per GO-SPEC-ISSUE-008); issuer maximum risk low for a medium task (task_issuer_not_authorized); medium-risk enablement off; NET-05 enablement off for a NET-05 task; issuer attempt ceiling below the task max_duration_ms (task_limit_exceeded); task label namespace not permitted; and each of these narrowed in local deployment permission instead of the issuer. For each bound named in the public list, a task value equal to the effective bound is accepted, a value one unit above is rejected and never clamped, and a lower value is accepted and carried as the effective value. Requirements: REQ-TRUST-0010, REQ-TRUST-0011, REQ-TRUST-0012.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -2914,7 +2916,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `library/task-trust.md`, section **Target Registration**. Intended target: `internal/admission/admit.go`. Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustTargetRegistration`.
 
-Case plan: Mutate each safety-relevant tuple component, normalization collision and registration expiry; require exact typed local matching and recheck every resolved/redirect address before contact.
+Case plan: Register synthetic tuples for TCP-01 (address, port), TLS-01 (address, port, server name, ALPN), HTTP-01 (URL, expected status, checks, redirect registrations) and DNS-01 (resolver name, bootstrap addresses). For each, an exactly matching task is accepted. Change one tuple component at a time (hostname, IP address, port, scheme, URL path, resolver name, bootstrap address, server name, an ALPN value, expected status, a body or header check, a redirect target, direct versus proxy path) and assert target_not_registered with zero transport calls. Normalization: a form that the public rules normalize to the registered value matches, while a suffix (evil-example.test against example.test), a subdomain, a URL with an extra path prefix and an IPv4-mapped IPv6 address do not. Expiry one second after the fake clock is accepted; expiry at or before it is rejected. Registrations with URL credentials or interpolation syntax fail policy construction. Execution-owned rows: with a scripted resolver returning an unregistered address and a scripted redirect to an unregistered location, assert no connection to either. Requirements: REQ-TRUST-0013, REQ-TRUST-0014, REQ-TRUST-0015, REQ-TRUST-0016.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -2932,7 +2934,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `library/task-trust.md`, section **Admission Procedure**. Intended target: `internal/admission/admit.go`. Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustAdmissionProcedure`.
 
-Case plan: Instrument ordered admission with fake context/transport; independently fail each gate and verify atomic rejection before scheduling or network calls.
+Case plan: Instrument admission with a fake delivery-record store, clock, registry, policy, replay store and recording transport that log the order of calls. A valid task runs the eleven public steps in order, and its handle is returned only after the replay write commits. Build eleven tasks that each fail exactly one step: missing delivery record, unauthenticated remote origin, 65,537 bytes, unknown top-level field, uppercase task_id, expired task, unknown issuer, unregistered target, risk above the issuer maximum, replay conflict and replay write failure. For each assert the class from the admission design table (or one of the ten public classes where GO-SPEC-ISSUE-008 leaves the row open), that no later step's capability is called, that no replay or admitted-task record exists, that no handle is returned and that the transport, DNS and Network Context fakes see zero calls. Combine an unknown top-level field with an unknown issuer and record which class is returned; precedence stays per GO-SPEC-ISSUE-008. A valid task that requires egress context performs no context lookup during admission. Requirements: REQ-TRUST-0017, REQ-TRUST-0018.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -3000,7 +3002,7 @@ Review case `RV-CC-TRUST-TARGETED-DELIVERY` (`docs/conformance/cross-cutting-rev
 
 Public source: `library/task-trust.md`, section **Local Policy Lifecycle**. Intended target: `internal/admission/state.go`. Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustLocalPolicyLifecycle`.
 
-Case plan: Fault-inject each authenticated generation update step; preserve complete old policy or uninitialized state, invalidate dependent caches and cancel forbidden work before reinitialized execution.
+Case plan: Initialize with policy generation 5 and admit a task. Assert no method mutates the active policy or registrations after initialization. Drive replacement by quiesce and reinitialization with fault injection at each public update step: an unauthenticated policy package; generation 5 (equal) and 4 (lower) rejected; generation 6 with one invalid registration rejected after complete validation; failure while cancelling a no-longer-permitted task; failure during cache invalidation; failure during reinitialization. After each failure assert either that the complete generation-5 policy is active and its tasks still admit, or that the client is uninitialized and admission fails with task_policy_unavailable, and never a mix of generation-5 and generation-6 registrations. On a successful generation-6 replacement that removes the task's registration, assert the queued task is cancelled or rejected before any new-policy attempt, Network Context caches are invalidated, and a generation-5 delivery is rejected as policy_rollback. Send policy-shaped content through a task label, collector reply, target response, proxy and context endpoint fakes and assert the active generation is unchanged. Requirements: REQ-TRUST-0029, REQ-TRUST-0030, REQ-TRUST-0031, REQ-TRUST-0032.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -3018,7 +3020,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `library/task-trust.md`, section **Admission Errors**. Intended target: `internal/admission/admit.go`. Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustAdmissionErrors`.
 
-Case plan: Trigger each error class and inject sensitive canaries/raw platform errors; return bounded deterministic operational diagnostics without Measurement Results.
+Case plan: Trigger each public class through a synthetic delivery: task_source_unauthenticated, task_issuer_not_authorized, task_policy_unavailable, task_trust_unavailable, task_expired, task_id_conflict, policy_rollback, target_not_registered, task_limit_exceeded and task_schema_invalid. Assert each returns a task.AdmissionError whose code is the expected class and whose text is the fixed class string, and that no Measurement Result, bundle entry or result-sink call is produced. Embed unique canaries in the task payload, a target URL, a label, a fake credential, verification-key and signature bytes in the delivery record, and the raw error text of a failing fake store and clock. Assert no canary appears in the error text, in %v or %+v formatting, in any errors.Unwrap chain or in captured log output. Assert repeating an identical failing delivery returns an identical error. Requirements: REQ-TRUST-0033, REQ-TRUST-0034, REQ-TRUST-0035.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 

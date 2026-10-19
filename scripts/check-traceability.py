@@ -28,6 +28,8 @@ DEV568_REVISION = "c5f4e92e06936cb677c7a03e9769ff75b1f51874"
 DEV569_REVISION = "60d64a606bdd19fa5d326c68a6157e7760b28ff1"
 # Revision whose cross-cutting manifest DEV-582 preserved before rebaselining to public 5a37e82.
 DEV572_REVISION = "c2b269042eaa5dff85027b46ccbea4dec9eb73a0"
+# Revision whose cross-cutting manifest DEV-583 preserved before rewriting the admission case plans.
+DEV582_REVISION = "a3e167c91c112e2da8b809be26fd76440cc74c95"
 # Superseded manifests: byte-identical to the original at their recorded source revision and
 # checked at their original baselines.
 HISTORICAL = {
@@ -49,6 +51,9 @@ HISTORICAL = {
     "historical/cross-cutting-a944ed6-c5f4e92-dev572.json": ("cross-cutting.json", DEV572_REVISION,
                                                              "a944ed6c389fec9f0d089f0044ead6fe845328b1",
                                                              "c5f4e92e06936cb677c7a03e9769ff75b1f51874"),
+    "historical/cross-cutting-5a37e82-4575079.json": ("cross-cutting.json", DEV582_REVISION,
+                                                      "5a37e82865a08922c4821c7318656286933421e5",
+                                                      "4575079b503467bff83c1175329be6cfa64cfb71"),
 }
 # Same standalone comment form as the public reference checker; history citations are excluded.
 REFERENCE = re.compile(r"// requirement-ref: (\S+)")

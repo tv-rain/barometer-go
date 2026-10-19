@@ -18,6 +18,8 @@ DEV-572 makes every non-unit-test case plan in both current manifests either a m
 
 DEV-582 adopts the GO-SPEC-ISSUE-007 disposition and rebaselines the cross-cutting manifest to public PR #13 merge `5a37e82865a08922c4821c7318656286933421e5` and Go `4575079b503467bff83c1175329be6cfa64cfb71`, preserving the DEV-572 mapping as a [historical manifest](../traceability/README.md). The new allocations REQ-SAFETY-0031 and REQ-SCHEDULE-0043 join the planned `CC-SAFETY-RISK-FACTORS` and `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-FIELDS` families. Those IDs and REQ-SAFETY-0012, REQ-SAFETY-0013, REQ-SCHEDULE-0013 and REQ-SCHEDULE-0014 become `partial`, linked to three new `UT.*` cases. Because evidence must match the manifest baselines, all 61 cross-cutting `UT.*` cases were re-executed at the new Go baseline and recorded in a [new evidence report](../traceability/evidence/go-unit-4575079.md). The measurement manifest keeps its baselines. No requirement is `implemented`, and planned families stay unexecuted.
 
+DEV-583 rewrites the thin admission-related cross-cutting plans (eight `CC-TRUST-*`, eight `CC-SAFETY-*` and `CC-LIMIT-TASK-AND-IDENTIFIER-LIMITS`) as measurable plans following the [admission design](admission.md), at unchanged baselines, and preserves the DEV-582 mapping as a [historical manifest](../traceability/README.md). Plans whose admission class the public text leaves open defer it to GO-SPEC-ISSUE-008, which is not linked in the manifest until its finding is committed at an immutable revision. No case is added or executed, and no requirement status or allocation changes.
+
 ### Typed Review Cases
 
 The public case record has no type field, so this repository types a human review case by convention within the existing format:
