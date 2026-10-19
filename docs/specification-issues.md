@@ -290,7 +290,7 @@ Public record and disposition first, then Go adoption when the NET-03 runner is 
 
 ## GO-SPEC-ISSUE-007: Undefined Allowed Values for `risk_factors` and `timezone`
 
-**Current state:** Open, raised October 16, 2026 under [DEV-573](https://app.clickup.com/t/124kk1zc613) from the DEV-572 triage. No public record exists yet. This finding affects merged Foundation code.
+**Current state:** Open; public disposition and wording accepted October 19, 2026, public merge and Go adoption pending. The public maintainer accepted alternative (a) for both domains in [`risk_factors` and `timezone` Value Domains — Maintainer Disposition](https://github.com/tv-rain/barometer-spec/blob/main/specification-issues/risk-factors-timezone-domains.md#maintainer-disposition--october-19-2026). Current Go `risk_factors` validation does not conform; `timezone` validation does. See the [disposition addendum](#disposition-addendum--october-19-2026). The sections before the addendum keep their original wording as historical evidence. Originally raised October 16, 2026 under [DEV-573](https://app.clickup.com/t/124kk1zc613) from the DEV-572 triage. This finding affects merged Foundation code.
 
 ### Identity, Baselines and Requirements
 
@@ -322,3 +322,15 @@ The current Go choices were made without a public disposition. The `timezone` ch
 ### Ordering and Closure
 
 Public record and disposition first. If `risk_factors` must contain at least one factor, a separate Go task changes `validSafety` and adds negative tests. Bindings and hosts follow. Closure requires the public disposition and, where applicable, Go adoption evidence.
+
+### Disposition Addendum — October 19, 2026
+
+The public record [`risk_factors` and `timezone` Value Domains](https://github.com/tv-rain/barometer-spec/blob/main/specification-issues/risk-factors-timezone-domains.md) was prepared under [DEV-581](https://app.clickup.com/t/124kk1zcaag) against public Draft `0.1.0` at [9cafe8d1dc48fb40fb6e49b58a8eefe41a9ee306](https://github.com/tv-rain/barometer-spec/tree/9cafe8d1dc48fb40fb6e49b58a8eefe41a9ee306), where the cited safety and schedule text is unchanged from this finding's baseline. The project owner and public maintainer, Lev, accepted alternative (a) for both domains on October 19, 2026. The accepted wording, REQ-SAFETY-0031 and REQ-SCHEDULE-0043, is part of the same public change and retains Draft `0.1.0`. Its merged immutable revision is recorded as evidence on DEV-581.
+
+- **`risk_factors`:** for `risk_level` `medium`, `high` and `unknown`, `risk_factors` must contain at least one factor; `[]` is rejected. `validSafety` in `internal/validation/task.go`, which rejects only a missing list, does not conform.
+- **`timezone`:** `local` is the only defined value in Draft `0.1.0`; any other value is rejected. Current validation, which accepts only `local` and defaults an omitted value to `local`, conforms.
+- **Public wording:** new obligations [REQ-SAFETY-0031](https://github.com/tv-rain/barometer-spec/blob/main/data-formats/task-safety.md#REQ-SAFETY-0031) (at least one factor for `medium`, `high` and `unknown`) and [REQ-SCHEDULE-0043](https://github.com/tv-rain/barometer-spec/blob/main/data-formats/task-schedule.md#REQ-SCHEDULE-0043) (`local` is the only `timezone` value). REQ-SAFETY-0012, REQ-SCHEDULE-0013 and REQ-SCHEDULE-0014 are unchanged. Go adoption must cite the merged immutable revision, not a branch.
+- **Internal alignment:** not required; no internal review or validation plan covers these fields.
+- **Go adoption:** [DEV-582](https://app.clickup.com/t/124kk1zcaah) changes `risk_factors` validation, adds negative and positive cases for both domains, and updates traceability, including manifest entries for the two new requirement IDs. Go behavior is unchanged by this addendum.
+
+This finding stays open until DEV-582 records adoption evidence for `risk_factors` and evidence or non-applicability for `timezone`.
