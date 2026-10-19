@@ -1,0 +1,28 @@
+{
+  "format_version": 1,
+  "case_id": "timezone-omitted",
+  "adapter": "common-task-v1",
+  "requirements": [
+    "REQ-SCHEDULE-0013",
+    "REQ-SCHEDULE-0014",
+    "REQ-SCHEDULE-0043"
+  ],
+  "task_base64": "eyJzY2hlbWFfdmVyc2lvbiI6IjAuMS4wIiwidGFza19pZCI6InN5bnRoZXRpYy10YXNrIiwidGVzdF9pZCI6IlNZTi0wMSIsInRlc3RfdmVyc2lvbiI6IjAuMS4wIiwiaW5wdXQiOnsic3ViamVjdCI6IkVYQU1QTEUifSwib3B0aW9ucyI6e30sInNjaGVkdWxlIjp7Im5vdF9hZnRlciI6IjIwMjYtMTAtMTZUMDA6MDA6MDBaIiwidGltZV93aW5kb3ciOnsicmFuZ2VzIjpbeyJzdGFydCI6IjA4OjAwIiwiZW5kIjoiMjA6MDAifV19fSwiZXhlY3V0aW9uIjp7ImxpbWl0cyI6e319LCJzYWZldHkiOnsicmlza19sZXZlbCI6ImxvdyIsInJlcXVpcmVzX3VzZXJfY29uc2VudCI6ZmFsc2V9fQ==",
+  "trusted_context": "remote-fixed-v1",
+  "local_policy": "synthetic-local-v1",
+  "expected": {
+    "rejection": "",
+    "normalized": {
+      "task_id": "synthetic-task",
+      "subject": "example",
+      "enabled": true,
+      "network_path": "direct",
+      "duration_ms": 30000,
+      "bytes_sent": 32768,
+      "bytes_received": 131072,
+      "connections": 8,
+      "max_runs": 1,
+      "max_attempts": 1
+    }
+  }
+}

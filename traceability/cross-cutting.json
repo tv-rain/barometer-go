@@ -2,12 +2,12 @@
   "format_version": 1,
   "specification": {
     "repository": "https://github.com/tv-rain/barometer-spec",
-    "revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
+    "revision": "5a37e82865a08922c4821c7318656286933421e5",
     "version": "0.1.0"
   },
   "implementation": {
     "repository": "https://github.com/tv-rain/barometer-go",
-    "revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874"
+    "revision": "4575079b503467bff83c1175329be6cfa64cfb71"
   },
   "coverage": {
     "mode": "partial",
@@ -31,7 +31,7 @@
       "threat-model.md",
       "measurement-limitations.md"
     ],
-    "notes": "DEV-568 updates the DEV-471 mapping to public baseline a944ed6. It maps all 573 active allocated shared format/library requirements: REQ-OBS-0042 and REQ-OBS-0043 succeed retired REQ-OBS-0011 and REQ-OBS-0021 in their former case families, and REQ-OBS-0044 to REQ-OBS-0051 map to six new planned vocabulary families. Each has planned ownership and a planned case family; every family must exercise each linked unit independently. Retired IDs are not current obligations; their historical mapping is preserved unchanged in traceability/historical/cross-cutting-47d7592.json. Registered test-specific catalog IDs, including REQ-TCP-01-0001, belong to the separately scoped measurement mapping. Coverage remains partial: residual unmarked authoritative prose in shared sources, threat-model and interpretation requirements require continued semantic inventory/allocation review; registered test-specific mappings are separate. No implementation, executed conformance, platform or field support is claimed. GO-SPEC-ISSUE-001 remains open for downstream evidence."
+    "notes": "DEV-568 updates the DEV-471 mapping to public baseline a944ed6. It maps all 573 active allocated shared format/library requirements: REQ-OBS-0042 and REQ-OBS-0043 succeed retired REQ-OBS-0011 and REQ-OBS-0021 in their former case families, and REQ-OBS-0044 to REQ-OBS-0051 map to six new planned vocabulary families. Each has planned ownership and a planned case family; every family must exercise each linked unit independently. Retired IDs are not current obligations; their historical mapping is preserved unchanged in traceability/historical/cross-cutting-47d7592.json. Registered test-specific catalog IDs, including REQ-TCP-01-0001, belong to the separately scoped measurement mapping. Coverage remains partial: residual unmarked authoritative prose in shared sources, threat-model and interpretation requirements require continued semantic inventory/allocation review; registered test-specific mappings are separate. No implementation, executed conformance, platform or field support is claimed. GO-SPEC-ISSUE-001 remains open for downstream evidence. DEV-582 rebaselines this mapping to public 5a37e82 and Go 4575079, adds REQ-SAFETY-0031 and REQ-SCHEDULE-0043 (575 active shared requirements), re-executes the unit-test evidence and links GO-SPEC-ISSUE-007 adoption tests; GO-SPEC-ISSUE-007 awaits admission, binding and host evidence."
   },
   "requirements": [
     {
@@ -104,7 +104,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Registered-incomplete failure handling is covered elsewhere; the result-time quantization link and any runtime producer are not shown. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Registered-incomplete failure handling is covered elsewhere; the result-time quantization link and any runtime producer are not shown. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0004",
@@ -134,7 +134,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Execution-order preservation and omission of never-attempted operations belong to result/NET-05 assembly and have no evidence here. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Execution-order preservation and omission of never-attempted operations belong to result/NET-05 assembly and have no evidence here. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0005",
@@ -181,7 +181,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Only the NET-01 access-only representation is evidenced; NET-03 combining validation fields with one http_exchange and NET-05 step observations are not shown. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Only the NET-01 access-only representation is evidenced; NET-03 combining validation fields with one http_exchange and NET-05 step observations are not shown. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0007",
@@ -247,7 +247,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Rejection of address_family for the system engine and of unknown query_type values is implemented but not tested; no runtime DNS producer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Rejection of address_family for the system engine and of unknown query_type values is implemented but not tested; no runtime DNS producer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0010",
@@ -295,7 +295,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Decoder validation only; no runtime DNS producer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Decoder validation only; no runtime DNS producer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0012",
@@ -329,7 +329,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Decoder validation only; no producer normalization from a resolver API is shown. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Decoder validation only; no producer normalization from a resolver API is shown. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0013",
@@ -364,7 +364,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: First-occurrence ordering is tested only for one small NewDNS case; no runtime resolver producer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: First-occurrence ordering is tested only for one small NewDNS case; no runtime resolver producer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0014",
@@ -399,7 +399,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Whether a query name is reviewed and non-sensitive is a caller-supplied flag (RetainDNSAnswers), not verified; absence of on-device enrichment is shown only through closed-schema rejection of extra fields. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Whether a query name is reviewed and non-sensitive is a caller-supplied flag (RetainDNSAnswers), not verified; absence of on-device enrichment is shown only through closed-schema rejection of extra fields. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0015",
@@ -482,7 +482,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No test injects a destination address or port inside tcp details or asserts the serialized TCP output omits them; no runtime producer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No test injects a destination address or port inside tcp details or asserts the serialized TCP output omits them; no runtime producer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0019",
@@ -552,7 +552,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: address_family vocabulary rejection is not tested; no runtime TLS producer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: address_family vocabulary rejection is not tested; no runtime TLS producer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0022",
@@ -640,7 +640,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: address_family and content_encoding vocabularies are validated but not tested; the 17-entry checks ceiling is not tested directly. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: address_family and content_encoding vocabularies are validated but not tested; the 17-entry checks ceiling is not tested directly. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0026",
@@ -705,7 +705,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Negative bytes_processed is enforced by schema but not tested; no runtime body processor exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Negative bytes_processed is enforced by schema but not tested; no runtime body processor exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0029",
@@ -752,7 +752,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Unknown kind values and header-index bounds are implemented but not specifically tested. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Unknown kind values and header-index bounds are implemented but not specifically tested. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0031",
@@ -786,7 +786,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No runtime HTTP producer exists to show that expected strings or digests are never copied; evidence is closed-schema only. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No runtime HTTP producer exists to show that expected strings or digests are never copied; evidence is closed-schema only. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0032",
@@ -835,7 +835,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Absence of runtime registry lookup and the review/compatibility process for vocabulary changes are not testable here. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Absence of runtime registry lookup and the review/compatibility process for vocabulary changes are not testable here. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0045",
@@ -876,7 +876,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Raw library message rejection and malformed-protocol-data handling are not distinctly tested; no runtime producer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Raw library message rejection and malformed-protocol-data handling are not distinctly tested; no runtime producer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0046",
@@ -900,7 +900,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Computing the effective code from extended response-code bits and excluding malformed/nonmatching messages are caller responsibilities with no implementation or test. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Computing the effective code from extended response-code bits and excluding malformed/nonmatching messages are caller responsibilities with no implementation or test. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0047",
@@ -930,7 +930,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Multi-response UDP outcome precedence is explicitly left to the runner and has no implementation here. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Multi-response UDP outcome precedence is explicitly left to the runner and has no implementation here. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0048",
@@ -954,7 +954,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Distinguishing negotiated from record-layer or offered versions, and not offering obsolete versions, are adapter responsibilities with no implementation or test. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Distinguishing negotiated from record-layer or offered versions, and not offering obsolete versions, are adapter responsibilities with no implementation or test. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0049",
@@ -990,7 +990,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: ValidateALPNOffer is not wired into task validation; unoffered-peer-selection handling and non-copying of unregistered identifiers are not implemented or tested. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: ValidateALPNOffer is not wired into task validation; unoffered-peer-selection handling and non-copying of unregistered identifiers are not implemented or tested. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0050",
@@ -1020,7 +1020,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Distinguishing received peer alerts from local alerts, cancellations or post-handshake closures is an adapter responsibility with no implementation or test. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Distinguishing received peer alerts from local alerts, cancellations or post-handshake closures is an adapter responsibility with no implementation or test. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0051",
@@ -1045,7 +1045,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Producer omission and execution.reason handling for termination are not exercised here. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Producer omission and execution.reason handling for termination are not exercised here. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0034",
@@ -1105,7 +1105,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Tested only for tcp_connect; other observation types rely on the same shared check without a dedicated test. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Tested only for tcp_connect; other observation types rely on the same shared check without a dedicated test. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0037",
@@ -1145,7 +1145,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Unregistered failure values for dns_query and tls_handshake are implemented but not directly tested. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Unregistered failure values for dns_query and tls_handshake are implemented but not directly tested. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0038",
@@ -1180,7 +1180,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Other HTTP failure consistency branches (redirect, status, header, body_limit_reached, unsupported_content_encoding) are implemented but not individually tested. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Other HTTP failure consistency branches (redirect, status, header, body_limit_reached, unsupported_content_encoding) are implemented but not individually tested. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0039",
@@ -1228,7 +1228,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Evidence is closed-schema rejection only; no runtime networking producer shows lower-level API addresses are not copied, and redirect addresses are covered only via the terminal class vocabulary. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Evidence is closed-schema rejection only; no runtime networking producer shows lower-level API addresses are not copied, and redirect addresses are covered only via the terminal class vocabulary. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-OBS-0041",
@@ -1295,7 +1295,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Only TCP-01 negative outcomes are exercised at the decoder; no runtime runner or scheduler demonstrates that negative outcomes are never retried in practice, and Result Bundle delivery is not covered here. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Only TCP-01 negative outcomes are exercised at the decoder; no runtime runner or scheduler demonstrates that negative outcomes are never retried in practice, and Result Bundle delivery is not covered here. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0002",
@@ -1329,7 +1329,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: task_id is only checked as equal to the trusted binding (ASCII, <=128 bytes at New); non-user-specificity of task_id and randomness of run_id are not validated by the decoder. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: task_id is only checked as equal to the trusted binding (ASCII, <=128 bytes at New); non-user-specificity of task_id and randomness of run_id are not validated by the decoder. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0003",
@@ -1358,7 +1358,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Evidence covers only the decoder path for the reviewed initial Output contracts; no receiver/collector implementation exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Evidence covers only the decoder path for the reviewed initial Output contracts; no receiver/collector implementation exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0004",
@@ -1393,7 +1393,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No test constructs a NET-05 composite result near the 65,536-byte encoded maximum; the 16-observation bound is tested only for TCP-01. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No test constructs a NET-05 composite result near the 65,536-byte encoded maximum; the 16-observation bound is tested only for TCP-01. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0005",
@@ -1422,7 +1422,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Enforcement is generic closed-schema rejection; copying task data into allowed fields is not checked, and collector-side resolution through task_id is out of scope for this repository. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Enforcement is generic closed-schema rejection; copying task data into allowed fields is not checked, and collector-side resolution through task_id is out of scope for this repository. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0006",
@@ -1446,7 +1446,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No runtime scheduler calls NewRunID at scheduled-run creation, no test asserts the randomness source, and non-influence by task source, collector, host, target, or proxy is not demonstrated; the decoder accepts any well-formed imported run_id. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No runtime scheduler calls NewRunID at scheduled-run creation, no test asserts the randomness source, and non-influence by task source, collector, host, target, or proxy is not demonstrated; the decoder accepts any well-formed imported run_id. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0007",
@@ -1548,7 +1548,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Only the single 0.1.0/0.1.0 combination exists, so independence of versions and support for multiple result versions per behavior are not exercised. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Only the single 0.1.0/0.1.0 combination exists, so independence of versions and support for multiple result versions per behavior are not exercised. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0012",
@@ -1623,7 +1623,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: The implementation object is closed to library_version and platform, but no test targets specific prohibited items (app version, device model, OS version, etc.), and the binding does not verify library_version is the released producer rather than host input. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: The implementation object is closed to library_version and platform, but no test targets specific prohibited items (app version, device model, OS version, etc.), and the binding does not verify library_version is the released producer rather than host input. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0015",
@@ -1676,7 +1676,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No test asserts the started_at value produced by Timing, and 'excluding bundle delivery' depends on a future caller choosing the start/end instants. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No test asserts the started_at value produced by Timing, and 'excluding bundle delivery' depends on a future caller choosing the start/end instants. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0017",
@@ -1718,7 +1718,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No test simulates an actual wall-clock change during an attempt, and no runtime execution owner yet calls Timing. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No test simulates an actual wall-clock change during an attempt, and no runtime execution owner yet calls Timing. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0019",
@@ -1743,7 +1743,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Covered only at the decoder; no runtime producer maps attempt phases to result state yet. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Covered only at the decoder; no runtime producer maps attempt phases to result state yet. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0020",
@@ -1774,7 +1774,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: The vocabulary is enforced, but no runtime produces these reasons with the stated meanings (e.g. distinguishing attempt deadline from protocol timeout). Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: The vocabulary is enforced, but no runtime produces these reasons with the stated meanings (e.g. distinguishing attempt deadline from protocol timeout). Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0021",
@@ -1822,7 +1822,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Non-retention of detailed policy, battery, scheduler, proxy endpoint, platform error text, and stack traces is shown only through closed schemas; 'first condition' ordering is shown only in the attempt value model, not a runtime. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Non-retention of detailed policy, battery, scheduler, proxy endpoint, platform error text, and stack traces is shown only through closed schemas; 'first condition' ordering is shown only in the attempt value model, not a runtime. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0022",
@@ -1870,7 +1870,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: The decoder cannot show the context is the snapshot actually used for execution; only TCP-01 is exercised for context presence. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: The decoder cannot show the context is the snapshot actually used for execution; only TCP-01 is exercised for context presence. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0024",
@@ -1900,7 +1900,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: CapturedContext is a trusted caller input; no runtime sets it from actual capture. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: CapturedContext is a trusted caller input; no runtime sets it from actual capture. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0025",
@@ -1934,7 +1934,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Evidence is generic unknown-field rejection; no test targets each listed item (resolver address, interface, carrier, network generation, etc.) individually. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Evidence is generic unknown-field rejection; no test targets each listed item (resolver address, interface, carrier, network generation, etc.) individually. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0026",
@@ -1974,7 +1974,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Observation compliance with measurement-observations.md is delegated to the observation package and is not independently evidenced here. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Observation compliance with measurement-observations.md is delegated to the observation package and is not independently evidenced here. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0027",
@@ -2005,7 +2005,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Only the reviewed initial Output schemas are covered. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Only the reviewed initial Output schemas are covered. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0028",
@@ -2053,7 +2053,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: The non-NET-05 prohibition is tested only for TCP-01; no runtime produces partial NET-05 results. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: The non-NET-05 prohibition is tested only for TCP-01; no runtime produces partial NET-05 results. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0030",
@@ -2120,7 +2120,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No receiver quarantine path exists (optional in the spec). Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No receiver quarantine path exists (optional in the spec). Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0033",
@@ -2168,7 +2168,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Conditional relationships are exercised mainly for TCP-01 and NET-05. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Conditional relationships are exercised mainly for TCP-01 and NET-05. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0036",
@@ -2193,7 +2193,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Wrong-length decoded run_id values (other than via padding) are not separately tested. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Wrong-length decoded run_id values (other than via padding) are not separately tested. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0037",
@@ -2241,7 +2241,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Only the single 0.1.0 combination per initial test is registered; there is no registry of multiple combinations. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Only the single 0.1.0 combination per initial test is registered; there is no registry of multiple combinations. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0039",
@@ -2317,7 +2317,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Outcome validity is evidenced only for the initial reviewed tests and selected cases. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Outcome validity is evidenced only for the initial reviewed tests and selected cases. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0042",
@@ -2346,7 +2346,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Covered at the decoder only. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Covered at the decoder only. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0043",
@@ -2386,7 +2386,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Detailed per-observation schema conformance is delegated to the observation package and only selected cases are exercised here. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Detailed per-observation schema conformance is delegated to the observation package and only selected cases are exercised here. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0044",
@@ -2415,7 +2415,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No bundling path exists, so 'before bundling' is not demonstrated; raw platform errors are excluded only by closed schemas. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No bundling path exists, so 'before bundling' is not demonstrated; raw platform errors are excluded only by closed schemas. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0035",
@@ -2489,7 +2489,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No test targets raw packets, header values, certificate chains, cookies, credentials, system logs, or resolver state specifically; exclusion relies on closed schemas, and no runtime collector is evidenced. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No test targets raw packets, header values, certificate chains, cookies, credentials, system logs, or resolver state specifically; exclusion relies on closed schemas, and no runtime collector is evidenced. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-RESULT-0047",
@@ -2599,7 +2599,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Decoder-level validation only; no producer captures a stable access-network generation, and absence of IP/persistent identifiers is shown only for the enumerated injected field names. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Decoder-level validation only; no producer captures a stable access-network generation, and absence of IP/persistent identifiers is shown only for the enumerated injected field names. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-CONTEXT-FORMAT-0002",
@@ -2670,7 +2670,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Accepted values other than \"unknown\" (wifi, cellular, detected, yes, no, etc.) and rejection of invalid values for vpn_state, ipv4/ipv6_available and validated are not individually tested; no platform producer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Accepted values other than \"unknown\" (wifi, cellular, detected, yes, no, etc.) and rejection of invalid values for vpn_state, ipv4/ipv6_available and validated are not individually tested; no platform producer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-CONTEXT-FORMAT-0005",
@@ -2700,7 +2700,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Evidence is closed-schema rejection of a sample of field names; there is no test for cell, SIM, interface-name or location fields specifically and no platform producer showing such data is never collected. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Evidence is closed-schema rejection of a sample of field names; there is no test for cell, SIM, interface-name or location fields specifically and no platform producer showing such data is never collected. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-CONTEXT-FORMAT-0006",
@@ -2736,7 +2736,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: The proxy-path connection_code conditional is exercised only via a single approved code; ISO assignment correctness depends on caller-supplied approvals and no runtime producer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: The proxy-path connection_code conditional is exercised only via a single approved code; ISO assignment correctness depends on caller-supplied approvals and no runtime producer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-CONTEXT-FORMAT-0007",
@@ -2761,7 +2761,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No test covers unavailable with a lookup_source other than none, or that connection_code remains present for an unavailable proxy-path context. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No test covers unavailable with a lookup_source other than none, or that connection_code remains present for an unavailable proxy-path context. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-CONTEXT-FORMAT-0008",
@@ -2786,7 +2786,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Decoder validation only; fresh/none, cached/fallback and similar combinations are not individually tested and no runtime producer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Decoder validation only; fresh/none, cached/fallback and similar combinations are not individually tested and no runtime producer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-CONTEXT-FORMAT-0009",
@@ -2810,7 +2810,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Cached context without classification is not separately tested, and non-inference is shown only for the decoder, not for any runtime lookup producer. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Cached context without classification is not separately tested, and non-inference is shown only for the decoder, not for any runtime lookup producer. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-CONTEXT-FORMAT-0010",
@@ -2955,7 +2955,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Shown only for the network-context model; no test asserts the enclosing result encoding never adds these values, and exact geolocation is not specifically tested. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Shown only for the network-context model; no test asserts the enclosing result encoding never adds these values, and exact geolocation is not specifically tested. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-CONTEXT-FORMAT-0017",
@@ -2990,7 +2990,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Unknown values are not individually tested for every enum field (vpn_state, validated, status, network_path). Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Unknown values are not individually tested for every enum field (vpn_state, validated, status, network_path). Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-CONTEXT-FORMAT-0018",
@@ -3015,7 +3015,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Normalization is decoder-side only; no runtime lookup producer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Normalization is decoder-side only; no runtime lookup producer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-CONTEXT-FORMAT-0019",
@@ -3039,7 +3039,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Decoder validation only. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Decoder validation only. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-CONTEXT-FORMAT-0020",
@@ -3068,7 +3068,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Decoder validation only. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Decoder validation only. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-CONTEXT-FORMAT-0021",
@@ -3110,7 +3110,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Each classification field is not tested in isolation with unavailable. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Each classification field is not tested in isolation with unavailable. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-CONTEXT-FORMAT-0023",
@@ -3145,7 +3145,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No execution-requirement evaluation or result attachment path is exercised; only model-level non-serializability of invalid context is tested. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No execution-requirement evaluation or result attachment path is exercised; only model-level non-serializability of invalid context is tested. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-BUNDLE-0001",
@@ -3174,7 +3174,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No test asserts randomness quality. Optional cross-bundle correlation is represented only by the caller-supplied linkage projection, and the rotating linkage derivation is not implemented in this package. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No test asserts randomness quality. Optional cross-bundle correlation is represented only by the caller-supplied linkage projection, and the rotating linkage derivation is not implemented in this package. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-BUNDLE-0002",
@@ -3200,7 +3200,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: The bundle does not re-validate results against the common or Output schema; it relies on result.Value construction. The Output-schema validation itself is owned and tested elsewhere. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: The bundle does not re-validate results against the common or Output schema; it relies on result.Value construction. The Output-schema validation itself is owned and tested elsewhere. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-BUNDLE-0003",
@@ -3225,7 +3225,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No test compares output with the spec example. The example's result content is owned by the result package. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No test compares output with the spec example. The example's result content is owned by the result package. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-BUNDLE-0004",
@@ -3271,7 +3271,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: There is no bundle decoder, so field constraints are enforced only on the producer side. Randomness of bundle_id is not tested. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: There is no bundle decoder, so field constraints are enforced only on the producer side. Randomness of bundle_id is not tested. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-BUNDLE-0005",
@@ -3324,7 +3324,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No test asserts that the random source is cryptographically secure. Ignoring the crypto/rand error is not tested. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No test asserts that the random source is cryptographically secure. Ignoring the crypto/rand error is not tested. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-BUNDLE-0007",
@@ -3358,7 +3358,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No transport or persistence retry path exists, so reuse for actual retransmission is not exercised. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No transport or persistence retry path exists, so reuse for actual retransmission is not exercised. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-BUNDLE-0008",
@@ -3423,7 +3423,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Epoch derivation from the rotation period and HMAC token derivation are not implemented here; both are caller-supplied. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Epoch derivation from the rotation period and HMAC token derivation are not implemented here; both are caller-supplied. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-BUNDLE-0011",
@@ -3457,7 +3457,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No linkage decoder exists; rejection comes from Value.UnmarshalJSON refusing all input, not from field-level validation. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No linkage decoder exists; rejection comes from Value.UnmarshalJSON refusing all input, not from field-level validation. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-BUNDLE-0012",
@@ -3500,7 +3500,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Distinguishability is shown only by byte preservation of member encodings; the outcome and execution semantics are owned by the result package. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Distinguishability is shown only by byte preservation of member encodings; the outcome and execution semantics are owned by the result package. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-BUNDLE-0014",
@@ -3524,7 +3524,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No bundle-local snapshot reference mechanism exists, which is consistent with the spec, and nothing tests that one is absent. The conditional Network Context rules are owned by the result and Output validators. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No bundle-local snapshot reference mechanism exists, which is consistent with the spec, and nothing tests that one is absent. The conditional Network Context rules are owned by the result and Output validators. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-BUNDLE-0015",
@@ -3566,7 +3566,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Changes to result membership or content are covered only indirectly by the 64-build uniqueness check in TestContractMembershipAndIdentity. No retry or transport layer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Changes to result membership or content are covered only indirectly by the 64-build uniqueness check in TestContractMembershipAndIdentity. No retry or transport layer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-BUNDLE-0017",
@@ -3590,7 +3590,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: The all-zero retry branch is not exercised deterministically. No decoder-side validation exists because there is no bundle decoder. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: The all-zero retry branch is not exercised deterministically. No decoder-side validation exists because there is no bundle decoder. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-BUNDLE-0021",
@@ -3625,7 +3625,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Enforcement is producer-side only; there is no decoder-side size validation. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Enforcement is producer-side only; there is no decoder-side size validation. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-BUNDLE-0022",
@@ -3650,7 +3650,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: The bundle does not itself run the common or Output schema validation; it trusts result.Value construction. Schema validation is evidenced, if at all, in the result package. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: The bundle does not itself run the common or Output schema validation; it trusts result.Value construction. Schema validation is evidenced, if at all, in the result package. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-BUNDLE-0023",
@@ -3679,7 +3679,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Unavailability caused by runtime derivation failure is represented only by the caller passing nil. No derivation owner exists yet. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Unavailability caused by runtime derivation failure is represented only by the caller passing nil. No derivation owner exists yet. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-BUNDLE-0024",
@@ -3726,7 +3726,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Task-originated configuration is rejected separately in taskdecode. No collector-response path exists to test. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Task-originated configuration is rejected separately in taskdecode. No collector-response path exists to test. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-BUNDLE-0026",
@@ -3755,7 +3755,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Correctness of token derivation (HMAC) is not implemented or tested here. There is no decoder-side check. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Correctness of token derivation (HMAC) is not implemented or tested here. There is no decoder-side check. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-BUNDLE-0027",
@@ -3821,7 +3821,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: The default-off behaviour of the config decoder itself is owned and tested in internal/config. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: The default-off behaviour of the config decoder itself is owned and tested in internal/config. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-BUNDLE-0029",
@@ -3846,7 +3846,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Build emits only a fixed envelope, but no test scans bundle or result content for advertising, device, account, SIM, or similar identifiers. Result content is governed by result and Output validators. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Build emits only a fixed envelope, but no test scans bundle or result content for advertising, device, account, SIM, or similar identifiers. Result content is governed by result and Output validators. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-BUNDLE-0030",
@@ -4203,7 +4203,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Only the explicit proxy execution-reason vocabulary and its recording on an attempt exist; there is no proxy execution path and no implementation or test showing that proxy failures never fall back to direct. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Only the explicit proxy execution-reason vocabulary and its recording on an attempt exist; there is no proxy execution path and no implementation or test showing that proxy failures never fall back to direct. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-EXECUTION-0011",
@@ -4276,7 +4276,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Stricter local limits (rejecting values above a local policy limit) are not exercised by these tests, and enforcement of the limits during execution is not implemented. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Stricter local limits (rejecting values above a local policy limit) are not exercised by these tests, and enforcement of the limits during execution is not implemented. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-EXECUTION-0014",
@@ -5225,7 +5225,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No test asserts that labels have no effect on scheduling, execution constraints, or safety decisions downstream. The manifest path internal/taskdecode/labels.go does not exist. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No test asserts that labels have no effect on scheduling, execution constraints, or safety decisions downstream. The manifest path internal/taskdecode/labels.go does not exist. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-LABEL-0002",
@@ -5286,7 +5286,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: The REF dump attributes task.go:51 to validSchedule, but the comment is inside Common. The manifest path internal/taskdecode/labels.go does not exist. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: The REF dump attributes task.go:51 to validSchedule, but the comment is inside Common. The manifest path internal/taskdecode/labels.go does not exist. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-LABEL-0005",
@@ -5322,7 +5322,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No test probes a value of exactly 129 bytes at the validation layer; taskdecode TestRejectionCorpus rejects 129 ASCII bytes. The manifest path internal/taskdecode/labels.go does not exist. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No test probes a value of exactly 129 bytes at the validation layer; taskdecode TestRejectionCorpus rejects 129 ASCII bytes. The manifest path internal/taskdecode/labels.go does not exist. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-LABEL-0006",
@@ -5424,7 +5424,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: The task decoder is not tested end-to-end with duplicate label keys; parser-level coverage uses a synthetic schema. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: The task decoder is not tested end-to-end with duplicate label keys; parser-level coverage uses a synthetic schema. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-LABEL-0011",
@@ -5504,7 +5504,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Case sensitivity of values is not explicitly tested. The non-interpretation of templates is evidenced only by verbatim retention. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Case sensitivity of values is not explicitly tested. The non-interpretation of templates is evidenced only by verbatim retention. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-LABEL-0015",
@@ -6556,39 +6556,59 @@
     },
     {
       "id": "REQ-SAFETY-0012",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
           "path": "internal/validation/safety.go",
           "selector": "file",
           "state": "planned"
+        },
+        {
+          "path": "internal/validation/task.go",
+          "selector": "symbol:validSafety",
+          "state": "existing"
         }
       ],
       "case_ids": [
-        "CC-SAFETY-RISK-FACTORS"
+        "CC-SAFETY-RISK-FACTORS",
+        "UT.internal.validation.TestCommonRiskFactorAndTimezoneDomains",
+        "UT.internal.taskdecode.TestRiskFactorAndTimezoneDomains",
+        "UT.internal.testkit.conformance.TestConformanceFixtures"
       ],
-      "issue_ids": [],
+      "issue_ids": [
+        "GO-SPEC-ISSUE-007"
+      ],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+      "notes": "Partial (DEV-582): existing locations implement part of this obligation at Go 4575079; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. validSafety rejects a missing risk_factors list for medium, high and unknown risk. Remaining: admission under local policy and the planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-SAFETY-0013",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
           "path": "internal/validation/safety.go",
           "selector": "file",
           "state": "planned"
+        },
+        {
+          "path": "internal/validation/task.go",
+          "selector": "symbol:validSafety",
+          "state": "existing"
         }
       ],
       "case_ids": [
-        "CC-SAFETY-RISK-FACTORS-RISK-FACTOR-FIELDS"
+        "CC-SAFETY-RISK-FACTORS-RISK-FACTOR-FIELDS",
+        "UT.internal.validation.TestCommonRiskFactorAndTimezoneDomains",
+        "UT.internal.taskdecode.TestRiskFactorAndTimezoneDomains",
+        "UT.internal.testkit.conformance.TestConformanceFixtures"
       ],
-      "issue_ids": [],
+      "issue_ids": [
+        "GO-SPEC-ISSUE-007"
+      ],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+      "notes": "Partial (DEV-582): existing locations implement part of this obligation at Go 4575079; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. validSafety checks factor type against the initial registered types and level against the risk levels; missing type or level and other factor-field cases remain with the planned family. Remaining: admission under local policy and the planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-SAFETY-0014",
@@ -6897,6 +6917,34 @@
       "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
     },
     {
+      "id": "REQ-SAFETY-0031",
+      "implementation_status": "partial",
+      "implementation_locations": [
+        {
+          "path": "internal/validation/safety.go",
+          "selector": "file",
+          "state": "planned"
+        },
+        {
+          "path": "internal/validation/task.go",
+          "selector": "symbol:validSafety",
+          "state": "existing"
+        }
+      ],
+      "case_ids": [
+        "CC-SAFETY-RISK-FACTORS",
+        "UT.internal.validation.TestCommonRiskFactorAndTimezoneDomains",
+        "UT.internal.taskdecode.TestRiskFactorAndTimezoneDomains",
+        "UT.internal.testkit.conformance.TestConformanceFixtures"
+      ],
+      "issue_ids": [
+        "GO-SPEC-ISSUE-007"
+      ],
+      "review_evidence_ids": [],
+      "support": [],
+      "notes": "Added by DEV-582 at public 5a37e82. Partial: existing locations implement part of this obligation at Go 4575079; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. validSafety rejects an empty risk_factors list for medium, high and unknown risk; low with an empty list remains accepted. Remaining: admission under local policy and the planned family cases are not executed; no implemented, runtime, platform or field claim."
+    },
+    {
       "id": "REQ-SCHEDULE-0001",
       "implementation_status": "planned",
       "implementation_locations": [
@@ -7114,39 +7162,64 @@
     },
     {
       "id": "REQ-SCHEDULE-0013",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
           "path": "internal/execution/schedule.go",
           "selector": "file",
           "state": "planned"
+        },
+        {
+          "path": "internal/validation/task.go",
+          "selector": "symbol:validSchedule",
+          "state": "existing"
+        },
+        {
+          "path": "internal/taskdecode/decode.go",
+          "selector": "symbol:common",
+          "state": "existing"
         }
       ],
       "case_ids": [
-        "CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-FIELDS"
+        "CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-FIELDS",
+        "UT.internal.validation.TestCommonRiskFactorAndTimezoneDomains",
+        "UT.internal.taskdecode.TestRiskFactorAndTimezoneDomains",
+        "UT.internal.testkit.conformance.TestConformanceFixtures"
       ],
-      "issue_ids": [],
+      "issue_ids": [
+        "GO-SPEC-ISSUE-007"
+      ],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+      "notes": "Partial (DEV-582): existing locations implement part of this obligation at Go 4575079; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Decoding defaults an omitted timezone to local and validation accepts only local; range evaluation remains with the planned family. Remaining: admission under local policy and the planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-SCHEDULE-0014",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
           "path": "internal/execution/schedule.go",
           "selector": "file",
           "state": "planned"
+        },
+        {
+          "path": "internal/validation/task.go",
+          "selector": "symbol:validSchedule",
+          "state": "existing"
         }
       ],
       "case_ids": [
-        "CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-FIELDS"
+        "CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-FIELDS",
+        "UT.internal.validation.TestCommonRiskFactorAndTimezoneDomains",
+        "UT.internal.taskdecode.TestRiskFactorAndTimezoneDomains",
+        "UT.internal.testkit.conformance.TestConformanceFixtures"
       ],
-      "issue_ids": [],
+      "issue_ids": [
+        "GO-SPEC-ISSUE-007"
+      ],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+      "notes": "Partial (DEV-582): existing locations implement part of this obligation at Go 4575079; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Validation accepts local as the time-window timezone; evaluation against the current device-reported timezone is not evidenced by these cases. Remaining: admission under local policy and the planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-SCHEDULE-0015",
@@ -7397,7 +7470,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Backoff field semantics in the same requirement block are not evidenced by these refs. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Backoff field semantics in the same requirement block are not evidenced by these refs. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-SCHEDULE-0028",
@@ -7670,6 +7743,34 @@
       "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
     },
     {
+      "id": "REQ-SCHEDULE-0043",
+      "implementation_status": "partial",
+      "implementation_locations": [
+        {
+          "path": "internal/execution/schedule.go",
+          "selector": "file",
+          "state": "planned"
+        },
+        {
+          "path": "internal/validation/task.go",
+          "selector": "symbol:validSchedule",
+          "state": "existing"
+        }
+      ],
+      "case_ids": [
+        "CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-FIELDS",
+        "UT.internal.validation.TestCommonRiskFactorAndTimezoneDomains",
+        "UT.internal.taskdecode.TestRiskFactorAndTimezoneDomains",
+        "UT.internal.testkit.conformance.TestConformanceFixtures"
+      ],
+      "issue_ids": [
+        "GO-SPEC-ISSUE-007"
+      ],
+      "review_evidence_ids": [],
+      "support": [],
+      "notes": "Added by DEV-582 at public 5a37e82. Partial: existing locations implement part of this obligation at Go 4575079; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. validSchedule rejects every time-window timezone other than local. Remaining: admission under local policy and the planned family cases are not executed; no implemented, runtime, platform or field claim."
+    },
+    {
       "id": "REQ-TASK-0002",
       "implementation_status": "planned",
       "implementation_locations": [
@@ -7765,7 +7866,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No identified gap for the task decoder. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No identified gap for the task decoder. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-TASK-0006",
@@ -8108,7 +8209,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Only a pure binding check exists; there is no runtime egress-context acquisition, no evidence that a proxy-only attempt never emits a direct context request, and nothing enforces that all NET-05 steps share one context and path snapshot. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Only a pure binding check exists; there is no runtime egress-context acquisition, no evidence that a proxy-only attempt never emits a direct context request, and nothing enforces that all NET-05 steps share one context and path snapshot. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-CONTEXT-0018",
@@ -9723,7 +9824,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Locally pending bundle count (32) and aggregate pending storage (4,194,304 bytes) limits have no implementation or test. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Locally pending bundle count (32) and aggregate pending storage (4,194,304 bytes) limits have no implementation or test. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-LIMIT-0022",
@@ -9747,7 +9848,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Creating another bundle for a result that does not fit and local persistence rejection are not implemented or tested. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Creating another bundle for a result that does not fit and local persistence rejection are not implemented or tested. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-LIMIT-0023",
@@ -10043,7 +10144,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Rotation-period lengthening, reinitialization on host config change, and local-policy disablement are not tested in this package. No server-response path exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Rotation-period lengthening, reinitialization on host config change, and local-policy disablement are not tested in this package. No server-response path exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-LINKAGE-0007",
@@ -10228,7 +10329,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Build emits only mode, scope, epoch, and token, with no previous-token field, but no test asserts the absence of a mapping. No collector continuity-proof path exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Build emits only mode, scope, epoch, and token, with no previous-token field, but no test asserts the absence of a mapping. No collector continuity-proof path exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-LINKAGE-0017",
@@ -10992,7 +11093,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No admission implementation exists; integrity verification, trusted-time availability and rejection of remote tasks at admission are not implemented or tested. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No admission implementation exists; integrity verification, trusted-time availability and rejection of remote tasks at admission are not implemented or tested. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-TRUST-0006",
@@ -11525,7 +11626,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No admission implementation returns these codes under the corresponding conditions. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No admission implementation returns these codes under the corresponding conditions. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-TRUST-0035",
@@ -11549,7 +11650,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No admission implementation exists to show raw platform errors are never surfaced in practice. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No admission implementation exists to show raw platform errors are never surfaced in practice. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-JSON-0001",
@@ -11581,7 +11682,7 @@
       ],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Evidence is limited to the shared decoder and synthetic schemas; conformance of every model-specific decoder is not separately demonstrated. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Evidence is limited to the shared decoder and synthetic schemas; conformance of every model-specific decoder is not separately demonstrated. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-JSON-0002",
@@ -11615,7 +11716,7 @@
       ],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No outstanding gap identified for the shared decoder beyond model-specific control-character rules owned by other requirements. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No outstanding gap identified for the shared decoder beyond model-specific control-character rules owned by other requirements. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-JSON-0003",
@@ -11643,7 +11744,7 @@
       ],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Acceptance of identical names in different objects is not asserted by a dedicated case. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Acceptance of identical names in different objects is not asserted by a dedicated case. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-JSON-0004",
@@ -11677,7 +11778,7 @@
       ],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No identified gap for implemented decoders; dynamic-key label namespace rules are owned by label requirements. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No identified gap for implemented decoders; dynamic-key label namespace rules are owned by label requirements. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-JSON-0005",
@@ -11705,7 +11806,7 @@
       ],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Schema-defined defaulting is evidenced elsewhere; no gap identified for the shared decoder. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Schema-defined defaulting is evidenced elsewhere; no gap identified for the shared decoder. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-JSON-0006",
@@ -11738,7 +11839,7 @@
       ],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: No identified gap for the shared decoder. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: No identified gap for the shared decoder. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-JSON-0007",
@@ -11767,7 +11868,7 @@
       ],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Documentation and review of finite exact representations for unbounded fields is not evidenced in code. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Documentation and review of finite exact representations for unbounded fields is not evidenced in code. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-JSON-0008",
@@ -11814,7 +11915,7 @@
       ],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Bundle and other model decoders are not covered by these refs. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Bundle and other model decoders are not covered by these refs. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-JSON-0009",
@@ -11853,7 +11954,7 @@
       ],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Review documentation of the local configuration bound is not evidenced in code. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Review documentation of the local configuration bound is not evidenced in code. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-JSON-0010",
@@ -11893,7 +11994,7 @@
       ],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Ordering before admission, scheduling and network activity is not demonstrated because those stages are not implemented. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Ordering before admission, scheduling and network activity is not demonstrated because those stages are not implemented. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-JSON-0011",
@@ -11924,7 +12025,7 @@
       ],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go c5f4e92; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-c5f4e92.md. Remaining: Most tests only bound error length rather than asserting absence of each input value; absence of targets, labels, credentials and linkage material is not asserted per model. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 4575079 (re-executed by DEV-582); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-4575079.md. Remaining: Most tests only bound error length rather than asserting absence of each input value; absence of targets, labels, credentials and linkage material is not asserted per model. Planned family cases are not executed; no implemented, runtime, platform or field claim."
     }
   ],
   "cases": [
@@ -13090,7 +13191,7 @@
         "selector": "symbol:TestCcSafetyRiskFactors",
         "state": "planned"
       },
-      "scope": "Synthetic core contract cases; Admit synthetic tasks under a fake local policy, varying `risk_level` and the presence of `risk_factors`. Accept `risk_level: low` with `risk_factors` omitted, and accept `low` with `risk_factors: [{\"type\": \"network_observability\", \"level\": \"low\"}]`. Reject `medium`, `high` and `unknown` each with `risk_factors` omitted, with a bounded non-measurement admission error and no run or attempt created. Accept `medium` with `[{\"type\": \"traffic_distinctiveness\", \"level\": \"medium\"}]`, `high` with `[{\"type\": \"target_sensitivity\", \"level\": \"high\"}]` and `unknown` with `[{\"type\": \"data_sensitivity\", \"level\": \"unknown\"}]` as structurally valid declarations (execution permission for `high` and `unknown` still depends on local policy). Requirements: REQ-SAFETY-0012.",
+      "scope": "Synthetic core contract cases; Admit synthetic tasks under a fake local policy, varying `risk_level` and the presence of `risk_factors`. Accept `risk_level: low` with `risk_factors` omitted, and accept `low` with `risk_factors: [{\"type\": \"network_observability\", \"level\": \"low\"}]`. Reject `medium`, `high` and `unknown` each with `risk_factors` omitted, with a bounded non-measurement admission error and no run or attempt created. Reject `medium`, `high` and `unknown` each with `risk_factors: []` with the same bounded non-measurement admission error and no run or attempt created, and accept `low` with `risk_factors: []`. Accept `medium` with `[{\"type\": \"traffic_distinctiveness\", \"level\": \"medium\"}]`, `high` with `[{\"type\": \"target_sensitivity\", \"level\": \"high\"}]` and `unknown` with `[{\"type\": \"data_sensitivity\", \"level\": \"unknown\"}]` as structurally valid declarations (execution permission for `high` and `unknown` still depends on local policy). Requirements: REQ-SAFETY-0012, REQ-SAFETY-0031.",
       "status": "planned",
       "evidence_ids": []
     },
@@ -13233,7 +13334,7 @@
         "selector": "symbol:TestCcScheduleSchedulingModelTimeWindowFields",
         "state": "planned"
       },
-      "scope": "Synthetic core contract cases; Validate synthetic `time_window` objects at admission and evaluate accepted ones with a deterministic clock and a fake platform timezone. Reject `ranges` omitted and `ranges: []` (0 ranges), accept 1 range and 4 non-overlapping ranges (`00:00`-`02:00`, `04:00`-`06:00`, `08:00`-`10:00`, `12:00`-`14:00`) and reject 5 ranges, with a bounded non-measurement admission error. Reject two identical ranges `08:00`-`12:00`, overlapping ranges `08:00`-`12:00` and `11:00`-`14:00`, and a midnight-crossing overlap `22:00`-`06:00` with `05:00`-`07:00`. Accept `timezone` omitted and assert it is treated as `local`. With range `12:00`-`18:00` and `timezone: local`, set the fake device timezone to UTC at fixed instant 10:30Z (local 10:30, no start), then switch it to UTC+03:00 at the same instant (local 13:30) and assert a run starts, demonstrating `local` uses the current device-reported timezone. Requirements: REQ-SCHEDULE-0013, REQ-SCHEDULE-0014.",
+      "scope": "Synthetic core contract cases; Validate synthetic `time_window` objects at admission and evaluate accepted ones with a deterministic clock and a fake platform timezone. Reject `ranges` omitted and `ranges: []` (0 ranges), accept 1 range and 4 non-overlapping ranges (`00:00`-`02:00`, `04:00`-`06:00`, `08:00`-`10:00`, `12:00`-`14:00`) and reject 5 ranges, with a bounded non-measurement admission error. Reject two identical ranges `08:00`-`12:00`, overlapping ranges `08:00`-`12:00` and `11:00`-`14:00`, and a midnight-crossing overlap `22:00`-`06:00` with `05:00`-`07:00`. Accept `timezone` omitted and assert it is treated as `local`. Reject `timezone` values `UTC`, `Europe/Berlin`, `\"\"` and `Local` with a bounded non-measurement admission error and no run or attempt created. With range `12:00`-`18:00` and `timezone: local`, set the fake device timezone to UTC at fixed instant 10:30Z (local 10:30, no start), then switch it to UTC+03:00 at the same instant (local 13:30) and assert a run starts, demonstrating `local` uses the current device-reported timezone. Requirements: REQ-SCHEDULE-0013, REQ-SCHEDULE-0014, REQ-SCHEDULE-0043.",
       "status": "planned",
       "evidence_ids": []
     },
@@ -15035,6 +15136,45 @@
       "evidence_ids": [
         "EV.UT.internal.validation.TestCommonNormalizationIsIdempotentAndConservative"
       ]
+    },
+    {
+      "id": "UT.internal.validation.TestCommonRiskFactorAndTimezoneDomains",
+      "location": {
+        "path": "internal/validation/task_test.go",
+        "selector": "symbol:TestCommonRiskFactorAndTimezoneDomains",
+        "state": "existing"
+      },
+      "scope": "Existing synthetic Go unit test TestCommonRiskFactorAndTimezoneDomains in package internal/validation, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "status": "passed",
+      "evidence_ids": [
+        "EV.UT.internal.validation.TestCommonRiskFactorAndTimezoneDomains"
+      ]
+    },
+    {
+      "id": "UT.internal.taskdecode.TestRiskFactorAndTimezoneDomains",
+      "location": {
+        "path": "internal/taskdecode/domain_test.go",
+        "selector": "symbol:TestRiskFactorAndTimezoneDomains",
+        "state": "existing"
+      },
+      "scope": "Existing synthetic Go unit test TestRiskFactorAndTimezoneDomains in package internal/taskdecode, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "status": "passed",
+      "evidence_ids": [
+        "EV.UT.internal.taskdecode.TestRiskFactorAndTimezoneDomains"
+      ]
+    },
+    {
+      "id": "UT.internal.testkit.conformance.TestConformanceFixtures",
+      "location": {
+        "path": "internal/testkit/conformance/runner_test.go",
+        "selector": "symbol:TestConformanceFixtures",
+        "state": "existing"
+      },
+      "scope": "Existing synthetic Go unit test TestConformanceFixtures in package internal/testkit/conformance, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "status": "passed",
+      "evidence_ids": [
+        "EV.UT.internal.testkit.conformance.TestConformanceFixtures"
+      ]
     }
   ],
   "issues": [
@@ -15049,6 +15189,25 @@
       },
       "resolution_references": [],
       "notes": "Public clarification and shared infrastructure are adopted; the October 14 addendum leaves downstream consumer/model, admission, binding and producer evidence open. This mapping does not close the finding."
+    },
+    {
+      "id": "GO-SPEC-ISSUE-007",
+      "disposition": "accepted_adoption_pending",
+      "finding": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "c326a21c98acd7df0823f7471182a50f3936473c",
+        "path": "docs/specification-issues.md",
+        "selector": "heading:GO-SPEC-ISSUE-007: Undefined Allowed Values for `risk_factors` and `timezone`"
+      },
+      "resolution_references": [
+        {
+          "repository": "https://github.com/tv-rain/barometer-spec",
+          "revision": "5a37e82865a08922c4821c7318656286933421e5",
+          "path": "specification-issues/risk-factors-timezone-domains.md",
+          "selector": "heading:Maintainer Disposition — October 19, 2026"
+        }
+      ],
+      "notes": "Public alternative (a) accepted and merged at 5a37e82 as REQ-SAFETY-0031 and REQ-SCHEDULE-0043; Go decoding and validation adopt it at 4575079. Admission-path, binding and host evidence remain open, so the finding is not closed."
     }
   ],
   "evidence": [
@@ -15057,12 +15216,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.bundle.TestBundleValidationPrecedence"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-BUNDLE-0002",
         "REQ-BUNDLE-0022",
@@ -15081,12 +15240,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.bundle.TestContractMembershipAndIdentity"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-BUNDLE-0001",
         "REQ-BUNDLE-0002",
@@ -15111,12 +15270,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.bundle.TestExactEncodedBoundaries"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-BUNDLE-0004",
         "REQ-BUNDLE-0021",
@@ -15136,12 +15295,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.bundle.TestImmutableRetryBytesAndViews"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-BUNDLE-0007",
         "REQ-BUNDLE-0013",
@@ -15160,12 +15319,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.bundle.TestMixedResultMembershipIsPreserved"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-BUNDLE-0002",
         "REQ-BUNDLE-0013",
@@ -15184,12 +15343,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.bundle.TestTrustedOptionalLinkage"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-BUNDLE-0003",
         "REQ-BUNDLE-0004",
@@ -15215,12 +15374,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.config.TestAtomicRejectionCorpus"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-JSON-0004",
         "REQ-JSON-0005",
@@ -15240,12 +15399,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.config.TestClosedSchemasAndTrustSeparation"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-JSON-0004"
       ],
@@ -15262,12 +15421,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.config.TestConfigurationValidationPrecedence"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-JSON-0010",
         "REQ-JSON-0011"
@@ -15285,12 +15444,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.config.TestVersionsApprovalsAndBounds"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-JSON-0008",
         "REQ-JSON-0009"
@@ -15308,12 +15467,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.execution.TestAllTerminationReasons"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-RESULT-0020",
         "REQ-RESULT-0021",
@@ -15333,12 +15492,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.execution.TestProtocolOutcomesAndInvalidReasons"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-RESULT-0001",
         "REQ-RESULT-0020",
@@ -15358,12 +15517,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.jsondecode.TestBounds"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-JSON-0009",
         "REQ-JSON-0010"
@@ -15381,12 +15540,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.jsondecode.TestConfigurationAndNoFallback"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-JSON-0008"
       ],
@@ -15403,12 +15562,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.jsondecode.TestErrorsAndDeterminism"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-JSON-0011"
       ],
@@ -15425,12 +15584,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.jsondecode.TestPositiveAndPresence"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-JSON-0001",
         "REQ-JSON-0002",
@@ -15451,12 +15610,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.jsondecode.TestRejectionCorpus"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-LABEL-0010",
         "REQ-JSON-0001",
@@ -15481,12 +15640,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.jsondecode.TestValueContainers"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-JSON-0002"
       ],
@@ -15503,12 +15662,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.model.observation.TestAcceptedProducerMappings"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-OBS-0044",
         "REQ-OBS-0045",
@@ -15531,12 +15690,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.model.observation.TestAccessOnlySnapshot"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-OBS-0006",
         "REQ-CONTEXT-FORMAT-0004",
@@ -15555,12 +15714,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.model.observation.TestContextNormalizationStaysWithinASCIICodes"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-CONTEXT-FORMAT-0006",
         "REQ-CONTEXT-FORMAT-0018",
@@ -15580,12 +15739,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.model.observation.TestContextPathGenerationAndPrivacy"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-CONTEXT-FORMAT-0001",
         "REQ-CONTEXT-FORMAT-0005",
@@ -15606,12 +15765,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.model.observation.TestContextRejectionAndNormalization"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-CONTEXT-FORMAT-0004",
         "REQ-CONTEXT-FORMAT-0006",
@@ -15637,12 +15796,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.model.observation.TestContextUnknownAndFreshnessStates"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-CONTEXT-FORMAT-0006",
         "REQ-CONTEXT-FORMAT-0007",
@@ -15662,12 +15821,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.model.observation.TestDNSBoundsAndPrivacy"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-OBS-0009",
         "REQ-OBS-0042",
@@ -15691,12 +15850,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.model.observation.TestDNSCollectionAndAnswerBoundaries"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-OBS-0009",
         "REQ-OBS-0042",
@@ -15716,12 +15875,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.model.observation.TestHTTPBoundsAndConsistency"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-OBS-0025",
         "REQ-OBS-0028",
@@ -15742,12 +15901,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.model.observation.TestIncompleteFailureAbsentForEveryType"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-OBS-0051"
       ],
@@ -15764,12 +15923,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.model.observation.TestProtocolPresenceAndVocabulary"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-OBS-0003",
         "REQ-OBS-0044",
@@ -15790,12 +15949,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.model.observation.TestProtocolPrivacyAndImmutableViews"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-OBS-0004",
         "REQ-OBS-0018",
@@ -15815,12 +15974,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.model.observation.TestProtocolValidationPrecedenceAndStableEncoding"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-OBS-0004",
         "REQ-OBS-0044",
@@ -15840,12 +15999,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.model.observation.TestTLSVocabularyAndConsistency"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-OBS-0043",
         "REQ-OBS-0045",
@@ -15866,12 +16025,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.model.task.TestAdmissionErrorVocabulary"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-TRUST-0034",
         "REQ-TRUST-0035"
@@ -15889,12 +16048,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.model.task.TestMalformedSourceRejectedAtomically"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-TRUST-0001"
       ],
@@ -15911,12 +16070,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.result.TestBindingBoundsAndProducerContext"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-RESULT-0011",
         "REQ-RESULT-0038"
@@ -15934,12 +16093,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.result.TestCompositeCompletionAndPartialBoundaries"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-RESULT-0021",
         "REQ-RESULT-0027",
@@ -15958,12 +16117,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.result.TestCompositeVersionPrecisionAndMarkerPresence"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-JSON-0007"
       ],
@@ -15980,12 +16139,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.result.TestEncodedAndObservationBoundaries"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-RESULT-0004",
         "REQ-RESULT-0026",
@@ -16005,12 +16164,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.result.TestEnvelopePresenceAndBounds"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-RESULT-0002",
         "REQ-RESULT-0016",
@@ -16034,12 +16193,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.result.TestExecutionContextAndAttemptBinding"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-RESULT-0019",
         "REQ-RESULT-0020",
@@ -16063,12 +16222,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.result.TestImmutableViewsAndProducerBuild"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-RESULT-0004"
       ],
@@ -16085,12 +16244,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.result.TestIndependentVersionsAndNegativeCompletion"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-RESULT-0001",
         "REQ-RESULT-0011",
@@ -16110,12 +16269,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.result.TestInitialPayloadSchemasAndEvidence"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-RESULT-0024",
         "REQ-RESULT-0026",
@@ -16137,12 +16296,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.result.TestProducerTimingAndRandomIdentity"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-RESULT-0006",
         "REQ-RESULT-0016",
@@ -16162,12 +16321,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.result.TestResultValidationPrecedence"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-RESULT-0032",
         "REQ-JSON-0008",
@@ -16186,12 +16345,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.result.TestUninitializedDecoderRejectsBeforeInput"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-JSON-0010"
       ],
@@ -16208,12 +16367,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.result.TestUnknownPrivateAndMalformedFields"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-RESULT-0003",
         "REQ-RESULT-0005",
@@ -16238,12 +16397,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.taskdecode.TestByteAndLabelBounds"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-LABEL-0005",
         "REQ-JSON-0009"
@@ -16261,12 +16420,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.taskdecode.TestDefaultsAndDeterminism"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-EXECUTION-0013",
         "REQ-LABEL-0004"
@@ -16284,12 +16443,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.taskdecode.TestExactSchemaSelection"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-JSON-0008"
       ],
@@ -16306,12 +16465,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.taskdecode.TestHostConfigurationCannotComeFromTask"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-LABEL-0001",
         "REQ-TASK-0001",
@@ -16330,12 +16489,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.taskdecode.TestModelValidationPrecedenceAndExactCodec"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-JSON-0008",
         "REQ-JSON-0010",
@@ -16354,12 +16513,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.taskdecode.TestRegisteredNumericalBoundaries"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-EXECUTION-0013",
         "REQ-LABEL-0005"
@@ -16377,12 +16536,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.taskdecode.TestRejectionCorpus"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-EXECUTION-0013",
         "REQ-LABEL-0014",
@@ -16401,12 +16560,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.taskdecode.TestRepresentationAndSanitizedErrors"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-JSON-0003",
         "REQ-JSON-0006",
@@ -16425,12 +16584,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.taskdecode.TestSerializedInputCannotSupplyTrustOrPolicy"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-LABEL-0001",
         "REQ-TASK-0001",
@@ -16449,12 +16608,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.validation.TestCommonLabelInvariants"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-LABEL-0004",
         "REQ-LABEL-0005",
@@ -16474,12 +16633,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "a0421719ebbd6a2dec44ba998891ee2a47b32e1d",
-        "path": "traceability/evidence/go-unit-c5f4e92.md",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
         "selector": "anchor:UT.internal.validation.TestCommonNormalizationIsIdempotentAndConservative"
       },
-      "specification_revision": "a944ed6c389fec9f0d089f0044ead6fe845328b1",
-      "implementation_revision": "c5f4e92e06936cb677c7a03e9769ff75b1f51874",
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
       "requirement_ids": [
         "REQ-EXECUTION-0013",
         "REQ-LABEL-0001",
@@ -16489,6 +16648,87 @@
       "case_results": [
         {
           "case_id": "UT.internal.validation.TestCommonNormalizationIsIdempotentAndConservative",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "EV.UT.internal.validation.TestCommonRiskFactorAndTimezoneDomains",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
+        "selector": "anchor:UT.internal.validation.TestCommonRiskFactorAndTimezoneDomains"
+      },
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
+      "requirement_ids": [
+        "REQ-SAFETY-0012",
+        "REQ-SAFETY-0013",
+        "REQ-SAFETY-0031",
+        "REQ-SCHEDULE-0013",
+        "REQ-SCHEDULE-0014",
+        "REQ-SCHEDULE-0043"
+      ],
+      "scope": "Existing synthetic Go unit test TestCommonRiskFactorAndTimezoneDomains in package internal/validation, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "case_results": [
+        {
+          "case_id": "UT.internal.validation.TestCommonRiskFactorAndTimezoneDomains",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "EV.UT.internal.taskdecode.TestRiskFactorAndTimezoneDomains",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
+        "selector": "anchor:UT.internal.taskdecode.TestRiskFactorAndTimezoneDomains"
+      },
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
+      "requirement_ids": [
+        "REQ-SAFETY-0012",
+        "REQ-SAFETY-0013",
+        "REQ-SAFETY-0031",
+        "REQ-SCHEDULE-0013",
+        "REQ-SCHEDULE-0014",
+        "REQ-SCHEDULE-0043"
+      ],
+      "scope": "Existing synthetic Go unit test TestRiskFactorAndTimezoneDomains in package internal/taskdecode, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "case_results": [
+        {
+          "case_id": "UT.internal.taskdecode.TestRiskFactorAndTimezoneDomains",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "EV.UT.internal.testkit.conformance.TestConformanceFixtures",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "a3161ca7e7a38b7447313ef86d54455ccfa419b7",
+        "path": "traceability/evidence/go-unit-4575079.md",
+        "selector": "anchor:UT.internal.testkit.conformance.TestConformanceFixtures"
+      },
+      "specification_revision": "5a37e82865a08922c4821c7318656286933421e5",
+      "implementation_revision": "4575079b503467bff83c1175329be6cfa64cfb71",
+      "requirement_ids": [
+        "REQ-SAFETY-0012",
+        "REQ-SAFETY-0013",
+        "REQ-SAFETY-0031",
+        "REQ-SCHEDULE-0013",
+        "REQ-SCHEDULE-0014",
+        "REQ-SCHEDULE-0043"
+      ],
+      "scope": "Existing synthetic Go unit test TestConformanceFixtures in package internal/testkit/conformance, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "case_results": [
+        {
+          "case_id": "UT.internal.testkit.conformance.TestConformanceFixtures",
           "result": "passed"
         }
       ]

@@ -103,3 +103,66 @@ func TestCommonNormalizationIsIdempotentAndConservative(t *testing.T) {
 		}
 	}
 }
+
+// requirement-ref: REQ-SAFETY-0012
+// requirement-ref: REQ-SAFETY-0013
+// requirement-ref: REQ-SAFETY-0031
+// requirement-ref: REQ-SCHEDULE-0013
+// requirement-ref: REQ-SCHEDULE-0014
+// requirement-ref: REQ-SCHEDULE-0043
+func TestCommonRiskFactorAndTimezoneDomains(t *testing.T) {
+	factor := func(level string) []task.RiskFactor {
+		return []task.RiskFactor{{Type: "network_observability", Level: level}}
+	}
+	window := func(zone string) *task.TimeWindow {
+		return &task.TimeWindow{Timezone: zone, Ranges: []task.TimeRange{{Start: 480, End: 1200}}}
+	}
+	type safetyCase struct {
+		name   string
+		safety task.Safety
+		valid  bool
+	}
+	cases := []safetyCase{
+		{"low omitted", task.Safety{RiskLevel: "low"}, true},
+		{"low empty", task.Safety{RiskLevel: "low", Factors: []task.RiskFactor{}}, true},
+		{"low one", task.Safety{RiskLevel: "low", Factors: factor("low")}, true},
+	}
+	for _, level := range []string{"medium", "high", "unknown"} {
+		cases = append(cases,
+			safetyCase{level + " omitted", task.Safety{RiskLevel: level}, false},
+			safetyCase{level + " empty", task.Safety{RiskLevel: level, Factors: []task.RiskFactor{}}, false},
+			safetyCase{level + " one", task.Safety{RiskLevel: level, Factors: factor(level)}, true},
+		)
+	}
+	for _, tc := range cases {
+		t.Run("risk factors "+tc.name, func(t *testing.T) {
+			c := candidate()
+			c.Safety = tc.safety
+			v, err := validation.Common(c)
+			if tc.valid && err != nil {
+				t.Fatal(err)
+			}
+			if !tc.valid && (!errors.Is(err, validation.ErrTask) || !reflect.DeepEqual(v, task.Candidate{})) {
+				t.Fatalf("risk factor declaration escaped: %v", err)
+			}
+		})
+	}
+	for _, tc := range []struct {
+		zone  string
+		valid bool
+	}{
+		{"local", true}, {"UTC", false}, {"Europe/Berlin", false}, {"", false}, {"Local", false}, {"LOCAL", false},
+	} {
+		t.Run("timezone "+tc.zone, func(t *testing.T) {
+			c := candidate()
+			c.Schedule.Window = window(tc.zone)
+			v, err := validation.Common(c)
+			if tc.valid && (err != nil || v.Schedule.Window.Timezone != "local") {
+				t.Fatalf("local timezone rejected or rewritten: %v", err)
+			}
+			if !tc.valid && (!errors.Is(err, validation.ErrTask) || !reflect.DeepEqual(v, task.Candidate{})) {
+				t.Fatalf("undefined timezone escaped: %v", err)
+			}
+		})
+	}
+}

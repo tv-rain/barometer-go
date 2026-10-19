@@ -78,9 +78,11 @@ func fixtureSchema() *jsondecode.Schema {
 var caseID = regexp.MustCompile(`^[a-z][a-z0-9-]{0,63}$`)
 
 // This runner pins its initial requirement allowlist to the active public
-// catalog at 05c1364af4f9a604b617fca45f060949b557d265. IDs identify assertions;
-// their presence alone never establishes coverage of a complete requirement.
-var requirementID = regexp.MustCompile(`^REQ-(TASK-0001|JSON-000[1-9]|JSON-001[01])$`)
+// catalog at 05c1364af4f9a604b617fca45f060949b557d265, extended by DEV-582 with
+// the safety and time-window IDs active at 5a37e82865a08922c4821c7318656286933421e5.
+// IDs identify assertions; their presence alone never establishes coverage of a
+// complete requirement.
+var requirementID = regexp.MustCompile(`^REQ-(TASK-0001|JSON-000[1-9]|JSON-001[01]|SAFETY-001[23]|SAFETY-0031|SCHEDULE-001[34]|SCHEDULE-0043)$`)
 
 func Parse(data []byte) (*Fixture, error) {
 	if _, err := jsondecode.Decode(data, fixtureSchema(), jsondecode.Limits{MaxBytes: MaxFixtureBytes, MaxDepth: 16, MaxNodes: 4096}); err != nil {

@@ -1,0 +1,16 @@
+{
+  "format_version": 1,
+  "case_id": "timezone-utc",
+  "adapter": "common-task-v1",
+  "requirements": [
+    "REQ-SCHEDULE-0013",
+    "REQ-SCHEDULE-0014",
+    "REQ-SCHEDULE-0043"
+  ],
+  "task_base64": "eyJzY2hlbWFfdmVyc2lvbiI6IjAuMS4wIiwidGFza19pZCI6InN5bnRoZXRpYy10YXNrIiwidGVzdF9pZCI6IlNZTi0wMSIsInRlc3RfdmVyc2lvbiI6IjAuMS4wIiwiaW5wdXQiOnsic3ViamVjdCI6IkVYQU1QTEUifSwib3B0aW9ucyI6e30sInNjaGVkdWxlIjp7Im5vdF9hZnRlciI6IjIwMjYtMTAtMTZUMDA6MDA6MDBaIiwidGltZV93aW5kb3ciOnsicmFuZ2VzIjpbeyJzdGFydCI6IjA4OjAwIiwiZW5kIjoiMjA6MDAifV0sInRpbWV6b25lIjoiVVRDIn19LCJleGVjdXRpb24iOnsibGltaXRzIjp7fX0sInNhZmV0eSI6eyJyaXNrX2xldmVsIjoibG93IiwicmVxdWlyZXNfdXNlcl9jb25zZW50IjpmYWxzZX19",
+  "trusted_context": "remote-fixed-v1",
+  "local_policy": "synthetic-local-v1",
+  "expected": {
+    "rejection": "task"
+  }
+}

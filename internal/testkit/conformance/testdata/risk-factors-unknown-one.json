@@ -1,0 +1,28 @@
+{
+  "format_version": 1,
+  "case_id": "risk-factors-unknown-one",
+  "adapter": "common-task-v1",
+  "requirements": [
+    "REQ-SAFETY-0012",
+    "REQ-SAFETY-0031",
+    "REQ-SAFETY-0013"
+  ],
+  "task_base64": "eyJzY2hlbWFfdmVyc2lvbiI6IjAuMS4wIiwidGFza19pZCI6InN5bnRoZXRpYy10YXNrIiwidGVzdF9pZCI6IlNZTi0wMSIsInRlc3RfdmVyc2lvbiI6IjAuMS4wIiwiaW5wdXQiOnsic3ViamVjdCI6IkVYQU1QTEUifSwib3B0aW9ucyI6e30sInNjaGVkdWxlIjp7Im5vdF9hZnRlciI6IjIwMjYtMTAtMTZUMDA6MDA6MDBaIn0sImV4ZWN1dGlvbiI6eyJsaW1pdHMiOnt9fSwic2FmZXR5Ijp7InJpc2tfbGV2ZWwiOiJ1bmtub3duIiwicmVxdWlyZXNfdXNlcl9jb25zZW50IjpmYWxzZSwicmlza19mYWN0b3JzIjpbeyJ0eXBlIjoibmV0d29ya19vYnNlcnZhYmlsaXR5IiwibGV2ZWwiOiJ1bmtub3duIn1dfX0=",
+  "trusted_context": "remote-fixed-v1",
+  "local_policy": "synthetic-local-v1",
+  "expected": {
+    "rejection": "",
+    "normalized": {
+      "task_id": "synthetic-task",
+      "subject": "example",
+      "enabled": true,
+      "network_path": "direct",
+      "duration_ms": 30000,
+      "bytes_sent": 32768,
+      "bytes_received": 131072,
+      "connections": 8,
+      "max_runs": 1,
+      "max_attempts": 1
+    }
+  }
+}

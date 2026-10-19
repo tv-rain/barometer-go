@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Adopted the GO-SPEC-ISSUE-007 disposition (DEV-582). Task validation now rejects a missing or empty `risk_factors` list for `medium`, `high` and `unknown` risk (REQ-SAFETY-0031). The existing `local`-only time-window `timezone` rule is unchanged and now evidenced (REQ-SCHEDULE-0043). Validation, decoding and conformance-fixture cases are added, and the cross-cutting traceability manifest, CI tooling pin and unit-test evidence are rebaselined to public `5a37e82` and Go `4575079`, with the DEV-572 mapping preserved as historical. The six affected requirements are `partial`, not `implemented`. GO-SPEC-ISSUE-007 stays open for admission, binding and host evidence. Producers that send `risk_factors: []` for non-`low` risk are now rejected; no runtime, platform or field support is claimed.
+
 - Recorded Foundation acceptance (DEV-450) in the README and the Foundation validation boundary. Documentation only; no code, traceability, runtime or support status changes.
 
 - Made every traceability case plan measurable or explicitly a human review case (DEV-572): templated measurement termination, minimization, version, interpretation and safety plans are replaced with per-measurement specifics; thin cross-cutting plans gain inputs, boundary values, expected outcomes and requirement IDs; judgement-based remainders become 48 typed `RV-*` review cases that are not automated coverage; and the CI traceability driver rejects vague, shared or untyped plans, with negative tests. Baselines, requirement statuses and allocations are unchanged, the DEV-569 manifests are preserved as historical, and no case is executed and no support claimed.
