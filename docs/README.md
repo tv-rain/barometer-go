@@ -23,7 +23,7 @@
 
 - [`conformance-fixtures.md`](conformance-fixtures.md) — versioned Go-local synthetic fixture schema, exact-byte input, fixed context/policy profiles, deterministic runner and evidence limits.
 
-- [`admission.md`](admission.md) — DEV-583 admission design: ordered steps and error classes, consumed capabilities and owners, atomic replay persistence, execution outputs and package-creation checklists for `internal/admission` and `internal/registry`. `internal/registry` exists (DEV-584); `internal/admission` holds only the delivery-record seam (DEV-585).
+- [`admission.md`](admission.md) — DEV-583 admission design: ordered steps and error classes, consumed capabilities and owners, atomic replay persistence, execution outputs and package-creation checklists for `internal/admission` and `internal/registry`. `internal/registry` exists (DEV-584); `internal/admission` holds the delivery-record seam (DEV-585) and the gates for steps 1 to 6 (DEV-586).
 - [`trusted-policy-models.md`](trusted-policy-models.md) — separate trusted source context, exact-byte delivery binding, immutable policy/target models, revocation inputs and pending enforcement boundaries.
 - [`configuration-models.md`](configuration-models.md) — immutable host configuration, strict validation, separate trusted approvals, internal clock/key capabilities and preparation limits.
 - [`task-models.md`](task-models.md) — common task/schedule models, strict decoding, deterministic defaults, timing/eligibility validation, synthetic evidence and remaining admission/runtime work.

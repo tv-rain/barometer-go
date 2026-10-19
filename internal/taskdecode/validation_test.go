@@ -25,7 +25,8 @@ func TestModelValidationPrecedenceAndExactCodec(t *testing.T) {
 		calls       int32
 	}{
 		{"syntax before selection", `{"test_version":"9.0.0"`, jsondecode.ErrSyntax, 0},
-		{"selection before shape", `{"schema_version":"0.1.0","test_id":"SYN-01","test_version":"9.0.0","private":"DO_NOT_RETAIN"}`, jsondecode.ErrVersion, 0},
+		{"shape before selection", `{"schema_version":"0.1.0","test_id":"SYN-01","test_version":"9.0.0","private":"DO_NOT_RETAIN"}`, jsondecode.ErrField, 0},
+		{"selection before common", strings.Replace(baseJSON, `"test_version":"0.1.0"`, `"test_version":"9.0.0"`, 1), ErrUnregistered, 0},
 		{"shape before common", string(change("task_id", nil, false)), jsondecode.ErrType, 0},
 		{"common before timing", string(change("safety.risk_level", "unsupported", false)), validation.ErrTask, 0},
 		{"timing before codec", baseJSON, validation.ErrTiming, 0},
@@ -37,7 +38,7 @@ func TestModelValidationPrecedenceAndExactCodec(t *testing.T) {
 				oldCalls.Store(0)
 				newCalls.Store(0)
 				ctx := timing()
-				if tc.name != "selected semantic rejection" {
+				if tc.name != "selected semantic rejection" && tc.name != "no older schema fallback" {
 					ctx.AcceptedAt = ctx.AcceptedAt.AddDate(0, 0, 2)
 				}
 				v, err := d.Decode([]byte(tc.input), ctx)

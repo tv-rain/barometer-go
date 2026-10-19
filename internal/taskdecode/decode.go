@@ -16,6 +16,18 @@ import (
 
 var ErrParameters = errors.New("taskdecode: parameters")
 
+// ErrUnregistered marks a well-formed (test_id, test_version) pair under the
+// supported schema_version that no supplied codec selects. It also matches
+// jsondecode.ErrVersion. It describes this decoder, not the task's validity.
+var ErrUnregistered = errors.New("taskdecode: unregistered test version")
+
+type unregistered struct{}
+
+func (unregistered) Error() string { return ErrUnregistered.Error() }
+func (unregistered) Is(target error) bool {
+	return target == ErrUnregistered || target == jsondecode.ErrVersion
+}
+
 type Definition struct {
 	TestID, TestVersion string
 	Input, Options      *jsondecode.Schema
@@ -30,7 +42,6 @@ type TestCodec interface {
 }
 
 type Decoder struct {
-	selection   jsondecode.Selection
 	codecs      []TestCodec
 	definitions []Definition
 }
@@ -45,7 +56,7 @@ func New(codecs []TestCodec) (*Decoder, error) {
 	if len(codecs) == 0 || len(codecs) > 256 {
 		return nil, jsondecode.ErrConfig
 	}
-	d := &Decoder{selection: jsondecode.Selection{Fields: []string{"schema_version", "test_id", "test_version"}}}
+	d := &Decoder{}
 	for _, codec := range codecs {
 		if codec == nil {
 			return nil, jsondecode.ErrConfig
@@ -59,13 +70,14 @@ func New(codecs []TestCodec) (*Decoder, error) {
 				return nil, jsondecode.ErrConfig
 			}
 		}
+		// Check descriptor validity without accepting a task or calling any codec.
+		for _, s := range []*jsondecode.Schema{inputSchema(def), optionsSchema(def)} {
+			if _, err := jsondecode.Decode([]byte(`{}`), s, parseLimits); errors.Is(err, jsondecode.ErrConfig) {
+				return nil, err
+			}
+		}
 		d.definitions = append(d.definitions, def)
 		d.codecs = append(d.codecs, codec)
-		d.selection.Cases = append(d.selection.Cases, jsondecode.Case{Values: []string{"0.1.0", def.TestID, def.TestVersion}, Schema: envelope(def)})
-	}
-	// Check descriptor validity without accepting a task or calling any codec.
-	if _, err := jsondecode.DecodeSelected([]byte(`{}`), d.selection, parseLimits); errors.Is(err, jsondecode.ErrConfig) {
-		return nil, err
 	}
 	return d, nil
 }
@@ -74,40 +86,113 @@ func New(codecs []TestCodec) (*Decoder, error) {
 // registered public limits. Depth matches the existing parser's stack ceiling.
 var parseLimits = jsondecode.Limits{MaxBytes: 65536, MaxDepth: 128, MaxNodes: 32768}
 
-// Decode rejects atomically. TimingContext is supplied by a trusted containing
-// boundary, never task JSON. The caller separately retains exact received bytes
-// for later integrity/replay checks; candidate normalization is not byte identity.
-// requirement-ref: REQ-JSON-0010
-func (d *Decoder) Decode(input []byte, timing validation.TimingContext) (*task.Candidate, error) {
+// Envelope is one parsed task whose closed top-level schema and exact versions
+// are valid (REQ-TRUST-0017 steps 3 and 4). Field values, numeric limits and
+// test-specific input and options are not yet validated. It holds the parsed
+// representation, never source context, and is not an admitted task.
+type Envelope struct {
+	decoder *Decoder
+	value   *jsondecode.Value
+	codec   int
+}
+
+// Envelope parses the task and validates its top-level structure with field
+// values and registered limits deferred to Fields and input and options
+// deferred to Parameters, so a caller can apply the public step order. An
+// unsupported schema_version or malformed version tuple returns
+// jsondecode.ErrVersion; a well-formed unregistered pair returns ErrUnregistered.
+// requirement-ref: REQ-JSON-0008
+func (d *Decoder) Envelope(input []byte) (*Envelope, error) {
 	if d == nil {
 		return nil, jsondecode.ErrConfig
 	}
-	v, err := jsondecode.DecodeSelected(input, d.selection, parseLimits)
+	v, err := jsondecode.Decode(input, shapeSchema, parseLimits)
 	if err != nil {
 		return nil, err
 	}
-	c, err := common(v)
+	schema, id, ver := text(v, "schema_version", ""), text(v, "test_id", ""), text(v, "test_version", "")
+	if schema != "0.1.0" {
+		return nil, jsondecode.ErrVersion
+	}
+	for i, def := range d.definitions {
+		if def.TestID == id && def.TestVersion == ver {
+			return &Envelope{decoder: d, value: v, codec: i}, nil
+		}
+	}
+	if testID.MatchString(id) && version.MatchString(ver) && len(ver) <= 64 {
+		return nil, unregistered{}
+	}
+	return nil, jsondecode.ErrVersion
+}
+
+// TaskID returns the exact task_id string; Envelope checked only its type.
+func (e *Envelope) TaskID() string { return text(e.value, "task_id", "") }
+
+// Test returns the exact registered test ID and version that selected the codec.
+func (e *Envelope) Test() task.TestVersion {
+	def := e.decoder.definitions[e.codec]
+	return task.TestVersion{ID: def.TestID, Version: def.TestVersion}
+}
+
+// Fields validates every common field value and registered limit, applies
+// defaults and checks expiry against the trusted timing context
+// (REQ-TRUST-0017 step 6). Test-specific input and options are checked only
+// for their registered byte limits. Failures keep the jsondecode and
+// validation classes, including ErrLimit, ErrExpired and ErrUnsupported.
+func (e *Envelope) Fields(timing validation.TimingContext) (task.Candidate, error) {
+	if err := jsondecode.Validate(e.value, fieldSchema); err != nil {
+		return task.Candidate{}, err
+	}
+	c, err := common(e.value)
 	if err != nil {
-		return nil, err
+		return task.Candidate{}, err
 	}
 	c, err = validation.Common(c)
 	if err != nil {
-		return nil, err
+		return task.Candidate{}, err
 	}
 	if err = validation.ScheduleAt(c.Schedule, timing); err != nil {
+		return task.Candidate{}, err
+	}
+	return c, nil
+}
+
+// Parameters validates input and options against the selected test's schemas
+// and normalizes them with its codec (the input and options part of step 8).
+func (e *Envelope) Parameters() (task.Parameters, error) {
+	def := e.decoder.definitions[e.codec]
+	input, options := member(e.value, "input"), member(e.value, "options")
+	if err := jsondecode.Validate(input, inputSchema(def)); err != nil {
 		return nil, err
 	}
-	// requirement-ref: REQ-JSON-0008
-	for i, def := range d.definitions {
-		if def.TestID == c.TestID && def.TestVersion == c.TestVersion {
-			c.Parameters, err = d.codecs[i].Normalize(member(v, "input"), member(v, "options"))
-			if err != nil || c.Parameters == nil {
-				return nil, ErrParameters
-			}
-			return &c, nil
-		}
+	if err := jsondecode.Validate(options, optionsSchema(def)); err != nil {
+		return nil, err
 	}
-	return nil, jsondecode.ErrVersion
+	p, err := e.decoder.codecs[e.codec].Normalize(input, options)
+	if err != nil || p == nil {
+		return nil, ErrParameters
+	}
+	return p, nil
+}
+
+// Decode rejects atomically. TimingContext is supplied by a trusted containing
+// boundary, never task JSON. The caller separately retains exact received bytes
+// for later integrity/replay checks; candidate normalization is not byte identity.
+// It runs Envelope, Fields and Parameters in order.
+// requirement-ref: REQ-JSON-0010
+func (d *Decoder) Decode(input []byte, timing validation.TimingContext) (*task.Candidate, error) {
+	e, err := d.Envelope(input)
+	if err != nil {
+		return nil, err
+	}
+	c, err := e.Fields(timing)
+	if err != nil {
+		return nil, err
+	}
+	if c.Parameters, err = e.Parameters(); err != nil {
+		return nil, err
+	}
+	return &c, nil
 }
 
 func member(v *jsondecode.Value, name string) *jsondecode.Value {

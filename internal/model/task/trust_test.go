@@ -60,13 +60,16 @@ func TestSourceContextInvariantsAndByteBinding(t *testing.T) {
 	if err != nil || r.Matches(buf) || !r.Matches([]byte(`{"a":1}`)) {
 		t.Fatal("payload mutation changed record")
 	}
-	for _, b := range [][]byte{nil, bytes.Repeat([]byte{'x'}, 65537)} {
+	for _, b := range [][]byte{nil, bytes.Repeat([]byte{'x'}, task.MaxDeliveryBytes+1)} {
 		if r, e := task.NewDeliveryRecord(s, b); e != task.ErrTrustModel || r.Source().Valid() {
 			t.Fatal("invalid byte envelope accepted")
 		}
 	}
-	if _, e := task.NewDeliveryRecord(s, bytes.Repeat([]byte{'x'}, 65536)); e != nil {
-		t.Fatal("task byte maximum rejected")
+	// Records bind over-limit tasks so admission can reject them by size.
+	for _, n := range []int{65536, 65537, task.MaxDeliveryBytes} {
+		if r, e := task.NewDeliveryRecord(s, bytes.Repeat([]byte{'x'}, n)); e != nil || !r.Matches(bytes.Repeat([]byte{'x'}, n)) {
+			t.Fatal("receive byte bound rejected")
+		}
 	}
 	if r, e := task.NewDeliveryRecord(task.SourceContext{}, []byte("x")); e != task.ErrTrustModel || r.Matches([]byte("x")) {
 		t.Fatal("zero source bound")
