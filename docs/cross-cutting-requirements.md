@@ -14,6 +14,8 @@ DEV-582 adopts the [GO-SPEC-ISSUE-007](specification-issues.md#go-spec-issue-007
 
 DEV-583 rewrites the remaining thin admission-related plans at the same baselines, using the [admission design](admission.md): the eight `CC-TRUST-*` families other than `CC-TRUST-TASK-IDENTIFIER-RULES`, `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING` and `CC-TRUST-TARGETED-DELIVERY`; the eight `CC-SAFETY-*` families not expanded by DEV-572 or DEV-582; and `CC-LIMIT-TASK-AND-IDENTIFIER-LIMITS`. Each plan now names inputs, boundary values, expected classes or outcomes and its `Requirements:` list. Rows that only execution can check, such as per-attempt safety re-evaluation and pre-contact address checks, are marked execution-owned within the same family. Where the public text names no admission class, plans assert rejection with one of the ten public classes and defer the class to [GO-SPEC-ISSUE-008](specification-issues.md#go-spec-issue-008-admission-error-classes-for-unsupported-and-unmapped-rejections). No family is added or executed, and no requirement status or allocation changes. The [DEV-582 manifest](../traceability/historical/cross-cutting-5a37e82-4575079.json) is preserved byte-for-byte, and the current [report](../traceability/reports/cross-cutting-5a37e82-4575079-dev583.json) keeps its gap counts.
 
+DEV-597 adopts the [GO-SPEC-ISSUE-008](specification-issues.md#go-spec-issue-008-admission-error-classes-for-unsupported-and-unmapped-rejections) disposition and rebaselines this map to public `d93aff93cbc17e7c065fb40d8f6e2e01a697bf35`, the verified merge of [public PR #14](https://github.com/tv-rain/barometer-spec/pull/14), and Go `c49a77fc35d0190992c272ba7447467ab8ff675c`. Between `5a37e82` and `d93aff9` the shared catalog changes only by the new allocations REQ-TRUST-0036 to REQ-TRUST-0038, and no other requirement text changes. REQ-TRUST-0036 joins `CC-TRUST-ADMISSION-ERRORS` and `CC-SAFETY-RISK-FACTORS-INITIAL-RISK-FACTOR-TYPES`, REQ-TRUST-0037 joins `CC-TRUST-ADMISSION-PROCEDURE` and REQ-TRUST-0038 joins `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING`. Every plan that deferred an admission class to GO-SPEC-ISSUE-008 now asserts its REQ-TRUST-0037 class, and the procedure plan adds first-failing-step precedence cases. The [manifest](../traceability/cross-cutting.json) maps 578 active shared requirements to the same 191 families, and the public requirement links below are pinned to `d93aff9`. REQ-TRUST-0036 is `partial` through the existing `TestAdmissionErrorVocabulary` case; REQ-TRUST-0037 and REQ-TRUST-0038 are `planned`. All 61 cross-cutting `UT.*` cases were re-executed at the new Go baseline, as recorded in the [evidence report](../traceability/evidence/go-unit-c49a77f.md). The [DEV-583 manifest](../traceability/historical/cross-cutting-5a37e82-4575079-dev583.json) is preserved byte-for-byte, and the current [report](../traceability/reports/cross-cutting-d93aff9-c49a77f.json) is a new baseline-dated record. No requirement is `implemented`; the planned families stay unexecuted.
+
 The earlier DEV-471 mapping at public baseline `47d75925b3829fccfb6954b545c15f695375b76f` and Go baseline `a9136f34fad00ecc2171cbc29e835c5c50b340df` is preserved byte-for-byte as [historical manifest](../traceability/historical/cross-cutting-47d7592.json) with its unchanged [report](../traceability/reports/cross-cutting.json). It mapped 565 requirements to 185 families. It remains valid metadata only for those original baselines and is not a current claim.
 
 ## Boundaries and Maintenance
@@ -24,7 +26,7 @@ The 16 format/library sources plus shared JSON decoding are in scope. Registered
 
 Portable Go owns its package targets. Native storage and binding obligations map to planned native validation contracts in this repository, consumed by future Android/Apple adapter work; these documents cannot implement platform behavior. Host, collector and public authoring obligations map to planned integration/review records. Mixed core/integration case families must retain both scopes; Go tests alone cannot close them. Synthetic requests and canary values are local fixtures, not measurements or participant data.
 
-Unresolved contract findings use [Specification Issues](specification-issues.md). `GO-SPEC-ISSUE-001` remains open for downstream evidence despite the accepted JSON clarification. `GO-SPEC-ISSUE-007` is adopted in Go decoding and validation and remains open for admission, binding and host evidence. Mapping a planned test never resolves it. A newly discovered ambiguity must block only the affected claim and enter that workflow before implementation selects behavior.
+Unresolved contract findings use [Specification Issues](specification-issues.md). `GO-SPEC-ISSUE-001` remains open for downstream evidence despite the accepted JSON clarification. `GO-SPEC-ISSUE-007` is adopted in Go decoding and validation and remains open for admission, binding and host evidence. `GO-SPEC-ISSUE-008` is adopted in the admission design, case plans and `task.AdmissionError` and remains open for admission evidence. Mapping a planned test never resolves it. A newly discovered ambiguity must block only the affected claim and enter that workflow before implementation selects behavior.
 
 Public prerequisite ordering is satisfied: PR #6 merged the approved allocation head `9dbd72af37205a08484435cb561a168ac7b1876b` as merge commit `47d75925b3829fccfb6954b545c15f695375b76f`, and PR #8 merged approved head `5869bc314c877e2ccd3426b82aadcd9c92414f02` as `a944ed6c389fec9f0d089f0044ead6fe845328b1`. Between those baselines, the shared catalog changes only by the REQ-OBS retirements and additions above. Any later public change requires a renewed source/catalog review, an explicit baseline update, and regenerated traceability report. Preserve previously committed historical manifests/reports rather than presenting old evidence as current. Keep partial coverage while wider source, test-specific or semantic inventory gaps remain.
 
@@ -69,8 +71,8 @@ Review case `RV-CC-OBS-OVERVIEW` (`docs/conformance/cross-cutting-review.md`, `h
 <!-- requirement-ref: REQ-OBS-0001 -->
 <!-- requirement-ref: REQ-OBS-0002 -->
 
-- [REQ-OBS-0001](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0001) → `CC-OBS-OVERVIEW`, `RV-CC-OBS-OVERVIEW`.
-- [REQ-OBS-0002](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0002) → `CC-OBS-OVERVIEW`, `RV-CC-OBS-OVERVIEW`.
+- [REQ-OBS-0001](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0001) → `CC-OBS-OVERVIEW`, `RV-CC-OBS-OVERVIEW`.
+- [REQ-OBS-0002](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0002) → `CC-OBS-OVERVIEW`, `RV-CC-OBS-OVERVIEW`.
 
 ### CC-OBS-COMMON-STRUCTURE
 
@@ -85,10 +87,10 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-OBS-0005 -->
 <!-- requirement-ref: REQ-OBS-0006 -->
 
-- [REQ-OBS-0003](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0003) → `CC-OBS-COMMON-STRUCTURE`.
-- [REQ-OBS-0004](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0004) → `CC-OBS-COMMON-STRUCTURE`.
-- [REQ-OBS-0005](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0005) → `CC-OBS-COMMON-STRUCTURE`.
-- [REQ-OBS-0006](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0006) → `CC-OBS-COMMON-STRUCTURE`.
+- [REQ-OBS-0003](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0003) → `CC-OBS-COMMON-STRUCTURE`.
+- [REQ-OBS-0004](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0004) → `CC-OBS-COMMON-STRUCTURE`.
+- [REQ-OBS-0005](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0005) → `CC-OBS-COMMON-STRUCTURE`.
+- [REQ-OBS-0006](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0006) → `CC-OBS-COMMON-STRUCTURE`.
 
 ### CC-OBS-DNS-QUERY-FAILURES
 
@@ -101,8 +103,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-OBS-0007 -->
 <!-- requirement-ref: REQ-OBS-0008 -->
 
-- [REQ-OBS-0007](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0007) → `CC-OBS-DNS-QUERY-FAILURES`.
-- [REQ-OBS-0008](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0008) → `CC-OBS-DNS-QUERY-FAILURES`.
+- [REQ-OBS-0007](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0007) → `CC-OBS-DNS-QUERY-FAILURES`.
+- [REQ-OBS-0008](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0008) → `CC-OBS-DNS-QUERY-FAILURES`.
 
 ### CC-OBS-DNS-QUERY-DETAILS
 
@@ -115,8 +117,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-OBS-0009 -->
 <!-- requirement-ref: REQ-OBS-0010 -->
 
-- [REQ-OBS-0009](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0009) → `CC-OBS-DNS-QUERY-DETAILS`.
-- [REQ-OBS-0010](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0010) → `CC-OBS-DNS-QUERY-DETAILS`.
+- [REQ-OBS-0009](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0009) → `CC-OBS-DNS-QUERY-DETAILS`.
+- [REQ-OBS-0010](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0010) → `CC-OBS-DNS-QUERY-DETAILS`.
 
 ### CC-OBS-DNS-QUERY-DNS-RESPONSE
 
@@ -129,7 +131,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-OBS-0042 -->
 <!-- requirement-history: REQ-OBS-0011 -->
 
-- [REQ-OBS-0042](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0042) → `CC-OBS-DNS-QUERY-DNS-RESPONSE`. Successor of retired [REQ-OBS-0011](https://github.com/tv-rain/barometer-spec/blob/47d75925b3829fccfb6954b545c15f695375b76f/data-formats/measurement-observations.md#REQ-OBS-0011), whose mapping is preserved only in the historical manifest.
+- [REQ-OBS-0042](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0042) → `CC-OBS-DNS-QUERY-DNS-RESPONSE`. Successor of retired [REQ-OBS-0011](https://github.com/tv-rain/barometer-spec/blob/47d75925b3829fccfb6954b545c15f695375b76f/data-formats/measurement-observations.md#REQ-OBS-0011), whose mapping is preserved only in the historical manifest.
 
 ### CC-OBS-DNS-QUERY-DNS-ANSWER
 
@@ -143,9 +145,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-OBS-0013 -->
 <!-- requirement-ref: REQ-OBS-0014 -->
 
-- [REQ-OBS-0012](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0012) → `CC-OBS-DNS-QUERY-DNS-ANSWER`.
-- [REQ-OBS-0013](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0013) → `CC-OBS-DNS-QUERY-DNS-ANSWER`.
-- [REQ-OBS-0014](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0014) → `CC-OBS-DNS-QUERY-DNS-ANSWER`.
+- [REQ-OBS-0012](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0012) → `CC-OBS-DNS-QUERY-DNS-ANSWER`.
+- [REQ-OBS-0013](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0013) → `CC-OBS-DNS-QUERY-DNS-ANSWER`.
+- [REQ-OBS-0014](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0014) → `CC-OBS-DNS-QUERY-DNS-ANSWER`.
 
 ### CC-OBS-TCP-CONNECT-FAILURES
 
@@ -158,8 +160,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-OBS-0015 -->
 <!-- requirement-ref: REQ-OBS-0016 -->
 
-- [REQ-OBS-0015](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0015) → `CC-OBS-TCP-CONNECT-FAILURES`.
-- [REQ-OBS-0016](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0016) → `CC-OBS-TCP-CONNECT-FAILURES`.
+- [REQ-OBS-0015](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0015) → `CC-OBS-TCP-CONNECT-FAILURES`.
+- [REQ-OBS-0016](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0016) → `CC-OBS-TCP-CONNECT-FAILURES`.
 
 ### CC-OBS-TCP-CONNECT-DETAILS
 
@@ -172,8 +174,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-OBS-0017 -->
 <!-- requirement-ref: REQ-OBS-0018 -->
 
-- [REQ-OBS-0017](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0017) → `CC-OBS-TCP-CONNECT-DETAILS`.
-- [REQ-OBS-0018](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0018) → `CC-OBS-TCP-CONNECT-DETAILS`.
+- [REQ-OBS-0017](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0017) → `CC-OBS-TCP-CONNECT-DETAILS`.
+- [REQ-OBS-0018](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0018) → `CC-OBS-TCP-CONNECT-DETAILS`.
 
 ### CC-OBS-TLS-HANDSHAKE-FAILURES
 
@@ -186,8 +188,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-OBS-0019 -->
 <!-- requirement-ref: REQ-OBS-0020 -->
 
-- [REQ-OBS-0019](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0019) → `CC-OBS-TLS-HANDSHAKE-FAILURES`.
-- [REQ-OBS-0020](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0020) → `CC-OBS-TLS-HANDSHAKE-FAILURES`.
+- [REQ-OBS-0019](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0019) → `CC-OBS-TLS-HANDSHAKE-FAILURES`.
+- [REQ-OBS-0020](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0020) → `CC-OBS-TLS-HANDSHAKE-FAILURES`.
 
 ### CC-OBS-TLS-HANDSHAKE-DETAILS
 
@@ -201,8 +203,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-history: REQ-OBS-0021 -->
 <!-- requirement-ref: REQ-OBS-0022 -->
 
-- [REQ-OBS-0043](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0043) → `CC-OBS-TLS-HANDSHAKE-DETAILS`. Successor of retired [REQ-OBS-0021](https://github.com/tv-rain/barometer-spec/blob/47d75925b3829fccfb6954b545c15f695375b76f/data-formats/measurement-observations.md#REQ-OBS-0021), whose mapping is preserved only in the historical manifest.
-- [REQ-OBS-0022](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0022) → `CC-OBS-TLS-HANDSHAKE-DETAILS`.
+- [REQ-OBS-0043](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0043) → `CC-OBS-TLS-HANDSHAKE-DETAILS`. Successor of retired [REQ-OBS-0021](https://github.com/tv-rain/barometer-spec/blob/47d75925b3829fccfb6954b545c15f695375b76f/data-formats/measurement-observations.md#REQ-OBS-0021), whose mapping is preserved only in the historical manifest.
+- [REQ-OBS-0022](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0022) → `CC-OBS-TLS-HANDSHAKE-DETAILS`.
 
 ### CC-OBS-HTTP-EXCHANGE-FAILURES
 
@@ -215,8 +217,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-OBS-0023 -->
 <!-- requirement-ref: REQ-OBS-0024 -->
 
-- [REQ-OBS-0023](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0023) → `CC-OBS-HTTP-EXCHANGE-FAILURES`.
-- [REQ-OBS-0024](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0024) → `CC-OBS-HTTP-EXCHANGE-FAILURES`.
+- [REQ-OBS-0023](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0023) → `CC-OBS-HTTP-EXCHANGE-FAILURES`.
+- [REQ-OBS-0024](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0024) → `CC-OBS-HTTP-EXCHANGE-FAILURES`.
 
 ### CC-OBS-HTTP-EXCHANGE-DETAILS
 
@@ -228,7 +230,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-OBS-0025 -->
 
-- [REQ-OBS-0025](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0025) → `CC-OBS-HTTP-EXCHANGE-DETAILS`.
+- [REQ-OBS-0025](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0025) → `CC-OBS-HTTP-EXCHANGE-DETAILS`.
 
 ### CC-OBS-HTTP-EXCHANGE-REDIRECT
 
@@ -241,8 +243,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-OBS-0026 -->
 <!-- requirement-ref: REQ-OBS-0027 -->
 
-- [REQ-OBS-0026](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0026) → `CC-OBS-HTTP-EXCHANGE-REDIRECT`.
-- [REQ-OBS-0027](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0027) → `CC-OBS-HTTP-EXCHANGE-REDIRECT`.
+- [REQ-OBS-0026](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0026) → `CC-OBS-HTTP-EXCHANGE-REDIRECT`.
+- [REQ-OBS-0027](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0027) → `CC-OBS-HTTP-EXCHANGE-REDIRECT`.
 
 ### CC-OBS-HTTP-EXCHANGE-BODY
 
@@ -255,8 +257,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-OBS-0028 -->
 <!-- requirement-ref: REQ-OBS-0029 -->
 
-- [REQ-OBS-0028](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0028) → `CC-OBS-HTTP-EXCHANGE-BODY`.
-- [REQ-OBS-0029](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0029) → `CC-OBS-HTTP-EXCHANGE-BODY`.
+- [REQ-OBS-0028](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0028) → `CC-OBS-HTTP-EXCHANGE-BODY`.
+- [REQ-OBS-0029](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0029) → `CC-OBS-HTTP-EXCHANGE-BODY`.
 
 ### CC-OBS-HTTP-EXCHANGE-CHECK
 
@@ -269,8 +271,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-OBS-0030 -->
 <!-- requirement-ref: REQ-OBS-0031 -->
 
-- [REQ-OBS-0030](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0030) → `CC-OBS-HTTP-EXCHANGE-CHECK`.
-- [REQ-OBS-0031](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0031) → `CC-OBS-HTTP-EXCHANGE-CHECK`.
+- [REQ-OBS-0030](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0030) → `CC-OBS-HTTP-EXCHANGE-CHECK`.
+- [REQ-OBS-0031](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0031) → `CC-OBS-HTTP-EXCHANGE-CHECK`.
 
 ### CC-OBS-VOCAB-CONTRACT-SELECTION
 
@@ -283,8 +285,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-OBS-0044 -->
 <!-- requirement-ref: REQ-OBS-0045 -->
 
-- [REQ-OBS-0044](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0044) → `CC-OBS-VOCAB-CONTRACT-SELECTION`.
-- [REQ-OBS-0045](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0045) → `CC-OBS-VOCAB-CONTRACT-SELECTION`.
+- [REQ-OBS-0044](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0044) → `CC-OBS-VOCAB-CONTRACT-SELECTION`.
+- [REQ-OBS-0045](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0045) → `CC-OBS-VOCAB-CONTRACT-SELECTION`.
 
 ### CC-OBS-VOCAB-DNS-RESPONSE-CODE
 
@@ -297,8 +299,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-OBS-0046 -->
 <!-- requirement-ref: REQ-OBS-0047 -->
 
-- [REQ-OBS-0046](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0046) → `CC-OBS-VOCAB-DNS-RESPONSE-CODE`.
-- [REQ-OBS-0047](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0047) → `CC-OBS-VOCAB-DNS-RESPONSE-CODE`.
+- [REQ-OBS-0046](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0046) → `CC-OBS-VOCAB-DNS-RESPONSE-CODE`.
+- [REQ-OBS-0047](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0047) → `CC-OBS-VOCAB-DNS-RESPONSE-CODE`.
 
 ### CC-OBS-VOCAB-TLS-NEGOTIATED-PROPERTIES
 
@@ -311,8 +313,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim. RE
 <!-- requirement-ref: REQ-OBS-0048 -->
 <!-- requirement-ref: REQ-OBS-0049 -->
 
-- [REQ-OBS-0048](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0048) → `CC-OBS-VOCAB-TLS-NEGOTIATED-PROPERTIES`.
-- [REQ-OBS-0049](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0049) → `CC-OBS-VOCAB-TLS-NEGOTIATED-PROPERTIES`.
+- [REQ-OBS-0048](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0048) → `CC-OBS-VOCAB-TLS-NEGOTIATED-PROPERTIES`.
+- [REQ-OBS-0049](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0049) → `CC-OBS-VOCAB-TLS-NEGOTIATED-PROPERTIES`.
 
 ### CC-OBS-VOCAB-TLS-OFFERED-ALPN
 
@@ -324,7 +326,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim. Th
 
 <!-- requirement-ref: REQ-OBS-0049 -->
 
-- [REQ-OBS-0049](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0049) → `CC-OBS-VOCAB-TLS-OFFERED-ALPN`.
+- [REQ-OBS-0049](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0049) → `CC-OBS-VOCAB-TLS-OFFERED-ALPN`.
 
 ### CC-OBS-VOCAB-TLS-PEER-ALERT
 
@@ -336,7 +338,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-OBS-0050 -->
 
-- [REQ-OBS-0050](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0050) → `CC-OBS-VOCAB-TLS-PEER-ALERT`.
+- [REQ-OBS-0050](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0050) → `CC-OBS-VOCAB-TLS-PEER-ALERT`.
 
 ### CC-OBS-VOCAB-INCOMPLETE-OBSERVATIONS
 
@@ -348,7 +350,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-OBS-0051 -->
 
-- [REQ-OBS-0051](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0051) → `CC-OBS-VOCAB-INCOMPLETE-OBSERVATIONS`.
+- [REQ-OBS-0051](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0051) → `CC-OBS-VOCAB-INCOMPLETE-OBSERVATIONS`.
 
 ### CC-OBS-VALIDATION-AND-BOUNDS
 
@@ -368,15 +370,15 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-OBS-0040 -->
 <!-- requirement-ref: REQ-OBS-0041 -->
 
-- [REQ-OBS-0032](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0032) → `CC-OBS-VALIDATION-AND-BOUNDS`.
-- [REQ-OBS-0034](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0034) → `CC-OBS-VALIDATION-AND-BOUNDS`.
-- [REQ-OBS-0035](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0035) → `CC-OBS-VALIDATION-AND-BOUNDS`.
-- [REQ-OBS-0036](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0036) → `CC-OBS-VALIDATION-AND-BOUNDS`.
-- [REQ-OBS-0037](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0037) → `CC-OBS-VALIDATION-AND-BOUNDS`.
-- [REQ-OBS-0038](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0038) → `CC-OBS-VALIDATION-AND-BOUNDS`.
-- [REQ-OBS-0039](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0039) → `CC-OBS-VALIDATION-AND-BOUNDS`.
-- [REQ-OBS-0040](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0040) → `CC-OBS-VALIDATION-AND-BOUNDS`.
-- [REQ-OBS-0041](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0041) → `CC-OBS-VALIDATION-AND-BOUNDS`.
+- [REQ-OBS-0032](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0032) → `CC-OBS-VALIDATION-AND-BOUNDS`.
+- [REQ-OBS-0034](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0034) → `CC-OBS-VALIDATION-AND-BOUNDS`.
+- [REQ-OBS-0035](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0035) → `CC-OBS-VALIDATION-AND-BOUNDS`.
+- [REQ-OBS-0036](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0036) → `CC-OBS-VALIDATION-AND-BOUNDS`.
+- [REQ-OBS-0037](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0037) → `CC-OBS-VALIDATION-AND-BOUNDS`.
+- [REQ-OBS-0038](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0038) → `CC-OBS-VALIDATION-AND-BOUNDS`.
+- [REQ-OBS-0039](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0039) → `CC-OBS-VALIDATION-AND-BOUNDS`.
+- [REQ-OBS-0040](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0040) → `CC-OBS-VALIDATION-AND-BOUNDS`.
+- [REQ-OBS-0041](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0041) → `CC-OBS-VALIDATION-AND-BOUNDS`.
 
 ### CC-OBS-PRIVACY-AND-INTERPRETATION
 
@@ -390,7 +392,7 @@ Review case `RV-CC-OBS-PRIVACY-AND-INTERPRETATION` (`docs/conformance/cross-cutt
 
 <!-- requirement-ref: REQ-OBS-0033 -->
 
-- [REQ-OBS-0033](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-observations.md#REQ-OBS-0033) → `CC-OBS-PRIVACY-AND-INTERPRETATION`, `RV-CC-OBS-PRIVACY-AND-INTERPRETATION`.
+- [REQ-OBS-0033](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0033) → `CC-OBS-PRIVACY-AND-INTERPRETATION`, `RV-CC-OBS-PRIVACY-AND-INTERPRETATION`.
 
 ### CC-RESULT-OVERVIEW
 
@@ -402,7 +404,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-RESULT-0001 -->
 
-- [REQ-RESULT-0001](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0001) → `CC-RESULT-OVERVIEW`.
+- [REQ-RESULT-0001](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0001) → `CC-RESULT-OVERVIEW`.
 
 ### CC-RESULT-TOP-LEVEL-FIELDS
 
@@ -417,10 +419,10 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-RESULT-0004 -->
 <!-- requirement-ref: REQ-RESULT-0005 -->
 
-- [REQ-RESULT-0002](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0002) → `CC-RESULT-TOP-LEVEL-FIELDS`.
-- [REQ-RESULT-0003](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0003) → `CC-RESULT-TOP-LEVEL-FIELDS`.
-- [REQ-RESULT-0004](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0004) → `CC-RESULT-TOP-LEVEL-FIELDS`.
-- [REQ-RESULT-0005](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0005) → `CC-RESULT-TOP-LEVEL-FIELDS`.
+- [REQ-RESULT-0002](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0002) → `CC-RESULT-TOP-LEVEL-FIELDS`.
+- [REQ-RESULT-0003](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0003) → `CC-RESULT-TOP-LEVEL-FIELDS`.
+- [REQ-RESULT-0004](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0004) → `CC-RESULT-TOP-LEVEL-FIELDS`.
+- [REQ-RESULT-0005](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0005) → `CC-RESULT-TOP-LEVEL-FIELDS`.
 
 ### CC-RESULT-RUN-AND-ATTEMPT-IDENTITY
 
@@ -435,10 +437,10 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-RESULT-0008 -->
 <!-- requirement-ref: REQ-RESULT-0009 -->
 
-- [REQ-RESULT-0006](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0006) → `CC-RESULT-RUN-AND-ATTEMPT-IDENTITY`.
-- [REQ-RESULT-0007](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0007) → `CC-RESULT-RUN-AND-ATTEMPT-IDENTITY`.
-- [REQ-RESULT-0008](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0008) → `CC-RESULT-RUN-AND-ATTEMPT-IDENTITY`.
-- [REQ-RESULT-0009](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0009) → `CC-RESULT-RUN-AND-ATTEMPT-IDENTITY`.
+- [REQ-RESULT-0006](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0006) → `CC-RESULT-RUN-AND-ATTEMPT-IDENTITY`.
+- [REQ-RESULT-0007](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0007) → `CC-RESULT-RUN-AND-ATTEMPT-IDENTITY`.
+- [REQ-RESULT-0008](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0008) → `CC-RESULT-RUN-AND-ATTEMPT-IDENTITY`.
+- [REQ-RESULT-0009](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0009) → `CC-RESULT-RUN-AND-ATTEMPT-IDENTITY`.
 
 ### CC-RESULT-TEST-OBJECT
 
@@ -452,9 +454,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-RESULT-0011 -->
 <!-- requirement-ref: REQ-RESULT-0012 -->
 
-- [REQ-RESULT-0010](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0010) → `CC-RESULT-TEST-OBJECT`.
-- [REQ-RESULT-0011](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0011) → `CC-RESULT-TEST-OBJECT`.
-- [REQ-RESULT-0012](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0012) → `CC-RESULT-TEST-OBJECT`.
+- [REQ-RESULT-0010](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0010) → `CC-RESULT-TEST-OBJECT`.
+- [REQ-RESULT-0011](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0011) → `CC-RESULT-TEST-OBJECT`.
+- [REQ-RESULT-0012](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0012) → `CC-RESULT-TEST-OBJECT`.
 
 ### CC-RESULT-IMPLEMENTATION-OBJECT
 
@@ -468,9 +470,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-RESULT-0014 -->
 <!-- requirement-ref: REQ-RESULT-0015 -->
 
-- [REQ-RESULT-0013](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0013) → `CC-RESULT-IMPLEMENTATION-OBJECT`.
-- [REQ-RESULT-0014](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0014) → `CC-RESULT-IMPLEMENTATION-OBJECT`.
-- [REQ-RESULT-0015](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0015) → `CC-RESULT-IMPLEMENTATION-OBJECT`.
+- [REQ-RESULT-0013](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0013) → `CC-RESULT-IMPLEMENTATION-OBJECT`.
+- [REQ-RESULT-0014](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0014) → `CC-RESULT-IMPLEMENTATION-OBJECT`.
+- [REQ-RESULT-0015](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0015) → `CC-RESULT-IMPLEMENTATION-OBJECT`.
 
 ### CC-RESULT-TIME-OBJECT
 
@@ -484,9 +486,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-RESULT-0017 -->
 <!-- requirement-ref: REQ-RESULT-0018 -->
 
-- [REQ-RESULT-0016](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0016) → `CC-RESULT-TIME-OBJECT`.
-- [REQ-RESULT-0017](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0017) → `CC-RESULT-TIME-OBJECT`.
-- [REQ-RESULT-0018](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0018) → `CC-RESULT-TIME-OBJECT`.
+- [REQ-RESULT-0016](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0016) → `CC-RESULT-TIME-OBJECT`.
+- [REQ-RESULT-0017](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0017) → `CC-RESULT-TIME-OBJECT`.
+- [REQ-RESULT-0018](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0018) → `CC-RESULT-TIME-OBJECT`.
 
 ### CC-RESULT-EXECUTION-OBJECT
 
@@ -501,10 +503,10 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-RESULT-0021 -->
 <!-- requirement-ref: REQ-RESULT-0022 -->
 
-- [REQ-RESULT-0019](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0019) → `CC-RESULT-EXECUTION-OBJECT`.
-- [REQ-RESULT-0020](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0020) → `CC-RESULT-EXECUTION-OBJECT`.
-- [REQ-RESULT-0021](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0021) → `CC-RESULT-EXECUTION-OBJECT`.
-- [REQ-RESULT-0022](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0022) → `CC-RESULT-EXECUTION-OBJECT`.
+- [REQ-RESULT-0019](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0019) → `CC-RESULT-EXECUTION-OBJECT`.
+- [REQ-RESULT-0020](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0020) → `CC-RESULT-EXECUTION-OBJECT`.
+- [REQ-RESULT-0021](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0021) → `CC-RESULT-EXECUTION-OBJECT`.
+- [REQ-RESULT-0022](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0022) → `CC-RESULT-EXECUTION-OBJECT`.
 
 ### CC-RESULT-NETWORK-CONTEXT
 
@@ -518,9 +520,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-RESULT-0024 -->
 <!-- requirement-ref: REQ-RESULT-0025 -->
 
-- [REQ-RESULT-0023](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0023) → `CC-RESULT-NETWORK-CONTEXT`.
-- [REQ-RESULT-0024](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0024) → `CC-RESULT-NETWORK-CONTEXT`.
-- [REQ-RESULT-0025](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0025) → `CC-RESULT-NETWORK-CONTEXT`.
+- [REQ-RESULT-0023](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0023) → `CC-RESULT-NETWORK-CONTEXT`.
+- [REQ-RESULT-0024](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0024) → `CC-RESULT-NETWORK-CONTEXT`.
+- [REQ-RESULT-0025](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0025) → `CC-RESULT-NETWORK-CONTEXT`.
 
 ### CC-RESULT-MEASUREMENT-OBJECT
 
@@ -534,9 +536,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-RESULT-0027 -->
 <!-- requirement-ref: REQ-RESULT-0028 -->
 
-- [REQ-RESULT-0026](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0026) → `CC-RESULT-MEASUREMENT-OBJECT`.
-- [REQ-RESULT-0027](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0027) → `CC-RESULT-MEASUREMENT-OBJECT`.
-- [REQ-RESULT-0028](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0028) → `CC-RESULT-MEASUREMENT-OBJECT`.
+- [REQ-RESULT-0026](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0026) → `CC-RESULT-MEASUREMENT-OBJECT`.
+- [REQ-RESULT-0027](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0027) → `CC-RESULT-MEASUREMENT-OBJECT`.
+- [REQ-RESULT-0028](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0028) → `CC-RESULT-MEASUREMENT-OBJECT`.
 
 ### CC-RESULT-PARTIAL-RESULTS
 
@@ -549,8 +551,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-RESULT-0029 -->
 <!-- requirement-ref: REQ-RESULT-0030 -->
 
-- [REQ-RESULT-0029](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0029) → `CC-RESULT-PARTIAL-RESULTS`.
-- [REQ-RESULT-0030](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0030) → `CC-RESULT-PARTIAL-RESULTS`.
+- [REQ-RESULT-0029](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0029) → `CC-RESULT-PARTIAL-RESULTS`.
+- [REQ-RESULT-0030](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0030) → `CC-RESULT-PARTIAL-RESULTS`.
 
 ### CC-RESULT-VERSIONING-AND-EXTENSION
 
@@ -564,9 +566,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-RESULT-0032 -->
 <!-- requirement-ref: REQ-RESULT-0033 -->
 
-- [REQ-RESULT-0031](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0031) → `CC-RESULT-VERSIONING-AND-EXTENSION`.
-- [REQ-RESULT-0032](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0032) → `CC-RESULT-VERSIONING-AND-EXTENSION`.
-- [REQ-RESULT-0033](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0033) → `CC-RESULT-VERSIONING-AND-EXTENSION`.
+- [REQ-RESULT-0031](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0031) → `CC-RESULT-VERSIONING-AND-EXTENSION`.
+- [REQ-RESULT-0032](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0032) → `CC-RESULT-VERSIONING-AND-EXTENSION`.
+- [REQ-RESULT-0033](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0033) → `CC-RESULT-VERSIONING-AND-EXTENSION`.
 
 ### CC-RESULT-VALIDATION
 
@@ -587,16 +589,16 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-RESULT-0043 -->
 <!-- requirement-ref: REQ-RESULT-0044 -->
 
-- [REQ-RESULT-0034](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0034) → `CC-RESULT-VALIDATION`.
-- [REQ-RESULT-0036](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0036) → `CC-RESULT-VALIDATION`.
-- [REQ-RESULT-0037](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0037) → `CC-RESULT-VALIDATION`.
-- [REQ-RESULT-0038](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0038) → `CC-RESULT-VALIDATION`.
-- [REQ-RESULT-0039](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0039) → `CC-RESULT-VALIDATION`.
-- [REQ-RESULT-0040](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0040) → `CC-RESULT-VALIDATION`.
-- [REQ-RESULT-0041](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0041) → `CC-RESULT-VALIDATION`.
-- [REQ-RESULT-0042](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0042) → `CC-RESULT-VALIDATION`.
-- [REQ-RESULT-0043](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0043) → `CC-RESULT-VALIDATION`.
-- [REQ-RESULT-0044](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0044) → `CC-RESULT-VALIDATION`.
+- [REQ-RESULT-0034](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0034) → `CC-RESULT-VALIDATION`.
+- [REQ-RESULT-0036](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0036) → `CC-RESULT-VALIDATION`.
+- [REQ-RESULT-0037](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0037) → `CC-RESULT-VALIDATION`.
+- [REQ-RESULT-0038](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0038) → `CC-RESULT-VALIDATION`.
+- [REQ-RESULT-0039](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0039) → `CC-RESULT-VALIDATION`.
+- [REQ-RESULT-0040](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0040) → `CC-RESULT-VALIDATION`.
+- [REQ-RESULT-0041](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0041) → `CC-RESULT-VALIDATION`.
+- [REQ-RESULT-0042](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0042) → `CC-RESULT-VALIDATION`.
+- [REQ-RESULT-0043](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0043) → `CC-RESULT-VALIDATION`.
+- [REQ-RESULT-0044](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0044) → `CC-RESULT-VALIDATION`.
 
 ### CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION
 
@@ -616,13 +618,13 @@ Review case `RV-CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION` (`docs/conformance/
 <!-- requirement-ref: REQ-RESULT-0049 -->
 <!-- requirement-ref: REQ-RESULT-0050 -->
 
-- [REQ-RESULT-0035](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0035) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-RESULT-0045](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0045) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-RESULT-0046](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0046) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-RESULT-0047](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0047) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-RESULT-0048](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0048) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-RESULT-0049](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0049) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-RESULT-0050](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/measurement-result.md#REQ-RESULT-0050) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-RESULT-0035](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0035) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-RESULT-0045](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0045) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-RESULT-0046](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0046) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-RESULT-0047](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0047) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-RESULT-0048](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0048) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-RESULT-0049](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0049) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-RESULT-0050](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-result.md#REQ-RESULT-0050) → `CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-RESULT-PRIVACY-SAFETY-AND-INTERPRETATION`.
 
 ### CC-CONTEXT-FORMAT-OVERVIEW
 
@@ -634,7 +636,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0001 -->
 
-- [REQ-CONTEXT-FORMAT-0001](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0001) → `CC-CONTEXT-FORMAT-OVERVIEW`.
+- [REQ-CONTEXT-FORMAT-0001](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0001) → `CC-CONTEXT-FORMAT-OVERVIEW`.
 
 ### CC-CONTEXT-FORMAT-TOP-LEVEL-FIELDS
 
@@ -647,8 +649,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0002 -->
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0003 -->
 
-- [REQ-CONTEXT-FORMAT-0002](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0002) → `CC-CONTEXT-FORMAT-TOP-LEVEL-FIELDS`.
-- [REQ-CONTEXT-FORMAT-0003](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0003) → `CC-CONTEXT-FORMAT-TOP-LEVEL-FIELDS`.
+- [REQ-CONTEXT-FORMAT-0002](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0002) → `CC-CONTEXT-FORMAT-TOP-LEVEL-FIELDS`.
+- [REQ-CONTEXT-FORMAT-0003](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0003) → `CC-CONTEXT-FORMAT-TOP-LEVEL-FIELDS`.
 
 ### CC-CONTEXT-FORMAT-ACCESS-OBJECT
 
@@ -661,8 +663,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0004 -->
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0005 -->
 
-- [REQ-CONTEXT-FORMAT-0004](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0004) → `CC-CONTEXT-FORMAT-ACCESS-OBJECT`.
-- [REQ-CONTEXT-FORMAT-0005](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0005) → `CC-CONTEXT-FORMAT-ACCESS-OBJECT`.
+- [REQ-CONTEXT-FORMAT-0004](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0004) → `CC-CONTEXT-FORMAT-ACCESS-OBJECT`.
+- [REQ-CONTEXT-FORMAT-0005](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0005) → `CC-CONTEXT-FORMAT-ACCESS-OBJECT`.
 
 ### CC-CONTEXT-FORMAT-EGRESS-OBJECT
 
@@ -677,10 +679,10 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0008 -->
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0009 -->
 
-- [REQ-CONTEXT-FORMAT-0006](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0006) → `CC-CONTEXT-FORMAT-EGRESS-OBJECT`.
-- [REQ-CONTEXT-FORMAT-0007](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0007) → `CC-CONTEXT-FORMAT-EGRESS-OBJECT`.
-- [REQ-CONTEXT-FORMAT-0008](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0008) → `CC-CONTEXT-FORMAT-EGRESS-OBJECT`.
-- [REQ-CONTEXT-FORMAT-0009](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0009) → `CC-CONTEXT-FORMAT-EGRESS-OBJECT`.
+- [REQ-CONTEXT-FORMAT-0006](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0006) → `CC-CONTEXT-FORMAT-EGRESS-OBJECT`.
+- [REQ-CONTEXT-FORMAT-0007](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0007) → `CC-CONTEXT-FORMAT-EGRESS-OBJECT`.
+- [REQ-CONTEXT-FORMAT-0008](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0008) → `CC-CONTEXT-FORMAT-EGRESS-OBJECT`.
+- [REQ-CONTEXT-FORMAT-0009](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0009) → `CC-CONTEXT-FORMAT-EGRESS-OBJECT`.
 
 ### CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR
 
@@ -696,9 +698,9 @@ Review case `RV-CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR` (`docs/conformance/cros
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0011 -->
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0012 -->
 
-- [REQ-CONTEXT-FORMAT-0010](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0010) → `CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR`, `RV-CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR`.
-- [REQ-CONTEXT-FORMAT-0011](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0011) → `CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR`, `RV-CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR`.
-- [REQ-CONTEXT-FORMAT-0012](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0012) → `CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR`, `RV-CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR`.
+- [REQ-CONTEXT-FORMAT-0010](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0010) → `CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR`, `RV-CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR`.
+- [REQ-CONTEXT-FORMAT-0011](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0011) → `CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR`, `RV-CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR`.
+- [REQ-CONTEXT-FORMAT-0012](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0012) → `CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR`, `RV-CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR`.
 
 ### CC-CONTEXT-FORMAT-USE-IN-EXECUTION
 
@@ -711,8 +713,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0013 -->
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0014 -->
 
-- [REQ-CONTEXT-FORMAT-0013](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0013) → `CC-CONTEXT-FORMAT-USE-IN-EXECUTION`.
-- [REQ-CONTEXT-FORMAT-0014](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0014) → `CC-CONTEXT-FORMAT-USE-IN-EXECUTION`.
+- [REQ-CONTEXT-FORMAT-0013](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0013) → `CC-CONTEXT-FORMAT-USE-IN-EXECUTION`.
+- [REQ-CONTEXT-FORMAT-0014](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0014) → `CC-CONTEXT-FORMAT-USE-IN-EXECUTION`.
 
 ### CC-CONTEXT-FORMAT-USE-IN-RESULTS
 
@@ -725,8 +727,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0015 -->
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0016 -->
 
-- [REQ-CONTEXT-FORMAT-0015](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0015) → `CC-CONTEXT-FORMAT-USE-IN-RESULTS`.
-- [REQ-CONTEXT-FORMAT-0016](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0016) → `CC-CONTEXT-FORMAT-USE-IN-RESULTS`.
+- [REQ-CONTEXT-FORMAT-0015](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0015) → `CC-CONTEXT-FORMAT-USE-IN-RESULTS`.
+- [REQ-CONTEXT-FORMAT-0016](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0016) → `CC-CONTEXT-FORMAT-USE-IN-RESULTS`.
 
 ### CC-CONTEXT-FORMAT-VALIDATION
 
@@ -744,13 +746,13 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0022 -->
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0023 -->
 
-- [REQ-CONTEXT-FORMAT-0017](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0017) → `CC-CONTEXT-FORMAT-VALIDATION`.
-- [REQ-CONTEXT-FORMAT-0018](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0018) → `CC-CONTEXT-FORMAT-VALIDATION`.
-- [REQ-CONTEXT-FORMAT-0019](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0019) → `CC-CONTEXT-FORMAT-VALIDATION`.
-- [REQ-CONTEXT-FORMAT-0020](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0020) → `CC-CONTEXT-FORMAT-VALIDATION`.
-- [REQ-CONTEXT-FORMAT-0021](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0021) → `CC-CONTEXT-FORMAT-VALIDATION`.
-- [REQ-CONTEXT-FORMAT-0022](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0022) → `CC-CONTEXT-FORMAT-VALIDATION`.
-- [REQ-CONTEXT-FORMAT-0023](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0023) → `CC-CONTEXT-FORMAT-VALIDATION`.
+- [REQ-CONTEXT-FORMAT-0017](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0017) → `CC-CONTEXT-FORMAT-VALIDATION`.
+- [REQ-CONTEXT-FORMAT-0018](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0018) → `CC-CONTEXT-FORMAT-VALIDATION`.
+- [REQ-CONTEXT-FORMAT-0019](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0019) → `CC-CONTEXT-FORMAT-VALIDATION`.
+- [REQ-CONTEXT-FORMAT-0020](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0020) → `CC-CONTEXT-FORMAT-VALIDATION`.
+- [REQ-CONTEXT-FORMAT-0021](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0021) → `CC-CONTEXT-FORMAT-VALIDATION`.
+- [REQ-CONTEXT-FORMAT-0022](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0022) → `CC-CONTEXT-FORMAT-VALIDATION`.
+- [REQ-CONTEXT-FORMAT-0023](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0023) → `CC-CONTEXT-FORMAT-VALIDATION`.
 
 ### CC-BUNDLE-OVERVIEW
 
@@ -763,8 +765,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-BUNDLE-0001 -->
 <!-- requirement-ref: REQ-BUNDLE-0002 -->
 
-- [REQ-BUNDLE-0001](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0001) → `CC-BUNDLE-OVERVIEW`.
-- [REQ-BUNDLE-0002](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0002) → `CC-BUNDLE-OVERVIEW`.
+- [REQ-BUNDLE-0001](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0001) → `CC-BUNDLE-OVERVIEW`.
+- [REQ-BUNDLE-0002](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0002) → `CC-BUNDLE-OVERVIEW`.
 
 ### CC-BUNDLE-JSON-STRUCTURE
 
@@ -776,7 +778,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-BUNDLE-0003 -->
 
-- [REQ-BUNDLE-0003](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0003) → `CC-BUNDLE-JSON-STRUCTURE`.
+- [REQ-BUNDLE-0003](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0003) → `CC-BUNDLE-JSON-STRUCTURE`.
 
 ### CC-BUNDLE-TOP-LEVEL-FIELDS
 
@@ -789,8 +791,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-BUNDLE-0004 -->
 <!-- requirement-ref: REQ-BUNDLE-0005 -->
 
-- [REQ-BUNDLE-0004](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0004) → `CC-BUNDLE-TOP-LEVEL-FIELDS`.
-- [REQ-BUNDLE-0005](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0005) → `CC-BUNDLE-TOP-LEVEL-FIELDS`.
+- [REQ-BUNDLE-0004](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0004) → `CC-BUNDLE-TOP-LEVEL-FIELDS`.
+- [REQ-BUNDLE-0005](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0005) → `CC-BUNDLE-TOP-LEVEL-FIELDS`.
 
 ### CC-BUNDLE-BUNDLE-IDENTIFIER
 
@@ -805,10 +807,10 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-BUNDLE-0008 -->
 <!-- requirement-ref: REQ-BUNDLE-0009 -->
 
-- [REQ-BUNDLE-0006](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0006) → `CC-BUNDLE-BUNDLE-IDENTIFIER`.
-- [REQ-BUNDLE-0007](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0007) → `CC-BUNDLE-BUNDLE-IDENTIFIER`.
-- [REQ-BUNDLE-0008](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0008) → `CC-BUNDLE-BUNDLE-IDENTIFIER`.
-- [REQ-BUNDLE-0009](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0009) → `CC-BUNDLE-BUNDLE-IDENTIFIER`.
+- [REQ-BUNDLE-0006](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0006) → `CC-BUNDLE-BUNDLE-IDENTIFIER`.
+- [REQ-BUNDLE-0007](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0007) → `CC-BUNDLE-BUNDLE-IDENTIFIER`.
+- [REQ-BUNDLE-0008](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0008) → `CC-BUNDLE-BUNDLE-IDENTIFIER`.
+- [REQ-BUNDLE-0009](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0009) → `CC-BUNDLE-BUNDLE-IDENTIFIER`.
 
 ### CC-BUNDLE-LINKAGE-OBJECT
 
@@ -822,9 +824,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-BUNDLE-0011 -->
 <!-- requirement-ref: REQ-BUNDLE-0012 -->
 
-- [REQ-BUNDLE-0010](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0010) → `CC-BUNDLE-LINKAGE-OBJECT`.
-- [REQ-BUNDLE-0011](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0011) → `CC-BUNDLE-LINKAGE-OBJECT`.
-- [REQ-BUNDLE-0012](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0012) → `CC-BUNDLE-LINKAGE-OBJECT`.
+- [REQ-BUNDLE-0010](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0010) → `CC-BUNDLE-LINKAGE-OBJECT`.
+- [REQ-BUNDLE-0011](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0011) → `CC-BUNDLE-LINKAGE-OBJECT`.
+- [REQ-BUNDLE-0012](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0012) → `CC-BUNDLE-LINKAGE-OBJECT`.
 
 ### CC-BUNDLE-RESULT-MEMBERSHIP
 
@@ -837,8 +839,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-BUNDLE-0013 -->
 <!-- requirement-ref: REQ-BUNDLE-0014 -->
 
-- [REQ-BUNDLE-0013](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0013) → `CC-BUNDLE-RESULT-MEMBERSHIP`.
-- [REQ-BUNDLE-0014](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0014) → `CC-BUNDLE-RESULT-MEMBERSHIP`.
+- [REQ-BUNDLE-0013](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0013) → `CC-BUNDLE-RESULT-MEMBERSHIP`.
+- [REQ-BUNDLE-0014](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0014) → `CC-BUNDLE-RESULT-MEMBERSHIP`.
 
 ### CC-BUNDLE-CONSTRUCTION-AND-DELIVERY
 
@@ -851,8 +853,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-BUNDLE-0015 -->
 <!-- requirement-ref: REQ-BUNDLE-0016 -->
 
-- [REQ-BUNDLE-0015](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0015) → `CC-BUNDLE-CONSTRUCTION-AND-DELIVERY`.
-- [REQ-BUNDLE-0016](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0016) → `CC-BUNDLE-CONSTRUCTION-AND-DELIVERY`.
+- [REQ-BUNDLE-0015](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0015) → `CC-BUNDLE-CONSTRUCTION-AND-DELIVERY`.
+- [REQ-BUNDLE-0016](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0016) → `CC-BUNDLE-CONSTRUCTION-AND-DELIVERY`.
 
 ### CC-BUNDLE-VALIDATION
 
@@ -872,15 +874,15 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-BUNDLE-0027 -->
 <!-- requirement-ref: REQ-BUNDLE-0028 -->
 
-- [REQ-BUNDLE-0017](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0017) → `CC-BUNDLE-VALIDATION`.
-- [REQ-BUNDLE-0021](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0021) → `CC-BUNDLE-VALIDATION`.
-- [REQ-BUNDLE-0022](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0022) → `CC-BUNDLE-VALIDATION`.
-- [REQ-BUNDLE-0023](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0023) → `CC-BUNDLE-VALIDATION`.
-- [REQ-BUNDLE-0024](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0024) → `CC-BUNDLE-VALIDATION`.
-- [REQ-BUNDLE-0025](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0025) → `CC-BUNDLE-VALIDATION`.
-- [REQ-BUNDLE-0026](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0026) → `CC-BUNDLE-VALIDATION`.
-- [REQ-BUNDLE-0027](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0027) → `CC-BUNDLE-VALIDATION`.
-- [REQ-BUNDLE-0028](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0028) → `CC-BUNDLE-VALIDATION`.
+- [REQ-BUNDLE-0017](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0017) → `CC-BUNDLE-VALIDATION`.
+- [REQ-BUNDLE-0021](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0021) → `CC-BUNDLE-VALIDATION`.
+- [REQ-BUNDLE-0022](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0022) → `CC-BUNDLE-VALIDATION`.
+- [REQ-BUNDLE-0023](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0023) → `CC-BUNDLE-VALIDATION`.
+- [REQ-BUNDLE-0024](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0024) → `CC-BUNDLE-VALIDATION`.
+- [REQ-BUNDLE-0025](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0025) → `CC-BUNDLE-VALIDATION`.
+- [REQ-BUNDLE-0026](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0026) → `CC-BUNDLE-VALIDATION`.
+- [REQ-BUNDLE-0027](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0027) → `CC-BUNDLE-VALIDATION`.
+- [REQ-BUNDLE-0028](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0028) → `CC-BUNDLE-VALIDATION`.
 
 ### CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS
 
@@ -902,15 +904,15 @@ Review case `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS` (`docs/conformance/cr
 <!-- requirement-ref: REQ-BUNDLE-0035 -->
 <!-- requirement-ref: REQ-BUNDLE-0036 -->
 
-- [REQ-BUNDLE-0018](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0018) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-BUNDLE-0029](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0029) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-BUNDLE-0030](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0030) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-BUNDLE-0031](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0031) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-BUNDLE-0032](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0032) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-BUNDLE-0033](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0033) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-BUNDLE-0034](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0034) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-BUNDLE-0035](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0035) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-BUNDLE-0036](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0036) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-BUNDLE-0018](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0018) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-BUNDLE-0029](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0029) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-BUNDLE-0030](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0030) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-BUNDLE-0031](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0031) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-BUNDLE-0032](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0032) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-BUNDLE-0033](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0033) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-BUNDLE-0034](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0034) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-BUNDLE-0035](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0035) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-BUNDLE-0036](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0036) → `CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-BUNDLE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
 
 ### CC-BUNDLE-INTERPRETATION
 
@@ -925,8 +927,8 @@ Review case `RV-CC-BUNDLE-INTERPRETATION` (`docs/conformance/cross-cutting-revie
 <!-- requirement-ref: REQ-BUNDLE-0019 -->
 <!-- requirement-ref: REQ-BUNDLE-0020 -->
 
-- [REQ-BUNDLE-0019](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0019) → `CC-BUNDLE-INTERPRETATION`, `RV-CC-BUNDLE-INTERPRETATION`.
-- [REQ-BUNDLE-0020](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/result-bundle.md#REQ-BUNDLE-0020) → `CC-BUNDLE-INTERPRETATION`, `RV-CC-BUNDLE-INTERPRETATION`.
+- [REQ-BUNDLE-0019](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0019) → `CC-BUNDLE-INTERPRETATION`, `RV-CC-BUNDLE-INTERPRETATION`.
+- [REQ-BUNDLE-0020](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0020) → `CC-BUNDLE-INTERPRETATION`, `RV-CC-BUNDLE-INTERPRETATION`.
 
 ### CC-EXECUTION-ENVELOPE
 
@@ -939,8 +941,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-EXECUTION-0001 -->
 <!-- requirement-ref: REQ-EXECUTION-0002 -->
 
-- [REQ-EXECUTION-0001](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0001) → `CC-EXECUTION-ENVELOPE`.
-- [REQ-EXECUTION-0002](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0002) → `CC-EXECUTION-ENVELOPE`.
+- [REQ-EXECUTION-0001](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0001) → `CC-EXECUTION-ENVELOPE`.
+- [REQ-EXECUTION-0002](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0002) → `CC-EXECUTION-ENVELOPE`.
 
 ### CC-EXECUTION-EXECUTION-MODEL
 
@@ -953,8 +955,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-EXECUTION-0003 -->
 <!-- requirement-ref: REQ-EXECUTION-0004 -->
 
-- [REQ-EXECUTION-0003](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0003) → `CC-EXECUTION-EXECUTION-MODEL`.
-- [REQ-EXECUTION-0004](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0004) → `CC-EXECUTION-EXECUTION-MODEL`.
+- [REQ-EXECUTION-0003](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0003) → `CC-EXECUTION-EXECUTION-MODEL`.
+- [REQ-EXECUTION-0004](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0004) → `CC-EXECUTION-EXECUTION-MODEL`.
 
 ### CC-EXECUTION-FIELDS
 
@@ -966,7 +968,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-EXECUTION-0005 -->
 
-- [REQ-EXECUTION-0005](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0005) → `CC-EXECUTION-FIELDS`.
+- [REQ-EXECUTION-0005](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0005) → `CC-EXECUTION-FIELDS`.
 
 ### CC-EXECUTION-FIELDS-NETWORK-PATH
 
@@ -982,11 +984,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-EXECUTION-0009 -->
 <!-- requirement-ref: REQ-EXECUTION-0010 -->
 
-- [REQ-EXECUTION-0006](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0006) → `CC-EXECUTION-FIELDS-NETWORK-PATH`.
-- [REQ-EXECUTION-0007](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0007) → `CC-EXECUTION-FIELDS-NETWORK-PATH`.
-- [REQ-EXECUTION-0008](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0008) → `CC-EXECUTION-FIELDS-NETWORK-PATH`.
-- [REQ-EXECUTION-0009](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0009) → `CC-EXECUTION-FIELDS-NETWORK-PATH`.
-- [REQ-EXECUTION-0010](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0010) → `CC-EXECUTION-FIELDS-NETWORK-PATH`.
+- [REQ-EXECUTION-0006](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0006) → `CC-EXECUTION-FIELDS-NETWORK-PATH`.
+- [REQ-EXECUTION-0007](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0007) → `CC-EXECUTION-FIELDS-NETWORK-PATH`.
+- [REQ-EXECUTION-0008](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0008) → `CC-EXECUTION-FIELDS-NETWORK-PATH`.
+- [REQ-EXECUTION-0009](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0009) → `CC-EXECUTION-FIELDS-NETWORK-PATH`.
+- [REQ-EXECUTION-0010](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0010) → `CC-EXECUTION-FIELDS-NETWORK-PATH`.
 
 ### CC-EXECUTION-FIELDS-LIMITS
 
@@ -998,7 +1000,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-EXECUTION-0011 -->
 
-- [REQ-EXECUTION-0011](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0011) → `CC-EXECUTION-FIELDS-LIMITS`.
+- [REQ-EXECUTION-0011](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0011) → `CC-EXECUTION-FIELDS-LIMITS`.
 
 ### CC-EXECUTION-FIELDS-LIMITS-FIELDS
 
@@ -1012,9 +1014,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-EXECUTION-0013 -->
 <!-- requirement-ref: REQ-EXECUTION-0014 -->
 
-- [REQ-EXECUTION-0012](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0012) → `CC-EXECUTION-FIELDS-LIMITS-FIELDS`.
-- [REQ-EXECUTION-0013](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0013) → `CC-EXECUTION-FIELDS-LIMITS-FIELDS`.
-- [REQ-EXECUTION-0014](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0014) → `CC-EXECUTION-FIELDS-LIMITS-FIELDS`.
+- [REQ-EXECUTION-0012](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0012) → `CC-EXECUTION-FIELDS-LIMITS-FIELDS`.
+- [REQ-EXECUTION-0013](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0013) → `CC-EXECUTION-FIELDS-LIMITS-FIELDS`.
+- [REQ-EXECUTION-0014](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0014) → `CC-EXECUTION-FIELDS-LIMITS-FIELDS`.
 
 ### CC-EXECUTION-FIELDS-NETWORK
 
@@ -1026,7 +1028,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-EXECUTION-0015 -->
 
-- [REQ-EXECUTION-0015](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0015) → `CC-EXECUTION-FIELDS-NETWORK`.
+- [REQ-EXECUTION-0015](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0015) → `CC-EXECUTION-FIELDS-NETWORK`.
 
 ### CC-EXECUTION-FIELDS-NETWORK-FIELDS
 
@@ -1039,8 +1041,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-EXECUTION-0016 -->
 <!-- requirement-ref: REQ-EXECUTION-0017 -->
 
-- [REQ-EXECUTION-0016](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0016) → `CC-EXECUTION-FIELDS-NETWORK-FIELDS`.
-- [REQ-EXECUTION-0017](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0017) → `CC-EXECUTION-FIELDS-NETWORK-FIELDS`.
+- [REQ-EXECUTION-0016](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0016) → `CC-EXECUTION-FIELDS-NETWORK-FIELDS`.
+- [REQ-EXECUTION-0017](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0017) → `CC-EXECUTION-FIELDS-NETWORK-FIELDS`.
 
 ### CC-EXECUTION-FIELDS-NETWORK-FIELDS-VPN-POLICY
 
@@ -1054,9 +1056,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-EXECUTION-0019 -->
 <!-- requirement-ref: REQ-EXECUTION-0020 -->
 
-- [REQ-EXECUTION-0018](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0018) → `CC-EXECUTION-FIELDS-NETWORK-FIELDS-VPN-POLICY`.
-- [REQ-EXECUTION-0019](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0019) → `CC-EXECUTION-FIELDS-NETWORK-FIELDS-VPN-POLICY`.
-- [REQ-EXECUTION-0020](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0020) → `CC-EXECUTION-FIELDS-NETWORK-FIELDS-VPN-POLICY`.
+- [REQ-EXECUTION-0018](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0018) → `CC-EXECUTION-FIELDS-NETWORK-FIELDS-VPN-POLICY`.
+- [REQ-EXECUTION-0019](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0019) → `CC-EXECUTION-FIELDS-NETWORK-FIELDS-VPN-POLICY`.
+- [REQ-EXECUTION-0020](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0020) → `CC-EXECUTION-FIELDS-NETWORK-FIELDS-VPN-POLICY`.
 
 ### CC-EXECUTION-FIELDS-NETWORK-FIELDS-NETWORK-CONTEXT-REQUIREMENTS
 
@@ -1071,10 +1073,10 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-EXECUTION-0023 -->
 <!-- requirement-ref: REQ-EXECUTION-0024 -->
 
-- [REQ-EXECUTION-0021](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0021) → `CC-EXECUTION-FIELDS-NETWORK-FIELDS-NETWORK-CONTEXT-REQUIREMENTS`.
-- [REQ-EXECUTION-0022](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0022) → `CC-EXECUTION-FIELDS-NETWORK-FIELDS-NETWORK-CONTEXT-REQUIREMENTS`.
-- [REQ-EXECUTION-0023](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0023) → `CC-EXECUTION-FIELDS-NETWORK-FIELDS-NETWORK-CONTEXT-REQUIREMENTS`.
-- [REQ-EXECUTION-0024](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0024) → `CC-EXECUTION-FIELDS-NETWORK-FIELDS-NETWORK-CONTEXT-REQUIREMENTS`.
+- [REQ-EXECUTION-0021](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0021) → `CC-EXECUTION-FIELDS-NETWORK-FIELDS-NETWORK-CONTEXT-REQUIREMENTS`.
+- [REQ-EXECUTION-0022](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0022) → `CC-EXECUTION-FIELDS-NETWORK-FIELDS-NETWORK-CONTEXT-REQUIREMENTS`.
+- [REQ-EXECUTION-0023](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0023) → `CC-EXECUTION-FIELDS-NETWORK-FIELDS-NETWORK-CONTEXT-REQUIREMENTS`.
+- [REQ-EXECUTION-0024](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0024) → `CC-EXECUTION-FIELDS-NETWORK-FIELDS-NETWORK-CONTEXT-REQUIREMENTS`.
 
 ### CC-EXECUTION-FIELDS-DEVICE-FIELDS
 
@@ -1087,8 +1089,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-EXECUTION-0025 -->
 <!-- requirement-ref: REQ-EXECUTION-0026 -->
 
-- [REQ-EXECUTION-0025](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0025) → `CC-EXECUTION-FIELDS-DEVICE-FIELDS`.
-- [REQ-EXECUTION-0026](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0026) → `CC-EXECUTION-FIELDS-DEVICE-FIELDS`.
+- [REQ-EXECUTION-0025](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0025) → `CC-EXECUTION-FIELDS-DEVICE-FIELDS`.
+- [REQ-EXECUTION-0026](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0026) → `CC-EXECUTION-FIELDS-DEVICE-FIELDS`.
 
 ### CC-EXECUTION-FIELDS-CONCURRENCY
 
@@ -1100,7 +1102,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-EXECUTION-0027 -->
 
-- [REQ-EXECUTION-0027](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0027) → `CC-EXECUTION-FIELDS-CONCURRENCY`.
+- [REQ-EXECUTION-0027](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0027) → `CC-EXECUTION-FIELDS-CONCURRENCY`.
 
 ### CC-EXECUTION-CONSTRAINT-EVALUATION
 
@@ -1114,9 +1116,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-EXECUTION-0029 -->
 <!-- requirement-ref: REQ-EXECUTION-0030 -->
 
-- [REQ-EXECUTION-0028](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0028) → `CC-EXECUTION-CONSTRAINT-EVALUATION`.
-- [REQ-EXECUTION-0029](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0029) → `CC-EXECUTION-CONSTRAINT-EVALUATION`.
-- [REQ-EXECUTION-0030](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-execution.md#REQ-EXECUTION-0030) → `CC-EXECUTION-CONSTRAINT-EVALUATION`.
+- [REQ-EXECUTION-0028](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0028) → `CC-EXECUTION-CONSTRAINT-EVALUATION`.
+- [REQ-EXECUTION-0029](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0029) → `CC-EXECUTION-CONSTRAINT-EVALUATION`.
+- [REQ-EXECUTION-0030](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0030) → `CC-EXECUTION-CONSTRAINT-EVALUATION`.
 
 ### CC-INPUT-ENVELOPE
 
@@ -1128,7 +1130,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-INPUT-0001 -->
 
-- [REQ-INPUT-0001](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0001) → `CC-INPUT-ENVELOPE`.
+- [REQ-INPUT-0001](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0001) → `CC-INPUT-ENVELOPE`.
 
 ### CC-INPUT-INPUT-MODEL
 
@@ -1140,7 +1142,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-INPUT-0002 -->
 
-- [REQ-INPUT-0002](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0002) → `CC-INPUT-INPUT-MODEL`.
+- [REQ-INPUT-0002](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0002) → `CC-INPUT-INPUT-MODEL`.
 
 ### CC-INPUT-JSON-STRUCTURE
 
@@ -1153,8 +1155,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-INPUT-0003 -->
 <!-- requirement-ref: REQ-INPUT-0004 -->
 
-- [REQ-INPUT-0003](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0003) → `CC-INPUT-JSON-STRUCTURE`.
-- [REQ-INPUT-0004](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0004) → `CC-INPUT-JSON-STRUCTURE`.
+- [REQ-INPUT-0003](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0003) → `CC-INPUT-JSON-STRUCTURE`.
+- [REQ-INPUT-0004](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0004) → `CC-INPUT-JSON-STRUCTURE`.
 
 ### CC-INPUT-INPUT-SCHEMA-REQUIREMENTS
 
@@ -1169,10 +1171,10 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-INPUT-0007 -->
 <!-- requirement-ref: REQ-INPUT-0008 -->
 
-- [REQ-INPUT-0005](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0005) → `CC-INPUT-INPUT-SCHEMA-REQUIREMENTS`.
-- [REQ-INPUT-0006](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0006) → `CC-INPUT-INPUT-SCHEMA-REQUIREMENTS`.
-- [REQ-INPUT-0007](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0007) → `CC-INPUT-INPUT-SCHEMA-REQUIREMENTS`.
-- [REQ-INPUT-0008](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0008) → `CC-INPUT-INPUT-SCHEMA-REQUIREMENTS`.
+- [REQ-INPUT-0005](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0005) → `CC-INPUT-INPUT-SCHEMA-REQUIREMENTS`.
+- [REQ-INPUT-0006](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0006) → `CC-INPUT-INPUT-SCHEMA-REQUIREMENTS`.
+- [REQ-INPUT-0007](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0007) → `CC-INPUT-INPUT-SCHEMA-REQUIREMENTS`.
+- [REQ-INPUT-0008](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0008) → `CC-INPUT-INPUT-SCHEMA-REQUIREMENTS`.
 
 ### CC-INPUT-VALIDATION
 
@@ -1195,18 +1197,18 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-INPUT-0033 -->
 <!-- requirement-ref: REQ-INPUT-0034 -->
 
-- [REQ-INPUT-0009](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0009) → `CC-INPUT-VALIDATION`.
-- [REQ-INPUT-0010](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0010) → `CC-INPUT-VALIDATION`.
-- [REQ-INPUT-0011](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0011) → `CC-INPUT-VALIDATION`.
-- [REQ-INPUT-0012](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0012) → `CC-INPUT-VALIDATION`.
-- [REQ-INPUT-0027](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0027) → `CC-INPUT-VALIDATION`.
-- [REQ-INPUT-0028](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0028) → `CC-INPUT-VALIDATION`.
-- [REQ-INPUT-0029](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0029) → `CC-INPUT-VALIDATION`.
-- [REQ-INPUT-0030](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0030) → `CC-INPUT-VALIDATION`.
-- [REQ-INPUT-0031](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0031) → `CC-INPUT-VALIDATION`.
-- [REQ-INPUT-0032](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0032) → `CC-INPUT-VALIDATION`.
-- [REQ-INPUT-0033](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0033) → `CC-INPUT-VALIDATION`.
-- [REQ-INPUT-0034](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0034) → `CC-INPUT-VALIDATION`.
+- [REQ-INPUT-0009](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0009) → `CC-INPUT-VALIDATION`.
+- [REQ-INPUT-0010](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0010) → `CC-INPUT-VALIDATION`.
+- [REQ-INPUT-0011](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0011) → `CC-INPUT-VALIDATION`.
+- [REQ-INPUT-0012](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0012) → `CC-INPUT-VALIDATION`.
+- [REQ-INPUT-0027](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0027) → `CC-INPUT-VALIDATION`.
+- [REQ-INPUT-0028](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0028) → `CC-INPUT-VALIDATION`.
+- [REQ-INPUT-0029](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0029) → `CC-INPUT-VALIDATION`.
+- [REQ-INPUT-0030](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0030) → `CC-INPUT-VALIDATION`.
+- [REQ-INPUT-0031](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0031) → `CC-INPUT-VALIDATION`.
+- [REQ-INPUT-0032](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0032) → `CC-INPUT-VALIDATION`.
+- [REQ-INPUT-0033](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0033) → `CC-INPUT-VALIDATION`.
+- [REQ-INPUT-0034](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0034) → `CC-INPUT-VALIDATION`.
 
 ### CC-INPUT-NORMALIZATION
 
@@ -1220,9 +1222,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-INPUT-0014 -->
 <!-- requirement-ref: REQ-INPUT-0015 -->
 
-- [REQ-INPUT-0013](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0013) → `CC-INPUT-NORMALIZATION`.
-- [REQ-INPUT-0014](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0014) → `CC-INPUT-NORMALIZATION`.
-- [REQ-INPUT-0015](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0015) → `CC-INPUT-NORMALIZATION`.
+- [REQ-INPUT-0013](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0013) → `CC-INPUT-NORMALIZATION`.
+- [REQ-INPUT-0014](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0014) → `CC-INPUT-NORMALIZATION`.
+- [REQ-INPUT-0015](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0015) → `CC-INPUT-NORMALIZATION`.
 
 ### CC-INPUT-TARGET-SAFETY
 
@@ -1236,9 +1238,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-INPUT-0017 -->
 <!-- requirement-ref: REQ-INPUT-0018 -->
 
-- [REQ-INPUT-0016](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0016) → `CC-INPUT-TARGET-SAFETY`.
-- [REQ-INPUT-0017](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0017) → `CC-INPUT-TARGET-SAFETY`.
-- [REQ-INPUT-0018](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0018) → `CC-INPUT-TARGET-SAFETY`.
+- [REQ-INPUT-0016](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0016) → `CC-INPUT-TARGET-SAFETY`.
+- [REQ-INPUT-0017](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0017) → `CC-INPUT-TARGET-SAFETY`.
+- [REQ-INPUT-0018](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0018) → `CC-INPUT-TARGET-SAFETY`.
 
 ### CC-INPUT-SENSITIVE-AND-DYNAMIC-INPUT
 
@@ -1251,8 +1253,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-INPUT-0019 -->
 <!-- requirement-ref: REQ-INPUT-0020 -->
 
-- [REQ-INPUT-0019](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0019) → `CC-INPUT-SENSITIVE-AND-DYNAMIC-INPUT`.
-- [REQ-INPUT-0020](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0020) → `CC-INPUT-SENSITIVE-AND-DYNAMIC-INPUT`.
+- [REQ-INPUT-0019](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0019) → `CC-INPUT-SENSITIVE-AND-DYNAMIC-INPUT`.
+- [REQ-INPUT-0020](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0020) → `CC-INPUT-SENSITIVE-AND-DYNAMIC-INPUT`.
 
 ### CC-INPUT-MULTIPLE-TARGETS
 
@@ -1266,9 +1268,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-INPUT-0022 -->
 <!-- requirement-ref: REQ-INPUT-0023 -->
 
-- [REQ-INPUT-0021](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0021) → `CC-INPUT-MULTIPLE-TARGETS`.
-- [REQ-INPUT-0022](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0022) → `CC-INPUT-MULTIPLE-TARGETS`.
-- [REQ-INPUT-0023](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0023) → `CC-INPUT-MULTIPLE-TARGETS`.
+- [REQ-INPUT-0021](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0021) → `CC-INPUT-MULTIPLE-TARGETS`.
+- [REQ-INPUT-0022](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0022) → `CC-INPUT-MULTIPLE-TARGETS`.
+- [REQ-INPUT-0023](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0023) → `CC-INPUT-MULTIPLE-TARGETS`.
 
 ### CC-INPUT-RESULT-PROPAGATION
 
@@ -1280,7 +1282,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-INPUT-0024 -->
 
-- [REQ-INPUT-0024](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0024) → `CC-INPUT-RESULT-PROPAGATION`.
+- [REQ-INPUT-0024](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0024) → `CC-INPUT-RESULT-PROPAGATION`.
 
 ### CC-INPUT-IMPLEMENTATION-AUTHORITY
 
@@ -1293,8 +1295,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-INPUT-0025 -->
 <!-- requirement-ref: REQ-INPUT-0026 -->
 
-- [REQ-INPUT-0025](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0025) → `CC-INPUT-IMPLEMENTATION-AUTHORITY`.
-- [REQ-INPUT-0026](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-input.md#REQ-INPUT-0026) → `CC-INPUT-IMPLEMENTATION-AUTHORITY`.
+- [REQ-INPUT-0025](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0025) → `CC-INPUT-IMPLEMENTATION-AUTHORITY`.
+- [REQ-INPUT-0026](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-input.md#REQ-INPUT-0026) → `CC-INPUT-IMPLEMENTATION-AUTHORITY`.
 
 ### CC-LABEL-ENVELOPE
 
@@ -1307,8 +1309,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-LABEL-0001 -->
 <!-- requirement-ref: REQ-LABEL-0002 -->
 
-- [REQ-LABEL-0001](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0001) → `CC-LABEL-ENVELOPE`.
-- [REQ-LABEL-0002](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0002) → `CC-LABEL-ENVELOPE`.
+- [REQ-LABEL-0001](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0001) → `CC-LABEL-ENVELOPE`.
+- [REQ-LABEL-0002](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0002) → `CC-LABEL-ENVELOPE`.
 
 ### CC-LABEL-JSON-STRUCTURE
 
@@ -1321,8 +1323,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-LABEL-0003 -->
 <!-- requirement-ref: REQ-LABEL-0004 -->
 
-- [REQ-LABEL-0003](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0003) → `CC-LABEL-JSON-STRUCTURE`.
-- [REQ-LABEL-0004](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0004) → `CC-LABEL-JSON-STRUCTURE`.
+- [REQ-LABEL-0003](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0003) → `CC-LABEL-JSON-STRUCTURE`.
+- [REQ-LABEL-0004](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0004) → `CC-LABEL-JSON-STRUCTURE`.
 
 ### CC-LABEL-CONSTRAINTS
 
@@ -1336,9 +1338,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-LABEL-0006 -->
 <!-- requirement-ref: REQ-LABEL-0007 -->
 
-- [REQ-LABEL-0005](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0005) → `CC-LABEL-CONSTRAINTS`.
-- [REQ-LABEL-0006](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0006) → `CC-LABEL-CONSTRAINTS`.
-- [REQ-LABEL-0007](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0007) → `CC-LABEL-CONSTRAINTS`.
+- [REQ-LABEL-0005](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0005) → `CC-LABEL-CONSTRAINTS`.
+- [REQ-LABEL-0006](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0006) → `CC-LABEL-CONSTRAINTS`.
+- [REQ-LABEL-0007](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0007) → `CC-LABEL-CONSTRAINTS`.
 
 ### CC-LABEL-KEYS
 
@@ -1352,9 +1354,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-LABEL-0009 -->
 <!-- requirement-ref: REQ-LABEL-0010 -->
 
-- [REQ-LABEL-0008](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0008) → `CC-LABEL-KEYS`.
-- [REQ-LABEL-0009](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0009) → `CC-LABEL-KEYS`.
-- [REQ-LABEL-0010](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0010) → `CC-LABEL-KEYS`.
+- [REQ-LABEL-0008](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0008) → `CC-LABEL-KEYS`.
+- [REQ-LABEL-0009](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0009) → `CC-LABEL-KEYS`.
+- [REQ-LABEL-0010](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0010) → `CC-LABEL-KEYS`.
 
 ### CC-LABEL-KEYS-RESERVED-NAMESPACE
 
@@ -1367,8 +1369,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-LABEL-0011 -->
 <!-- requirement-ref: REQ-LABEL-0012 -->
 
-- [REQ-LABEL-0011](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0011) → `CC-LABEL-KEYS-RESERVED-NAMESPACE`.
-- [REQ-LABEL-0012](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0012) → `CC-LABEL-KEYS-RESERVED-NAMESPACE`.
+- [REQ-LABEL-0011](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0011) → `CC-LABEL-KEYS-RESERVED-NAMESPACE`.
+- [REQ-LABEL-0012](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0012) → `CC-LABEL-KEYS-RESERVED-NAMESPACE`.
 
 ### CC-LABEL-VALUES
 
@@ -1384,11 +1386,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-LABEL-0016 -->
 <!-- requirement-ref: REQ-LABEL-0017 -->
 
-- [REQ-LABEL-0013](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0013) → `CC-LABEL-VALUES`.
-- [REQ-LABEL-0014](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0014) → `CC-LABEL-VALUES`.
-- [REQ-LABEL-0015](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0015) → `CC-LABEL-VALUES`.
-- [REQ-LABEL-0016](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0016) → `CC-LABEL-VALUES`.
-- [REQ-LABEL-0017](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0017) → `CC-LABEL-VALUES`.
+- [REQ-LABEL-0013](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0013) → `CC-LABEL-VALUES`.
+- [REQ-LABEL-0014](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0014) → `CC-LABEL-VALUES`.
+- [REQ-LABEL-0015](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0015) → `CC-LABEL-VALUES`.
+- [REQ-LABEL-0016](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0016) → `CC-LABEL-VALUES`.
+- [REQ-LABEL-0017](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0017) → `CC-LABEL-VALUES`.
 
 ### CC-LABEL-PRIVACY-AND-SAFETY
 
@@ -1405,12 +1407,12 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-LABEL-0022 -->
 <!-- requirement-ref: REQ-LABEL-0023 -->
 
-- [REQ-LABEL-0018](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0018) → `CC-LABEL-PRIVACY-AND-SAFETY`.
-- [REQ-LABEL-0019](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0019) → `CC-LABEL-PRIVACY-AND-SAFETY`.
-- [REQ-LABEL-0020](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0020) → `CC-LABEL-PRIVACY-AND-SAFETY`.
-- [REQ-LABEL-0021](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0021) → `CC-LABEL-PRIVACY-AND-SAFETY`.
-- [REQ-LABEL-0022](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0022) → `CC-LABEL-PRIVACY-AND-SAFETY`.
-- [REQ-LABEL-0023](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0023) → `CC-LABEL-PRIVACY-AND-SAFETY`.
+- [REQ-LABEL-0018](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0018) → `CC-LABEL-PRIVACY-AND-SAFETY`.
+- [REQ-LABEL-0019](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0019) → `CC-LABEL-PRIVACY-AND-SAFETY`.
+- [REQ-LABEL-0020](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0020) → `CC-LABEL-PRIVACY-AND-SAFETY`.
+- [REQ-LABEL-0021](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0021) → `CC-LABEL-PRIVACY-AND-SAFETY`.
+- [REQ-LABEL-0022](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0022) → `CC-LABEL-PRIVACY-AND-SAFETY`.
+- [REQ-LABEL-0023](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0023) → `CC-LABEL-PRIVACY-AND-SAFETY`.
 
 ### CC-LABEL-PROCESSING
 
@@ -1425,10 +1427,10 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-LABEL-0026 -->
 <!-- requirement-ref: REQ-LABEL-0027 -->
 
-- [REQ-LABEL-0024](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0024) → `CC-LABEL-PROCESSING`.
-- [REQ-LABEL-0025](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0025) → `CC-LABEL-PROCESSING`.
-- [REQ-LABEL-0026](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0026) → `CC-LABEL-PROCESSING`.
-- [REQ-LABEL-0027](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0027) → `CC-LABEL-PROCESSING`.
+- [REQ-LABEL-0024](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0024) → `CC-LABEL-PROCESSING`.
+- [REQ-LABEL-0025](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0025) → `CC-LABEL-PROCESSING`.
+- [REQ-LABEL-0026](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0026) → `CC-LABEL-PROCESSING`.
+- [REQ-LABEL-0027](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0027) → `CC-LABEL-PROCESSING`.
 
 ### CC-LABEL-VALIDATION
 
@@ -1441,8 +1443,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-LABEL-0028 -->
 <!-- requirement-ref: REQ-LABEL-0029 -->
 
-- [REQ-LABEL-0028](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0028) → `CC-LABEL-VALIDATION`.
-- [REQ-LABEL-0029](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-labels.md#REQ-LABEL-0029) → `CC-LABEL-VALIDATION`.
+- [REQ-LABEL-0028](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0028) → `CC-LABEL-VALIDATION`.
+- [REQ-LABEL-0029](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-labels.md#REQ-LABEL-0029) → `CC-LABEL-VALIDATION`.
 
 ### CC-OPTIONS-ENVELOPE
 
@@ -1455,8 +1457,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-OPTIONS-0001 -->
 <!-- requirement-ref: REQ-OPTIONS-0002 -->
 
-- [REQ-OPTIONS-0001](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0001) → `CC-OPTIONS-ENVELOPE`.
-- [REQ-OPTIONS-0002](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0002) → `CC-OPTIONS-ENVELOPE`.
+- [REQ-OPTIONS-0001](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0001) → `CC-OPTIONS-ENVELOPE`.
+- [REQ-OPTIONS-0002](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0002) → `CC-OPTIONS-ENVELOPE`.
 
 ### CC-OPTIONS-JSON-STRUCTURE
 
@@ -1470,9 +1472,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-OPTIONS-0004 -->
 <!-- requirement-ref: REQ-OPTIONS-0005 -->
 
-- [REQ-OPTIONS-0003](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0003) → `CC-OPTIONS-JSON-STRUCTURE`.
-- [REQ-OPTIONS-0004](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0004) → `CC-OPTIONS-JSON-STRUCTURE`.
-- [REQ-OPTIONS-0005](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0005) → `CC-OPTIONS-JSON-STRUCTURE`.
+- [REQ-OPTIONS-0003](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0003) → `CC-OPTIONS-JSON-STRUCTURE`.
+- [REQ-OPTIONS-0004](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0004) → `CC-OPTIONS-JSON-STRUCTURE`.
+- [REQ-OPTIONS-0005](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0005) → `CC-OPTIONS-JSON-STRUCTURE`.
 
 ### CC-OPTIONS-OPTIONS-SCHEMA
 
@@ -1488,11 +1490,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-OPTIONS-0009 -->
 <!-- requirement-ref: REQ-OPTIONS-0010 -->
 
-- [REQ-OPTIONS-0006](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0006) → `CC-OPTIONS-OPTIONS-SCHEMA`.
-- [REQ-OPTIONS-0007](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0007) → `CC-OPTIONS-OPTIONS-SCHEMA`.
-- [REQ-OPTIONS-0008](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0008) → `CC-OPTIONS-OPTIONS-SCHEMA`.
-- [REQ-OPTIONS-0009](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0009) → `CC-OPTIONS-OPTIONS-SCHEMA`.
-- [REQ-OPTIONS-0010](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0010) → `CC-OPTIONS-OPTIONS-SCHEMA`.
+- [REQ-OPTIONS-0006](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0006) → `CC-OPTIONS-OPTIONS-SCHEMA`.
+- [REQ-OPTIONS-0007](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0007) → `CC-OPTIONS-OPTIONS-SCHEMA`.
+- [REQ-OPTIONS-0008](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0008) → `CC-OPTIONS-OPTIONS-SCHEMA`.
+- [REQ-OPTIONS-0009](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0009) → `CC-OPTIONS-OPTIONS-SCHEMA`.
+- [REQ-OPTIONS-0010](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0010) → `CC-OPTIONS-OPTIONS-SCHEMA`.
 
 ### CC-OPTIONS-VALIDATION
 
@@ -1516,19 +1518,19 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-OPTIONS-0031 -->
 <!-- requirement-ref: REQ-OPTIONS-0032 -->
 
-- [REQ-OPTIONS-0011](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0011) → `CC-OPTIONS-VALIDATION`.
-- [REQ-OPTIONS-0012](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0012) → `CC-OPTIONS-VALIDATION`.
-- [REQ-OPTIONS-0013](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0013) → `CC-OPTIONS-VALIDATION`.
-- [REQ-OPTIONS-0014](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0014) → `CC-OPTIONS-VALIDATION`.
-- [REQ-OPTIONS-0015](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0015) → `CC-OPTIONS-VALIDATION`.
-- [REQ-OPTIONS-0025](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0025) → `CC-OPTIONS-VALIDATION`.
-- [REQ-OPTIONS-0026](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0026) → `CC-OPTIONS-VALIDATION`.
-- [REQ-OPTIONS-0027](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0027) → `CC-OPTIONS-VALIDATION`.
-- [REQ-OPTIONS-0028](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0028) → `CC-OPTIONS-VALIDATION`.
-- [REQ-OPTIONS-0029](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0029) → `CC-OPTIONS-VALIDATION`.
-- [REQ-OPTIONS-0030](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0030) → `CC-OPTIONS-VALIDATION`.
-- [REQ-OPTIONS-0031](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0031) → `CC-OPTIONS-VALIDATION`.
-- [REQ-OPTIONS-0032](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0032) → `CC-OPTIONS-VALIDATION`.
+- [REQ-OPTIONS-0011](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0011) → `CC-OPTIONS-VALIDATION`.
+- [REQ-OPTIONS-0012](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0012) → `CC-OPTIONS-VALIDATION`.
+- [REQ-OPTIONS-0013](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0013) → `CC-OPTIONS-VALIDATION`.
+- [REQ-OPTIONS-0014](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0014) → `CC-OPTIONS-VALIDATION`.
+- [REQ-OPTIONS-0015](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0015) → `CC-OPTIONS-VALIDATION`.
+- [REQ-OPTIONS-0025](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0025) → `CC-OPTIONS-VALIDATION`.
+- [REQ-OPTIONS-0026](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0026) → `CC-OPTIONS-VALIDATION`.
+- [REQ-OPTIONS-0027](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0027) → `CC-OPTIONS-VALIDATION`.
+- [REQ-OPTIONS-0028](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0028) → `CC-OPTIONS-VALIDATION`.
+- [REQ-OPTIONS-0029](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0029) → `CC-OPTIONS-VALIDATION`.
+- [REQ-OPTIONS-0030](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0030) → `CC-OPTIONS-VALIDATION`.
+- [REQ-OPTIONS-0031](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0031) → `CC-OPTIONS-VALIDATION`.
+- [REQ-OPTIONS-0032](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0032) → `CC-OPTIONS-VALIDATION`.
 
 ### CC-OPTIONS-EXECUTION-PRECEDENCE
 
@@ -1541,8 +1543,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-OPTIONS-0016 -->
 <!-- requirement-ref: REQ-OPTIONS-0017 -->
 
-- [REQ-OPTIONS-0016](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0016) → `CC-OPTIONS-EXECUTION-PRECEDENCE`.
-- [REQ-OPTIONS-0017](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0017) → `CC-OPTIONS-EXECUTION-PRECEDENCE`.
+- [REQ-OPTIONS-0016](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0016) → `CC-OPTIONS-EXECUTION-PRECEDENCE`.
+- [REQ-OPTIONS-0017](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0017) → `CC-OPTIONS-EXECUTION-PRECEDENCE`.
 
 ### CC-OPTIONS-NO-SILENT-REWRITING
 
@@ -1556,9 +1558,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-OPTIONS-0019 -->
 <!-- requirement-ref: REQ-OPTIONS-0020 -->
 
-- [REQ-OPTIONS-0018](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0018) → `CC-OPTIONS-NO-SILENT-REWRITING`.
-- [REQ-OPTIONS-0019](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0019) → `CC-OPTIONS-NO-SILENT-REWRITING`.
-- [REQ-OPTIONS-0020](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0020) → `CC-OPTIONS-NO-SILENT-REWRITING`.
+- [REQ-OPTIONS-0018](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0018) → `CC-OPTIONS-NO-SILENT-REWRITING`.
+- [REQ-OPTIONS-0019](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0019) → `CC-OPTIONS-NO-SILENT-REWRITING`.
+- [REQ-OPTIONS-0020](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0020) → `CC-OPTIONS-NO-SILENT-REWRITING`.
 
 ### CC-OPTIONS-SECURITY-AND-SAFETY
 
@@ -1573,10 +1575,10 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-OPTIONS-0023 -->
 <!-- requirement-ref: REQ-OPTIONS-0024 -->
 
-- [REQ-OPTIONS-0021](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0021) → `CC-OPTIONS-SECURITY-AND-SAFETY`.
-- [REQ-OPTIONS-0022](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0022) → `CC-OPTIONS-SECURITY-AND-SAFETY`.
-- [REQ-OPTIONS-0023](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0023) → `CC-OPTIONS-SECURITY-AND-SAFETY`.
-- [REQ-OPTIONS-0024](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-options.md#REQ-OPTIONS-0024) → `CC-OPTIONS-SECURITY-AND-SAFETY`.
+- [REQ-OPTIONS-0021](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0021) → `CC-OPTIONS-SECURITY-AND-SAFETY`.
+- [REQ-OPTIONS-0022](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0022) → `CC-OPTIONS-SECURITY-AND-SAFETY`.
+- [REQ-OPTIONS-0023](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0023) → `CC-OPTIONS-SECURITY-AND-SAFETY`.
+- [REQ-OPTIONS-0024](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-options.md#REQ-OPTIONS-0024) → `CC-OPTIONS-SECURITY-AND-SAFETY`.
 
 ### CC-SAFETY-ENVELOPE
 
@@ -1590,9 +1592,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-SAFETY-0002 -->
 <!-- requirement-ref: REQ-SAFETY-0003 -->
 
-- [REQ-SAFETY-0001](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0001) → `CC-SAFETY-ENVELOPE`.
-- [REQ-SAFETY-0002](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0002) → `CC-SAFETY-ENVELOPE`.
-- [REQ-SAFETY-0003](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0003) → `CC-SAFETY-ENVELOPE`.
+- [REQ-SAFETY-0001](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0001) → `CC-SAFETY-ENVELOPE`.
+- [REQ-SAFETY-0002](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0002) → `CC-SAFETY-ENVELOPE`.
+- [REQ-SAFETY-0003](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0003) → `CC-SAFETY-ENVELOPE`.
 
 ### CC-SAFETY-SAFETY-MODEL
 
@@ -1606,9 +1608,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-SAFETY-0005 -->
 <!-- requirement-ref: REQ-SAFETY-0006 -->
 
-- [REQ-SAFETY-0004](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0004) → `CC-SAFETY-SAFETY-MODEL`.
-- [REQ-SAFETY-0005](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0005) → `CC-SAFETY-SAFETY-MODEL`.
-- [REQ-SAFETY-0006](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0006) → `CC-SAFETY-SAFETY-MODEL`.
+- [REQ-SAFETY-0004](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0004) → `CC-SAFETY-SAFETY-MODEL`.
+- [REQ-SAFETY-0005](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0005) → `CC-SAFETY-SAFETY-MODEL`.
+- [REQ-SAFETY-0006](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0006) → `CC-SAFETY-SAFETY-MODEL`.
 
 ### CC-SAFETY-FIELDS
 
@@ -1620,7 +1622,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-SAFETY-0007 -->
 
-- [REQ-SAFETY-0007](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0007) → `CC-SAFETY-FIELDS`.
+- [REQ-SAFETY-0007](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0007) → `CC-SAFETY-FIELDS`.
 
 ### CC-SAFETY-RISK-LEVEL
 
@@ -1637,10 +1639,10 @@ Review case `RV-CC-SAFETY-RISK-LEVEL` (`docs/conformance/cross-cutting-review.md
 <!-- requirement-ref: REQ-SAFETY-0010 -->
 <!-- requirement-ref: REQ-SAFETY-0011 -->
 
-- [REQ-SAFETY-0008](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0008) → `CC-SAFETY-RISK-LEVEL`, `RV-CC-SAFETY-RISK-LEVEL`.
-- [REQ-SAFETY-0009](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0009) → `CC-SAFETY-RISK-LEVEL`, `RV-CC-SAFETY-RISK-LEVEL`.
-- [REQ-SAFETY-0010](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0010) → `CC-SAFETY-RISK-LEVEL`, `RV-CC-SAFETY-RISK-LEVEL`.
-- [REQ-SAFETY-0011](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0011) → `CC-SAFETY-RISK-LEVEL`, `RV-CC-SAFETY-RISK-LEVEL`.
+- [REQ-SAFETY-0008](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0008) → `CC-SAFETY-RISK-LEVEL`, `RV-CC-SAFETY-RISK-LEVEL`.
+- [REQ-SAFETY-0009](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0009) → `CC-SAFETY-RISK-LEVEL`, `RV-CC-SAFETY-RISK-LEVEL`.
+- [REQ-SAFETY-0010](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0010) → `CC-SAFETY-RISK-LEVEL`, `RV-CC-SAFETY-RISK-LEVEL`.
+- [REQ-SAFETY-0011](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0011) → `CC-SAFETY-RISK-LEVEL`, `RV-CC-SAFETY-RISK-LEVEL`.
 
 ### CC-SAFETY-RISK-FACTORS
 
@@ -1653,8 +1655,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-SAFETY-0012 -->
 <!-- requirement-ref: REQ-SAFETY-0031 -->
 
-- [REQ-SAFETY-0012](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0012) → `CC-SAFETY-RISK-FACTORS`.
-- [REQ-SAFETY-0031](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0031) → `CC-SAFETY-RISK-FACTORS`.
+- [REQ-SAFETY-0012](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0012) → `CC-SAFETY-RISK-FACTORS`.
+- [REQ-SAFETY-0031](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0031) → `CC-SAFETY-RISK-FACTORS`.
 
 ### CC-SAFETY-RISK-FACTORS-RISK-FACTOR-FIELDS
 
@@ -1667,24 +1669,26 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-SAFETY-0013 -->
 <!-- requirement-ref: REQ-SAFETY-0014 -->
 
-- [REQ-SAFETY-0013](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0013) → `CC-SAFETY-RISK-FACTORS-RISK-FACTOR-FIELDS`.
-- [REQ-SAFETY-0014](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0014) → `CC-SAFETY-RISK-FACTORS-RISK-FACTOR-FIELDS`.
+- [REQ-SAFETY-0013](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0013) → `CC-SAFETY-RISK-FACTORS-RISK-FACTOR-FIELDS`.
+- [REQ-SAFETY-0014](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0014) → `CC-SAFETY-RISK-FACTORS-RISK-FACTOR-FIELDS`.
 
 ### CC-SAFETY-RISK-FACTORS-INITIAL-RISK-FACTOR-TYPES
 
 Public source: `data-formats/task-safety.md`, section **Risk Factors / Initial Risk Factor Types**. Intended target: `internal/validation/safety.go`. Planned case location: `internal/validation/cross_cutting_conformance_test.go`, `symbol:TestCcSafetyRiskFactorsInitialRiskFactorTypes`.
 
-Case plan: With risk_level unknown and one factor of level unknown, iterate the five initial types and assert each is accepted and exposed unchanged. Submit unknown types (battery_drain, Network_observability, network-observability, an empty string and a 65-byte string) and assert each task is either rejected before scheduling (class per GO-SPEC-ISSUE-008) or treated as unknown risk, and is never accepted with the factor ignored; the current validator rejects them. Submit execution concerns as factor types (bandwidth, battery, runtime, network_availability, device_state) and assert they are rejected as unknown types, while the corresponding constraints in the execution object are accepted. Requirements: REQ-SAFETY-0015, REQ-SAFETY-0016, REQ-SAFETY-0017.
+Case plan: With risk_level unknown and one factor of level unknown, iterate the five initial types and assert each is accepted and exposed unchanged. Submit unknown types (battery_drain, Network_observability, network-observability, an empty string and a 65-byte string) and assert each task is either rejected before scheduling with task_unsupported, never task_schema_invalid, or treated as unknown risk, and is never accepted with the factor ignored; the current validator rejects them, so admission must return task_unsupported. Submit execution concerns as factor types (bandwidth, battery, runtime, network_availability, device_state) and assert they are rejected as unknown types with task_unsupported, while the corresponding constraints in the execution object are accepted. Requirements: REQ-SAFETY-0015, REQ-SAFETY-0016, REQ-SAFETY-0017, REQ-TRUST-0036.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-SAFETY-0015 -->
 <!-- requirement-ref: REQ-SAFETY-0016 -->
 <!-- requirement-ref: REQ-SAFETY-0017 -->
+<!-- requirement-ref: REQ-TRUST-0036 -->
 
-- [REQ-SAFETY-0015](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0015) → `CC-SAFETY-RISK-FACTORS-INITIAL-RISK-FACTOR-TYPES`.
-- [REQ-SAFETY-0016](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0016) → `CC-SAFETY-RISK-FACTORS-INITIAL-RISK-FACTOR-TYPES`.
-- [REQ-SAFETY-0017](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0017) → `CC-SAFETY-RISK-FACTORS-INITIAL-RISK-FACTOR-TYPES`.
+- [REQ-SAFETY-0015](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0015) → `CC-SAFETY-RISK-FACTORS-INITIAL-RISK-FACTOR-TYPES`.
+- [REQ-SAFETY-0016](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0016) → `CC-SAFETY-RISK-FACTORS-INITIAL-RISK-FACTOR-TYPES`.
+- [REQ-SAFETY-0017](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0017) → `CC-SAFETY-RISK-FACTORS-INITIAL-RISK-FACTOR-TYPES`.
+- [REQ-TRUST-0036](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0036) → `CC-SAFETY-RISK-FACTORS-INITIAL-RISK-FACTOR-TYPES`.
 
 ### CC-SAFETY-RISK-FACTORS-RISK-CONSISTENCY
 
@@ -1697,8 +1701,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-SAFETY-0018 -->
 <!-- requirement-ref: REQ-SAFETY-0019 -->
 
-- [REQ-SAFETY-0018](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0018) → `CC-SAFETY-RISK-FACTORS-RISK-CONSISTENCY`.
-- [REQ-SAFETY-0019](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0019) → `CC-SAFETY-RISK-FACTORS-RISK-CONSISTENCY`.
+- [REQ-SAFETY-0018](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0018) → `CC-SAFETY-RISK-FACTORS-RISK-CONSISTENCY`.
+- [REQ-SAFETY-0019](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0019) → `CC-SAFETY-RISK-FACTORS-RISK-CONSISTENCY`.
 
 ### CC-SAFETY-USER-CONSENT
 
@@ -1712,9 +1716,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-SAFETY-0021 -->
 <!-- requirement-ref: REQ-SAFETY-0022 -->
 
-- [REQ-SAFETY-0020](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0020) → `CC-SAFETY-USER-CONSENT`.
-- [REQ-SAFETY-0021](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0021) → `CC-SAFETY-USER-CONSENT`.
-- [REQ-SAFETY-0022](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0022) → `CC-SAFETY-USER-CONSENT`.
+- [REQ-SAFETY-0020](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0020) → `CC-SAFETY-USER-CONSENT`.
+- [REQ-SAFETY-0021](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0021) → `CC-SAFETY-USER-CONSENT`.
+- [REQ-SAFETY-0022](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0022) → `CC-SAFETY-USER-CONSENT`.
 
 ### CC-SAFETY-EFFECTIVE-RISK
 
@@ -1729,10 +1733,10 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-SAFETY-0025 -->
 <!-- requirement-ref: REQ-SAFETY-0026 -->
 
-- [REQ-SAFETY-0023](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0023) → `CC-SAFETY-EFFECTIVE-RISK`.
-- [REQ-SAFETY-0024](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0024) → `CC-SAFETY-EFFECTIVE-RISK`.
-- [REQ-SAFETY-0025](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0025) → `CC-SAFETY-EFFECTIVE-RISK`.
-- [REQ-SAFETY-0026](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0026) → `CC-SAFETY-EFFECTIVE-RISK`.
+- [REQ-SAFETY-0023](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0023) → `CC-SAFETY-EFFECTIVE-RISK`.
+- [REQ-SAFETY-0024](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0024) → `CC-SAFETY-EFFECTIVE-RISK`.
+- [REQ-SAFETY-0025](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0025) → `CC-SAFETY-EFFECTIVE-RISK`.
+- [REQ-SAFETY-0026](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0026) → `CC-SAFETY-EFFECTIVE-RISK`.
 
 ### CC-SAFETY-SAFETY-EVALUATION
 
@@ -1747,10 +1751,10 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-SAFETY-0029 -->
 <!-- requirement-ref: REQ-SAFETY-0030 -->
 
-- [REQ-SAFETY-0027](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0027) → `CC-SAFETY-SAFETY-EVALUATION`.
-- [REQ-SAFETY-0028](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0028) → `CC-SAFETY-SAFETY-EVALUATION`.
-- [REQ-SAFETY-0029](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0029) → `CC-SAFETY-SAFETY-EVALUATION`.
-- [REQ-SAFETY-0030](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0030) → `CC-SAFETY-SAFETY-EVALUATION`.
+- [REQ-SAFETY-0027](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0027) → `CC-SAFETY-SAFETY-EVALUATION`.
+- [REQ-SAFETY-0028](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0028) → `CC-SAFETY-SAFETY-EVALUATION`.
+- [REQ-SAFETY-0029](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0029) → `CC-SAFETY-SAFETY-EVALUATION`.
+- [REQ-SAFETY-0030](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0030) → `CC-SAFETY-SAFETY-EVALUATION`.
 
 ### CC-SCHEDULE-ENVELOPE
 
@@ -1762,7 +1766,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-SCHEDULE-0001 -->
 
-- [REQ-SCHEDULE-0001](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0001) → `CC-SCHEDULE-ENVELOPE`.
+- [REQ-SCHEDULE-0001](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0001) → `CC-SCHEDULE-ENVELOPE`.
 
 ### CC-SCHEDULE-FIELDS
 
@@ -1774,7 +1778,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-SCHEDULE-0002 -->
 
-- [REQ-SCHEDULE-0002](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0002) → `CC-SCHEDULE-FIELDS`.
+- [REQ-SCHEDULE-0002](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0002) → `CC-SCHEDULE-FIELDS`.
 
 ### CC-SCHEDULE-SCHEDULING-MODEL
 
@@ -1789,10 +1793,10 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-SCHEDULE-0005 -->
 <!-- requirement-ref: REQ-SCHEDULE-0006 -->
 
-- [REQ-SCHEDULE-0003](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0003) → `CC-SCHEDULE-SCHEDULING-MODEL`.
-- [REQ-SCHEDULE-0004](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0004) → `CC-SCHEDULE-SCHEDULING-MODEL`.
-- [REQ-SCHEDULE-0005](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0005) → `CC-SCHEDULE-SCHEDULING-MODEL`.
-- [REQ-SCHEDULE-0006](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0006) → `CC-SCHEDULE-SCHEDULING-MODEL`.
+- [REQ-SCHEDULE-0003](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0003) → `CC-SCHEDULE-SCHEDULING-MODEL`.
+- [REQ-SCHEDULE-0004](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0004) → `CC-SCHEDULE-SCHEDULING-MODEL`.
+- [REQ-SCHEDULE-0005](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0005) → `CC-SCHEDULE-SCHEDULING-MODEL`.
+- [REQ-SCHEDULE-0006](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0006) → `CC-SCHEDULE-SCHEDULING-MODEL`.
 
 ### CC-SCHEDULE-SCHEDULING-MODEL-START-TIME
 
@@ -1806,9 +1810,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-SCHEDULE-0008 -->
 <!-- requirement-ref: REQ-SCHEDULE-0009 -->
 
-- [REQ-SCHEDULE-0007](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0007) → `CC-SCHEDULE-SCHEDULING-MODEL-START-TIME`.
-- [REQ-SCHEDULE-0008](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0008) → `CC-SCHEDULE-SCHEDULING-MODEL-START-TIME`.
-- [REQ-SCHEDULE-0009](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0009) → `CC-SCHEDULE-SCHEDULING-MODEL-START-TIME`.
+- [REQ-SCHEDULE-0007](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0007) → `CC-SCHEDULE-SCHEDULING-MODEL-START-TIME`.
+- [REQ-SCHEDULE-0008](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0008) → `CC-SCHEDULE-SCHEDULING-MODEL-START-TIME`.
+- [REQ-SCHEDULE-0009](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0009) → `CC-SCHEDULE-SCHEDULING-MODEL-START-TIME`.
 
 ### CC-SCHEDULE-SCHEDULING-MODEL-TIME-LIMIT
 
@@ -1821,8 +1825,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-SCHEDULE-0010 -->
 <!-- requirement-ref: REQ-SCHEDULE-0011 -->
 
-- [REQ-SCHEDULE-0010](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0010) → `CC-SCHEDULE-SCHEDULING-MODEL-TIME-LIMIT`.
-- [REQ-SCHEDULE-0011](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0011) → `CC-SCHEDULE-SCHEDULING-MODEL-TIME-LIMIT`.
+- [REQ-SCHEDULE-0010](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0010) → `CC-SCHEDULE-SCHEDULING-MODEL-TIME-LIMIT`.
+- [REQ-SCHEDULE-0011](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0011) → `CC-SCHEDULE-SCHEDULING-MODEL-TIME-LIMIT`.
 
 ### CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW
 
@@ -1834,7 +1838,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-SCHEDULE-0012 -->
 
-- [REQ-SCHEDULE-0012](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0012) → `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW`.
+- [REQ-SCHEDULE-0012](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0012) → `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW`.
 
 ### CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-FIELDS
 
@@ -1848,9 +1852,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-SCHEDULE-0014 -->
 <!-- requirement-ref: REQ-SCHEDULE-0043 -->
 
-- [REQ-SCHEDULE-0013](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0013) → `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-FIELDS`.
-- [REQ-SCHEDULE-0014](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0014) → `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-FIELDS`.
-- [REQ-SCHEDULE-0043](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0043) → `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-FIELDS`.
+- [REQ-SCHEDULE-0013](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0013) → `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-FIELDS`.
+- [REQ-SCHEDULE-0014](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0014) → `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-FIELDS`.
+- [REQ-SCHEDULE-0043](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0043) → `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-FIELDS`.
 
 ### CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-RANGE-FIELDS
 
@@ -1864,9 +1868,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-SCHEDULE-0016 -->
 <!-- requirement-ref: REQ-SCHEDULE-0017 -->
 
-- [REQ-SCHEDULE-0015](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0015) → `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-RANGE-FIELDS`.
-- [REQ-SCHEDULE-0016](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0016) → `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-RANGE-FIELDS`.
-- [REQ-SCHEDULE-0017](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0017) → `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-RANGE-FIELDS`.
+- [REQ-SCHEDULE-0015](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0015) → `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-RANGE-FIELDS`.
+- [REQ-SCHEDULE-0016](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0016) → `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-RANGE-FIELDS`.
+- [REQ-SCHEDULE-0017](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0017) → `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-RANGE-FIELDS`.
 
 ### CC-SCHEDULE-SCHEDULING-MODEL-REPEAT
 
@@ -1878,7 +1882,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-SCHEDULE-0018 -->
 
-- [REQ-SCHEDULE-0018](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0018) → `CC-SCHEDULE-SCHEDULING-MODEL-REPEAT`.
+- [REQ-SCHEDULE-0018](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0018) → `CC-SCHEDULE-SCHEDULING-MODEL-REPEAT`.
 
 ### CC-SCHEDULE-SCHEDULING-MODEL-REPEAT-INTERVAL-FIELDS
 
@@ -1892,9 +1896,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-SCHEDULE-0020 -->
 <!-- requirement-ref: REQ-SCHEDULE-0021 -->
 
-- [REQ-SCHEDULE-0019](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0019) → `CC-SCHEDULE-SCHEDULING-MODEL-REPEAT-INTERVAL-FIELDS`.
-- [REQ-SCHEDULE-0020](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0020) → `CC-SCHEDULE-SCHEDULING-MODEL-REPEAT-INTERVAL-FIELDS`.
-- [REQ-SCHEDULE-0021](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0021) → `CC-SCHEDULE-SCHEDULING-MODEL-REPEAT-INTERVAL-FIELDS`.
+- [REQ-SCHEDULE-0019](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0019) → `CC-SCHEDULE-SCHEDULING-MODEL-REPEAT-INTERVAL-FIELDS`.
+- [REQ-SCHEDULE-0020](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0020) → `CC-SCHEDULE-SCHEDULING-MODEL-REPEAT-INTERVAL-FIELDS`.
+- [REQ-SCHEDULE-0021](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0021) → `CC-SCHEDULE-SCHEDULING-MODEL-REPEAT-INTERVAL-FIELDS`.
 
 ### CC-SCHEDULE-SCHEDULING-MODEL-RETRY
 
@@ -1909,10 +1913,10 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-SCHEDULE-0024 -->
 <!-- requirement-ref: REQ-SCHEDULE-0025 -->
 
-- [REQ-SCHEDULE-0022](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0022) → `CC-SCHEDULE-SCHEDULING-MODEL-RETRY`.
-- [REQ-SCHEDULE-0023](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0023) → `CC-SCHEDULE-SCHEDULING-MODEL-RETRY`.
-- [REQ-SCHEDULE-0024](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0024) → `CC-SCHEDULE-SCHEDULING-MODEL-RETRY`.
-- [REQ-SCHEDULE-0025](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0025) → `CC-SCHEDULE-SCHEDULING-MODEL-RETRY`.
+- [REQ-SCHEDULE-0022](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0022) → `CC-SCHEDULE-SCHEDULING-MODEL-RETRY`.
+- [REQ-SCHEDULE-0023](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0023) → `CC-SCHEDULE-SCHEDULING-MODEL-RETRY`.
+- [REQ-SCHEDULE-0024](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0024) → `CC-SCHEDULE-SCHEDULING-MODEL-RETRY`.
+- [REQ-SCHEDULE-0025](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0025) → `CC-SCHEDULE-SCHEDULING-MODEL-RETRY`.
 
 ### CC-SCHEDULE-SCHEDULING-MODEL-RETRY-RETRY-FIELDS
 
@@ -1927,10 +1931,10 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-SCHEDULE-0028 -->
 <!-- requirement-ref: REQ-SCHEDULE-0029 -->
 
-- [REQ-SCHEDULE-0026](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0026) → `CC-SCHEDULE-SCHEDULING-MODEL-RETRY-RETRY-FIELDS`.
-- [REQ-SCHEDULE-0027](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0027) → `CC-SCHEDULE-SCHEDULING-MODEL-RETRY-RETRY-FIELDS`.
-- [REQ-SCHEDULE-0028](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0028) → `CC-SCHEDULE-SCHEDULING-MODEL-RETRY-RETRY-FIELDS`.
-- [REQ-SCHEDULE-0029](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0029) → `CC-SCHEDULE-SCHEDULING-MODEL-RETRY-RETRY-FIELDS`.
+- [REQ-SCHEDULE-0026](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0026) → `CC-SCHEDULE-SCHEDULING-MODEL-RETRY-RETRY-FIELDS`.
+- [REQ-SCHEDULE-0027](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0027) → `CC-SCHEDULE-SCHEDULING-MODEL-RETRY-RETRY-FIELDS`.
+- [REQ-SCHEDULE-0028](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0028) → `CC-SCHEDULE-SCHEDULING-MODEL-RETRY-RETRY-FIELDS`.
+- [REQ-SCHEDULE-0029](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0029) → `CC-SCHEDULE-SCHEDULING-MODEL-RETRY-RETRY-FIELDS`.
 
 ### CC-SCHEDULE-SCHEDULING-MODEL-LIMITS-FIELDS
 
@@ -1944,9 +1948,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-SCHEDULE-0031 -->
 <!-- requirement-ref: REQ-SCHEDULE-0032 -->
 
-- [REQ-SCHEDULE-0030](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0030) → `CC-SCHEDULE-SCHEDULING-MODEL-LIMITS-FIELDS`.
-- [REQ-SCHEDULE-0031](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0031) → `CC-SCHEDULE-SCHEDULING-MODEL-LIMITS-FIELDS`.
-- [REQ-SCHEDULE-0032](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0032) → `CC-SCHEDULE-SCHEDULING-MODEL-LIMITS-FIELDS`.
+- [REQ-SCHEDULE-0030](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0030) → `CC-SCHEDULE-SCHEDULING-MODEL-LIMITS-FIELDS`.
+- [REQ-SCHEDULE-0031](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0031) → `CC-SCHEDULE-SCHEDULING-MODEL-LIMITS-FIELDS`.
+- [REQ-SCHEDULE-0032](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0032) → `CC-SCHEDULE-SCHEDULING-MODEL-LIMITS-FIELDS`.
 
 ### CC-SCHEDULE-VALIDATION
 
@@ -1965,14 +1969,14 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-SCHEDULE-0041 -->
 <!-- requirement-ref: REQ-SCHEDULE-0042 -->
 
-- [REQ-SCHEDULE-0033](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0033) → `CC-SCHEDULE-VALIDATION`.
-- [REQ-SCHEDULE-0036](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0036) → `CC-SCHEDULE-VALIDATION`.
-- [REQ-SCHEDULE-0037](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0037) → `CC-SCHEDULE-VALIDATION`.
-- [REQ-SCHEDULE-0038](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0038) → `CC-SCHEDULE-VALIDATION`.
-- [REQ-SCHEDULE-0039](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0039) → `CC-SCHEDULE-VALIDATION`.
-- [REQ-SCHEDULE-0040](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0040) → `CC-SCHEDULE-VALIDATION`.
-- [REQ-SCHEDULE-0041](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0041) → `CC-SCHEDULE-VALIDATION`.
-- [REQ-SCHEDULE-0042](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0042) → `CC-SCHEDULE-VALIDATION`.
+- [REQ-SCHEDULE-0033](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0033) → `CC-SCHEDULE-VALIDATION`.
+- [REQ-SCHEDULE-0036](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0036) → `CC-SCHEDULE-VALIDATION`.
+- [REQ-SCHEDULE-0037](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0037) → `CC-SCHEDULE-VALIDATION`.
+- [REQ-SCHEDULE-0038](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0038) → `CC-SCHEDULE-VALIDATION`.
+- [REQ-SCHEDULE-0039](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0039) → `CC-SCHEDULE-VALIDATION`.
+- [REQ-SCHEDULE-0040](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0040) → `CC-SCHEDULE-VALIDATION`.
+- [REQ-SCHEDULE-0041](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0041) → `CC-SCHEDULE-VALIDATION`.
+- [REQ-SCHEDULE-0042](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0042) → `CC-SCHEDULE-VALIDATION`.
 
 ### CC-SCHEDULE-VALIDATION-ELIGIBILITY-RULES
 
@@ -1985,8 +1989,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-SCHEDULE-0034 -->
 <!-- requirement-ref: REQ-SCHEDULE-0035 -->
 
-- [REQ-SCHEDULE-0034](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0034) → `CC-SCHEDULE-VALIDATION-ELIGIBILITY-RULES`.
-- [REQ-SCHEDULE-0035](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0035) → `CC-SCHEDULE-VALIDATION-ELIGIBILITY-RULES`.
+- [REQ-SCHEDULE-0034](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0034) → `CC-SCHEDULE-VALIDATION-ELIGIBILITY-RULES`.
+- [REQ-SCHEDULE-0035](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0035) → `CC-SCHEDULE-VALIDATION-ELIGIBILITY-RULES`.
 
 ### CC-TASK-OVERVIEW
 
@@ -1998,7 +2002,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-TASK-0002 -->
 
-- [REQ-TASK-0002](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task.md#REQ-TASK-0002) → `CC-TASK-OVERVIEW`.
+- [REQ-TASK-0002](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task.md#REQ-TASK-0002) → `CC-TASK-OVERVIEW`.
 
 ### CC-TASK-ENVELOPE
 
@@ -2013,10 +2017,10 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-TASK-0004 -->
 <!-- requirement-ref: REQ-TASK-0005 -->
 
-- [REQ-TASK-0001](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task.md#REQ-TASK-0001) → `CC-TASK-ENVELOPE`.
-- [REQ-TASK-0003](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task.md#REQ-TASK-0003) → `CC-TASK-ENVELOPE`.
-- [REQ-TASK-0004](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task.md#REQ-TASK-0004) → `CC-TASK-ENVELOPE`.
-- [REQ-TASK-0005](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task.md#REQ-TASK-0005) → `CC-TASK-ENVELOPE`.
+- [REQ-TASK-0001](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task.md#REQ-TASK-0001) → `CC-TASK-ENVELOPE`.
+- [REQ-TASK-0003](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task.md#REQ-TASK-0003) → `CC-TASK-ENVELOPE`.
+- [REQ-TASK-0004](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task.md#REQ-TASK-0004) → `CC-TASK-ENVELOPE`.
+- [REQ-TASK-0005](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task.md#REQ-TASK-0005) → `CC-TASK-ENVELOPE`.
 
 ### CC-TASK-DESIGN-PRINCIPLES-STABLE-STRUCTURE
 
@@ -2028,7 +2032,7 @@ Scope: Host, collector or specification review; no runtime enforcement claim. No
 
 <!-- requirement-ref: REQ-TASK-0006 -->
 
-- [REQ-TASK-0006](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task.md#REQ-TASK-0006) → `RV-CC-TASK-DESIGN-PRINCIPLES-STABLE-STRUCTURE`.
+- [REQ-TASK-0006](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task.md#REQ-TASK-0006) → `RV-CC-TASK-DESIGN-PRINCIPLES-STABLE-STRUCTURE`.
 
 ### CC-CONTEXT-OVERVIEW
 
@@ -2040,7 +2044,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-CONTEXT-0001 -->
 
-- [REQ-CONTEXT-0001](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0001) → `CC-CONTEXT-OVERVIEW`.
+- [REQ-CONTEXT-0001](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0001) → `CC-CONTEXT-OVERVIEW`.
 
 ### CC-CONTEXT-CONTEXT-LAYERS-ACCESS-CONTEXT
 
@@ -2053,8 +2057,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-CONTEXT-0002 -->
 <!-- requirement-ref: REQ-CONTEXT-0003 -->
 
-- [REQ-CONTEXT-0002](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0002) → `CC-CONTEXT-CONTEXT-LAYERS-ACCESS-CONTEXT`.
-- [REQ-CONTEXT-0003](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0003) → `CC-CONTEXT-CONTEXT-LAYERS-ACCESS-CONTEXT`.
+- [REQ-CONTEXT-0002](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0002) → `CC-CONTEXT-CONTEXT-LAYERS-ACCESS-CONTEXT`.
+- [REQ-CONTEXT-0003](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0003) → `CC-CONTEXT-CONTEXT-LAYERS-ACCESS-CONTEXT`.
 
 ### CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT
 
@@ -2070,9 +2074,9 @@ Review case `RV-CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT` (`docs/conformance/cro
 <!-- requirement-ref: REQ-CONTEXT-0005 -->
 <!-- requirement-ref: REQ-CONTEXT-0006 -->
 
-- [REQ-CONTEXT-0004](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0004) → `CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT`, `RV-CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT`.
-- [REQ-CONTEXT-0005](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0005) → `CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT`, `RV-CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT`.
-- [REQ-CONTEXT-0006](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0006) → `CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT`, `RV-CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT`.
+- [REQ-CONTEXT-0004](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0004) → `CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT`, `RV-CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT`.
+- [REQ-CONTEXT-0005](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0005) → `CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT`, `RV-CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT`.
+- [REQ-CONTEXT-0006](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0006) → `CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT`, `RV-CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT`.
 
 ### CC-CONTEXT-HOST-INITIALIZATION
 
@@ -2087,10 +2091,10 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-CONTEXT-0009 -->
 <!-- requirement-ref: REQ-CONTEXT-0010 -->
 
-- [REQ-CONTEXT-0007](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0007) → `CC-CONTEXT-HOST-INITIALIZATION`.
-- [REQ-CONTEXT-0008](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0008) → `CC-CONTEXT-HOST-INITIALIZATION`.
-- [REQ-CONTEXT-0009](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0009) → `CC-CONTEXT-HOST-INITIALIZATION`.
-- [REQ-CONTEXT-0010](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0010) → `CC-CONTEXT-HOST-INITIALIZATION`.
+- [REQ-CONTEXT-0007](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0007) → `CC-CONTEXT-HOST-INITIALIZATION`.
+- [REQ-CONTEXT-0008](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0008) → `CC-CONTEXT-HOST-INITIALIZATION`.
+- [REQ-CONTEXT-0009](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0009) → `CC-CONTEXT-HOST-INITIALIZATION`.
+- [REQ-CONTEXT-0010](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0010) → `CC-CONTEXT-HOST-INITIALIZATION`.
 
 ### CC-CONTEXT-ENDPOINT-CONTRACT
 
@@ -2107,12 +2111,12 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-CONTEXT-0015 -->
 <!-- requirement-ref: REQ-CONTEXT-0016 -->
 
-- [REQ-CONTEXT-0011](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0011) → `CC-CONTEXT-ENDPOINT-CONTRACT`.
-- [REQ-CONTEXT-0012](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0012) → `CC-CONTEXT-ENDPOINT-CONTRACT`.
-- [REQ-CONTEXT-0013](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0013) → `CC-CONTEXT-ENDPOINT-CONTRACT`.
-- [REQ-CONTEXT-0014](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0014) → `CC-CONTEXT-ENDPOINT-CONTRACT`.
-- [REQ-CONTEXT-0015](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0015) → `CC-CONTEXT-ENDPOINT-CONTRACT`.
-- [REQ-CONTEXT-0016](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0016) → `CC-CONTEXT-ENDPOINT-CONTRACT`.
+- [REQ-CONTEXT-0011](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0011) → `CC-CONTEXT-ENDPOINT-CONTRACT`.
+- [REQ-CONTEXT-0012](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0012) → `CC-CONTEXT-ENDPOINT-CONTRACT`.
+- [REQ-CONTEXT-0013](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0013) → `CC-CONTEXT-ENDPOINT-CONTRACT`.
+- [REQ-CONTEXT-0014](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0014) → `CC-CONTEXT-ENDPOINT-CONTRACT`.
+- [REQ-CONTEXT-0015](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0015) → `CC-CONTEXT-ENDPOINT-CONTRACT`.
+- [REQ-CONTEXT-0016](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0016) → `CC-CONTEXT-ENDPOINT-CONTRACT`.
 
 ### CC-CONTEXT-PATH-CONSISTENCY
 
@@ -2126,9 +2130,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-CONTEXT-0018 -->
 <!-- requirement-ref: REQ-CONTEXT-0019 -->
 
-- [REQ-CONTEXT-0017](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0017) → `CC-CONTEXT-PATH-CONSISTENCY`.
-- [REQ-CONTEXT-0018](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0018) → `CC-CONTEXT-PATH-CONSISTENCY`.
-- [REQ-CONTEXT-0019](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0019) → `CC-CONTEXT-PATH-CONSISTENCY`.
+- [REQ-CONTEXT-0017](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0017) → `CC-CONTEXT-PATH-CONSISTENCY`.
+- [REQ-CONTEXT-0018](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0018) → `CC-CONTEXT-PATH-CONSISTENCY`.
+- [REQ-CONTEXT-0019](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0019) → `CC-CONTEXT-PATH-CONSISTENCY`.
 
 ### CC-CONTEXT-ACQUISITION-AND-FALLBACK
 
@@ -2144,11 +2148,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-CONTEXT-0023 -->
 <!-- requirement-ref: REQ-CONTEXT-0024 -->
 
-- [REQ-CONTEXT-0020](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0020) → `CC-CONTEXT-ACQUISITION-AND-FALLBACK`.
-- [REQ-CONTEXT-0021](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0021) → `CC-CONTEXT-ACQUISITION-AND-FALLBACK`.
-- [REQ-CONTEXT-0022](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0022) → `CC-CONTEXT-ACQUISITION-AND-FALLBACK`.
-- [REQ-CONTEXT-0023](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0023) → `CC-CONTEXT-ACQUISITION-AND-FALLBACK`.
-- [REQ-CONTEXT-0024](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0024) → `CC-CONTEXT-ACQUISITION-AND-FALLBACK`.
+- [REQ-CONTEXT-0020](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0020) → `CC-CONTEXT-ACQUISITION-AND-FALLBACK`.
+- [REQ-CONTEXT-0021](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0021) → `CC-CONTEXT-ACQUISITION-AND-FALLBACK`.
+- [REQ-CONTEXT-0022](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0022) → `CC-CONTEXT-ACQUISITION-AND-FALLBACK`.
+- [REQ-CONTEXT-0023](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0023) → `CC-CONTEXT-ACQUISITION-AND-FALLBACK`.
+- [REQ-CONTEXT-0024](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0024) → `CC-CONTEXT-ACQUISITION-AND-FALLBACK`.
 
 ### CC-CONTEXT-EXECUTION-INTEGRATION
 
@@ -2163,10 +2167,10 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-CONTEXT-0027 -->
 <!-- requirement-ref: REQ-CONTEXT-0028 -->
 
-- [REQ-CONTEXT-0025](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0025) → `CC-CONTEXT-EXECUTION-INTEGRATION`.
-- [REQ-CONTEXT-0026](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0026) → `CC-CONTEXT-EXECUTION-INTEGRATION`.
-- [REQ-CONTEXT-0027](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0027) → `CC-CONTEXT-EXECUTION-INTEGRATION`.
-- [REQ-CONTEXT-0028](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0028) → `CC-CONTEXT-EXECUTION-INTEGRATION`.
+- [REQ-CONTEXT-0025](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0025) → `CC-CONTEXT-EXECUTION-INTEGRATION`.
+- [REQ-CONTEXT-0026](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0026) → `CC-CONTEXT-EXECUTION-INTEGRATION`.
+- [REQ-CONTEXT-0027](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0027) → `CC-CONTEXT-EXECUTION-INTEGRATION`.
+- [REQ-CONTEXT-0028](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0028) → `CC-CONTEXT-EXECUTION-INTEGRATION`.
 
 ### CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION
 
@@ -2182,9 +2186,9 @@ Review case `RV-CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION` (`docs/conforma
 <!-- requirement-ref: REQ-CONTEXT-0030 -->
 <!-- requirement-ref: REQ-CONTEXT-0031 -->
 
-- [REQ-CONTEXT-0029](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0029) → `CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION`, `RV-CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION`.
-- [REQ-CONTEXT-0030](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0030) → `CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION`, `RV-CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION`.
-- [REQ-CONTEXT-0031](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0031) → `CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION`, `RV-CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION`.
+- [REQ-CONTEXT-0029](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0029) → `CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION`, `RV-CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION`.
+- [REQ-CONTEXT-0030](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0030) → `CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION`, `RV-CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION`.
+- [REQ-CONTEXT-0031](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0031) → `CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION`, `RV-CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION`.
 
 ### CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS
 
@@ -2206,15 +2210,15 @@ Review case `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS` (`docs/conformance/c
 <!-- requirement-ref: REQ-CONTEXT-0041 -->
 <!-- requirement-ref: REQ-CONTEXT-0042 -->
 
-- [REQ-CONTEXT-0032](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0032) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-CONTEXT-0035](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0035) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-CONTEXT-0036](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0036) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-CONTEXT-0037](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0037) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-CONTEXT-0038](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0038) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-CONTEXT-0039](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0039) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-CONTEXT-0040](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0040) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-CONTEXT-0041](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0041) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-CONTEXT-0042](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0042) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-CONTEXT-0032](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0032) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-CONTEXT-0035](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0035) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-CONTEXT-0036](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0036) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-CONTEXT-0037](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0037) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-CONTEXT-0038](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0038) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-CONTEXT-0039](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0039) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-CONTEXT-0040](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0040) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-CONTEXT-0041](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0041) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-CONTEXT-0042](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0042) → `CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-CONTEXT-PRIVACY-AND-SAFETY-REQUIREMENTS`.
 
 ### CC-CONTEXT-PLATFORM-COLLECTION
 
@@ -2227,8 +2231,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-CONTEXT-0033 -->
 <!-- requirement-ref: REQ-CONTEXT-0034 -->
 
-- [REQ-CONTEXT-0033](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0033) → `CC-CONTEXT-PLATFORM-COLLECTION`.
-- [REQ-CONTEXT-0034](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/network-context.md#REQ-CONTEXT-0034) → `CC-CONTEXT-PLATFORM-COLLECTION`.
+- [REQ-CONTEXT-0033](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0033) → `CC-CONTEXT-PLATFORM-COLLECTION`.
+- [REQ-CONTEXT-0034](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0034) → `CC-CONTEXT-PLATFORM-COLLECTION`.
 
 ### CC-PROXY-OVERVIEW
 
@@ -2240,7 +2244,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-PROXY-0001 -->
 
-- [REQ-PROXY-0001](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0001) → `CC-PROXY-OVERVIEW`.
+- [REQ-PROXY-0001](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0001) → `CC-PROXY-OVERVIEW`.
 
 ### CC-PROXY-HOST-INTEGRATION
 
@@ -2256,9 +2260,9 @@ Review case `RV-CC-PROXY-HOST-INTEGRATION` (`docs/conformance/cross-cutting-revi
 <!-- requirement-ref: REQ-PROXY-0003 -->
 <!-- requirement-ref: REQ-PROXY-0004 -->
 
-- [REQ-PROXY-0002](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0002) → `CC-PROXY-HOST-INTEGRATION`, `RV-CC-PROXY-HOST-INTEGRATION`.
-- [REQ-PROXY-0003](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0003) → `CC-PROXY-HOST-INTEGRATION`, `RV-CC-PROXY-HOST-INTEGRATION`.
-- [REQ-PROXY-0004](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0004) → `CC-PROXY-HOST-INTEGRATION`, `RV-CC-PROXY-HOST-INTEGRATION`.
+- [REQ-PROXY-0002](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0002) → `CC-PROXY-HOST-INTEGRATION`, `RV-CC-PROXY-HOST-INTEGRATION`.
+- [REQ-PROXY-0003](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0003) → `CC-PROXY-HOST-INTEGRATION`, `RV-CC-PROXY-HOST-INTEGRATION`.
+- [REQ-PROXY-0004](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0004) → `CC-PROXY-HOST-INTEGRATION`, `RV-CC-PROXY-HOST-INTEGRATION`.
 
 ### CC-PROXY-PROXY-CONFIGURATION
 
@@ -2272,9 +2276,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-PROXY-0006 -->
 <!-- requirement-ref: REQ-PROXY-0007 -->
 
-- [REQ-PROXY-0005](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0005) → `CC-PROXY-PROXY-CONFIGURATION`.
-- [REQ-PROXY-0006](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0006) → `CC-PROXY-PROXY-CONFIGURATION`.
-- [REQ-PROXY-0007](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0007) → `CC-PROXY-PROXY-CONFIGURATION`.
+- [REQ-PROXY-0005](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0005) → `CC-PROXY-PROXY-CONFIGURATION`.
+- [REQ-PROXY-0006](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0006) → `CC-PROXY-PROXY-CONFIGURATION`.
+- [REQ-PROXY-0007](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0007) → `CC-PROXY-PROXY-CONFIGURATION`.
 
 ### CC-PROXY-CONFIGURATION-VALIDATION
 
@@ -2288,9 +2292,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-PROXY-0009 -->
 <!-- requirement-ref: REQ-PROXY-0010 -->
 
-- [REQ-PROXY-0008](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0008) → `CC-PROXY-CONFIGURATION-VALIDATION`.
-- [REQ-PROXY-0009](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0009) → `CC-PROXY-CONFIGURATION-VALIDATION`.
-- [REQ-PROXY-0010](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0010) → `CC-PROXY-CONFIGURATION-VALIDATION`.
+- [REQ-PROXY-0008](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0008) → `CC-PROXY-CONFIGURATION-VALIDATION`.
+- [REQ-PROXY-0009](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0009) → `CC-PROXY-CONFIGURATION-VALIDATION`.
+- [REQ-PROXY-0010](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0010) → `CC-PROXY-CONFIGURATION-VALIDATION`.
 
 ### CC-PROXY-LIFECYCLE-AND-RENEWAL
 
@@ -2307,12 +2311,12 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-PROXY-0015 -->
 <!-- requirement-ref: REQ-PROXY-0016 -->
 
-- [REQ-PROXY-0011](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0011) → `CC-PROXY-LIFECYCLE-AND-RENEWAL`.
-- [REQ-PROXY-0012](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0012) → `CC-PROXY-LIFECYCLE-AND-RENEWAL`.
-- [REQ-PROXY-0013](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0013) → `CC-PROXY-LIFECYCLE-AND-RENEWAL`.
-- [REQ-PROXY-0014](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0014) → `CC-PROXY-LIFECYCLE-AND-RENEWAL`.
-- [REQ-PROXY-0015](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0015) → `CC-PROXY-LIFECYCLE-AND-RENEWAL`.
-- [REQ-PROXY-0016](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0016) → `CC-PROXY-LIFECYCLE-AND-RENEWAL`.
+- [REQ-PROXY-0011](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0011) → `CC-PROXY-LIFECYCLE-AND-RENEWAL`.
+- [REQ-PROXY-0012](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0012) → `CC-PROXY-LIFECYCLE-AND-RENEWAL`.
+- [REQ-PROXY-0013](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0013) → `CC-PROXY-LIFECYCLE-AND-RENEWAL`.
+- [REQ-PROXY-0014](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0014) → `CC-PROXY-LIFECYCLE-AND-RENEWAL`.
+- [REQ-PROXY-0015](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0015) → `CC-PROXY-LIFECYCLE-AND-RENEWAL`.
+- [REQ-PROXY-0016](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0016) → `CC-PROXY-LIFECYCLE-AND-RENEWAL`.
 
 ### CC-PROXY-HTTP-CONNECT-BEHAVIOR
 
@@ -2327,10 +2331,10 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-PROXY-0019 -->
 <!-- requirement-ref: REQ-PROXY-0020 -->
 
-- [REQ-PROXY-0017](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0017) → `CC-PROXY-HTTP-CONNECT-BEHAVIOR`.
-- [REQ-PROXY-0018](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0018) → `CC-PROXY-HTTP-CONNECT-BEHAVIOR`.
-- [REQ-PROXY-0019](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0019) → `CC-PROXY-HTTP-CONNECT-BEHAVIOR`.
-- [REQ-PROXY-0020](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0020) → `CC-PROXY-HTTP-CONNECT-BEHAVIOR`.
+- [REQ-PROXY-0017](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0017) → `CC-PROXY-HTTP-CONNECT-BEHAVIOR`.
+- [REQ-PROXY-0018](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0018) → `CC-PROXY-HTTP-CONNECT-BEHAVIOR`.
+- [REQ-PROXY-0019](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0019) → `CC-PROXY-HTTP-CONNECT-BEHAVIOR`.
+- [REQ-PROXY-0020](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0020) → `CC-PROXY-HTTP-CONNECT-BEHAVIOR`.
 
 ### CC-PROXY-TASK-SELECTION
 
@@ -2343,8 +2347,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-PROXY-0021 -->
 <!-- requirement-ref: REQ-PROXY-0022 -->
 
-- [REQ-PROXY-0021](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0021) → `CC-PROXY-TASK-SELECTION`.
-- [REQ-PROXY-0022](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0022) → `CC-PROXY-TASK-SELECTION`.
+- [REQ-PROXY-0021](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0021) → `CC-PROXY-TASK-SELECTION`.
+- [REQ-PROXY-0022](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0022) → `CC-PROXY-TASK-SELECTION`.
 
 ### CC-PROXY-NETWORK-CONTEXT
 
@@ -2358,9 +2362,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-PROXY-0024 -->
 <!-- requirement-ref: REQ-PROXY-0025 -->
 
-- [REQ-PROXY-0023](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0023) → `CC-PROXY-NETWORK-CONTEXT`.
-- [REQ-PROXY-0024](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0024) → `CC-PROXY-NETWORK-CONTEXT`.
-- [REQ-PROXY-0025](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0025) → `CC-PROXY-NETWORK-CONTEXT`.
+- [REQ-PROXY-0023](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0023) → `CC-PROXY-NETWORK-CONTEXT`.
+- [REQ-PROXY-0024](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0024) → `CC-PROXY-NETWORK-CONTEXT`.
+- [REQ-PROXY-0025](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0025) → `CC-PROXY-NETWORK-CONTEXT`.
 
 ### CC-PROXY-INITIAL-TEST-COMPATIBILITY
 
@@ -2373,8 +2377,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-PROXY-0026 -->
 <!-- requirement-ref: REQ-PROXY-0027 -->
 
-- [REQ-PROXY-0026](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0026) → `CC-PROXY-INITIAL-TEST-COMPATIBILITY`.
-- [REQ-PROXY-0027](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0027) → `CC-PROXY-INITIAL-TEST-COMPATIBILITY`.
+- [REQ-PROXY-0026](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0026) → `CC-PROXY-INITIAL-TEST-COMPATIBILITY`.
+- [REQ-PROXY-0027](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0027) → `CC-PROXY-INITIAL-TEST-COMPATIBILITY`.
 
 ### CC-PROXY-EXECUTION-STATES
 
@@ -2388,9 +2392,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-PROXY-0029 -->
 <!-- requirement-ref: REQ-PROXY-0030 -->
 
-- [REQ-PROXY-0028](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0028) → `CC-PROXY-EXECUTION-STATES`.
-- [REQ-PROXY-0029](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0029) → `CC-PROXY-EXECUTION-STATES`.
-- [REQ-PROXY-0030](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0030) → `CC-PROXY-EXECUTION-STATES`.
+- [REQ-PROXY-0028](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0028) → `CC-PROXY-EXECUTION-STATES`.
+- [REQ-PROXY-0029](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0029) → `CC-PROXY-EXECUTION-STATES`.
+- [REQ-PROXY-0030](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0030) → `CC-PROXY-EXECUTION-STATES`.
 
 ### CC-PROXY-RESULT-METADATA
 
@@ -2404,9 +2408,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-PROXY-0032 -->
 <!-- requirement-ref: REQ-PROXY-0033 -->
 
-- [REQ-PROXY-0031](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0031) → `CC-PROXY-RESULT-METADATA`.
-- [REQ-PROXY-0032](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0032) → `CC-PROXY-RESULT-METADATA`.
-- [REQ-PROXY-0033](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0033) → `CC-PROXY-RESULT-METADATA`.
+- [REQ-PROXY-0031](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0031) → `CC-PROXY-RESULT-METADATA`.
+- [REQ-PROXY-0032](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0032) → `CC-PROXY-RESULT-METADATA`.
+- [REQ-PROXY-0033](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0033) → `CC-PROXY-RESULT-METADATA`.
 
 ### CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION
 
@@ -2427,14 +2431,14 @@ Review case `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION` (`docs/conformance/c
 <!-- requirement-ref: REQ-PROXY-0040 -->
 <!-- requirement-ref: REQ-PROXY-0041 -->
 
-- [REQ-PROXY-0034](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0034) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-PROXY-0035](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0035) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-PROXY-0036](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0036) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-PROXY-0037](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0037) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-PROXY-0038](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0038) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-PROXY-0039](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0039) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-PROXY-0040](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0040) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
-- [REQ-PROXY-0041](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/proxy.md#REQ-PROXY-0041) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-PROXY-0034](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0034) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-PROXY-0035](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0035) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-PROXY-0036](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0036) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-PROXY-0037](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0037) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-PROXY-0038](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0038) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-PROXY-0039](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0039) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-PROXY-0040](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0040) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
+- [REQ-PROXY-0041](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0041) → `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`, `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`.
 
 ### CC-LIMIT-PURPOSE
 
@@ -2450,23 +2454,23 @@ Review case `RV-CC-LIMIT-PURPOSE` (`docs/conformance/cross-cutting-review.md`, `
 <!-- requirement-ref: REQ-LIMIT-0002 -->
 <!-- requirement-ref: REQ-LIMIT-0003 -->
 
-- [REQ-LIMIT-0001](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0001) → `CC-LIMIT-PURPOSE`, `RV-CC-LIMIT-PURPOSE`.
-- [REQ-LIMIT-0002](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0002) → `CC-LIMIT-PURPOSE`, `RV-CC-LIMIT-PURPOSE`.
-- [REQ-LIMIT-0003](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0003) → `CC-LIMIT-PURPOSE`, `RV-CC-LIMIT-PURPOSE`.
+- [REQ-LIMIT-0001](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0001) → `CC-LIMIT-PURPOSE`, `RV-CC-LIMIT-PURPOSE`.
+- [REQ-LIMIT-0002](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0002) → `CC-LIMIT-PURPOSE`, `RV-CC-LIMIT-PURPOSE`.
+- [REQ-LIMIT-0003](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0003) → `CC-LIMIT-PURPOSE`, `RV-CC-LIMIT-PURPOSE`.
 
 ### CC-LIMIT-TASK-AND-IDENTIFIER-LIMITS
 
 Public source: `library/registered-limits.md`, section **Task and Identifier Limits**. Intended target: `internal/validation/limits.go`. Planned case location: `internal/validation/cross_cutting_conformance_test.go`, `symbol:TestCcLimitTaskAndIdentifierLimits`.
 
-Case plan: Parameterize each row of the task and identifier table at below, equal and above its maximum, measured on original encoded bytes: complete task 65,535 and 65,536 bytes accepted, 65,537 rejected before parsing as task_limit_exceeded; task_id 127 and 128 ASCII bytes accepted, 129 rejected (class per GO-SPEC-ISSUE-008); input JSON 49,151 and 49,152 encoded bytes accepted, 49,153 rejected; options JSON 8,191 and 8,192 accepted, 8,193 rejected; labels with 16 entries accepted and 17 rejected, and 2,048 encoded bytes accepted and 2,049 rejected; a generic identifier such as a NET-05 step_id of 64 ASCII bytes accepted and 65 rejected. Pad with insignificant whitespace and with escape sequences so encoded and decoded lengths differ, and assert the encoded length is counted. An unknown field that takes a task from 65,536 to 65,537 bytes is rejected as task_limit_exceeded; an unknown field within the limit is rejected as task_schema_invalid. Feed 1 MiB through a counting reader and assert no more than 65,537 bytes are read. Requirements: REQ-LIMIT-0004, REQ-LIMIT-0005.
+Case plan: Parameterize each row of the task and identifier table at below, equal and above its maximum, measured on original encoded bytes: complete task 65,535 and 65,536 bytes accepted, 65,537 rejected before parsing as task_limit_exceeded; task_id 127 and 128 ASCII bytes accepted, 129 rejected as task_limit_exceeded, never task_schema_invalid; input JSON 49,151 and 49,152 encoded bytes accepted, 49,153 rejected; options JSON 8,191 and 8,192 accepted, 8,193 rejected; labels with 16 entries accepted and 17 rejected, and 2,048 encoded bytes accepted and 2,049 rejected; a generic identifier such as a NET-05 step_id of 64 ASCII bytes accepted and 65 rejected. Pad with insignificant whitespace and with escape sequences so encoded and decoded lengths differ, and assert the encoded length is counted. An unknown field that takes a task from 65,536 to 65,537 bytes is rejected as task_limit_exceeded; an unknown field within the limit is rejected as task_schema_invalid. Feed 1 MiB through a counting reader and assert no more than 65,537 bytes are read. Requirements: REQ-LIMIT-0004, REQ-LIMIT-0005.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-LIMIT-0004 -->
 <!-- requirement-ref: REQ-LIMIT-0005 -->
 
-- [REQ-LIMIT-0004](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0004) → `CC-LIMIT-TASK-AND-IDENTIFIER-LIMITS`.
-- [REQ-LIMIT-0005](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0005) → `CC-LIMIT-TASK-AND-IDENTIFIER-LIMITS`.
+- [REQ-LIMIT-0004](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0004) → `CC-LIMIT-TASK-AND-IDENTIFIER-LIMITS`.
+- [REQ-LIMIT-0005](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0005) → `CC-LIMIT-TASK-AND-IDENTIFIER-LIMITS`.
 
 ### CC-LIMIT-ATTEMPT-LIMITS
 
@@ -2480,9 +2484,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-LIMIT-0007 -->
 <!-- requirement-ref: REQ-LIMIT-0008 -->
 
-- [REQ-LIMIT-0006](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0006) → `CC-LIMIT-ATTEMPT-LIMITS`.
-- [REQ-LIMIT-0007](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0007) → `CC-LIMIT-ATTEMPT-LIMITS`.
-- [REQ-LIMIT-0008](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0008) → `CC-LIMIT-ATTEMPT-LIMITS`.
+- [REQ-LIMIT-0006](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0006) → `CC-LIMIT-ATTEMPT-LIMITS`.
+- [REQ-LIMIT-0007](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0007) → `CC-LIMIT-ATTEMPT-LIMITS`.
+- [REQ-LIMIT-0008](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0008) → `CC-LIMIT-ATTEMPT-LIMITS`.
 
 ### CC-LIMIT-SCHEDULE-AND-RETRY-LIMITS
 
@@ -2498,11 +2502,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-LIMIT-0012 -->
 <!-- requirement-ref: REQ-LIMIT-0013 -->
 
-- [REQ-LIMIT-0009](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0009) → `CC-LIMIT-SCHEDULE-AND-RETRY-LIMITS`.
-- [REQ-LIMIT-0010](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0010) → `CC-LIMIT-SCHEDULE-AND-RETRY-LIMITS`.
-- [REQ-LIMIT-0011](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0011) → `CC-LIMIT-SCHEDULE-AND-RETRY-LIMITS`.
-- [REQ-LIMIT-0012](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0012) → `CC-LIMIT-SCHEDULE-AND-RETRY-LIMITS`.
-- [REQ-LIMIT-0013](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0013) → `CC-LIMIT-SCHEDULE-AND-RETRY-LIMITS`.
+- [REQ-LIMIT-0009](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0009) → `CC-LIMIT-SCHEDULE-AND-RETRY-LIMITS`.
+- [REQ-LIMIT-0010](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0010) → `CC-LIMIT-SCHEDULE-AND-RETRY-LIMITS`.
+- [REQ-LIMIT-0011](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0011) → `CC-LIMIT-SCHEDULE-AND-RETRY-LIMITS`.
+- [REQ-LIMIT-0012](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0012) → `CC-LIMIT-SCHEDULE-AND-RETRY-LIMITS`.
+- [REQ-LIMIT-0013](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0013) → `CC-LIMIT-SCHEDULE-AND-RETRY-LIMITS`.
 
 ### CC-LIMIT-DNS-LIMITS
 
@@ -2515,8 +2519,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-LIMIT-0014 -->
 <!-- requirement-ref: REQ-LIMIT-0015 -->
 
-- [REQ-LIMIT-0014](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0014) → `CC-LIMIT-DNS-LIMITS`.
-- [REQ-LIMIT-0015](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0015) → `CC-LIMIT-DNS-LIMITS`.
+- [REQ-LIMIT-0014](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0014) → `CC-LIMIT-DNS-LIMITS`.
+- [REQ-LIMIT-0015](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0015) → `CC-LIMIT-DNS-LIMITS`.
 
 ### CC-LIMIT-HTTP-AND-VALIDATION-LIMITS
 
@@ -2530,9 +2534,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-LIMIT-0017 -->
 <!-- requirement-ref: REQ-LIMIT-0018 -->
 
-- [REQ-LIMIT-0016](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0016) → `CC-LIMIT-HTTP-AND-VALIDATION-LIMITS`.
-- [REQ-LIMIT-0017](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0017) → `CC-LIMIT-HTTP-AND-VALIDATION-LIMITS`.
-- [REQ-LIMIT-0018](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0018) → `CC-LIMIT-HTTP-AND-VALIDATION-LIMITS`.
+- [REQ-LIMIT-0016](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0016) → `CC-LIMIT-HTTP-AND-VALIDATION-LIMITS`.
+- [REQ-LIMIT-0017](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0017) → `CC-LIMIT-HTTP-AND-VALIDATION-LIMITS`.
+- [REQ-LIMIT-0018](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0018) → `CC-LIMIT-HTTP-AND-VALIDATION-LIMITS`.
 
 ### CC-LIMIT-NET-05-COMPOSITE-LIMITS
 
@@ -2545,8 +2549,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-LIMIT-0019 -->
 <!-- requirement-ref: REQ-LIMIT-0020 -->
 
-- [REQ-LIMIT-0019](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0019) → `CC-LIMIT-NET-05-COMPOSITE-LIMITS`.
-- [REQ-LIMIT-0020](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0020) → `CC-LIMIT-NET-05-COMPOSITE-LIMITS`.
+- [REQ-LIMIT-0019](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0019) → `CC-LIMIT-NET-05-COMPOSITE-LIMITS`.
+- [REQ-LIMIT-0020](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0020) → `CC-LIMIT-NET-05-COMPOSITE-LIMITS`.
 
 ### CC-LIMIT-RESULT-AND-BUNDLE-LIMITS
 
@@ -2559,8 +2563,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-LIMIT-0021 -->
 <!-- requirement-ref: REQ-LIMIT-0022 -->
 
-- [REQ-LIMIT-0021](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0021) → `CC-LIMIT-RESULT-AND-BUNDLE-LIMITS`.
-- [REQ-LIMIT-0022](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0022) → `CC-LIMIT-RESULT-AND-BUNDLE-LIMITS`.
+- [REQ-LIMIT-0021](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0021) → `CC-LIMIT-RESULT-AND-BUNDLE-LIMITS`.
+- [REQ-LIMIT-0022](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0022) → `CC-LIMIT-RESULT-AND-BUNDLE-LIMITS`.
 
 ### CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS
 
@@ -2576,9 +2580,9 @@ Review case `RV-CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS` (`docs/conformanc
 <!-- requirement-ref: REQ-LIMIT-0024 -->
 <!-- requirement-ref: REQ-LIMIT-0025 -->
 
-- [REQ-LIMIT-0023](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0023) → `CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`, `RV-CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`.
-- [REQ-LIMIT-0024](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0024) → `CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`, `RV-CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`.
-- [REQ-LIMIT-0025](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0025) → `CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`, `RV-CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`.
+- [REQ-LIMIT-0023](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0023) → `CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`, `RV-CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`.
+- [REQ-LIMIT-0024](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0024) → `CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`, `RV-CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`.
+- [REQ-LIMIT-0025](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0025) → `CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`, `RV-CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`.
 
 ### CC-LIMIT-LIMIT-HANDLING
 
@@ -2597,12 +2601,12 @@ Review case `RV-CC-LIMIT-LIMIT-HANDLING` (`docs/conformance/cross-cutting-review
 <!-- requirement-ref: REQ-LIMIT-0030 -->
 <!-- requirement-ref: REQ-LIMIT-0031 -->
 
-- [REQ-LIMIT-0026](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0026) → `CC-LIMIT-LIMIT-HANDLING`, `RV-CC-LIMIT-LIMIT-HANDLING`.
-- [REQ-LIMIT-0027](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0027) → `CC-LIMIT-LIMIT-HANDLING`, `RV-CC-LIMIT-LIMIT-HANDLING`.
-- [REQ-LIMIT-0028](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0028) → `CC-LIMIT-LIMIT-HANDLING`, `RV-CC-LIMIT-LIMIT-HANDLING`.
-- [REQ-LIMIT-0029](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0029) → `CC-LIMIT-LIMIT-HANDLING`, `RV-CC-LIMIT-LIMIT-HANDLING`.
-- [REQ-LIMIT-0030](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0030) → `CC-LIMIT-LIMIT-HANDLING`, `RV-CC-LIMIT-LIMIT-HANDLING`.
-- [REQ-LIMIT-0031](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/registered-limits.md#REQ-LIMIT-0031) → `CC-LIMIT-LIMIT-HANDLING`, `RV-CC-LIMIT-LIMIT-HANDLING`.
+- [REQ-LIMIT-0026](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0026) → `CC-LIMIT-LIMIT-HANDLING`, `RV-CC-LIMIT-LIMIT-HANDLING`.
+- [REQ-LIMIT-0027](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0027) → `CC-LIMIT-LIMIT-HANDLING`, `RV-CC-LIMIT-LIMIT-HANDLING`.
+- [REQ-LIMIT-0028](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0028) → `CC-LIMIT-LIMIT-HANDLING`, `RV-CC-LIMIT-LIMIT-HANDLING`.
+- [REQ-LIMIT-0029](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0029) → `CC-LIMIT-LIMIT-HANDLING`, `RV-CC-LIMIT-LIMIT-HANDLING`.
+- [REQ-LIMIT-0030](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0030) → `CC-LIMIT-LIMIT-HANDLING`, `RV-CC-LIMIT-LIMIT-HANDLING`.
+- [REQ-LIMIT-0031](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0031) → `CC-LIMIT-LIMIT-HANDLING`, `RV-CC-LIMIT-LIMIT-HANDLING`.
 
 ### CC-LINKAGE-OVERVIEW
 
@@ -2616,7 +2620,7 @@ Review case `RV-CC-LINKAGE-OVERVIEW` (`docs/conformance/cross-cutting-review.md`
 
 <!-- requirement-ref: REQ-LINKAGE-0001 -->
 
-- [REQ-LINKAGE-0001](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0001) → `CC-LINKAGE-OVERVIEW`, `RV-CC-LINKAGE-OVERVIEW`.
+- [REQ-LINKAGE-0001](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0001) → `CC-LINKAGE-OVERVIEW`, `RV-CC-LINKAGE-OVERVIEW`.
 
 ### CC-LINKAGE-GOALS-AND-NON-GOALS
 
@@ -2628,7 +2632,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-LINKAGE-0002 -->
 
-- [REQ-LINKAGE-0002](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0002) → `CC-LINKAGE-GOALS-AND-NON-GOALS`.
+- [REQ-LINKAGE-0002](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0002) → `CC-LINKAGE-GOALS-AND-NON-GOALS`.
 
 ### CC-LINKAGE-INITIALIZATION-CONFIGURATION
 
@@ -2645,10 +2649,10 @@ Review case `RV-CC-LINKAGE-INITIALIZATION-CONFIGURATION` (`docs/conformance/cros
 <!-- requirement-ref: REQ-LINKAGE-0005 -->
 <!-- requirement-ref: REQ-LINKAGE-0006 -->
 
-- [REQ-LINKAGE-0003](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0003) → `CC-LINKAGE-INITIALIZATION-CONFIGURATION`, `RV-CC-LINKAGE-INITIALIZATION-CONFIGURATION`.
-- [REQ-LINKAGE-0004](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0004) → `CC-LINKAGE-INITIALIZATION-CONFIGURATION`, `RV-CC-LINKAGE-INITIALIZATION-CONFIGURATION`.
-- [REQ-LINKAGE-0005](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0005) → `CC-LINKAGE-INITIALIZATION-CONFIGURATION`, `RV-CC-LINKAGE-INITIALIZATION-CONFIGURATION`.
-- [REQ-LINKAGE-0006](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0006) → `CC-LINKAGE-INITIALIZATION-CONFIGURATION`, `RV-CC-LINKAGE-INITIALIZATION-CONFIGURATION`.
+- [REQ-LINKAGE-0003](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0003) → `CC-LINKAGE-INITIALIZATION-CONFIGURATION`, `RV-CC-LINKAGE-INITIALIZATION-CONFIGURATION`.
+- [REQ-LINKAGE-0004](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0004) → `CC-LINKAGE-INITIALIZATION-CONFIGURATION`, `RV-CC-LINKAGE-INITIALIZATION-CONFIGURATION`.
+- [REQ-LINKAGE-0005](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0005) → `CC-LINKAGE-INITIALIZATION-CONFIGURATION`, `RV-CC-LINKAGE-INITIALIZATION-CONFIGURATION`.
+- [REQ-LINKAGE-0006](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0006) → `CC-LINKAGE-INITIALIZATION-CONFIGURATION`, `RV-CC-LINKAGE-INITIALIZATION-CONFIGURATION`.
 
 ### CC-LINKAGE-INSTALLATION-SECRET
 
@@ -2662,9 +2666,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-LINKAGE-0008 -->
 <!-- requirement-ref: REQ-LINKAGE-0009 -->
 
-- [REQ-LINKAGE-0007](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0007) → `CC-LINKAGE-INSTALLATION-SECRET`.
-- [REQ-LINKAGE-0008](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0008) → `CC-LINKAGE-INSTALLATION-SECRET`.
-- [REQ-LINKAGE-0009](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0009) → `CC-LINKAGE-INSTALLATION-SECRET`.
+- [REQ-LINKAGE-0007](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0007) → `CC-LINKAGE-INSTALLATION-SECRET`.
+- [REQ-LINKAGE-0008](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0008) → `CC-LINKAGE-INSTALLATION-SECRET`.
+- [REQ-LINKAGE-0009](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0009) → `CC-LINKAGE-INSTALLATION-SECRET`.
 
 ### CC-LINKAGE-TOKEN-DERIVATION
 
@@ -2680,11 +2684,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-LINKAGE-0013 -->
 <!-- requirement-ref: REQ-LINKAGE-0014 -->
 
-- [REQ-LINKAGE-0010](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0010) → `CC-LINKAGE-TOKEN-DERIVATION`.
-- [REQ-LINKAGE-0011](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0011) → `CC-LINKAGE-TOKEN-DERIVATION`.
-- [REQ-LINKAGE-0012](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0012) → `CC-LINKAGE-TOKEN-DERIVATION`.
-- [REQ-LINKAGE-0013](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0013) → `CC-LINKAGE-TOKEN-DERIVATION`.
-- [REQ-LINKAGE-0014](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0014) → `CC-LINKAGE-TOKEN-DERIVATION`.
+- [REQ-LINKAGE-0010](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0010) → `CC-LINKAGE-TOKEN-DERIVATION`.
+- [REQ-LINKAGE-0011](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0011) → `CC-LINKAGE-TOKEN-DERIVATION`.
+- [REQ-LINKAGE-0012](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0012) → `CC-LINKAGE-TOKEN-DERIVATION`.
+- [REQ-LINKAGE-0013](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0013) → `CC-LINKAGE-TOKEN-DERIVATION`.
+- [REQ-LINKAGE-0014](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0014) → `CC-LINKAGE-TOKEN-DERIVATION`.
 
 ### CC-LINKAGE-ROTATION-SEMANTICS
 
@@ -2698,9 +2702,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-LINKAGE-0016 -->
 <!-- requirement-ref: REQ-LINKAGE-0017 -->
 
-- [REQ-LINKAGE-0015](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0015) → `CC-LINKAGE-ROTATION-SEMANTICS`.
-- [REQ-LINKAGE-0016](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0016) → `CC-LINKAGE-ROTATION-SEMANTICS`.
-- [REQ-LINKAGE-0017](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0017) → `CC-LINKAGE-ROTATION-SEMANTICS`.
+- [REQ-LINKAGE-0015](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0015) → `CC-LINKAGE-ROTATION-SEMANTICS`.
+- [REQ-LINKAGE-0016](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0016) → `CC-LINKAGE-ROTATION-SEMANTICS`.
+- [REQ-LINKAGE-0017](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0017) → `CC-LINKAGE-ROTATION-SEMANTICS`.
 
 ### CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE
 
@@ -2718,11 +2722,11 @@ Review case `RV-CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE` (`docs/confo
 <!-- requirement-ref: REQ-LINKAGE-0021 -->
 <!-- requirement-ref: REQ-LINKAGE-0022 -->
 
-- [REQ-LINKAGE-0018](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0018) → `CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`, `RV-CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`.
-- [REQ-LINKAGE-0019](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0019) → `CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`, `RV-CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`.
-- [REQ-LINKAGE-0020](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0020) → `CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`, `RV-CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`.
-- [REQ-LINKAGE-0021](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0021) → `CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`, `RV-CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`.
-- [REQ-LINKAGE-0022](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0022) → `CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`, `RV-CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`.
+- [REQ-LINKAGE-0018](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0018) → `CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`, `RV-CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`.
+- [REQ-LINKAGE-0019](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0019) → `CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`, `RV-CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`.
+- [REQ-LINKAGE-0020](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0020) → `CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`, `RV-CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`.
+- [REQ-LINKAGE-0021](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0021) → `CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`, `RV-CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`.
+- [REQ-LINKAGE-0022](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0022) → `CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`, `RV-CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE`.
 
 ### CC-LINKAGE-CLEAR-DATA-CONTRACT
 
@@ -2737,10 +2741,10 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-LINKAGE-0025 -->
 <!-- requirement-ref: REQ-LINKAGE-0026 -->
 
-- [REQ-LINKAGE-0023](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0023) → `CC-LINKAGE-CLEAR-DATA-CONTRACT`.
-- [REQ-LINKAGE-0024](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0024) → `CC-LINKAGE-CLEAR-DATA-CONTRACT`.
-- [REQ-LINKAGE-0025](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0025) → `CC-LINKAGE-CLEAR-DATA-CONTRACT`.
-- [REQ-LINKAGE-0026](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0026) → `CC-LINKAGE-CLEAR-DATA-CONTRACT`.
+- [REQ-LINKAGE-0023](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0023) → `CC-LINKAGE-CLEAR-DATA-CONTRACT`.
+- [REQ-LINKAGE-0024](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0024) → `CC-LINKAGE-CLEAR-DATA-CONTRACT`.
+- [REQ-LINKAGE-0025](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0025) → `CC-LINKAGE-CLEAR-DATA-CONTRACT`.
+- [REQ-LINKAGE-0026](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0026) → `CC-LINKAGE-CLEAR-DATA-CONTRACT`.
 
 ### CC-LINKAGE-ANDROID-STORAGE
 
@@ -2756,11 +2760,11 @@ Scope: Native adapter and device release validation; planned outside portable Go
 <!-- requirement-ref: REQ-LINKAGE-0030 -->
 <!-- requirement-ref: REQ-LINKAGE-0031 -->
 
-- [REQ-LINKAGE-0027](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0027) → `CC-LINKAGE-ANDROID-STORAGE`.
-- [REQ-LINKAGE-0028](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0028) → `CC-LINKAGE-ANDROID-STORAGE`.
-- [REQ-LINKAGE-0029](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0029) → `CC-LINKAGE-ANDROID-STORAGE`.
-- [REQ-LINKAGE-0030](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0030) → `CC-LINKAGE-ANDROID-STORAGE`.
-- [REQ-LINKAGE-0031](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0031) → `CC-LINKAGE-ANDROID-STORAGE`.
+- [REQ-LINKAGE-0027](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0027) → `CC-LINKAGE-ANDROID-STORAGE`.
+- [REQ-LINKAGE-0028](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0028) → `CC-LINKAGE-ANDROID-STORAGE`.
+- [REQ-LINKAGE-0029](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0029) → `CC-LINKAGE-ANDROID-STORAGE`.
+- [REQ-LINKAGE-0030](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0030) → `CC-LINKAGE-ANDROID-STORAGE`.
+- [REQ-LINKAGE-0031](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0031) → `CC-LINKAGE-ANDROID-STORAGE`.
 
 ### CC-LINKAGE-APPLE-PLATFORM-STORAGE
 
@@ -2778,11 +2782,11 @@ Review case `RV-CC-LINKAGE-APPLE-PLATFORM-STORAGE` (`docs/conformance/native-lin
 <!-- requirement-ref: REQ-LINKAGE-0035 -->
 <!-- requirement-ref: REQ-LINKAGE-0036 -->
 
-- [REQ-LINKAGE-0032](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0032) → `CC-LINKAGE-APPLE-PLATFORM-STORAGE`, `RV-CC-LINKAGE-APPLE-PLATFORM-STORAGE`.
-- [REQ-LINKAGE-0033](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0033) → `CC-LINKAGE-APPLE-PLATFORM-STORAGE`, `RV-CC-LINKAGE-APPLE-PLATFORM-STORAGE`.
-- [REQ-LINKAGE-0034](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0034) → `CC-LINKAGE-APPLE-PLATFORM-STORAGE`, `RV-CC-LINKAGE-APPLE-PLATFORM-STORAGE`.
-- [REQ-LINKAGE-0035](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0035) → `CC-LINKAGE-APPLE-PLATFORM-STORAGE`, `RV-CC-LINKAGE-APPLE-PLATFORM-STORAGE`.
-- [REQ-LINKAGE-0036](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0036) → `CC-LINKAGE-APPLE-PLATFORM-STORAGE`, `RV-CC-LINKAGE-APPLE-PLATFORM-STORAGE`.
+- [REQ-LINKAGE-0032](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0032) → `CC-LINKAGE-APPLE-PLATFORM-STORAGE`, `RV-CC-LINKAGE-APPLE-PLATFORM-STORAGE`.
+- [REQ-LINKAGE-0033](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0033) → `CC-LINKAGE-APPLE-PLATFORM-STORAGE`, `RV-CC-LINKAGE-APPLE-PLATFORM-STORAGE`.
+- [REQ-LINKAGE-0034](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0034) → `CC-LINKAGE-APPLE-PLATFORM-STORAGE`, `RV-CC-LINKAGE-APPLE-PLATFORM-STORAGE`.
+- [REQ-LINKAGE-0035](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0035) → `CC-LINKAGE-APPLE-PLATFORM-STORAGE`, `RV-CC-LINKAGE-APPLE-PLATFORM-STORAGE`.
+- [REQ-LINKAGE-0036](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0036) → `CC-LINKAGE-APPLE-PLATFORM-STORAGE`, `RV-CC-LINKAGE-APPLE-PLATFORM-STORAGE`.
 
 ### CC-LINKAGE-STORAGE-FAILURE
 
@@ -2796,9 +2800,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-LINKAGE-0038 -->
 <!-- requirement-ref: REQ-LINKAGE-0039 -->
 
-- [REQ-LINKAGE-0037](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0037) → `CC-LINKAGE-STORAGE-FAILURE`.
-- [REQ-LINKAGE-0038](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0038) → `CC-LINKAGE-STORAGE-FAILURE`.
-- [REQ-LINKAGE-0039](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0039) → `CC-LINKAGE-STORAGE-FAILURE`.
+- [REQ-LINKAGE-0037](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0037) → `CC-LINKAGE-STORAGE-FAILURE`.
+- [REQ-LINKAGE-0038](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0038) → `CC-LINKAGE-STORAGE-FAILURE`.
+- [REQ-LINKAGE-0039](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0039) → `CC-LINKAGE-STORAGE-FAILURE`.
 
 ### CC-LINKAGE-INGESTION-SEPARATION
 
@@ -2812,9 +2816,9 @@ Scope: Host, collector or specification review; no runtime enforcement claim. No
 <!-- requirement-ref: REQ-LINKAGE-0041 -->
 <!-- requirement-ref: REQ-LINKAGE-0042 -->
 
-- [REQ-LINKAGE-0040](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0040) → `RV-CC-LINKAGE-INGESTION-SEPARATION`.
-- [REQ-LINKAGE-0041](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0041) → `RV-CC-LINKAGE-INGESTION-SEPARATION`.
-- [REQ-LINKAGE-0042](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0042) → `RV-CC-LINKAGE-INGESTION-SEPARATION`.
+- [REQ-LINKAGE-0040](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0040) → `RV-CC-LINKAGE-INGESTION-SEPARATION`.
+- [REQ-LINKAGE-0041](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0041) → `RV-CC-LINKAGE-INGESTION-SEPARATION`.
+- [REQ-LINKAGE-0042](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0042) → `RV-CC-LINKAGE-INGESTION-SEPARATION`.
 
 ### CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS
 
@@ -2837,36 +2841,36 @@ Review case `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS` (`docs/conformance/c
 <!-- requirement-ref: REQ-LINKAGE-0051 -->
 <!-- requirement-ref: REQ-LINKAGE-0052 -->
 
-- [REQ-LINKAGE-0043](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0043) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-LINKAGE-0044](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0044) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-LINKAGE-0045](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0045) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-LINKAGE-0046](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0046) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-LINKAGE-0047](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0047) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-LINKAGE-0048](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0048) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-LINKAGE-0049](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0049) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-LINKAGE-0050](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0050) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-LINKAGE-0051](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0051) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
-- [REQ-LINKAGE-0052](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/result-linkage.md#REQ-LINKAGE-0052) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-LINKAGE-0043](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0043) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-LINKAGE-0044](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0044) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-LINKAGE-0045](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0045) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-LINKAGE-0046](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0046) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-LINKAGE-0047](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0047) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-LINKAGE-0048](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0048) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-LINKAGE-0049](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0049) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-LINKAGE-0050](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0050) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-LINKAGE-0051](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0051) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
+- [REQ-LINKAGE-0052](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0052) → `CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`, `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS`.
 
 ### CC-TRUST-OVERVIEW
 
 Public source: `library/task-trust.md`, section **Overview**. Intended target: `internal/admission/admit.go`. Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustOverview`.
 
-Case plan: Admit synthetic NET-01 tasks with a fake delivery-record store, local policy, registry, deterministic clock and recording transport. A baseline task with an embedded delivery record for its exact bytes, an issuer permitted NET-01 0.1.0 and a matching target registration is accepted. Remove one prerequisite at a time (the delivery record, the issuer permission, the target registration, the registry entry for the exact version, and a numeric value raised above its registered limit) and assert rejection with one of the ten public admission classes and zero transport calls. Add task-controlled authority claims: top-level authenticated, issuer_id, policy_generation and trusted fields are rejected as task_schema_invalid, and a permitted label with the text "authenticated: true" stays opaque, producing the same authority, effective risk, targets and policy decision as the same task without it. With a synthetic registry baseline of medium, a task declaring low cannot lower effective risk. Assert no task field changes the active policy generation or registrations. Requirements: REQ-TRUST-0002, REQ-TRUST-0003.
+Case plan: Admit synthetic NET-01 tasks with a fake delivery-record store, local policy, registry, deterministic clock and recording transport. A baseline task with an embedded delivery record for its exact bytes, an issuer permitted NET-01 0.1.0 and a matching target registration is accepted. Remove one prerequisite at a time (the delivery record, the issuer permission, the target registration, the registry entry for the exact version, and a numeric value raised above its registered limit) and assert rejection with, respectively, task_source_unauthenticated, task_issuer_not_authorized, target_not_registered, task_unsupported and task_limit_exceeded, and zero transport calls. Add task-controlled authority claims: top-level authenticated, issuer_id, policy_generation and trusted fields are rejected as task_schema_invalid, and a permitted label with the text "authenticated: true" stays opaque, producing the same authority, effective risk, targets and policy decision as the same task without it. With a synthetic registry baseline of medium, a task declaring low cannot lower effective risk. Assert no task field changes the active policy generation or registrations. Requirements: REQ-TRUST-0002, REQ-TRUST-0003.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-TRUST-0002 -->
 <!-- requirement-ref: REQ-TRUST-0003 -->
 
-- [REQ-TRUST-0002](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0002) → `CC-TRUST-OVERVIEW`.
-- [REQ-TRUST-0003](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0003) → `CC-TRUST-OVERVIEW`.
+- [REQ-TRUST-0002](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0002) → `CC-TRUST-OVERVIEW`.
+- [REQ-TRUST-0003](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0003) → `CC-TRUST-OVERVIEW`.
 
 ### CC-TRUST-ACCEPTED-TASK-ORIGINS
 
 Public source: `library/task-trust.md`, section **Accepted Task Origins**. Intended target: `internal/admission/admit.go`. Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustAcceptedTaskOrigins`.
 
-Case plan: Admit the same synthetic task bytes through delivery records of each origin: embedded with authenticated false and no issued_at is accepted, and remote with authenticated true and issued_at equal to the fake clock is accepted. For remote origin, remove one input at a time: authenticated false is rejected as task_source_unauthenticated; a record bound to bytes differing by one byte (failed integrity) is rejected; a missing issued_at cannot produce a record; an unavailable trusted clock is rejected; no delivery record at all is rejected. The classes for the last three follow GO-SPEC-ISSUE-008. A test verifier that reports transport encryption without issuer authentication must yield no authenticated record, and admission then rejects. For every rejection assert no replay or admitted-task record is written and the recording transport sees zero calls. Requirements: REQ-TRUST-0001, REQ-TRUST-0004, REQ-TRUST-0005.
+Case plan: Admit the same synthetic task bytes through delivery records of each origin: embedded with authenticated false and no issued_at is accepted, and remote with authenticated true and issued_at equal to the fake clock is accepted. For remote origin, remove one input at a time: authenticated false is rejected as task_source_unauthenticated; a record bound to bytes differing by one byte (failed integrity) is rejected as task_source_unauthenticated; a missing issued_at cannot produce a record, so the task is rejected as task_source_unauthenticated; an unavailable trusted clock is rejected as task_trust_unavailable; no delivery record at all is rejected as task_source_unauthenticated. A test verifier that reports transport encryption without issuer authentication must yield no authenticated record, and admission then rejects. For every rejection assert no replay or admitted-task record is written and the recording transport sees zero calls. Requirements: REQ-TRUST-0001, REQ-TRUST-0004, REQ-TRUST-0005.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -2874,15 +2878,15 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-TRUST-0004 -->
 <!-- requirement-ref: REQ-TRUST-0005 -->
 
-- [REQ-TRUST-0001](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0001) → `CC-TRUST-ACCEPTED-TASK-ORIGINS`.
-- [REQ-TRUST-0004](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0004) → `CC-TRUST-ACCEPTED-TASK-ORIGINS`.
-- [REQ-TRUST-0005](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0005) → `CC-TRUST-ACCEPTED-TASK-ORIGINS`.
+- [REQ-TRUST-0001](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0001) → `CC-TRUST-ACCEPTED-TASK-ORIGINS`.
+- [REQ-TRUST-0004](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0004) → `CC-TRUST-ACCEPTED-TASK-ORIGINS`.
+- [REQ-TRUST-0005](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0005) → `CC-TRUST-ACCEPTED-TASK-ORIGINS`.
 
 ### CC-TRUST-TRUSTED-SOURCE-CONTEXT
 
 Public source: `library/task-trust.md`, section **Trusted Source Context**. Intended target: `internal/admission/admit.go`. Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustTrustedSourceContext`.
 
-Case plan: Construct source contexts through the admission seam, varying one property at a time. origin: embedded and remote accepted, any other value rejected. issuer_id: 1 and 64 allowed bytes accepted; empty, 65 bytes, uppercase, space and "/" rejected. policy_generation: 1 and 2^64-1 accepted, 0 rejected. authenticated: true with embedded and false with remote rejected. issued_at: for remote, equal to the fake clock and 300 seconds ahead accepted, 301 seconds ahead rejected (class per GO-SPEC-ISSUE-008), missing rejected; for embedded, present rejected. Assert task JSON and initialization JSON have no field that sets any property (unknown fields rejected) and the trust models reject JSON import. Admit and run a task with canary issuer_id and generation values against a recording transport and fake result sink, and assert the canaries are absent from every transmitted byte, Measurement Result and bundle. Assert the facade signature fixture accepts no raw key or authenticated flag. Requirements: REQ-TRUST-0006, REQ-TRUST-0007, REQ-TRUST-0008, REQ-TRUST-0009.
+Case plan: Construct source contexts through the admission seam, varying one property at a time. origin: embedded and remote accepted, any other value rejected. issuer_id: 1 and 64 allowed bytes accepted; empty, 65 bytes, uppercase, space and "/" rejected. policy_generation: 1 and 2^64-1 accepted, 0 rejected. authenticated: true with embedded and false with remote rejected. issued_at: for remote, equal to the fake clock and 300 seconds ahead accepted, 301 seconds ahead rejected as task_source_unauthenticated, missing rejected; for embedded, present rejected. Assert task JSON and initialization JSON have no field that sets any property (unknown fields rejected) and the trust models reject JSON import. Admit and run a task with canary issuer_id and generation values against a recording transport and fake result sink, and assert the canaries are absent from every transmitted byte, Measurement Result and bundle. Assert the facade signature fixture accepts no raw key or authenticated flag. Requirements: REQ-TRUST-0006, REQ-TRUST-0007, REQ-TRUST-0008, REQ-TRUST-0009.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -2891,16 +2895,16 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-TRUST-0008 -->
 <!-- requirement-ref: REQ-TRUST-0009 -->
 
-- [REQ-TRUST-0006](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0006) → `CC-TRUST-TRUSTED-SOURCE-CONTEXT`.
-- [REQ-TRUST-0007](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0007) → `CC-TRUST-TRUSTED-SOURCE-CONTEXT`.
-- [REQ-TRUST-0008](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0008) → `CC-TRUST-TRUSTED-SOURCE-CONTEXT`.
-- [REQ-TRUST-0009](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0009) → `CC-TRUST-TRUSTED-SOURCE-CONTEXT`.
+- [REQ-TRUST-0006](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0006) → `CC-TRUST-TRUSTED-SOURCE-CONTEXT`.
+- [REQ-TRUST-0007](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0007) → `CC-TRUST-TRUSTED-SOURCE-CONTEXT`.
+- [REQ-TRUST-0008](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0008) → `CC-TRUST-TRUSTED-SOURCE-CONTEXT`.
+- [REQ-TRUST-0009](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0009) → `CC-TRUST-TRUSTED-SOURCE-CONTEXT`.
 
 ### CC-TRUST-ISSUER-AUTHORIZATION
 
 Public source: `library/task-trust.md`, section **Issuer Authorization**. Intended target: `internal/admission/admit.go`. Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustIssuerAuthorization`.
 
-Case plan: Start from a fake configuration where registered behavior, issuer permission, local deployment permission, platform capability and task restrictions all allow a NET-01 0.1.0 direct-path task, which is accepted. Narrow one dimension at a time while the other four stay permissive, and assert rejection with zero transport calls: issuer lacks the test/version pair (task_issuer_not_authorized); issuer lacks the registration reference (target_not_registered); issuer permits only the proxy path for a direct task (class per GO-SPEC-ISSUE-008); issuer maximum risk low for a medium task (task_issuer_not_authorized); medium-risk enablement off; NET-05 enablement off for a NET-05 task; issuer attempt ceiling below the task max_duration_ms (task_limit_exceeded); task label namespace not permitted; and each of these narrowed in local deployment permission instead of the issuer. For each bound named in the public list, a task value equal to the effective bound is accepted, a value one unit above is rejected and never clamped, and a lower value is accepted and carried as the effective value. Requirements: REQ-TRUST-0010, REQ-TRUST-0011, REQ-TRUST-0012.
+Case plan: Start from a fake configuration where registered behavior, issuer permission, local deployment permission, platform capability and task restrictions all allow a NET-01 0.1.0 direct-path task, which is accepted. Narrow one dimension at a time while the other four stay permissive, and assert rejection with zero transport calls: issuer lacks the test/version pair (task_issuer_not_authorized); issuer lacks the registration reference (target_not_registered); issuer permits only the proxy path for a direct task (task_issuer_not_authorized); issuer maximum risk low for a medium task (task_issuer_not_authorized); medium-risk enablement off; NET-05 enablement off for a NET-05 task; issuer attempt ceiling below the task max_duration_ms (task_limit_exceeded); task label namespace not permitted; and each of these narrowed in local deployment permission instead of the issuer. For each bound named in the public list, a task value equal to the effective bound is accepted, a value one unit above is rejected and never clamped, and a lower value is accepted and carried as the effective value. Requirements: REQ-TRUST-0010, REQ-TRUST-0011, REQ-TRUST-0012.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -2908,9 +2912,9 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-TRUST-0011 -->
 <!-- requirement-ref: REQ-TRUST-0012 -->
 
-- [REQ-TRUST-0010](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0010) → `CC-TRUST-ISSUER-AUTHORIZATION`.
-- [REQ-TRUST-0011](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0011) → `CC-TRUST-ISSUER-AUTHORIZATION`.
-- [REQ-TRUST-0012](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0012) → `CC-TRUST-ISSUER-AUTHORIZATION`.
+- [REQ-TRUST-0010](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0010) → `CC-TRUST-ISSUER-AUTHORIZATION`.
+- [REQ-TRUST-0011](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0011) → `CC-TRUST-ISSUER-AUTHORIZATION`.
+- [REQ-TRUST-0012](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0012) → `CC-TRUST-ISSUER-AUTHORIZATION`.
 
 ### CC-TRUST-TARGET-REGISTRATION
 
@@ -2925,24 +2929,26 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-TRUST-0015 -->
 <!-- requirement-ref: REQ-TRUST-0016 -->
 
-- [REQ-TRUST-0013](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0013) → `CC-TRUST-TARGET-REGISTRATION`.
-- [REQ-TRUST-0014](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0014) → `CC-TRUST-TARGET-REGISTRATION`.
-- [REQ-TRUST-0015](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0015) → `CC-TRUST-TARGET-REGISTRATION`.
-- [REQ-TRUST-0016](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0016) → `CC-TRUST-TARGET-REGISTRATION`.
+- [REQ-TRUST-0013](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0013) → `CC-TRUST-TARGET-REGISTRATION`.
+- [REQ-TRUST-0014](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0014) → `CC-TRUST-TARGET-REGISTRATION`.
+- [REQ-TRUST-0015](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0015) → `CC-TRUST-TARGET-REGISTRATION`.
+- [REQ-TRUST-0016](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0016) → `CC-TRUST-TARGET-REGISTRATION`.
 
 ### CC-TRUST-ADMISSION-PROCEDURE
 
 Public source: `library/task-trust.md`, section **Admission Procedure**. Intended target: `internal/admission/admit.go`. Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustAdmissionProcedure`.
 
-Case plan: Instrument admission with a fake delivery-record store, clock, registry, policy, replay store and recording transport that log the order of calls. A valid task runs the eleven public steps in order, and its handle is returned only after the replay write commits. Build eleven tasks that each fail exactly one step: missing delivery record, unauthenticated remote origin, 65,537 bytes, unknown top-level field, uppercase task_id, expired task, unknown issuer, unregistered target, risk above the issuer maximum, replay conflict and replay write failure. For each assert the class from the admission design table (or one of the ten public classes where GO-SPEC-ISSUE-008 leaves the row open), that no later step's capability is called, that no replay or admitted-task record exists, that no handle is returned and that the transport, DNS and Network Context fakes see zero calls. Combine an unknown top-level field with an unknown issuer and record which class is returned; precedence stays per GO-SPEC-ISSUE-008. A valid task that requires egress context performs no context lookup during admission. Requirements: REQ-TRUST-0017, REQ-TRUST-0018.
+Case plan: Instrument admission with a fake delivery-record store, clock, registry, policy, replay store and recording transport that log the order of calls. A valid task runs the eleven public steps in order, and its handle is returned only after the replay write commits. Build tasks that each fail exactly one step and assert the listed class: missing, expired, foreign-instance or byte-mismatched delivery record, task_source_unauthenticated; unauthenticated remote origin, task_source_unauthenticated; unavailable trusted clock, task_trust_unavailable; remote issued_at 301 seconds in the future, task_source_unauthenticated, while 300 seconds is accepted; 65,537 bytes, task_limit_exceeded; unknown top-level field, task_schema_invalid; well-formed but unregistered test_version, task_unsupported; uppercase task_id, task_schema_invalid; 129-byte task_id, task_limit_exceeded; expired task, task_expired; execution.context requiring egress Network Context in a build without egress acquisition, task_unsupported; no installed policy, task_policy_unavailable; source policy_generation one above the active generation, task_policy_unavailable, and one below, policy_rollback; unknown issuer, task_issuer_not_authorized; direct or proxy path not permitted by issuer authority or local policy, task_issuer_not_authorized; path not permitted by the matched target registration, and an unregistered target, target_not_registered; effective risk above the issuer maximum or a local-policy bound, and unknown risk without a reviewed local permission, task_issuer_not_authorized; replay conflict, task_id_conflict; replay write failure, task_trust_unavailable. For each assert exactly one class, that no later step's capability is called, that no replay or admitted-task record exists, that no handle is returned and that the transport, DNS and Network Context fakes see zero calls. Precedence follows the first failing step: an unknown top-level field with an unknown issuer returns task_schema_invalid (step 4 before 7), an unregistered test_version with a 129-byte task_id returns task_unsupported (step 4 before 5), an expired task with an unregistered target returns task_expired (step 6 before 8), and a 65,537-byte task from an unauthenticated remote source returns task_source_unauthenticated (step 2 before 3). A valid task that requires egress context performs no context lookup during admission in a build that provides egress acquisition. Requirements: REQ-TRUST-0017, REQ-TRUST-0018, REQ-TRUST-0037.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-TRUST-0017 -->
 <!-- requirement-ref: REQ-TRUST-0018 -->
+<!-- requirement-ref: REQ-TRUST-0037 -->
 
-- [REQ-TRUST-0017](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0017) → `CC-TRUST-ADMISSION-PROCEDURE`.
-- [REQ-TRUST-0018](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0018) → `CC-TRUST-ADMISSION-PROCEDURE`.
+- [REQ-TRUST-0017](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0017) → `CC-TRUST-ADMISSION-PROCEDURE`.
+- [REQ-TRUST-0018](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0018) → `CC-TRUST-ADMISSION-PROCEDURE`.
+- [REQ-TRUST-0037](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0037) → `CC-TRUST-ADMISSION-PROCEDURE`.
 
 ### CC-TRUST-TASK-IDENTIFIER-RULES
 
@@ -2957,14 +2963,14 @@ Review case `RV-CC-TRUST-TASK-IDENTIFIER-RULES` (`docs/conformance/cross-cutting
 <!-- requirement-ref: REQ-TRUST-0019 -->
 <!-- requirement-ref: REQ-TRUST-0020 -->
 
-- [REQ-TRUST-0019](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0019) → `CC-TRUST-TASK-IDENTIFIER-RULES`, `RV-CC-TRUST-TASK-IDENTIFIER-RULES`.
-- [REQ-TRUST-0020](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0020) → `CC-TRUST-TASK-IDENTIFIER-RULES`, `RV-CC-TRUST-TASK-IDENTIFIER-RULES`.
+- [REQ-TRUST-0019](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0019) → `CC-TRUST-TASK-IDENTIFIER-RULES`, `RV-CC-TRUST-TASK-IDENTIFIER-RULES`.
+- [REQ-TRUST-0020](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0020) → `CC-TRUST-TASK-IDENTIFIER-RULES`, `RV-CC-TRUST-TASK-IDENTIFIER-RULES`.
 
 ### CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING
 
 Public source: `library/task-trust.md`, section **Replay, Duplicate, and Rollback Handling**. Intended target: `internal/admission/state.go`. Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustReplayDuplicateAndRollbackHandling`.
 
-Case plan: Exercise every replay-table row with a deterministic clock and fake persistent storage: a new replay key continues admission; the same key with identical bytes is idempotent redelivery with no duplicate runs and unchanged expiry; the same key with one changed byte (including whitespace only) is rejected as task_id_conflict; a lower policy generation than the active one is rejected as policy_rollback; an expired task is rejected as task_expired and never reactivated on later redelivery; unavailable or corrupted replay state for a remote task fails closed with task_trust_unavailable. Assert the persisted record contains only the (issuer_id, task_id) key, a SHA-256 digest equal to an independently computed digest of the exact accepted bytes, the accepted policy generation and acceptance/expiry classes, and that synthetic canary input, target, label, participant and result strings are absent from stored bytes. After clearMeasurementData, assert a redelivered unexpired task is evaluated as new and an expired one is still rejected as task_expired. Requirements: REQ-TRUST-0021, REQ-TRUST-0022, REQ-TRUST-0023, REQ-TRUST-0024, REQ-TRUST-0025.
+Case plan: Exercise every replay-table row with a deterministic clock and fake persistent storage: a new replay key continues admission; the same key with identical bytes is idempotent redelivery with no duplicate runs and unchanged expiry; the same key with one changed byte (including whitespace only) is rejected as task_id_conflict; a lower policy generation than the active one is rejected as policy_rollback; an expired task is rejected as task_expired and never reactivated on later redelivery; unavailable or corrupted replay state fails closed with task_trust_unavailable for a remote task and, with the same storage fault injected, for an embedded task, which is never accepted, assigned a handle or made executable without replay state. Assert the persisted record contains only the (issuer_id, task_id) key, a SHA-256 digest equal to an independently computed digest of the exact accepted bytes, the accepted policy generation and acceptance/expiry classes, and that synthetic canary input, target, label, participant and result strings are absent from stored bytes. After clearMeasurementData, assert a redelivered unexpired task is evaluated as new and an expired one is still rejected as task_expired. Requirements: REQ-TRUST-0021, REQ-TRUST-0022, REQ-TRUST-0023, REQ-TRUST-0024, REQ-TRUST-0025, REQ-TRUST-0038.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -2973,12 +2979,14 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-TRUST-0023 -->
 <!-- requirement-ref: REQ-TRUST-0024 -->
 <!-- requirement-ref: REQ-TRUST-0025 -->
+<!-- requirement-ref: REQ-TRUST-0038 -->
 
-- [REQ-TRUST-0021](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0021) → `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING`.
-- [REQ-TRUST-0022](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0022) → `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING`.
-- [REQ-TRUST-0023](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0023) → `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING`.
-- [REQ-TRUST-0024](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0024) → `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING`.
-- [REQ-TRUST-0025](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0025) → `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING`.
+- [REQ-TRUST-0021](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0021) → `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING`.
+- [REQ-TRUST-0022](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0022) → `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING`.
+- [REQ-TRUST-0023](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0023) → `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING`.
+- [REQ-TRUST-0024](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0024) → `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING`.
+- [REQ-TRUST-0025](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0025) → `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING`.
+- [REQ-TRUST-0038](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0038) → `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING`.
 
 ### CC-TRUST-TARGETED-DELIVERY
 
@@ -2994,9 +3002,9 @@ Review case `RV-CC-TRUST-TARGETED-DELIVERY` (`docs/conformance/cross-cutting-rev
 <!-- requirement-ref: REQ-TRUST-0027 -->
 <!-- requirement-ref: REQ-TRUST-0028 -->
 
-- [REQ-TRUST-0026](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0026) → `CC-TRUST-TARGETED-DELIVERY`, `RV-CC-TRUST-TARGETED-DELIVERY`.
-- [REQ-TRUST-0027](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0027) → `CC-TRUST-TARGETED-DELIVERY`, `RV-CC-TRUST-TARGETED-DELIVERY`.
-- [REQ-TRUST-0028](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0028) → `CC-TRUST-TARGETED-DELIVERY`, `RV-CC-TRUST-TARGETED-DELIVERY`.
+- [REQ-TRUST-0026](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0026) → `CC-TRUST-TARGETED-DELIVERY`, `RV-CC-TRUST-TARGETED-DELIVERY`.
+- [REQ-TRUST-0027](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0027) → `CC-TRUST-TARGETED-DELIVERY`, `RV-CC-TRUST-TARGETED-DELIVERY`.
+- [REQ-TRUST-0028](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0028) → `CC-TRUST-TARGETED-DELIVERY`, `RV-CC-TRUST-TARGETED-DELIVERY`.
 
 ### CC-TRUST-LOCAL-POLICY-LIFECYCLE
 
@@ -3011,26 +3019,28 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-TRUST-0031 -->
 <!-- requirement-ref: REQ-TRUST-0032 -->
 
-- [REQ-TRUST-0029](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0029) → `CC-TRUST-LOCAL-POLICY-LIFECYCLE`.
-- [REQ-TRUST-0030](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0030) → `CC-TRUST-LOCAL-POLICY-LIFECYCLE`.
-- [REQ-TRUST-0031](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0031) → `CC-TRUST-LOCAL-POLICY-LIFECYCLE`.
-- [REQ-TRUST-0032](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0032) → `CC-TRUST-LOCAL-POLICY-LIFECYCLE`.
+- [REQ-TRUST-0029](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0029) → `CC-TRUST-LOCAL-POLICY-LIFECYCLE`.
+- [REQ-TRUST-0030](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0030) → `CC-TRUST-LOCAL-POLICY-LIFECYCLE`.
+- [REQ-TRUST-0031](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0031) → `CC-TRUST-LOCAL-POLICY-LIFECYCLE`.
+- [REQ-TRUST-0032](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0032) → `CC-TRUST-LOCAL-POLICY-LIFECYCLE`.
 
 ### CC-TRUST-ADMISSION-ERRORS
 
 Public source: `library/task-trust.md`, section **Admission Errors**. Intended target: `internal/admission/admit.go`. Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustAdmissionErrors`.
 
-Case plan: Trigger each public class through a synthetic delivery: task_source_unauthenticated, task_issuer_not_authorized, task_policy_unavailable, task_trust_unavailable, task_expired, task_id_conflict, policy_rollback, target_not_registered, task_limit_exceeded and task_schema_invalid. Assert each returns a task.AdmissionError whose code is the expected class and whose text is the fixed class string, and that no Measurement Result, bundle entry or result-sink call is produced. Embed unique canaries in the task payload, a target URL, a label, a fake credential, verification-key and signature bytes in the delivery record, and the raw error text of a failing fake store and clock. Assert no canary appears in the error text, in %v or %+v formatting, in any errors.Unwrap chain or in captured log output. Assert repeating an identical failing delivery returns an identical error. Requirements: REQ-TRUST-0033, REQ-TRUST-0034, REQ-TRUST-0035.
+Case plan: Trigger each public class through a synthetic delivery: task_source_unauthenticated, task_issuer_not_authorized, task_policy_unavailable, task_trust_unavailable, task_expired, task_id_conflict, policy_rollback, target_not_registered, task_limit_exceeded, task_schema_invalid and task_unsupported. Trigger task_unsupported with three otherwise valid tasks: a well-formed but unregistered (test_id, test_version) pair, a risk factor type the build does not recognize and rejects, and an execution.context value requiring egress Network Context in a build without egress acquisition; assert none returns task_schema_invalid, and that with a fake build that provides egress acquisition the same egress task is admitted. Assert each returns a task.AdmissionError whose code is the expected class and whose text is the fixed class string, and that no Measurement Result, bundle entry or result-sink call is produced. Embed unique canaries in the task payload, a target URL, a label, a fake credential, verification-key and signature bytes in the delivery record, and the raw error text of a failing fake store and clock. Assert no canary appears in the error text, in %v or %+v formatting, in any errors.Unwrap chain or in captured log output. Assert repeating an identical failing delivery returns an identical error. Requirements: REQ-TRUST-0033, REQ-TRUST-0034, REQ-TRUST-0035, REQ-TRUST-0036.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-TRUST-0033 -->
 <!-- requirement-ref: REQ-TRUST-0034 -->
 <!-- requirement-ref: REQ-TRUST-0035 -->
+<!-- requirement-ref: REQ-TRUST-0036 -->
 
-- [REQ-TRUST-0033](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0033) → `CC-TRUST-ADMISSION-ERRORS`.
-- [REQ-TRUST-0034](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0034) → `CC-TRUST-ADMISSION-ERRORS`.
-- [REQ-TRUST-0035](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/library/task-trust.md#REQ-TRUST-0035) → `CC-TRUST-ADMISSION-ERRORS`.
+- [REQ-TRUST-0033](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0033) → `CC-TRUST-ADMISSION-ERRORS`.
+- [REQ-TRUST-0034](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0034) → `CC-TRUST-ADMISSION-ERRORS`.
+- [REQ-TRUST-0035](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0035) → `CC-TRUST-ADMISSION-ERRORS`.
+- [REQ-TRUST-0036](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0036) → `CC-TRUST-ADMISSION-ERRORS`.
 
 ### CC-JSON-UNIT-0001
 
@@ -3042,7 +3052,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-JSON-0001 -->
 
-- [REQ-JSON-0001](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/json-decoding.md#REQ-JSON-0001) → `CC-JSON-UNIT-0001`.
+- [REQ-JSON-0001](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/json-decoding.md#REQ-JSON-0001) → `CC-JSON-UNIT-0001`.
 
 ### CC-JSON-UNIT-0002
 
@@ -3054,7 +3064,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-JSON-0002 -->
 
-- [REQ-JSON-0002](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/json-decoding.md#REQ-JSON-0002) → `CC-JSON-UNIT-0002`.
+- [REQ-JSON-0002](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/json-decoding.md#REQ-JSON-0002) → `CC-JSON-UNIT-0002`.
 
 ### CC-JSON-UNIT-0003
 
@@ -3066,7 +3076,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-JSON-0003 -->
 
-- [REQ-JSON-0003](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/json-decoding.md#REQ-JSON-0003) → `CC-JSON-UNIT-0003`.
+- [REQ-JSON-0003](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/json-decoding.md#REQ-JSON-0003) → `CC-JSON-UNIT-0003`.
 
 ### CC-JSON-UNIT-0004
 
@@ -3078,7 +3088,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-JSON-0004 -->
 
-- [REQ-JSON-0004](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/json-decoding.md#REQ-JSON-0004) → `CC-JSON-UNIT-0004`.
+- [REQ-JSON-0004](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/json-decoding.md#REQ-JSON-0004) → `CC-JSON-UNIT-0004`.
 
 ### CC-JSON-UNIT-0005
 
@@ -3090,7 +3100,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-JSON-0005 -->
 
-- [REQ-JSON-0005](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/json-decoding.md#REQ-JSON-0005) → `CC-JSON-UNIT-0005`.
+- [REQ-JSON-0005](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/json-decoding.md#REQ-JSON-0005) → `CC-JSON-UNIT-0005`.
 
 ### CC-JSON-UNIT-0006
 
@@ -3102,7 +3112,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-JSON-0006 -->
 
-- [REQ-JSON-0006](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/json-decoding.md#REQ-JSON-0006) → `CC-JSON-UNIT-0006`.
+- [REQ-JSON-0006](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/json-decoding.md#REQ-JSON-0006) → `CC-JSON-UNIT-0006`.
 
 ### CC-JSON-UNIT-0007
 
@@ -3116,7 +3126,7 @@ Review case `RV-CC-JSON-UNIT-0007` (`docs/conformance/cross-cutting-review.md`, 
 
 <!-- requirement-ref: REQ-JSON-0007 -->
 
-- [REQ-JSON-0007](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/json-decoding.md#REQ-JSON-0007) → `CC-JSON-UNIT-0007`, `RV-CC-JSON-UNIT-0007`.
+- [REQ-JSON-0007](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/json-decoding.md#REQ-JSON-0007) → `CC-JSON-UNIT-0007`, `RV-CC-JSON-UNIT-0007`.
 
 ### CC-JSON-UNIT-0008
 
@@ -3128,7 +3138,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-JSON-0008 -->
 
-- [REQ-JSON-0008](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/json-decoding.md#REQ-JSON-0008) → `CC-JSON-UNIT-0008`.
+- [REQ-JSON-0008](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/json-decoding.md#REQ-JSON-0008) → `CC-JSON-UNIT-0008`.
 
 ### CC-JSON-UNIT-0009
 
@@ -3140,7 +3150,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-JSON-0009 -->
 
-- [REQ-JSON-0009](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/json-decoding.md#REQ-JSON-0009) → `CC-JSON-UNIT-0009`.
+- [REQ-JSON-0009](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/json-decoding.md#REQ-JSON-0009) → `CC-JSON-UNIT-0009`.
 
 ### CC-JSON-UNIT-0010
 
@@ -3152,7 +3162,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-JSON-0010 -->
 
-- [REQ-JSON-0010](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/json-decoding.md#REQ-JSON-0010) → `CC-JSON-UNIT-0010`.
+- [REQ-JSON-0010](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/json-decoding.md#REQ-JSON-0010) → `CC-JSON-UNIT-0010`.
 
 ### CC-JSON-UNIT-0011
 
@@ -3164,5 +3174,5 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-JSON-0011 -->
 
-- [REQ-JSON-0011](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/json-decoding.md#REQ-JSON-0011) → `CC-JSON-UNIT-0011`.
+- [REQ-JSON-0011](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/json-decoding.md#REQ-JSON-0011) → `CC-JSON-UNIT-0011`.
 

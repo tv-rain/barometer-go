@@ -10,7 +10,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/model/task"
 )
 
-// REQ-TRUST-0033..0035: finite, payload-free operational errors, separate
+// REQ-TRUST-0033..0036: finite, payload-free operational errors, separate
 // from measurement results and execution reasons.
 func TestAdmissionErrorVocabulary(t *testing.T) {
 	for _, tc := range []struct {
@@ -24,6 +24,7 @@ func TestAdmissionErrorVocabulary(t *testing.T) {
 		{task.Expired, "task_expired"}, {task.IDConflict, "task_id_conflict"},
 		{task.PolicyRollback, "policy_rollback"}, {task.TargetNotRegistered, "target_not_registered"},
 		{task.LimitExceeded, "task_limit_exceeded"}, {task.SchemaInvalid, "task_schema_invalid"},
+		{task.Unsupported, "task_unsupported"},
 	} {
 		t.Run(tc.text, func(t *testing.T) {
 			e, err := task.NewAdmissionError(tc.code)
@@ -51,7 +52,7 @@ func TestAdmissionErrorVocabulary(t *testing.T) {
 	// The entire uint8 domain is checked, including the invalid zero value.
 	for n := 0; n < 256; n++ {
 		e, err := task.NewAdmissionError(task.AdmissionCode(n))
-		if n >= 1 && n <= 10 {
+		if n >= 1 && n <= 11 {
 			continue
 		}
 		if !errors.Is(err, task.ErrAdmissionCode) || e.Code() != 0 || e.Error() != "task: invalid admission error" {
