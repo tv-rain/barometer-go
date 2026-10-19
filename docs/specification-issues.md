@@ -290,7 +290,7 @@ Public record and disposition first, then Go adoption when the NET-03 runner is 
 
 ## GO-SPEC-ISSUE-007: Undefined Allowed Values for `risk_factors` and `timezone`
 
-**Current state:** Open; public disposition and wording accepted October 19, 2026, public merge and Go adoption pending. The public maintainer accepted alternative (a) for both domains in [`risk_factors` and `timezone` Value Domains — Maintainer Disposition](https://github.com/tv-rain/barometer-spec/blob/main/specification-issues/risk-factors-timezone-domains.md#maintainer-disposition--october-19-2026). Current Go `risk_factors` validation does not conform; `timezone` validation does. See the [disposition addendum](#disposition-addendum--october-19-2026). The sections before the addendum keep their original wording as historical evidence. Originally raised October 16, 2026 under [DEV-573](https://app.clickup.com/t/124kk1zc613) from the DEV-572 triage. This finding affects merged Foundation code.
+**Current state:** Open; public disposition merged at [5a37e82865a08922c4821c7318656286933421e5](https://github.com/tv-rain/barometer-spec/tree/5a37e82865a08922c4821c7318656286933421e5) and adopted in Go decoding and validation by [DEV-582](https://app.clickup.com/t/124kk1zcaah). Go now rejects `risk_factors: []` for `medium`, `high` and `unknown` risk; `timezone` validation was already conforming and is now evidenced. Admission-path, binding and host evidence remain open; see the [adoption addendum](#adoption-addendum--october-19-2026). The sections before the addenda keep their original wording as historical evidence. Originally raised October 16, 2026 under [DEV-573](https://app.clickup.com/t/124kk1zc613) from the DEV-572 triage. This finding affects merged Foundation code.
 
 ### Identity, Baselines and Requirements
 
@@ -334,3 +334,16 @@ The public record [`risk_factors` and `timezone` Value Domains](https://github.c
 - **Go adoption:** [DEV-582](https://app.clickup.com/t/124kk1zcaah) changes `risk_factors` validation, adds negative and positive cases for both domains, and updates traceability, including manifest entries for the two new requirement IDs. Go behavior is unchanged by this addendum.
 
 This finding stays open until DEV-582 records adoption evidence for `risk_factors` and evidence or non-applicability for `timezone`.
+
+### Adoption Addendum — October 19, 2026
+
+[DEV-582](https://app.clickup.com/t/124kk1zcaah) adopts the disposition against public Draft `0.1.0` at [5a37e82865a08922c4821c7318656286933421e5](https://github.com/tv-rain/barometer-spec/tree/5a37e82865a08922c4821c7318656286933421e5), the merge of public PR #13 recorded on DEV-581.
+
+- **`risk_factors`:** `validSafety` in `internal/validation/task.go` now rejects a missing or empty factor list for `medium`, `high` and `unknown` risk ([REQ-SAFETY-0031](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-safety.md#REQ-SAFETY-0031)). The whole task is rejected with `validation.ErrTask` and no candidate. A `low` task may still omit the list or send it empty. The decoder schema is unchanged, because an empty array remains valid for `low`.
+- **`timezone`:** no behavior change. Decoding defaults an omitted value to `local`, and validation rejects every other value ([REQ-SCHEDULE-0043](https://github.com/tv-rain/barometer-spec/blob/5a37e82865a08922c4821c7318656286933421e5/data-formats/task-schedule.md#REQ-SCHEDULE-0043)). The comment that called `local` the "initially implemented" value now cites the requirement.
+- **Implementation:** Go commit `4575079b503467bff83c1175329be6cfa64cfb71`. Its new tests fail at the previous `validSafety` on exactly the empty-list cases and pass after the change.
+- **Cases:** synthetic positive and negative cases at three levels. `TestCommonRiskFactorAndTimezoneDomains` covers `validation.Common`, `TestRiskFactorAndTimezoneDomains` covers `taskdecode` decoding, and 13 `risk-factors-*` and `timezone-*` fixtures run through the [conformance fixture runner](conformance-fixtures.md), whose requirement allowlist now includes these IDs. Rejected `timezone` values include `UTC`, `Europe/Berlin`, `""`, `Local` and `LOCAL`.
+- **Traceability:** the [cross-cutting manifest](../traceability/cross-cutting.json) is rebaselined to public `5a37e82` and Go `4575079` and links this finding as `accepted_adoption_pending`. REQ-SAFETY-0012, REQ-SAFETY-0013, REQ-SAFETY-0031, REQ-SCHEDULE-0013, REQ-SCHEDULE-0014 and REQ-SCHEDULE-0043 are `partial`, with [executed unit-test evidence](../traceability/evidence/go-unit-4575079.md). None is `implemented`.
+- **Remaining scope:** admission under local policy, and the planned `CC-SAFETY-RISK-FACTORS` and `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-FIELDS` family cases, which need the pending admission and runtime work. Binding and host adoption is unassessed until those components exist. External producers and stored tasks are unassessed. No specialist safety review is claimed.
+
+The finding stays open until the remaining scope records evidence or explicit non-applicability.
