@@ -23,6 +23,7 @@ var implementedAPI = []string{
 	"type Client",
 	"func NewClient() *Client",
 	"func (c *Client) Initialize(configJSON string) error",
+	"func (c *Client) AdmitTask(taskJSON string, sourceRef string) (string, error)",
 	"func (c *Client) ClearMeasurementData() error",
 	"func (c *Client) Close() error",
 }

@@ -57,8 +57,14 @@ type runtime struct {
 	generation uint64
 	init       *config.Initialization
 	admitter   *admission.Admitter
-	tasks      *handleTable[admission.Admitted]
+	tasks      *taskTable
 	runs       *handleTable[runRecord]
+
+	// ctx bounds adapter calls made for this generation. invalidate cancels
+	// it, so a transition does not wait on a stalled trusted adapter.
+	ctx      context.Context
+	cancel   context.CancelFunc
+	deadline time.Duration
 }
 
 // String and GoString keep handles, adapters and configuration out of
@@ -71,6 +77,7 @@ func (a *adapters) GoString() string { return "barometer.adapters" }
 
 func (r *runtime) invalidate() {
 	if r != nil {
+		r.cancel()
 		r.tasks.invalidate()
 		r.runs.invalidate()
 	}
@@ -102,9 +109,10 @@ func prepare(a *adapters, configJSON []byte) *runtime {
 	if err != nil {
 		return nil
 	}
-	return &runtime{init: init, admitter: admitter,
-		tasks: newHandleTable[admission.Admitted](taskHandlePrefix, taskHandleCapacity),
-		runs:  newHandleTable[runRecord](runHandlePrefix, runHandleCapacity)}
+	ctx, cancel := context.WithCancel(context.Background())
+	return &runtime{init: init, admitter: admitter, tasks: newTaskTable(),
+		runs: newHandleTable[runRecord](runHandlePrefix, runHandleCapacity),
+		ctx:  ctx, cancel: cancel, deadline: a.lifecycleDeadline()}
 }
 
 // absent also treats typed nil values in an interface as missing.

@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"sync"
+	"time"
 
 	"github.com/tv-rain/barometer-go/internal/admission"
 )
@@ -84,6 +85,17 @@ func (t *handleTable[T]) remove(h string) bool {
 	return ok
 }
 
+// removeIf drops every entry for which done reports true.
+func (t *handleTable[T]) removeIf(done func(T) bool) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	for h, v := range t.entries {
+		if done(v) {
+			delete(t.entries, h)
+		}
+	}
+}
+
 // invalidate drops every handle and refuses later additions.
 func (t *handleTable[T]) invalidate() {
 	t.mu.Lock()
@@ -94,3 +106,60 @@ func (t *handleTable[T]) invalidate() {
 
 func (t *handleTable[T]) String() string   { return "barometer.handleTable" }
 func (t *handleTable[T]) GoString() string { return "barometer.handleTable" }
+
+// taskTable is the task-handle table plus an index from replay identity to
+// handle, so an exact redelivery resolves to the handle already published in
+// this generation. Publication is serialized, so concurrent identical
+// deliveries share one handle.
+type taskTable struct {
+	publishing sync.Mutex
+	byIdentity map[admission.Identity]string
+	*handleTable[admission.Admitted]
+}
+
+func newTaskTable() *taskTable {
+	return &taskTable{byIdentity: make(map[admission.Identity]string),
+		handleTable: newHandleTable[admission.Admitted](taskHandlePrefix, taskHandleCapacity)}
+}
+
+// publish returns the handle bound to a's identity, or binds a new one. A full
+// table first drops tasks whose validity ended at or before now; it never
+// evicts a task that is still valid and otherwise returns capacity_exceeded.
+func (t *taskTable) publish(a admission.Admitted, now time.Time) (string, error) {
+	t.publishing.Lock()
+	defer t.publishing.Unlock()
+	id := a.Identity()
+	if h, ok := t.byIdentity[id]; ok {
+		if _, err := t.lookup(h); err == nil {
+			return h, nil
+		}
+		delete(t.byIdentity, id)
+	}
+	h, err := t.add(a)
+	if err == (opError{code: capacityExceeded}) {
+		t.removeIf(func(v admission.Admitted) bool { return !v.ExpiresAt().After(now) })
+		for known, kh := range t.byIdentity {
+			if _, err := t.lookup(kh); err != nil {
+				delete(t.byIdentity, known)
+			}
+		}
+		h, err = t.add(a)
+	}
+	if err != nil {
+		return "", err
+	}
+	t.byIdentity[id] = h
+	return h, nil
+}
+
+// invalidate drops every handle and identity binding and refuses later
+// additions.
+func (t *taskTable) invalidate() {
+	t.publishing.Lock()
+	defer t.publishing.Unlock()
+	t.handleTable.invalidate()
+	clear(t.byIdentity)
+}
+
+func (t *taskTable) String() string   { return "barometer.taskTable" }
+func (t *taskTable) GoString() string { return "barometer.taskTable" }

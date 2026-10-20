@@ -28,6 +28,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- `Client.AdmitTask` (DEV-592), the public-API review point for the documented `AdmitTask(taskJSON, sourceRef string) (string, error)` signature; no other identifier is added.
+  - It reserves the current generation, runs every admission step through `Admitter.Admit` and publishes a task handle only after the replay record is durable. A rejection returns the code-only public admission class and leaves no handle; calls outside the initialized state return the API-local lifecycle codes.
+  - An exact redelivery, through the same or a new delivery reference, returns the same handle in the current generation without a new replay record, a run or a later expiry. Concurrent identical deliveries share one handle. After reinitialization a redelivery resolves to the retained acceptance under a new handle.
+  - Admission adapter calls run under a per-generation context bounded by the lifecycle deadline; `Close` and clearing cancel it. A panic below the facade returns `task_trust_unavailable` with no handle.
+  - A full task table first reclaims tasks whose validity has ended; it never evicts a valid task and otherwise returns `capacity_exceeded`. The facade adds no byte check, so the REQ-TRUST-0037 step order, including the complete-task byte limit after delivery resolution, stays the admitter's.
+
+  The cross-cutting traceability manifest is rebaselined to Go `7b098a6` with the DEV-600 mapping preserved as historical; four `UT.root.*` cases add facade-level aspects to REQ-TRUST-0017, REQ-TRUST-0024, REQ-TRUST-0035, REQ-TRUST-0037 and REQ-TRUST-0038, which stay `partial`, and the admission families stay planned. Execution, runs, proxy compatibility at admission, policy replacement (DEV-593), production adapters and native wiring (DEV-455) are not included. No runtime, platform or field support is claimed.
+
 - The root `Client` lifecycle shell (DEV-600), the public-API review point for `NewClient`, `Initialize`, `Close` and `ClearMeasurementData` with the documented signatures; no other identifier is exported, and `TestPublicSurfaceMatchesDocumentedSignatures` enforces this.
   - Lifecycle states follow the documented table. Lifecycle calls do adapter work without holding the lock and refuse concurrent transitions with `transition_in_progress`. An unexported reservation counter lets future admission, run and bundle entry points serialize with transitions.
   - `Initialize` binds trusted adapters through an unexported seam with no production caller, so it fails closed with `not_initialized`. It decodes only the closed configuration container through `internal/config`; an invalid local policy is left to fail admission as `task_policy_unavailable`.
