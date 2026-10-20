@@ -32,6 +32,8 @@ DEV-600 adds the root `Client` lifecycle shell ([Implemented Subset](public-api.
 
 DEV-592 adds `Client.AdmitTask` ([Implemented Subset](public-api.md#implemented-subset)) and rebaselines this map to Go `7b098a6397dc839f3b76c5d799606132cd7723b9` at the same public baseline. Four `UT.root.*` cases record facade-level admission aspects in the [evidence report](../traceability/evidence/go-unit-7b098a6.md) for REQ-TRUST-0017, REQ-TRUST-0024, REQ-TRUST-0035, REQ-TRUST-0037 and REQ-TRUST-0038, which stay `partial` (165 `partial`); `CC-TRUST-ADMISSION-PROCEDURE`, `CC-TRUST-ADMISSION-ERRORS` and the other admission families stay planned.
 
+DEV-593 adds local policy activation and replacement by reinitialization ([Implemented Subset](public-api.md#implemented-subset)) and rebaselines this map to Go `954b7d7de7c5473f261d85bacbd5f44d7aa0e15b` at the same public baseline. The executed `CC-TRUST-LOCAL-POLICY-LIFECYCLE` family case records its aspects in the [evidence report](../traceability/evidence/go-unit-954b7d7.md) and makes REQ-TRUST-0029 to REQ-TRUST-0032 `partial` (169 `partial`); its rows that need components that do not exist yet move to the planned `CC-TRUST-LOCAL-POLICY-LIFECYCLE-RUNTIME` case.
+
 The earlier DEV-471 mapping at public baseline `47d75925b3829fccfb6954b545c15f695375b76f` and Go baseline `a9136f34fad00ecc2171cbc29e835c5c50b340df` is preserved byte-for-byte as [historical manifest](../traceability/historical/cross-cutting-47d7592.json) with its unchanged [report](../traceability/reports/cross-cutting.json). It mapped 565 requirements to 185 families. It remains valid metadata only for those original baselines and is not a current claim.
 
 ## Boundaries and Maintenance
@@ -2992,7 +2994,7 @@ Public source: `library/task-trust.md`, section **Replay, Duplicate, and Rollbac
 
 Case plan: Exercise every replay-table row with a deterministic clock and fake persistent storage: a new replay key continues admission; the same key with identical bytes is idempotent redelivery with no duplicate runs and unchanged expiry; the same key with one changed byte (including whitespace only) is rejected as task_id_conflict; a lower policy generation than the active one is rejected as policy_rollback; an expired task is rejected as task_expired and never reactivated on later redelivery; unavailable or corrupted replay state fails closed with task_trust_unavailable for a remote task and, with the same storage fault injected, for an embedded task, which is never accepted, assigned a handle or made executable without replay state. Assert the persisted record contains only the (issuer_id, task_id) key, a SHA-256 digest equal to an independently computed digest of the exact accepted bytes, the accepted policy generation and acceptance/expiry classes with retention ending 86,400 seconds after task expiry, and that synthetic canary input, target, label, participant and result strings are absent from stored bytes. Post-clearing redelivery rows are planned separately in CC-TRUST-REPLAY-AFTER-CLEARING. Requirements: REQ-TRUST-0021, REQ-TRUST-0022, REQ-TRUST-0023, REQ-TRUST-0024, REQ-TRUST-0038, REQ-LIMIT-0023.
 
-Scope: Synthetic core contract cases. Passed at Go `9283870` and re-executed at Go `73faaf5` and `7b098a6` ([evidence](../traceability/evidence/go-unit-7b098a6.md#CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING)); partial evidence only, with no production store, device-durability or support claim.
+Scope: Synthetic core contract cases. Passed at Go `9283870` and re-executed at Go `73faaf5`, `7b098a6` and `954b7d7` ([evidence](../traceability/evidence/go-unit-954b7d7.md#CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING)); partial evidence only, with no production store, device-durability or support claim.
 
 <!-- requirement-ref: REQ-TRUST-0021 -->
 <!-- requirement-ref: REQ-TRUST-0022 -->
@@ -3042,21 +3044,34 @@ Review case `RV-CC-TRUST-TARGETED-DELIVERY` (`docs/conformance/cross-cutting-rev
 
 ### CC-TRUST-LOCAL-POLICY-LIFECYCLE
 
-Public source: `library/task-trust.md`, section **Local Policy Lifecycle**. Intended target: `internal/admission/state.go`. Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustLocalPolicyLifecycle`.
+Public source: `library/task-trust.md`, section **Local Policy Lifecycle**. Intended target: the root `Client` (`client.go`, `policy.go`). Case location: `policy_test.go`, `symbol:TestCcTrustLocalPolicyLifecycle`, executed by DEV-593.
 
-Case plan: Initialize with policy generation 5 and admit a task. Assert no method mutates the active policy or registrations after initialization. Drive replacement by quiesce and reinitialization with fault injection at each public update step: an unauthenticated policy package; generation 5 (equal) and 4 (lower) rejected; generation 6 with one invalid registration rejected after complete validation; failure while cancelling a no-longer-permitted task; failure during cache invalidation; failure during reinitialization. After each failure assert either that the complete generation-5 policy is active and its tasks still admit, or that the client is uninitialized and admission fails with task_policy_unavailable, and never a mix of generation-5 and generation-6 registrations. On a successful generation-6 replacement that removes the task's registration, assert the queued task is cancelled or rejected before any new-policy attempt, Network Context caches are invalidated, and a generation-5 delivery is rejected as policy_rollback. Send policy-shaped content through a task label, collector reply, target response, proxy and context endpoint fakes and assert the active generation is unchanged. Requirements: REQ-TRUST-0029, REQ-TRUST-0030, REQ-TRUST-0031, REQ-TRUST-0032.
+Case plan: Initialize with policy generation 2 and admit a task. Assert from the root package source that only the replacement seam assigns the active policy, adapters or admitter, that admission leaves the active generation unchanged and that Initialize on an initialized client returns already_initialized. Drive replacement by quiesce and reinitialization with fault injection at each implemented step. Validation refuses generation 2 (equal) and 1 (lower), an incomplete policy, retained replay acceptances above the new generation, unavailable replay generations and a panicking trusted clock with policy_rejected. After quiescing, a panic while cancelling the current generation and a delivery store that refuses the new generation leave the client uninitialized, and reserved work outliving the lifecycle deadline leaves it blocked with cleanup_incomplete until close. After each validation failure assert the complete generation-2 policy, its handles and its delivery references stay active and its tasks still admit; after each later failure assert no policy remains and that a reinitialized client rejects generation-2 and generation-3 deliveries with task_policy_unavailable, never mixing registrations. Assert in-flight admission is cancelled with no replay record or handle. On a successful generation-3 replacement that removes the task's registration, assert the previous generation's context is cancelled, its task handles and delivery records no longer resolve, a generation-3 redelivery is rejected as target_not_registered and a generation-2 delivery as policy_rollback; after a generation-4 replacement restoring the registration, a redelivery resolves to the retained acceptance under a new handle, and after clearing, initializing generation 2 or 3 fails closed while generation 4 initializes. Send policy-shaped content through permitted task labels and unknown task members and assert the active generation, issuers and registrations are unchanged. Run concurrent replacements and admissions and assert one highest winning generation. Host authentication of policy updates, run cancellation, Network Context cache invalidation and collector, target, proxy and context endpoint paths are planned separately in CC-TRUST-LOCAL-POLICY-LIFECYCLE-RUNTIME. Requirements: REQ-TRUST-0029, REQ-TRUST-0030, REQ-TRUST-0031, REQ-TRUST-0032.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. Passed at Go `954b7d7` ([evidence](../traceability/evidence/go-unit-954b7d7.md#CC-TRUST-LOCAL-POLICY-LIFECYCLE)); partial evidence only, with no production policy adapter, durable generation floor or support claim.
 
 <!-- requirement-ref: REQ-TRUST-0029 -->
 <!-- requirement-ref: REQ-TRUST-0030 -->
 <!-- requirement-ref: REQ-TRUST-0031 -->
 <!-- requirement-ref: REQ-TRUST-0032 -->
 
-- [REQ-TRUST-0029](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0029) → `CC-TRUST-LOCAL-POLICY-LIFECYCLE`.
-- [REQ-TRUST-0030](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0030) → `CC-TRUST-LOCAL-POLICY-LIFECYCLE`.
-- [REQ-TRUST-0031](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0031) → `CC-TRUST-LOCAL-POLICY-LIFECYCLE`.
-- [REQ-TRUST-0032](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0032) → `CC-TRUST-LOCAL-POLICY-LIFECYCLE`.
+### CC-TRUST-LOCAL-POLICY-LIFECYCLE-RUNTIME
+
+Public source: `library/task-trust.md`, section **Local Policy Lifecycle**. Intended target: the root `Client` with the host policy adapter (DEV-455), run reservation (DEV-561) and Network Context caching (DEV-578). Planned case location: `policy_test.go`, `symbol:TestCcTrustLocalPolicyLifecycleRuntime`.
+
+Case plan: With the reviewed host policy adapter (DEV-455), run reservation (DEV-561) and Network Context caching (DEV-578) in place, reject a policy update whose authentication or integrity check fails before the replacement seam is called and assert the generation-2 policy stays active. On a generation-3 replacement that removes a registration, assert a queued and a running run of the affected task are cancelled before any generation-3 attempt starts and that no attempt continues under the removed registration. Populate access and egress Network Context snapshots under generation 2 and assert none is used by a generation-3 attempt. Return policy-shaped content from collector reply, target response, proxy and context endpoint fakes and assert the active generation, issuers and registrations are unchanged. Requirements: REQ-TRUST-0029, REQ-TRUST-0030, REQ-TRUST-0031, REQ-TRUST-0032.
+
+Scope: Synthetic core contract cases, split from `CC-TRUST-LOCAL-POLICY-LIFECYCLE` by DEV-593. No execution evidence or support claim.
+
+<!-- requirement-ref: REQ-TRUST-0029 -->
+<!-- requirement-ref: REQ-TRUST-0030 -->
+<!-- requirement-ref: REQ-TRUST-0031 -->
+<!-- requirement-ref: REQ-TRUST-0032 -->
+
+- [REQ-TRUST-0029](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0029) → `CC-TRUST-LOCAL-POLICY-LIFECYCLE`, `CC-TRUST-LOCAL-POLICY-LIFECYCLE-RUNTIME`.
+- [REQ-TRUST-0030](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0030) → `CC-TRUST-LOCAL-POLICY-LIFECYCLE`, `CC-TRUST-LOCAL-POLICY-LIFECYCLE-RUNTIME`.
+- [REQ-TRUST-0031](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0031) → `CC-TRUST-LOCAL-POLICY-LIFECYCLE`, `CC-TRUST-LOCAL-POLICY-LIFECYCLE-RUNTIME`.
+- [REQ-TRUST-0032](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0032) → `CC-TRUST-LOCAL-POLICY-LIFECYCLE`, `CC-TRUST-LOCAL-POLICY-LIFECYCLE-RUNTIME`.
 
 ### CC-TRUST-ADMISSION-ERRORS
 
