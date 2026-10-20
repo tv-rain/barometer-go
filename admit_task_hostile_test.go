@@ -79,11 +79,7 @@ func TestAdmitTaskStrictJSON(t *testing.T) {
 			t.Run(origin+"/"+tc.name, func(t *testing.T) {
 				h := admittingHarness(t)
 				c := h.initialized(t)
-				ref := h.embedded
-				if origin == "remote" {
-					ref = h.remote
-				}
-				th, err := c.AdmitTask(tc.task, ref(t, tc.task))
+				th, err := c.AdmitTask(h.deliver(t, origin, tc.task))
 				if codeOf(err) != tc.want {
 					t.Fatalf("got %s, want %s", codeOf(err), tc.want)
 				}
@@ -102,59 +98,77 @@ func TestAdmitTaskStrictJSON(t *testing.T) {
 }
 
 // Hostile source contexts presented through the facade never admit, and each
-// fails at step 1 or 2 before the task bytes are parsed.
+// fails at step 1 or 2 before the task bytes are parsed. For remote origin the
+// host passes only package bytes; nothing it asserts authenticates a task.
+// requirement-ref: REQ-TRUST-0042
+// requirement-ref: REQ-TRUST-0052
 func TestAdmitTaskHostileSources(t *testing.T) {
 	valid := synTask("synthetic-task", time.Hour)
-	now := func(h *harness) task.Timestamp { return task.TimestampFromTime(h.clock.Clock.Now()) }
+	ctx := context.Background()
+	embedded := func(t *testing.T, h *harness, ref string) (string, string) { return valid, ref }
 	cases := []struct {
-		name string
-		ref  func(t *testing.T, h *harness) string
+		name    string
+		deliver func(t *testing.T, h *harness) (string, string)
 	}{
-		{"empty reference", func(*testing.T, *harness) string { return "" }},
-		{"forged reference", func(*testing.T, *harness) string { return strings.Repeat("0", 64) }},
-		{"reference from another instance", func(t *testing.T, h *harness) string {
+		{"empty reference", func(t *testing.T, h *harness) (string, string) { return embedded(t, h, "") }},
+		{"forged reference", func(t *testing.T, h *harness) (string, string) { return embedded(t, h, strings.Repeat("0", 64)) }},
+		{"reference from another instance", func(t *testing.T, h *harness) (string, string) {
 			other, err := admission.NewDeliveryStore(h.clock, admission.DeliveryLimits{Capacity: 1, Lifetime: time.Minute}, 2)
 			if err != nil {
 				t.Fatal(err)
 			}
-			ref, err := other.InstallEmbedded(context.Background(), "embedded-issuer", 2, []byte(valid))
+			ref, err := other.InstallEmbedded(ctx, "embedded-issuer", 2, []byte(valid))
 			if err != nil {
 				t.Fatal(err)
 			}
-			return ref
+			return valid, ref
 		}},
-		{"reference for other bytes", func(t *testing.T, h *harness) string { return h.embedded(t, synTask("other-task", time.Hour)) }},
-		{"remote without issuer authentication", func(t *testing.T, h *harness) string {
-			v := delivery.Verifier{Key: []byte("synthetic-key"), IssuerID: "remote-issuer", PolicyGeneration: 2, IssuedAt: now(h)}
-			ref, _ := h.deliveries.InstallRemote(context.Background(), v, v.Seal([]byte(valid)))
-			return ref
+		{"reference for other bytes", func(t *testing.T, h *harness) (string, string) {
+			return embedded(t, h, h.embedded(t, synTask("other-task", time.Hour)))
 		}},
-		{"remote envelope failing integrity", func(t *testing.T, h *harness) string {
-			v := delivery.Verifier{Key: []byte("synthetic-key"), IssuerID: "remote-issuer", PolicyGeneration: 2, IssuedAt: now(h), IssuerAuthenticated: true}
-			sealed := v.Seal([]byte(valid))
-			sealed[0] ^= 1
-			ref, _ := h.deliveries.InstallRemote(context.Background(), v, sealed)
-			return ref
+		{"remote task without a signed package", func(t *testing.T, h *harness) (string, string) {
+			return valid, h.installPackage(t, valid)
 		}},
-		{"remote issued 301 seconds ahead", func(t *testing.T, h *harness) string {
-			v := delivery.Verifier{Key: []byte("synthetic-key"), IssuerID: "remote-issuer", PolicyGeneration: 2, IssuedAt: task.TimestampFromTime(h.clock.Clock.Now().Add(admission.MaxIssuedAhead + time.Second)), IssuerAuthenticated: true}
-			ref, err := h.deliveries.InstallRemote(context.Background(), v, v.Seal([]byte(valid)))
-			if err != nil {
+		{"remote package with an altered task byte", func(t *testing.T, h *harness) (string, string) {
+			p := remoteSigner().Sign(h.clock.Clock.Now(), []byte(valid))
+			p.Task[len(p.Task)-2] = ' '
+			pkg := string(p.Encode())
+			return pkg, h.installPackage(t, pkg)
+		}},
+		{"remote package signed by an unknown key", func(t *testing.T, h *harness) (string, string) {
+			pkg := string(delivery.NewSigner("unknown-key", "remote-issuer", 9).Sign(h.clock.Clock.Now(), []byte(valid)).Encode())
+			return pkg, h.installPackage(t, pkg)
+		}},
+		{"remote package moved to another issuer", func(t *testing.T, h *harness) (string, string) {
+			s := embeddedSigner()
+			p := s.Sign(h.clock.Clock.Now(), []byte(valid))
+			p.IssuerID = "remote-issuer"
+			pkg := string(s.Resign(p).Encode())
+			return pkg, h.installPackage(t, pkg)
+		}},
+		{"remote package issued 301 seconds ahead", func(t *testing.T, h *harness) (string, string) {
+			pkg := string(remoteSigner().Sign(h.clock.Clock.Now().Add(admission.MaxIssuedAhead+time.Second), []byte(valid)).Encode())
+			return pkg, h.installPackage(t, pkg)
+		}},
+		{"remote reference presented again", func(t *testing.T, h *harness) (string, string) {
+			pkg := h.sign(valid)
+			ref := h.installPackage(t, pkg)
+			if _, err := h.deliveries.Resolve(ctx, ref, []byte(pkg)); err != nil {
 				t.Fatal(err)
 			}
-			return ref
+			return pkg, ref
 		}},
-		{"expired delivery record", func(t *testing.T, h *harness) string {
+		{"expired delivery record", func(t *testing.T, h *harness) (string, string) {
 			ref := h.embedded(t, valid)
 			h.clock.Advance(time.Minute)
-			return ref
+			return valid, ref
 		}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			h := admittingHarness(t)
 			c := h.initialized(t)
-			th, err := c.AdmitTask(valid, tc.ref(t, h))
+			th, err := c.AdmitTask(tc.deliver(t, h))
 			if codeOf(err) != "task_source_unauthenticated" {
 				t.Fatal("hostile source must be task_source_unauthenticated, got", codeOf(err))
 			}
@@ -165,12 +179,14 @@ func TestAdmitTaskHostileSources(t *testing.T) {
 
 // FuzzAdmitTask drives the public facade with arbitrary task text and a
 // fuzzed source: an embedded record for the exact text, an embedded record for
-// other bytes, a remote delivery with fuzzed authentication and issuance time,
-// a forged reference, and a record from another instance. Every call either
-// admits, publishing exactly one handle and one replay record, or returns
-// exactly one public admission class and leaves no admission state. Results
-// are deterministic, exact redelivery returns the same handle, and only an
-// exact-bytes record of a reviewed origin can admit.
+// other bytes, a remote signed package with a fuzzed signature and issuance
+// time, a forged reference, and a record from another instance. Every call
+// either admits, publishing exactly one handle and one replay record, or
+// returns exactly one public admission class and leaves no admission state.
+// Results are deterministic, exact redelivery returns the same handle, and
+// only an exact-bytes record of a reviewed origin, or a validly signed package,
+// can admit. A remote reference is single-use, so each remote presentation
+// installs its own reference for the same package bytes.
 func FuzzAdmitTask(f *testing.F) {
 	valid := synTask("synthetic-task", time.Hour)
 	for _, seed := range []string{
@@ -191,14 +207,16 @@ func FuzzAdmitTask(f *testing.F) {
 	f.Add(valid, uint8(2), "", false, int16(0))
 	f.Add(valid, uint8(2), "", true, int16(301))
 	f.Add(valid, uint8(2), "", true, int16(300))
-	f.Fuzz(func(t *testing.T, taskJSON string, source uint8, forged string, authenticated bool, issuedAhead int16) {
+	f.Fuzz(func(t *testing.T, taskJSON string, source uint8, forged string, signedOK bool, issuedAhead int16) {
 		h := admittingHarness(t)
 		// Queued calls must not hit the short harness deadline, which would
 		// fail closed as task_trust_unavailable and break the determinism check.
 		h.adapters.deadline = defaultLifecycleDeadline
 		c := h.initialized(t)
 		ctx := context.Background()
+		presented := taskJSON
 		var ref string
+		present := func() string { return ref }
 		admissible := false
 		switch source % 5 {
 		case 0:
@@ -211,11 +229,19 @@ func FuzzAdmitTask(f *testing.F) {
 				ref, admissible = r, taskJSON == other
 			}
 		case 2:
-			v := delivery.Verifier{Key: []byte("synthetic-key"), IssuerID: "remote-issuer", PolicyGeneration: 2,
-				IssuedAt: task.TimestampFromTime(h.clock.Clock.Now().Add(time.Duration(issuedAhead) * time.Second)), IssuerAuthenticated: authenticated}
-			if r, err := h.deliveries.InstallRemote(ctx, v, v.Seal([]byte(taskJSON))); err == nil {
-				ref, admissible = r, authenticated && time.Duration(issuedAhead)*time.Second <= admission.MaxIssuedAhead
+			p := remoteSigner().Sign(h.clock.Clock.Now().Add(time.Duration(issuedAhead)*time.Second), []byte(taskJSON))
+			if !signedOK {
+				p.Signature[0] ^= 1
 			}
+			presented = string(p.Encode())
+			present = func() string {
+				r, err := h.deliveries.InstallRemote(ctx, 2, []byte(presented))
+				if err != nil {
+					t.Fatal("remote install rejected")
+				}
+				return r
+			}
+			admissible = signedOK && taskJSON != "" && time.Duration(issuedAhead)*time.Second <= admission.MaxIssuedAhead
 		case 3:
 			ref = forged
 		case 4:
@@ -227,8 +253,8 @@ func FuzzAdmitTask(f *testing.F) {
 				ref = forged
 			}
 		}
-		th, err := c.AdmitTask(taskJSON, ref)
-		again, err2 := c.AdmitTask(taskJSON, ref)
+		th, err := c.AdmitTask(presented, present())
+		again, err2 := c.AdmitTask(presented, present())
 		if err != nil {
 			if codeOf(err2) != codeOf(err) {
 				t.Fatalf("nondeterministic rejection: %s then %s", codeOf(err), codeOf(err2))
@@ -240,7 +266,7 @@ func FuzzAdmitTask(f *testing.F) {
 			return
 		}
 		if !admissible {
-			t.Fatal("a task was admitted without an exact-bytes record of a reviewed origin")
+			t.Fatal("a task was admitted without an exact-bytes record of a reviewed origin or a valid signature")
 		}
 		if !strings.HasPrefix(th, taskHandlePrefix) || err2 != nil || again != th {
 			t.Fatal("exact redelivery did not return the same handle:", codeOf(err2))

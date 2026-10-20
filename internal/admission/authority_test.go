@@ -52,7 +52,8 @@ func permissive() task.PolicyInput {
 	local.RegistrationIDs = []string{"reg-a", "reg-b"}
 	return task.PolicyInput{Generation: 2, Permissions: local,
 		Issuers: []task.IssuerPermissions{{IssuerID: "embedded-issuer", Permissions: permissions()}, {IssuerID: "remote-issuer", Permissions: permissions()}},
-		Targets: []task.TargetRegistration{registration("reg-a"), registration("reg-b")}}
+		Targets: []task.TargetRegistration{registration("reg-a"), registration("reg-b")},
+		Keys:    []task.TrustedKey{signer().Key(keyNotBefore, keyNotAfter), otherSigner().Key(keyNotBefore, keyNotAfter)}}
 }
 
 func mustPolicy(t testing.TB, in task.PolicyInput) task.LocalPolicy {
@@ -252,7 +253,7 @@ func TestGateIssuerLocalConflicts(t *testing.T) {
 // the deployment policy while the other side stays permissive.
 // requirement-ref: REQ-TRUST-0010
 // requirement-ref: REQ-TRUST-0011
-// requirement-ref: REQ-TRUST-0037
+// requirement-ref: REQ-TRUST-0047
 func TestGateIssuerAuthorization(t *testing.T) {
 	net05 := task.TestVersion{ID: "NET-05", Version: "0.1.0"}
 	high := []any{map[string]any{"type": "data_sensitivity", "level": "high"}}
@@ -344,7 +345,7 @@ func TestGateIssuerAuthorization(t *testing.T) {
 // Step 7 resolves the active policy generation and the source issuer before
 // any authority comparison.
 // requirement-ref: REQ-TRUST-0010
-// requirement-ref: REQ-TRUST-0037
+// requirement-ref: REQ-TRUST-0047
 func TestGatePolicyAndIssuerResolution(t *testing.T) {
 	ctx := context.Background()
 	b := []byte(baseTask)
@@ -370,20 +371,20 @@ func TestGatePolicyAndIssuerResolution(t *testing.T) {
 	expect(t, "no policy installed", gate(none, "embedded-issuer", 2), task.PolicyUnavailable)
 	expect(t, "no policy before unknown issuer", gate(none, "other-issuer", 1), task.PolicyUnavailable)
 
-	// Remote tasks resolve the authenticated issuer the same way.
+	// Remote tasks resolve the issuer of the verified package the same way. A
+	// policy without the issuer cannot hold its keys, so its packages fail
+	// verification at step 2 before issuer authorization.
 	_, err := h.remote(t, 0, b)
 	expect(t, "remote issuer", err, 0)
 	in := permissive()
-	in.Issuers = in.Issuers[:1]
+	in.Issuers, in.Keys = in.Issuers[:1], in.Keys[1:]
 	_, err = newHarnessWith(t, mustPolicy(t, in)).remote(t, 0, b)
-	expect(t, "remote issuer not in policy", err, task.IssuerNotAuthorized)
-	v := verifier()
-	v.PolicyGeneration = 1
-	ref, err := h.store.InstallRemote(ctx, v, v.Seal(b))
+	expect(t, "remote issuer not in policy", err, task.SourceUnauthenticated)
+	ref, err := h.store.InstallRemote(ctx, 1, signed(0, b))
 	if err != nil {
 		t.Fatal("remote install rejected")
 	}
-	_, err = h.admitter.Gate(ctx, ref, b)
+	_, err = h.admitter.Gate(ctx, ref, signed(0, b))
 	expect(t, "remote rollback", err, task.PolicyRollback)
 	// Remote validity is bounded from the earlier of issuance and acceptance.
 	in = permissive()
@@ -396,7 +397,7 @@ func TestGatePolicyAndIssuerResolution(t *testing.T) {
 }
 
 // Steps keep their public order around the new step-7 and step-8 checks.
-// requirement-ref: REQ-TRUST-0037
+// requirement-ref: REQ-TRUST-0047
 func TestGateAuthorityPrecedence(t *testing.T) {
 	ctx := context.Background()
 	unknownIssuer := func(b []byte) error {

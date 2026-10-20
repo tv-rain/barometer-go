@@ -34,9 +34,10 @@ These references target Draft `0.1.0` companion specification changes for DEV-46
 
 [REQ-TASK-0001](https://github.com/tv-rain/barometer-spec/blob/main/data-formats/task.md#REQ-TASK-0001) belongs with the planned `internal/taskdecode` owner: rejection of unknown top-level task fields. A future case should verify rejection of an otherwise valid task containing an unknown top-level key.
 
-<!-- requirement-ref: REQ-TRUST-0001 -->
+<!-- requirement-history: REQ-TRUST-0001 -->
+<!-- requirement-ref: REQ-TRUST-0043 -->
 
-[REQ-TRUST-0001](https://github.com/tv-rain/barometer-spec/blob/main/library/task-trust.md#REQ-TRUST-0001) belongs with the planned `internal/admission` owner: refusal of remote tasks when required trust inputs are unavailable. A future case should independently remove each required input and verify fail-closed admission.
+REQ-TRUST-0001 was retired at public revision `e97502747c917a16bc2b71337535ff972bbd7d64`; its successor [REQ-TRUST-0043](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0043) belongs with the `internal/admission` owner: refusal of remote tasks when signed package verification fails or cannot be performed, or when trusted policy, time or source context is unavailable. `CC-TRUST-SIGNED-REMOTE-PACKAGES` removes each input independently and verifies fail-closed admission (DEV-612).
 
 <!-- requirement-ref: REQ-TCP-01-0001 -->
 

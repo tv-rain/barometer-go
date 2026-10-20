@@ -31,7 +31,7 @@ The complete fixture is capped at 1 MiB, 16 value levels and 4,096 value nodes. 
 
 ## Synthetic Profiles and Adapter
 
-`remote-fixed-v1` constructs a structurally valid `SourceContext` with remote origin, issuer `synthetic-issuer`, policy generation `1`, authenticated assertion `true`, and issuance time `2026-10-15T00:00:00Z`. The accepted clock is the same fixed instant. These values are assertions by an isolated test adapter, not real authentication evidence. The runner reads no wall clock, process timezone, secrets or participant data.
+`remote-fixed-v1` constructs a structurally valid remote `SourceContext` for policy generation `1` and completes it with issuer `synthetic-issuer` and issuance time `2026-10-15T00:00:00Z` through `WithVerifiedPackage`, as admission does after verifying a signed package (DEV-612). The accepted clock is the same fixed instant. No package is signed or verified: these values are set by an isolated test adapter and are not authentication evidence. The runner reads no wall clock, process timezone, secrets or participant data.
 
 `synthetic-local-v1` constructs a `LocalPolicy` at generation `1`, with the same issuer and deployment/issuer permissions for synthetic `SYN-01` version `0.1.0`: direct path only, low risk, no registrations, label namespaces, consent requirement or additional opt-ins. Its explicit limits are:
 

@@ -11,7 +11,7 @@ import (
 func GatedCandidate(g Gated) task.Candidate  { return g.candidate }
 func GatedAcceptedAt(g Gated) time.Time      { return g.acceptedAt }
 func GatedTest(g Gated) task.TestVersion     { return g.entry.Test }
-func GatedSource(g Gated) task.SourceContext { return g.record.Source() }
+func GatedSource(g Gated) task.SourceContext { return g.source }
 func GatedBaselineRisk(g Gated) task.Risk    { return g.entry.BaselineRisk }
 
 // Test-only views of the effective authority.

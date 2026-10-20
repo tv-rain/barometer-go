@@ -16,14 +16,22 @@ func TestTrustedModelReconstruction(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			next := task.SourceInput{Origin: first.Origin(), IssuerID: first.IssuerID(), PolicyGeneration: first.PolicyGeneration(), Authenticated: first.Authenticated()}
-			if issued, ok := first.IssuedAt(); ok {
-				next.IssuedAt = &issued
-			}
+			next := task.SourceInput{Origin: first.Origin(), IssuerID: first.IssuerID(), PolicyGeneration: first.PolicyGeneration()}
 			second, err := task.NewSourceContext(next)
 			if err != nil || !reflect.DeepEqual(first, second) {
 				t.Fatal("source changed on reconstruction", err)
 			}
+		}
+		pending, _ := task.NewSourceContext(source())
+		first, err := pending.WithVerifiedPackage("reviewed-issuer", whole())
+		if err != nil {
+			t.Fatal(err)
+		}
+		issued, _ := first.IssuedAt()
+		again, _ := task.NewSourceContext(task.SourceInput{Origin: first.Origin(), PolicyGeneration: first.PolicyGeneration()})
+		second, err := again.WithVerifiedPackage(first.IssuerID(), issued)
+		if err != nil || !reflect.DeepEqual(first, second) {
+			t.Fatal("verified remote source changed on reconstruction", err)
 		}
 	})
 	t.Run("policy", func(t *testing.T) {

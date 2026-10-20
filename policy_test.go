@@ -8,6 +8,7 @@ import (
 	"go/parser"
 	"go/token"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/tv-rain/barometer-go/internal/model/task"
 	"github.com/tv-rain/barometer-go/internal/persistence"
+	"github.com/tv-rain/barometer-go/internal/testkit/delivery"
 	"github.com/tv-rain/barometer-go/internal/testkit/replay"
 )
 
@@ -511,4 +513,138 @@ func TestPolicyReplacementConcurrency(t *testing.T) {
 	if g := activePolicy(c).Generation(); g < 3 || g != c.policyFloor {
 		t.Fatal("the active generation is not the highest activated one")
 	}
+}
+
+// Trusted keys and issuers are rotated or removed only by a replacement policy
+// with a higher generation. Replacement invalidates every handle and delivery
+// reference; a redelivered package is verified again under the new policy, so
+// a task signed with a removed key, or by a removed issuer, is no longer
+// admitted, while a task signed with a retained key resolves to its retained
+// acceptance. A task admitted while its key was valid is not re-verified when
+// the key later expires: its handle stays until its own expiry, but a new
+// presentation of its package is verified at that time and rejected.
+// requirement-ref: REQ-TRUST-0054
+// requirement-ref: REQ-TRUST-0030
+// requirement-ref: REQ-TRUST-0051
+func TestCcTrustKeyRotationByPolicyReplacement(t *testing.T) {
+	rotated := delivery.NewSigner("remote-key-2", "remote-issuer", 3)
+	withKeys := func(t *testing.T, generation uint64, issuers []string, keys ...task.TrustedKey) task.LocalPolicy {
+		t.Helper()
+		in := synPolicyInput(generation, "reg-a", permit)
+		var kept []task.IssuerPermissions
+		for _, i := range in.Issuers {
+			if slices.Contains(issuers, i.IssuerID) {
+				kept = append(kept, i)
+			}
+		}
+		in.Issuers, in.Keys = kept, keys
+		p, err := task.NewLocalPolicy(in)
+		if err != nil {
+			t.Fatal("synthetic policy rejected")
+		}
+		return p
+	}
+	both := []string{"embedded-issuer", "remote-issuer"}
+	present := func(t *testing.T, h *harness, c *Client, generation uint64, s delivery.Signer, taskJSON string) (string, error) {
+		t.Helper()
+		pkg := string(s.Sign(h.clock.Clock.Now(), []byte(taskJSON)).Encode())
+		ref, err := h.deliveries.InstallRemote(context.Background(), generation, []byte(pkg))
+		if err != nil {
+			t.Fatal("remote install rejected")
+		}
+		return c.AdmitTask(pkg, ref)
+	}
+
+	t.Run("removing a key and then its issuer", func(t *testing.T) {
+		h := admittingHarness(t)
+		h.adapters.policy = withKeys(t, 2, both, remoteSigner().Key(keyNotBefore, keyNotAfter), rotated.Key(keyNotBefore, keyNotAfter))
+		c := h.initialized(t)
+		old, retained := synTask("old-key-task", time.Hour), synTask("new-key-task", time.Hour)
+		oldHandle, err := present(t, h, c, 2, remoteSigner(), old)
+		if err != nil {
+			t.Fatal(codeOf(err))
+		}
+		newHandle, err := present(t, h, c, 2, rotated, retained)
+		if err != nil {
+			t.Fatal(codeOf(err))
+		}
+		queued := string(remoteSigner().Sign(h.clock.Clock.Now(), []byte(synTask("queued-task", time.Hour))).Encode())
+		queuedRef, _ := h.deliveries.InstallRemote(context.Background(), 2, []byte(queued))
+
+		// Generation 3 rotates: remote-key-1 is removed, remote-key-2 kept.
+		if err := c.replacePolicy(withKeys(t, 3, both, rotated.Key(keyNotBefore, keyNotAfter))); err != nil {
+			t.Fatal("valid replacement rejected:", codeOf(err))
+		}
+		for _, handle := range []string{oldHandle, newHandle} {
+			if _, err := c.rt.tasks.lookup(handle); codeOf(err) != "handle_unavailable" {
+				t.Fatal("a task handle survived replacement")
+			}
+		}
+		if _, err := c.AdmitTask(queued, queuedRef); codeOf(err) != "task_source_unauthenticated" {
+			t.Fatal("a queued delivery survived replacement, got", codeOf(err))
+		}
+		if _, err := present(t, h, c, 3, remoteSigner(), old); codeOf(err) != "task_source_unauthenticated" {
+			t.Fatal("a task signed with a removed key was admitted, got", codeOf(err))
+		}
+		if _, err := present(t, h, c, 3, remoteSigner(), synTask("fresh-old-key-task", time.Hour)); codeOf(err) != "task_source_unauthenticated" {
+			t.Fatal("a new task signed with a removed key was admitted, got", codeOf(err))
+		}
+		again, err := present(t, h, c, 3, rotated, retained)
+		if err != nil || again == newHandle {
+			t.Fatal("a task signed with a retained key must be admitted again, got", codeOf(err))
+		}
+		if a, err := c.rt.tasks.lookup(again); err != nil || !a.Redelivery() || h.replay.Commits() != 2 {
+			t.Fatal("the retained acceptance was not reused")
+		}
+
+		// Generation 4 removes the remote issuer and so all of its keys.
+		if err := c.replacePolicy(withKeys(t, 4, []string{"embedded-issuer"}, embeddedSigner().Key(keyNotBefore, keyNotAfter))); err != nil {
+			t.Fatal("valid replacement rejected:", codeOf(err))
+		}
+		if _, err := c.rt.tasks.lookup(again); codeOf(err) != "handle_unavailable" {
+			t.Fatal("a task handle of a removed issuer survived replacement")
+		}
+		if _, err := present(t, h, c, 4, rotated, retained); codeOf(err) != "task_source_unauthenticated" {
+			t.Fatal("a task of a removed issuer was admitted, got", codeOf(err))
+		}
+		if h.replay.Commits() != 2 {
+			t.Fatal("rejections under a replacement policy wrote replay state")
+		}
+	})
+
+	t.Run("a policy whose key names a removed issuer is rejected", func(t *testing.T) {
+		h := admittingHarness(t)
+		c := h.initialized(t)
+		in := synPolicyInput(3, "reg-a", permit)
+		in.Issuers = in.Issuers[:1]
+		if _, err := task.NewLocalPolicy(in); err == nil {
+			t.Fatal("a key for an issuer the policy does not authorize was accepted")
+		}
+		if activePolicy(c).Generation() != 2 {
+			t.Fatal("the active policy changed")
+		}
+	})
+
+	t.Run("key expiry after admission", func(t *testing.T) {
+		h := admittingHarness(t)
+		h.adapters.policy = withKeys(t, 2, both, remoteSigner().Key(keyNotBefore, epoch.Add(time.Hour)))
+		c := h.initialized(t)
+		b := synTask("expiring-key-task", 3*time.Hour)
+		pkg := string(remoteSigner().Sign(epoch, []byte(b)).Encode())
+		ref, _ := h.deliveries.InstallRemote(context.Background(), 2, []byte(pkg))
+		handle, err := c.AdmitTask(pkg, ref)
+		if err != nil {
+			t.Fatal(codeOf(err))
+		}
+		if err := h.clock.Advance(2 * time.Hour); err != nil {
+			t.Fatal(err)
+		}
+		if a, err := c.rt.tasks.lookup(handle); err != nil || !a.ExpiresAt().Equal(epoch.Add(3*time.Hour)) {
+			t.Fatal("an admitted task was re-verified when its key expired")
+		}
+		ref, _ = h.deliveries.InstallRemote(context.Background(), 2, []byte(pkg))
+		if _, err := c.AdmitTask(pkg, ref); codeOf(err) != "task_source_unauthenticated" {
+			t.Fatal("a package presented after its key expired was accepted, got", codeOf(err))
+		}
+	})
 }

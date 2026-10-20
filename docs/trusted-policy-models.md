@@ -8,17 +8,39 @@ DEV-479 uses Draft `0.1.0` at immutable public `tv-rain/barometer-spec` revision
 
 These are structurally validated models. Successful construction is not authentication, release review, target approval, effective authorization, policy activation or task admission.
 
+DEV-612 adopts public revision `e97502747c917a16bc2b71337535ff972bbd7d64` for the source context and adds trusted issuer keys to the policy snapshot ([Task Trust and Local Policy](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md), [Registered Initial Limits](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/registered-limits.md)). Remote provenance is now Barometer's verification of a signed package; the host no longer asserts remote authentication ([Signed Remote Task Packages](admission.md#signed-remote-task-packages)).
+
 ## Source Context and Exact Bytes
 
-An internal reviewed adapter supplies `SourceInput` after establishing provenance. `NewSourceContext` requires a bounded lowercase issuer identifier and positive `uint64` policy generation. Remote origin requires authentication and issuance time; reviewed embedded origin requires authentication to be false and issuance time absent. Unknown origins and invalid timestamp representations reject atomically. Timestamps preserve exact fractional precision using the existing UTC `Timestamp` representation. No current clock is read and no future-offset or task-validity decision is made here.
+<!-- requirement-ref: REQ-TRUST-0044 -->
 
-`SourceContext` stores private immutable values; zero values are invalid and the issuance pointer is copied. It is structurally separate from `Candidate`, task parameters, labels and initialization JSON.
+An internal reviewed adapter supplies `SourceInput`: origin and positive `uint64` policy generation, and for embedded origin a bounded lowercase issuer identifier ([REQ-TRUST-0044](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0044)). `SourceInput` has no authentication flag and no issuance time, and `NewSourceContext` refuses an issuer for remote origin, so a host cannot supply a remote issuer, issuance time or authentication verdict. A remote context starts unverified, with no issuer or issuance time; `WithVerifiedPackage` completes it with the issuer and whole-second UTC issuance time of a package that admission verified, and refuses an already completed, embedded or zero context. Admission is its only caller; calling it verifies nothing. `Verified` reports whether the issuer is established: always for a valid embedded context, and for remote only after completion. Unknown origins and invalid identifiers or timestamps reject atomically. No current clock is read and no future-offset or task-validity decision is made here.
 
-`NewDeliveryRecord` binds a valid context to the SHA-256 digest of 1–131,072 exact received bytes (`task.MaxDeliveryBytes`) without retaining the payload. This implementation-local receive bound is deliberately above the registered 65,536-byte task limit so that admission rejects an oversized task as `task_limit_exceeded` before parsing instead of the record refusing it (DEV-586). `Matches` distinguishes semantically equivalent JSON with different bytes. This value models the exact-byte association required by the future delivery owner. It does not verify integrity/authentication, parse the task, mint a public `sourceRef`, retain replay state or return an admitted task. The adapter must verify the same bytes it binds; admission must use that identity rather than reconstructing bytes from a candidate.
+`SourceContext` stores private immutable values; zero values are invalid. It is structurally separate from `Candidate`, task parameters, labels and initialization JSON.
 
-<!-- requirement-ref: REQ-TRUST-0001 -->
+`NewDeliveryRecord` binds a valid context to the SHA-256 digest of 1–131,072 exact received bytes (`task.MaxDeliveryBytes`) without retaining the payload: a serialized task for embedded origin, a signed package for remote origin. This implementation-local receive bound is deliberately above the registered 65,536-byte task and 98,304-byte package limits so that admission rejects oversized input as `task_limit_exceeded` instead of the record refusing it (DEV-586, DEV-612). `Matches` distinguishes semantically equivalent JSON with different bytes. It does not verify a signature, parse the task, mint a public `sourceRef`, retain replay state or return an admitted task. Admission verifies the same package bytes the record binds, and uses the decoded task bytes rather than reconstructing bytes from a candidate.
 
-The missing-authentication/issuance structural tests support the future [REQ-TRUST-0001](https://github.com/tv-rain/barometer-spec/blob/05c1364af4f9a604b617fca45f060949b557d265/library/task-trust.md#REQ-TRUST-0001) boundary only. Trusted-time availability, actual source verification and fail-closed runtime admission are not implemented by these tests or constructors; admission implements them over synthetic delivery records and a synthetic test verifier (DEV-586 to DEV-594, [Admission Design](admission.md)), and production remote authentication remains deferred (DEV-595).
+<!-- requirement-ref: REQ-TRUST-0043 -->
+<!-- requirement-history: REQ-TRUST-0001 -->
+
+The structural tests support [REQ-TRUST-0043](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0043), the successor of REQ-TRUST-0001, only: a host cannot construct a verified remote source. Trusted-time availability, package verification and fail-closed admission are implemented by admission over synthetic delivery records and synthetic keys (DEV-586 to DEV-594 and DEV-612, [Admission Design](admission.md)); remote delivery stays gated by DEV-595 until the required reviews.
+
+## Trusted Issuer Keys
+
+<!-- requirement-ref: REQ-TRUST-0051 -->
+<!-- requirement-ref: REQ-LIMIT-0032 -->
+
+`PolicyInput.Keys` carries the trusted issuer keys of [REQ-TRUST-0051](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0051). Each `TrustedKey` has a key ID, one issuer, a 32-byte Ed25519 public key held as an array (so it cannot alias caller memory), and `NotBefore` and `NotAfter` as whole UTC seconds. `NewLocalPolicy` rejects the whole policy, with the fixed `ErrTrustModel` and no partial snapshot, when any key record:
+
+- has a key ID or issuer outside 1 to 64 lowercase ASCII letters, digits, `.`, `_` or `-`, or a key ID used by another key of the policy;
+- names an issuer the same policy does not authorize;
+- has a `NotBefore` or `NotAfter` that is zero, not UTC or not a whole second, a `NotAfter` not later than `NotBefore`, or a period above 365 days (`task.MaxKeyValidity`, [REQ-LIMIT-0032](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/registered-limits.md#REQ-LIMIT-0032));
+- would make more than four keys for one issuer or more than 32 in the policy;
+- has a public key that is not the canonical encoding of a curve point, or that is a point of small order.
+
+`task.ValidPublicKey` decodes the point as in RFC 8032 section 5.1.3 with `math/big` and also rejects the encodings that the RFC leaves to implementations: a `y` coordinate not below the field prime and `x = 0` with the sign bit set. A point has small order exactly when eight times it is the identity, which the check computes. It runs only during policy validation over at most 32 keys and is not constant time; public keys are not secret. A policy without keys is valid and admits no remote task. `LocalPolicy.TrustedKey` returns a key by exact key ID. `TrustedKey.Covers` is the inclusive validity check of REQ-TRUST-0052 check 7.
+
+Keys enter only inside the trusted policy bound at initialization or by policy replacement. Tasks, packages, collector responses and other delivered content cannot add, replace or extend them, and no Go, native or Flutter binding accepts a key.
 
 ## Policy Snapshots
 
@@ -48,7 +70,7 @@ Finite implementation-local limits keep trusted inputs bounded: at most 256 issu
 
 ## Revocation and Serialization Boundaries
 
-`NewRevocations` copies bounded issuer/registration ID lists under a positive generation. At least one list must be nonempty; duplicate/invalid IDs reject. It deliberately does not compare generations with an active policy, install a revocation, decide what happens to queued/running tasks, change expiry, cancel activity or persist anything. Operational revocation remains unresolved in the internal task-trust review; defining that behavior requires the public specification and review sequence before implementation. Constructing this input cannot mutate a `LocalPolicy`.
+`NewRevocations` copies bounded issuer/registration ID lists under a positive generation. At least one list must be nonempty; duplicate/invalid IDs reject. It deliberately does not compare generations with an active policy, install a revocation, decide what happens to queued/running tasks, change expiry, cancel activity or persist anything. Key, issuer and target revocation in version `0.1.0` is policy replacement with a higher generation (REQ-TRUST-0054, see [Signed Remote Task Packages](admission.md#signed-remote-task-packages)); this input is not used for it, and there is no fast revocation channel. Constructing this input cannot mutate a `LocalPolicy`.
 
 All trusted input containers and snapshots explicitly reject JSON import and export, including import into an existing valid value. Ordinary task and initialization schemas have no trust/policy fields. Trust-looking text in a permitted task label remains opaque text. The public facade (`Client.AdmitTask`, DEV-592) resolves adapter-installed delivery records by opaque reference; it never deserializes a source or policy supplied by Flutter. Internal constructors can still be called by trusted Go code: this is a structural boundary, not protection against a compromised host or adapter. Models must never be placed in results, traffic, logs, analytics or crash reports.
 
@@ -58,13 +80,15 @@ Errors are fixed `ErrTrustModel` or `ErrTrustEncoding` sentinels without payload
 
 | Case | Evidence scope |
 |---|---|
-| `TestSourceContextInvariantsAndByteBinding`, `TestMalformedSourceRejectedAtomically` | Origin/authentication/time shape, copied time, byte-boundary and exact-byte binding; no cryptographic or clock assurance. |
+| `TestSourceContextInvariantsAndByteBinding`, `TestMalformedSourceRejectedAtomically` | Origin and generation shape, refusal of a host-supplied remote issuer, completion only of an unverified remote context, byte-boundary and exact-byte binding; no cryptographic or clock assurance. |
+| `TestPolicyCarriesBoundedTrustedKeys`, `TestPolicyRejectsMalformedOrAmbiguousKeys`, `TestTrustedKeyCoversInclusiveValidity` | Trusted key records: exact lookup without aliasing, count bounds at and above 4 per issuer and 32 per policy, validity at and above 365 days, malformed identifiers and times, unauthorized issuers, rejected public keys and inclusive validity ends. |
+| `TestSmallOrderPointsDecodeAndAreRejected`, `TestNonCanonicalAndOffCurveKeysRejected`, `TestGeneratedKeysAccepted` | The eight small-order points decode and are rejected; non-canonical and off-curve encodings fail decoding; standard-library keys decode, round-trip and are accepted. Synthetic keys only; not a cryptographic review. |
 | `TestPolicyRejectsMalformedOrAmbiguousAuthority`, `TestRegistrationTuplesAreExactAndBounded` | Atomic model rejection, ambiguous IDs/references, explicit limits and canonical typed tuple structure. |
 | `TestPolicySnapshotsSurviveMutationAndConcurrentReads` | Deep copies on ingress/egress, exact ID lookup and concurrent immutable reads. |
 | `TestPolicyKeepsRestrictionsSeparateWithoutGrantingAuthority` | Independent local/issuer restrictions and zero-traffic local-only representation. |
 | `TestRevocationInputsHaveNoActivationSideEffects` | Immutable inputs and no policy activation effects. |
 | `TestTrustModelsCannotBeImportedOrExportedAsJSON`, `TestSerializedInputCannotSupplyTrustOrPolicy` | JSON boundary rejection, unchanged valid state, task/config injection rejection and opaque labels. |
 
-Validation commands are `make check`, `git diff --check`, and `python3 -B ../barometer-spec/scripts/check_requirements.py --consumer .` against the explicit public checkout. The fixtures are synthetic and perform no network measurement. Admission, trusted-time checks, replay over a synthetic store and facade integration were later delivered by DEV-586 to DEV-594 ([Admission Design](admission.md)). Production protected persistence, operational revocation (DEV-595), native delivery adapters and device validation remain pending. There is no full runtime conformance, platform, field or release-support claim.
+Validation commands are `make check`, `git diff --check`, and `python3 -B ../barometer-spec/scripts/check_requirements.py --consumer .` against the explicit public checkout. The fixtures are synthetic and perform no network measurement. Admission, trusted-time checks, replay over a synthetic store and facade integration were later delivered by DEV-586 to DEV-594 ([Admission Design](admission.md)). Production protected persistence, the reviews that gate remote delivery (DEV-595), native delivery adapters and device validation remain pending. There is no full runtime conformance, platform, field or release-support claim.
 
 Local validation on October 15, 2026 passed the complete `make check`: formatting, host build, unit tests, race detection, static analysis, module integrity, diff whitespace and pure-Go Android ARM64/iOS ARM64 compilation. Requirement-reference structure validation passed against the explicit public checkout above; allocation history, coverage and semantic conformance were not assessed by that checker. Native bindings, devices, CI, releases and field behavior were not tested by this change. No sibling repository was modified.

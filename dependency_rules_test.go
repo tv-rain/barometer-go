@@ -345,7 +345,7 @@ func TestDependencyRulesRejectForbiddenImports(t *testing.T) {
 		file("registry", false, internalPath("model/task"), internalPath("taskdecode"), "errors"),
 		file("admission", false, internalPath("registry"), internalPath("model/task"), internalPath("taskdecode"), internalPath("validation"), internalPath("platform"), internalPath("persistence"), "context", "crypto/rand", "sync"),
 		file("admission", true, internalPath("testkit"), internalPath("testkit/delivery")),
-		file("testkit/delivery", false, internalPath("model/task"), "crypto/hmac"),
+		file("testkit/delivery", false, internalPath("model/task"), "crypto/ed25519"),
 		file("persistence", false, internalPath("model/task"), "context", "crypto/sha256"),
 		file("testkit/replay", false, internalPath("persistence"), internalPath("model/task"), "encoding/json"),
 		file("admission", true, internalPath("testkit/replay")),

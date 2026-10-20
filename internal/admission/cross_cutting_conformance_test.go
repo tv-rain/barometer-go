@@ -32,13 +32,12 @@ func (h *harness) admitEmbedded(t *testing.T, b []byte) (admission.Admitted, err
 
 func (h *harness) admitRemote(t *testing.T, b []byte) (admission.Admitted, error) {
 	t.Helper()
-	v := verifier()
-	v.IssuedAt = task.TimestampFromTime(h.clock.Clock.Now())
-	ref, err := h.store.InstallRemote(context.Background(), v, v.Seal(b))
+	pkg := signer().Sign(h.clock.Clock.Now(), b).Encode()
+	ref, err := h.store.InstallRemote(context.Background(), 2, pkg)
 	if err != nil {
 		t.Fatal("remote install rejected")
 	}
-	return h.admitter.Admit(context.Background(), ref, b)
+	return h.admitter.Admit(context.Background(), ref, pkg)
 }
 
 // restart models a new client instance after a process restart: a fresh
@@ -344,9 +343,10 @@ func TestCcTrustReplayDuplicateAndRollbackHandling(t *testing.T) {
 // have no transport, resolver or Network Context dependency
 // (TestAdmissionHasNoNetworkDependency in the root package), so no recording
 // transport can be connected to them.
-// requirement-ref: REQ-TRUST-0001
-// requirement-ref: REQ-TRUST-0004
-// requirement-ref: REQ-TRUST-0005
+// requirement-ref: REQ-TRUST-0041
+// requirement-ref: REQ-TRUST-0042
+// requirement-ref: REQ-TRUST-0043
+// requirement-ref: REQ-TRUST-0044
 func TestCcTrustAcceptedTaskOrigins(t *testing.T) {
 	b := []byte(baseTask)
 	ctx := context.Background()
@@ -360,82 +360,75 @@ func TestCcTrustAcceptedTaskOrigins(t *testing.T) {
 		}
 	}
 
-	t.Run("same bytes are accepted through each reviewed origin", func(t *testing.T) {
+	t.Run("same task bytes are accepted through each reviewed origin", func(t *testing.T) {
 		h := newHarness(t)
 		source, err := task.NewSourceContext(task.SourceInput{Origin: task.Embedded, IssuerID: "embedded-issuer", PolicyGeneration: 2})
-		if _, issued := source.IssuedAt(); err != nil || source.Authenticated() || issued {
-			t.Fatal("embedded origin must carry authenticated false and no issued_at")
+		if _, issued := source.IssuedAt(); err != nil || !source.Verified() || issued {
+			t.Fatal("embedded origin must carry its issuer and no issued_at")
 		}
-		if _, err := h.admitEmbedded(t, b); err != nil {
+		embedded, err := h.admitEmbedded(t, b)
+		if err != nil {
 			t.Fatal("embedded origin rejected:", code(err))
 		}
 		h = newHarness(t)
-		if _, err := h.admitRemote(t, b); err != nil {
-			t.Fatal("authenticated remote origin with issued_at at the trusted clock rejected:", code(err))
+		remote, err := h.admitRemote(t, b)
+		if err != nil {
+			t.Fatal("signed remote package issued at the trusted clock rejected:", code(err))
+		}
+		// The replay identity is the task bytes, not the package bytes.
+		if admission.AdmittedRecord(remote).Digest != sha256.Sum256(b) || admission.AdmittedRecord(remote).Digest != admission.AdmittedRecord(embedded).Digest {
+			t.Fatal("remote replay digest is not the digest of the exact task bytes")
 		}
 	})
 
-	t.Run("remote origin without issuer authentication", func(t *testing.T) {
+	t.Run("host cannot supply a remote issuer or mark a task authenticated", func(t *testing.T) {
 		h := newHarness(t)
-		v := verifier()
-		v.IssuedAt = task.TimestampFromTime(h.clock.Clock.Now())
-		v.IssuerAuthenticated = false
-		ref, installErr := h.store.InstallRemote(ctx, v, v.Seal(b))
-		if installErr == nil || ref != "" {
-			t.Fatal("transport encryption without issuer authentication produced a record")
+		if _, err := task.NewSourceContext(task.SourceInput{Origin: task.Remote, IssuerID: "remote-issuer", PolicyGeneration: 2}); err == nil {
+			t.Fatal("remote source with a host-supplied issuer was constructed")
 		}
-		if _, err := task.NewSourceContext(task.SourceInput{Origin: task.Remote, IssuerID: "remote-issuer", PolicyGeneration: 2, IssuedAt: &v.IssuedAt}); err == nil {
-			t.Fatal("remote source with authenticated false was constructed")
+		// The bare task presented as remote, without a signed package.
+		ref, err := h.store.InstallRemote(ctx, 2, b)
+		if err != nil {
+			t.Fatal(err)
 		}
 		a, err := h.admitter.Admit(ctx, ref, b)
-		noState(t, "unauthenticated remote", h, a, err, task.SourceUnauthenticated)
+		noState(t, "unsigned remote task", h, a, err, task.SourceUnauthenticated)
+		// A package with an authentication claim added is not a package.
+		claimed := bytes.Replace(signed(0, b), []byte(`{`), []byte(`{"authenticated":true,`), 1)
+		ref, _ = h.store.InstallRemote(ctx, 2, claimed)
+		a, err = h.admitter.Admit(ctx, ref, claimed)
+		noState(t, "authentication claim", h, a, err, task.SourceUnauthenticated)
 	})
 
 	t.Run("remote record bound to bytes differing by one byte", func(t *testing.T) {
 		h := newHarness(t)
-		v := verifier()
-		v.IssuedAt = task.TimestampFromTime(h.clock.Clock.Now())
-		ref, err := h.store.InstallRemote(ctx, v, v.Seal(b))
+		pkg := signed(0, b)
+		ref, err := h.store.InstallRemote(ctx, 2, pkg)
 		if err != nil {
 			t.Fatal(err)
 		}
-		other := bytes.Clone(b)
-		other[len(other)-2] = ' '
+		other := bytes.Clone(pkg)
+		other[len(other)-2] ^= 1
 		a, err := h.admitter.Admit(ctx, ref, other)
 		noState(t, "byte mismatch", h, a, err, task.SourceUnauthenticated)
-		tampered := v.Seal(b)
-		tampered[len(tampered)-2] ^= 1
-		if ref, err := h.store.InstallRemote(ctx, v, tampered); err == nil || ref != "" {
-			t.Fatal("an envelope failing integrity produced a record")
-		}
-	})
-
-	t.Run("remote record without issued_at cannot exist", func(t *testing.T) {
-		h := newHarness(t)
-		if _, err := task.NewSourceContext(task.SourceInput{Origin: task.Remote, IssuerID: "remote-issuer", PolicyGeneration: 2, Authenticated: true}); err == nil {
-			t.Fatal("remote source without issued_at was constructed")
-		}
-		a, err := h.admitter.Admit(ctx, "", b)
-		noState(t, "no issued_at, hence no record", h, a, err, task.SourceUnauthenticated)
 	})
 
 	t.Run("trusted clock unavailable", func(t *testing.T) {
 		h := newHarness(t)
-		v := verifier()
-		v.IssuedAt = task.TimestampFromTime(h.clock.Clock.Now())
-		ref, err := h.store.InstallRemote(ctx, v, v.Seal(b))
+		pkg := signed(0, b)
+		ref, err := h.store.InstallRemote(ctx, 2, pkg)
 		if err != nil {
 			t.Fatal(err)
 		}
 		h.clock.down.Store(true)
-		a, err := h.admitter.Admit(ctx, ref, b)
+		a, err := h.admitter.Admit(ctx, ref, pkg)
 		noState(t, "clock unavailable", h, a, err, task.TrustUnavailable)
 	})
 
 	t.Run("no delivery record", func(t *testing.T) {
 		for _, ref := range []string{"", strings.Repeat("0", 64), "not-a-reference"} {
 			h := newHarness(t)
-			a, err := h.admitter.Admit(ctx, ref, b)
+			a, err := h.admitter.Admit(ctx, ref, signed(0, b))
 			noState(t, "no record", h, a, err, task.SourceUnauthenticated)
 		}
 	})

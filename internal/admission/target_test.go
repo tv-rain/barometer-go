@@ -532,6 +532,7 @@ func TestGateTargetRegistrationRequiresCompleteTuples(t *testing.T) {
 		local := in
 		local.Permissions.RegistrationIDs = []string{"reg-a", "reg-b"}
 		local.Issuers = []task.IssuerPermissions{{IssuerID: "embedded-issuer", Permissions: local.Permissions}}
+		local.Keys = local.Keys[1:] // keep only the embedded issuer's key
 		h := newHarness(t)
 		rebind(t, h, mustPolicy(t, local), registry.Entry{Test: task.TestVersion{ID: "SYN-01", Version: "0.1.0"}, Codec: synCodec{}, BaselineRisk: task.LowRisk, Targets: c.rule, Proxy: registry.NoProxy{}})
 		_, err := h.embedded(t, []byte(baseTask))
@@ -541,7 +542,7 @@ func TestGateTargetRegistrationRequiresCompleteTuples(t *testing.T) {
 
 // Target matching is part of step 8: it follows expiry and path authority and
 // precedes the step-9 risk bounds.
-// requirement-ref: REQ-TRUST-0037
+// requirement-ref: REQ-TRUST-0047
 func TestGateTargetRegistrationPrecedence(t *testing.T) {
 	unregistered := map[string]any{"address": "192.0.2.99"}
 	cases := []struct {

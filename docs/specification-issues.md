@@ -476,3 +476,31 @@ The public text requires admission to validate proxy compatibility but assigns n
 ### Ordering and Closure
 
 Public record and disposition first, then internal task-trust review alignment if its validation plan names the class, then Go adoption in DEV-599, then bindings. Closure requires the public disposition and Go adoption evidence.
+
+## Signed Remote Task Package Adoption
+
+**Status:** Public contract and internal review alignment are merged; the Go core adopts them in DEV-612 with synthetic evidence only. Cryptographic, safety and host integration reviews, binding and host adoption, and the remote-delivery gate (DEV-595) remain open.
+
+This is an adoption record, not a Go finding: the change came from coordination decision 0011 (DEV-609), not from an implementation ambiguity. Its public record is [Library-Verified Signed Remote Task Packages](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/specification-issues/signed-remote-task-packages.md).
+
+### Baselines and Requirements
+
+- **Public baseline:** Draft `0.1.0` at immutable revision `e97502747c917a16bc2b71337535ff972bbd7d64` (public PR #18 merge, DEV-610).
+- **Internal alignment:** `barometer-spec-internal` task-trust review at the PR #6 merge (DEV-611), which adds the signed-package rows of the validation plan.
+- **Adopted requirements:** REQ-TRUST-0040 to REQ-TRUST-0054 and REQ-LIMIT-0032. The retired REQ-TRUST-0001, REQ-TRUST-0002, REQ-TRUST-0004 to REQ-TRUST-0007, REQ-TRUST-0009, REQ-TRUST-0017 and REQ-TRUST-0037 are replaced by their declared successors in `requirement-ref` comments; Markdown records cite them only as `requirement-history`.
+
+### Adoption Evidence
+
+- **Implementation:** `internal/admission/signed.go` (package decoding, message construction, the nine ordered checks), `internal/admission/delivery.go` (package-only, single-use remote records), `internal/model/task/trust.go` (no host-supplied remote issuer, issuance time or authentication flag) and `internal/model/task/keys.go` (trusted key records and public-key validation), described in [Signed Remote Task Packages](admission.md#signed-remote-task-packages) and [Trusted Issuer Keys](trusted-policy-models.md#trusted-issuer-keys). The `RemoteVerifier` seam and the synthetic HMAC verifier are removed; tests use synthetic Ed25519 keys from `internal/testkit/delivery`.
+- **Cases:** `CC-TRUST-SIGNED-REMOTE-PACKAGES`, `CC-TRUST-SIGNED-PACKAGE-DISCLOSURE`, `CC-TRUST-SIGNED-PACKAGE-RETENTION`, `CC-TRUST-KEY-ROTATION`, the rewritten `CC-TRUST-ACCEPTED-TASK-ORIGINS`, unit-test cases for key validation, package formats and Ed25519 edge vectors, and the fuzz targets `FuzzSignedPackage` and `FuzzAdmitTask`. Results are recorded in the traceability evidence for this change.
+
+### Open Interpretation Question
+
+REQ-TRUST-0054 states that a task admitted while its signing key was trusted and valid is not re-verified when that key's validity later ends. The existing replacement procedure (DEV-593) invalidates every task handle and relies on redelivery for tasks the new policy still permits, and every redelivered package is verified at its new acceptance time. A task whose key validity ended between admission and a policy replacement is therefore rejected on redelivery, and an exact redelivery within one generation after key expiry is rejected while the existing handle stays valid. The implementation keeps this fail-closed behavior. Whether REQ-TRUST-0054 intends such a task to survive replacement without re-verification is left to the public specification; it is recorded here and not resolved by local choice.
+
+### Remaining Boundaries
+
+- Cryptographic review of the package encoding, signed-message construction, Ed25519 verification strictness and public-key validation, including confirmation that the Go standard library behavior relied on stays as tested.
+- Safety review of residual key exposure, the 365-day maximum key validity and four keys per issuer.
+- Host integration review of how hosts avoid retaining received packages, and native and Flutter binding of the package-only remote path (DEV-455).
+- No runtime, platform, field or release support is claimed.

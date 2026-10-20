@@ -161,7 +161,7 @@ func TestGateLocallyDeterminedRiskBounds(t *testing.T) {
 // requirement-ref: REQ-SAFETY-0017
 // requirement-ref: REQ-SAFETY-0019
 // requirement-ref: REQ-SAFETY-0029
-// requirement-ref: REQ-TRUST-0037
+// requirement-ref: REQ-TRUST-0047
 func TestGateUnreliableSafetyInputsFailClosed(t *testing.T) {
 	permitsUnknown := mustPolicy(t, riskPolicy(task.LowRisk, true, true))
 	for _, typ := range []string{"battery_drain", "bandwidth", "Network_observability", "network-observability", ""} {

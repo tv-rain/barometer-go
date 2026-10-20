@@ -2,6 +2,7 @@ package admission
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"sync"
 	"time"
@@ -24,7 +25,7 @@ const (
 // ErrAdmitterConfig is the single construction error. It carries no detail.
 var ErrAdmitterConfig = errors.New("admission: invalid admitter configuration")
 
-// Admitter runs the ordered admission steps of REQ-TRUST-0017 for one client
+// Admitter runs the ordered admission steps of REQ-TRUST-0046 for one client
 // instance. It implements steps 1 to 6 (DEV-586), issuer and policy resolution
 // in step 7 and the input, options and path-authority parts of step 8
 // (DEV-587), target registration matching in step 8 (DEV-588), and effective
@@ -66,9 +67,13 @@ func NewAdmitter(deliveries *DeliveryStore, clock platform.Clock, reg *registry.
 // Gated is the unpublished outcome of the implemented gates: owned values for
 // the later steps, including the effective risk and consent requirement that
 // acceptance records on the admitted task. It is not an admitted task, holds no task bytes and has no
-// serialized form; discarding it leaves no state behind.
+// serialized form; discarding it leaves no state behind. It keeps the verified
+// source context and the digest of the exact task bytes, never the delivery
+// record, so nothing derived from a signed package, its signature or its key
+// ID outlives admission (REQ-TRUST-0053).
 type Gated struct {
-	record     task.DeliveryRecord
+	source     task.SourceContext
+	digest     [sha256.Size]byte
 	acceptedAt time.Time
 	entry      registry.Entry
 	candidate  task.Candidate
@@ -81,52 +86,62 @@ func (Gated) String() string   { return "admission.Gated" }
 func (Gated) GoString() string { return "admission.Gated" }
 
 // Gate runs the implemented steps in public order and returns the class of the
-// first failing step (REQ-TRUST-0037) as a code-only task.AdmissionError. Step
+// first failing step (REQ-TRUST-0047) as a code-only task.AdmissionError. Step
 // failures are mapped at the step boundary and never wrapped (REQ-TRUST-0035).
 // Task-controlled authority claims and recipient selectors are unknown fields
-// and fail at step 4; no task value is interpolated locally.
-// requirement-ref: REQ-TRUST-0001
-// requirement-ref: REQ-TRUST-0002
-// requirement-ref: REQ-TRUST-0017
+// and fail at step 4; no task value is interpolated locally. presented is the
+// exact serialized task for embedded origin and the exact signed remote task
+// package for remote origin (REQ-TRUST-0046 step 1).
+// requirement-ref: REQ-TRUST-0040
+// requirement-ref: REQ-TRUST-0043
+// requirement-ref: REQ-TRUST-0046
 // requirement-ref: REQ-TRUST-0018
 // requirement-ref: REQ-TRUST-0026
 // requirement-ref: REQ-TRUST-0027
 // requirement-ref: REQ-TRUST-0033
 // requirement-ref: REQ-TRUST-0035
 // requirement-ref: REQ-TRUST-0036
-// requirement-ref: REQ-TRUST-0037
+// requirement-ref: REQ-TRUST-0047
 // requirement-ref: REQ-TRUST-0010
 // requirement-ref: REQ-TRUST-0012
 // requirement-ref: REQ-LIMIT-0026
-func (a *Admitter) Gate(ctx context.Context, sourceRef string, exactTask []byte) (Gated, error) {
+func (a *Admitter) Gate(ctx context.Context, sourceRef string, presented []byte) (Gated, error) {
 	if a == nil {
 		return Gated{}, admissionError(task.TrustUnavailable)
 	}
-	// Step 1: the adapter-installed record for these exact bytes.
-	record, err := a.deliveries.Resolve(ctx, sourceRef, exactTask)
+	// Step 1: the adapter-installed record for these exact presented bytes: the
+	// serialized task for embedded origin, the signed package for remote.
+	record, err := a.deliveries.Resolve(ctx, sourceRef, presented)
 	if err != nil {
 		return Gated{}, err
 	}
-	// Step 2: authenticated remote origin or reviewed embedded origin.
-	// requirement-ref: REQ-TRUST-0004
-	source := record.Source()
-	remote := source.Origin() == task.Remote
-	if !source.Valid() || remote != source.Authenticated() || !remote && source.Origin() != task.Embedded {
+	// Step 2: reviewed embedded origin, or a remote signed package verified
+	// under REQ-TRUST-0052. Nothing the host asserts authenticates a remote task.
+	// requirement-ref: REQ-TRUST-0041
+	// requirement-ref: REQ-TRUST-0042
+	source, exactTask := record.Source(), presented
+	var now time.Time
+	switch {
+	case source.Valid() && source.Origin() == task.Embedded && source.Verified():
+	case source.Valid() && source.Origin() == task.Remote && !source.Verified():
+		var class task.AdmissionCode
+		if source, exactTask, now, class = a.verifyPackage(ctx, source, presented); class != 0 {
+			return Gated{}, admissionError(class)
+		}
+	default:
 		return Gated{}, admissionError(task.SourceUnauthenticated)
 	}
-	// Step 3: trusted time, issuance freshness, then the byte limit before parsing.
-	now, err := a.clock.Now(ctx)
-	if err != nil || now.IsZero() {
-		return Gated{}, admissionError(task.TrustUnavailable)
+	// Step 3: trusted time, then the byte limit before parsing. For remote
+	// origin the acceptance time is the reading of check 6, and issuer_id and
+	// issued_at come from the verified package.
+	if source.Origin() == task.Embedded {
+		if now, err = a.clock.Now(ctx); err != nil || now.IsZero() {
+			return Gated{}, admissionError(task.TrustUnavailable)
+		}
 	}
 	timing := validation.TimingContext{Origin: "embedded", AcceptedAt: now}
 	base := now // validity reference, as in validation.ScheduleAt
-	if remote {
-		// requirement-ref: REQ-LIMIT-0010
-		issued, ok := source.IssuedAt()
-		if !ok || issued.AfterTime(now.Add(MaxIssuedAhead)) {
-			return Gated{}, admissionError(task.SourceUnauthenticated)
-		}
+	if issued, ok := source.IssuedAt(); ok {
 		whole := issued.Whole
 		timing.Origin, timing.IssuedAt = "remote", &whole
 		if whole.Before(base) {
@@ -196,7 +211,7 @@ func (a *Admitter) Gate(ctx context.Context, sourceRef string, exactTask []byte)
 	if class = authority.evaluateRisk(a.policy, entry.BaselineRisk, candidate.Safety.RiskLevel); class != 0 {
 		return Gated{}, admissionError(class)
 	}
-	return Gated{record: record, acceptedAt: now, entry: entry, candidate: candidate, authority: authority}, nil
+	return Gated{source: source, digest: sha256.Sum256(exactTask), acceptedAt: now, entry: entry, candidate: candidate, authority: authority}, nil
 }
 
 // fieldClass maps a decoding or validation failure to its public class. A value

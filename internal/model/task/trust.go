@@ -19,15 +19,16 @@ const (
 )
 
 // SourceInput is an internal adapter assertion, never a wire schema. Constructing
-// it cannot authenticate a delivery or prove release review. Only a reviewed
-// adapter may supply it after establishing provenance for the exact task bytes.
+// it cannot authenticate a delivery or prove release review. A reviewed adapter
+// supplies the origin and policy generation, and for embedded origin also the
+// issuer (REQ-TRUST-0044). It has no authentication flag, remote issuer or
+// issuance time: for remote origin those come only from a signed package that
+// admission verifies (REQ-TRUST-0042).
 type SourceInput struct {
 	trustedOnly
 	Origin           Origin
 	IssuerID         string
 	PolicyGeneration uint64
-	Authenticated    bool
-	IssuedAt         *Timestamp
 }
 
 // trustedOnly blocks accidental JSON import/export, including on input records.
@@ -39,35 +40,52 @@ func (trustedOnly) UnmarshalJSON([]byte) error   { return ErrTrustEncoding }
 
 // SourceContext is structurally valid provenance metadata, not an admission
 // permit. Zero values are invalid. No mutable aliases escape the constructor.
+// A remote context starts unverified, with no issuer or issuance time, and is
+// completed only by WithVerifiedPackage.
 type SourceContext struct {
 	trustedOnly
-	valid         bool
-	origin        Origin
-	issuer        string
-	generation    uint64
-	authenticated bool
-	issued        Timestamp
-	hasIssued     bool
+	valid      bool
+	verified   bool
+	origin     Origin
+	issuer     string
+	generation uint64
+	issued     Timestamp
+	hasIssued  bool
 }
 
+// NewSourceContext requires a positive policy generation. Embedded origin
+// requires the issuer; remote origin refuses one, because a host-supplied
+// remote issuer is not accepted.
+// requirement-ref: REQ-TRUST-0044
 func NewSourceContext(in SourceInput) (SourceContext, error) {
-	if !identifier(in.IssuerID) || in.PolicyGeneration == 0 {
+	if in.PolicyGeneration == 0 {
 		return SourceContext{}, ErrTrustModel
 	}
-	s := SourceContext{valid: true, origin: in.Origin, issuer: in.IssuerID, generation: in.PolicyGeneration, authenticated: in.Authenticated}
 	switch in.Origin {
 	case Embedded:
-		if in.Authenticated || in.IssuedAt != nil {
+		if !identifier(in.IssuerID) {
 			return SourceContext{}, ErrTrustModel
 		}
+		return SourceContext{valid: true, verified: true, origin: Embedded, issuer: in.IssuerID, generation: in.PolicyGeneration}, nil
 	case Remote:
-		if !in.Authenticated || in.IssuedAt == nil || !trustTimestamp(*in.IssuedAt) {
+		if in.IssuerID != "" {
 			return SourceContext{}, ErrTrustModel
 		}
-		s.issued, s.hasIssued = *in.IssuedAt, true
-	default:
+		return SourceContext{valid: true, origin: Remote, generation: in.PolicyGeneration}, nil
+	}
+	return SourceContext{}, ErrTrustModel
+}
+
+// WithVerifiedPackage returns the remote context completed with the issuer and
+// issuance time of a signed package (REQ-TRUST-0046 step 3). Only admission
+// calls it, after the last check of REQ-TRUST-0052 succeeds; calling it
+// verifies nothing. The receiver must be a valid unverified remote context and
+// issuedAt a whole UTC second.
+func (s SourceContext) WithVerifiedPackage(issuerID string, issuedAt Timestamp) (SourceContext, error) {
+	if !s.valid || s.verified || s.origin != Remote || !identifier(issuerID) || issuedAt.Fraction != "" || !trustTimestamp(issuedAt) {
 		return SourceContext{}, ErrTrustModel
 	}
+	s.verified, s.issuer, s.issued, s.hasIssued = true, issuerID, issuedAt, true
 	return s, nil
 }
 
@@ -75,13 +93,17 @@ func (s SourceContext) Valid() bool                 { return s.valid }
 func (s SourceContext) Origin() Origin              { return s.origin }
 func (s SourceContext) IssuerID() string            { return s.issuer }
 func (s SourceContext) PolicyGeneration() uint64    { return s.generation }
-func (s SourceContext) Authenticated() bool         { return s.authenticated }
 func (s SourceContext) IssuedAt() (Timestamp, bool) { return s.issued, s.hasIssued }
 
+// Verified reports whether the issuer is established: for a valid embedded
+// context always, and for remote only after WithVerifiedPackage.
+func (s SourceContext) Verified() bool { return s.valid && s.verified }
+
 // MaxDeliveryBytes bounds the exact bytes a delivery record can bind. It is an
-// implementation-local receive bound, deliberately above the registered 65,536-byte
-// task limit so that admission, not the record, rejects an oversized task as
-// task_limit_exceeded before parsing (REQ-TRUST-0017 step 3).
+// implementation-local receive bound, deliberately above the registered
+// 65,536-byte task and 98,304-byte signed-package limits, so that admission,
+// not the record, rejects an oversized task or package as task_limit_exceeded
+// before decoding (REQ-TRUST-0046 step 3, REQ-TRUST-0052 check 1).
 const MaxDeliveryBytes = 2 * 65536
 
 // DeliveryRecord binds metadata to byte identity without retaining payloads.

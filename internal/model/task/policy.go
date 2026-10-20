@@ -156,6 +156,9 @@ type PolicyInput struct {
 	Permissions Permissions
 	Issuers     []IssuerPermissions
 	Targets     []TargetRegistration
+	// Keys are the trusted issuer keys for signed remote task packages
+	// (REQ-TRUST-0051). A policy without keys admits no remote task.
+	Keys []TrustedKey
 }
 
 // LocalPolicy owns a complete immutable snapshot. Constructors check structural
@@ -191,6 +194,9 @@ func NewLocalPolicy(in PolicyInput) (LocalPolicy, error) {
 	if !references(in.Permissions, targets) {
 		return LocalPolicy{}, ErrTrustModel
 	}
+	if !validKeys(in.Keys, issuers) {
+		return LocalPolicy{}, ErrTrustModel
+	}
 	for _, t := range in.Targets {
 		for _, id := range t.RedirectIDs {
 			r, ok := targets[id]
@@ -213,6 +219,17 @@ func (p LocalPolicy) Issuer(id string) (IssuerPermissions, bool) {
 	}
 	return IssuerPermissions{}, false
 }
+
+// TrustedKey returns the trusted issuer key named id, by exact key ID.
+func (p LocalPolicy) TrustedKey(id string) (TrustedKey, bool) {
+	for _, k := range p.input.Keys {
+		if k.KeyID == id {
+			return k, true
+		}
+	}
+	return TrustedKey{}, false
+}
+
 func (p LocalPolicy) Target(id string) (TargetRegistration, bool) {
 	for _, t := range p.input.Targets {
 		if t.ID == id {
@@ -404,6 +421,7 @@ func copyPolicy(in PolicyInput) PolicyInput {
 	in.Permissions = copyPermissions(in.Permissions)
 	in.Issuers = slices.Clone(in.Issuers)
 	in.Targets = slices.Clone(in.Targets)
+	in.Keys = slices.Clone(in.Keys)
 	for n := range in.Issuers {
 		in.Issuers[n].Permissions = copyPermissions(in.Issuers[n].Permissions)
 	}

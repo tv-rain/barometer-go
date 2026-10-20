@@ -138,15 +138,20 @@ func (h *harness) embedded(t *testing.T, b []byte) (admission.Gated, error) {
 	return h.admitter.Gate(context.Background(), ref, b)
 }
 
+// remote signs b as issued at epoch+ahead and presents the package.
 func (h *harness) remote(t *testing.T, ahead time.Duration, b []byte) (admission.Gated, error) {
 	t.Helper()
-	v := verifier()
-	v.IssuedAt = task.TimestampFromTime(epoch.Add(ahead))
-	ref, err := h.store.InstallRemote(context.Background(), v, v.Seal(b))
+	return h.presentPackage(t, signed(ahead, b))
+}
+
+// presentPackage installs and presents the exact package bytes.
+func (h *harness) presentPackage(t *testing.T, pkg []byte) (admission.Gated, error) {
+	t.Helper()
+	ref, err := h.store.InstallRemote(context.Background(), 2, pkg)
 	if err != nil {
 		t.Fatal("remote install rejected")
 	}
-	return h.admitter.Gate(context.Background(), ref, b)
+	return h.admitter.Gate(context.Background(), ref, pkg)
 }
 
 const baseTask = `{"schema_version":"0.1.0","task_id":"synthetic-task","test_id":"SYN-01","test_version":"0.1.0","input":{"subject":"example"},"options":{},"schedule":{"not_after":"2026-10-20T12:00:00Z"},"execution":{"limits":{}},"safety":{"risk_level":"low","requires_user_consent":false}}`
@@ -226,8 +231,9 @@ func admissionCode(c task.AdmissionCode) string {
 	return err.Error()
 }
 
-// requirement-ref: REQ-TRUST-0001
-// requirement-ref: REQ-TRUST-0004
+// requirement-ref: REQ-TRUST-0040
+// requirement-ref: REQ-TRUST-0041
+// requirement-ref: REQ-TRUST-0044
 func TestGateAcceptsReviewedOrigins(t *testing.T) {
 	h := newHarness(t)
 	b := []byte(baseTask)
@@ -247,8 +253,10 @@ func TestGateAcceptsReviewedOrigins(t *testing.T) {
 	}
 	for _, ahead := range []time.Duration{-time.Hour, 0, admission.MaxIssuedAhead} {
 		g, err := h.remote(t, ahead, b)
-		if err != nil || admission.GatedSource(g).Origin() != task.Remote {
-			t.Errorf("remote task issued %v ahead rejected", ahead)
+		s := admission.GatedSource(g)
+		issued, ok := s.IssuedAt()
+		if err != nil || s.Origin() != task.Remote || !s.Verified() || s.IssuerID() != "remote-issuer" || !ok || !issued.Whole.Equal(epoch.Add(ahead)) {
+			t.Errorf("remote task issued %v ahead rejected or its package context lost", ahead)
 		}
 	}
 	if fmt.Sprintf("%v %+v %#v %s", g, g, g, g) != "admission.Gated admission.Gated admission.Gated admission.Gated" {
@@ -256,13 +264,13 @@ func TestGateAcceptsReviewedOrigins(t *testing.T) {
 	}
 }
 
-// Each case fails exactly one implemented step and expects its REQ-TRUST-0037
+// Each case fails exactly one implemented step and expects its REQ-TRUST-0047
 // class. Later steps are not reached: the codec is never called on rejection.
-// requirement-ref: REQ-TRUST-0001
-// requirement-ref: REQ-TRUST-0017
+// requirement-ref: REQ-TRUST-0043
+// requirement-ref: REQ-TRUST-0046
 // requirement-ref: REQ-TRUST-0018
 // requirement-ref: REQ-TRUST-0036
-// requirement-ref: REQ-TRUST-0037
+// requirement-ref: REQ-TRUST-0047
 // requirement-ref: REQ-SAFETY-0017
 // requirement-ref: REQ-LIMIT-0004
 // requirement-ref: REQ-LIMIT-0005
@@ -276,8 +284,6 @@ func TestGateStepClasses(t *testing.T) {
 	foreign := mustEmbedded(t, other.store, base)
 	mismatch := append([]byte(nil), base...)
 	mismatch[len(mismatch)-2] = ' '
-	unauthenticated := verifier()
-	unauthenticated.IssuerAuthenticated = false
 
 	// Steps 1 and 2: no record, a foreign or mismatched record, or no proof.
 	for name, run := range map[string]func() error{
@@ -285,11 +291,12 @@ func TestGateStepClasses(t *testing.T) {
 		"malformed ref":    func() error { _, err := h.admitter.Gate(ctx, "not-a-reference", base); return err },
 		"foreign instance": func() error { _, err := h.admitter.Gate(ctx, foreign, base); return err },
 		"byte mismatch":    func() error { _, err := h.admitter.Gate(ctx, ref, mismatch); return err },
-		"encryption without issuer authentication": func() error {
-			if _, err := h.store.InstallRemote(ctx, unauthenticated, unauthenticated.Seal(base)); err == nil {
-				t.Fatal("unauthenticated remote delivery installed")
+		"remote task without a signed package": func() error {
+			r, err := h.store.InstallRemote(ctx, 2, base)
+			if err != nil {
+				t.Fatal("remote install rejected")
 			}
-			_, err := h.admitter.Gate(ctx, strings.Repeat("a", 32), base)
+			_, err = h.admitter.Gate(ctx, r, base)
 			return err
 		},
 	} {
@@ -319,8 +326,6 @@ func TestGateStepClasses(t *testing.T) {
 	h = newHarness(t)
 	_, err = h.remote(t, admission.MaxIssuedAhead+time.Second, base)
 	expect(t, "remote issued_at 301 seconds ahead", err, task.SourceUnauthenticated)
-	_, err = h.remote(t, admission.MaxIssuedAhead+time.Second/2, base)
-	expect(t, "remote issued_at 300.5 seconds ahead", err, task.SourceUnauthenticated)
 
 	cases := []struct {
 		name string
@@ -422,8 +427,8 @@ func TestGateTaskIdentifierRules(t *testing.T) {
 	expect(t, "task_id number", err, task.SchemaInvalid)
 }
 
-// The first failing step decides the class (REQ-TRUST-0037).
-// requirement-ref: REQ-TRUST-0037
+// The first failing step decides the class (REQ-TRUST-0047).
+// requirement-ref: REQ-TRUST-0047
 func TestGatePrecedence(t *testing.T) {
 	long := strings.Repeat("a", 129)
 	expired := "2026-10-19T11:00:00Z"
@@ -445,17 +450,17 @@ func TestGatePrecedence(t *testing.T) {
 		_, err := h.embedded(t, c.task)
 		expect(t, c.name, err, c.want)
 	}
-	// Step 2 before 3: an oversized task without authenticated provenance never
-	// gets a record, so it fails at step 1, not on size.
+	// Step 2 before 3: an oversized task presented as remote without a signed
+	// package fails package decoding, not on size; a signed one fails on size
+	// only after its signature verifies.
 	h := newHarness(t)
-	v := verifier()
-	v.IssuerAuthenticated = false
 	big := padded([]byte(baseTask), admission.MaxTaskBytes+1)
-	if _, err := h.store.InstallRemote(context.Background(), v, v.Seal(big)); err == nil {
-		t.Fatal("unauthenticated remote delivery installed")
-	}
-	_, err := h.admitter.Gate(context.Background(), strings.Repeat("b", 32), big)
-	expect(t, "unauthenticated before byte limit", err, task.SourceUnauthenticated)
+	_, err := h.presentPackage(t, big)
+	expect(t, "unsigned before byte limit", err, task.SourceUnauthenticated)
+	_, err = h.remote(t, 0, big)
+	expect(t, "signed task over the byte limit", err, task.LimitExceeded)
+	_, err = h.remote(t, 0, padded([]byte(baseTask), admission.MaxTaskBytes))
+	expect(t, "signed task at the byte limit", err, 0)
 	// Freshness and trusted time before size.
 	_, err = h.remote(t, admission.MaxIssuedAhead+time.Second, big)
 	expect(t, "issued_at before byte limit", err, task.SourceUnauthenticated)
@@ -468,7 +473,7 @@ func TestGatePrecedence(t *testing.T) {
 
 // Task-controlled authority claims and recipient selectors are unknown fields;
 // placeholder text is kept literal and never interpolated locally.
-// requirement-ref: REQ-TRUST-0002
+// requirement-ref: REQ-TRUST-0040
 // requirement-ref: REQ-TRUST-0026
 // requirement-ref: REQ-TRUST-0027
 func TestGateNoTaskControlledAuthorityOrInterpolation(t *testing.T) {
@@ -491,7 +496,7 @@ func TestGateNoTaskControlledAuthorityOrInterpolation(t *testing.T) {
 		if c.Parameters != (synParameters{Subject: "{{country}}"}) || len(c.Labels) < 2 || c.Labels[0] != (task.Label{Key: "cohort", Value: "${cohort}"}) || c.Labels[1] != (task.Label{Key: "network", Value: "%NETWORK%"}) {
 			t.Fatal("placeholder text was interpolated or changed")
 		}
-		if s := admission.GatedSource(g); s.Authenticated() || s.Origin() != task.Embedded {
+		if s := admission.GatedSource(g); s.Origin() != task.Embedded || s.IssuerID() != "embedded-issuer" {
 			t.Fatal("label text changed source context")
 		}
 		if i == 0 {

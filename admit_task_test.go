@@ -55,18 +55,25 @@ func permit(*task.Permissions) {}
 // widens the deployment and issuer permissions alike.
 func synPolicy(t *testing.T, generation uint64, registration string, adjust func(*task.Permissions)) task.LocalPolicy {
 	t.Helper()
-	perm := synPermissions()
-	perm.RegistrationIDs = []string{registration}
-	adjust(&perm)
-	policy, err := task.NewLocalPolicy(task.PolicyInput{Generation: generation, Permissions: perm,
-		Issuers: []task.IssuerPermissions{{IssuerID: "embedded-issuer", Permissions: perm}, {IssuerID: "remote-issuer", Permissions: perm}},
-		Targets: []task.TargetRegistration{{ID: registration, Test: task.TestVersion{ID: "SYN-01", Version: "0.1.0"}, Role: task.MeasurementTarget,
-			Tuple: task.TargetTuple{Hostname: registration + ".example.test"}, Paths: task.Paths{Direct: true, Proxy: true}, BaselineRisk: task.LowRisk,
-			Owner: "synthetic", Purpose: "synthetic", ReviewGeneration: 1, ExpiresAt: task.TimestampFromTime(epoch.Add(48 * time.Hour))}}})
+	policy, err := task.NewLocalPolicy(synPolicyInput(generation, registration, adjust))
 	if err != nil {
 		t.Fatal("synthetic policy rejected")
 	}
 	return policy
+}
+
+// synPolicyInput is the input of synPolicy, for tests that change its issuers
+// or trusted keys.
+func synPolicyInput(generation uint64, registration string, adjust func(*task.Permissions)) task.PolicyInput {
+	perm := synPermissions()
+	perm.RegistrationIDs = []string{registration}
+	adjust(&perm)
+	return task.PolicyInput{Generation: generation, Permissions: perm,
+		Issuers: []task.IssuerPermissions{{IssuerID: "embedded-issuer", Permissions: perm}, {IssuerID: "remote-issuer", Permissions: perm}},
+		Targets: []task.TargetRegistration{{ID: registration, Test: task.TestVersion{ID: "SYN-01", Version: "0.1.0"}, Role: task.MeasurementTarget,
+			Tuple: task.TargetTuple{Hostname: registration + ".example.test"}, Paths: task.Paths{Direct: true, Proxy: true}, BaselineRisk: task.LowRisk,
+			Owner: "synthetic", Purpose: "synthetic", ReviewGeneration: 1, ExpiresAt: task.TimestampFromTime(epoch.Add(48 * time.Hour))}},
+		Keys: []task.TrustedKey{remoteSigner().Key(keyNotBefore, keyNotAfter), embeddedSigner().Key(keyNotBefore, keyNotAfter)}}
 }
 
 // admittingHarness binds a synthetic generation-2 policy in which the
@@ -101,14 +108,44 @@ func (h *harness) embedded(t *testing.T, taskJSON string) string {
 	return ref
 }
 
-func (h *harness) remote(t *testing.T, taskJSON string) string {
+// remoteSigner holds the synthetic remote issuer key; embeddedSigner a trusted
+// key of the embedded issuer. Both are valid from 30 days before the epoch to
+// 300 days after it.
+func remoteSigner() delivery.Signer { return delivery.NewSigner("remote-key-1", "remote-issuer", 1) }
+func embeddedSigner() delivery.Signer {
+	return delivery.NewSigner("embedded-key-1", "embedded-issuer", 2)
+}
+
+var (
+	keyNotBefore = epoch.Add(-30 * 24 * time.Hour)
+	keyNotAfter  = epoch.Add(300 * 24 * time.Hour)
+)
+
+// sign returns the encoded signed package of taskJSON issued at the clock.
+func (h *harness) sign(taskJSON string) string {
+	return string(remoteSigner().Sign(h.clock.Clock.Now(), []byte(taskJSON)).Encode())
+}
+
+// installPackage installs a remote record for the exact package bytes.
+func (h *harness) installPackage(t *testing.T, pkg string) string {
 	t.Helper()
-	v := delivery.Verifier{Key: []byte("synthetic-key"), IssuerID: "remote-issuer", PolicyGeneration: 2, IssuedAt: task.TimestampFromTime(h.clock.Clock.Now()), IssuerAuthenticated: true}
-	ref, err := h.deliveries.InstallRemote(context.Background(), v, v.Seal([]byte(taskJSON)))
+	ref, err := h.deliveries.InstallRemote(context.Background(), 2, []byte(pkg))
 	if err != nil {
 		t.Fatal("remote install rejected")
 	}
 	return ref
+}
+
+// deliver installs taskJSON through the named origin and returns the exact
+// bytes to present with the reference: the task for embedded origin, its
+// signed package for remote origin.
+func (h *harness) deliver(t *testing.T, origin, taskJSON string) (string, string) {
+	t.Helper()
+	if origin == "remote" {
+		pkg := h.sign(taskJSON)
+		return pkg, h.installPackage(t, pkg)
+	}
+	return taskJSON, h.embedded(t, taskJSON)
 }
 
 func taskHandles(c *Client) int {
@@ -124,12 +161,7 @@ func TestAdmitTaskAcceptsReviewedOrigins(t *testing.T) {
 		t.Run(origin, func(t *testing.T) {
 			h := admittingHarness(t)
 			c := h.initialized(t)
-			b := synTask("synthetic-task", time.Hour)
-			ref := h.embedded
-			if origin == "remote" {
-				ref = h.remote
-			}
-			th, err := c.AdmitTask(b, ref(t, b))
+			th, err := c.AdmitTask(h.deliver(t, origin, synTask("synthetic-task", time.Hour)))
 			if err != nil || !strings.HasPrefix(th, taskHandlePrefix) {
 				t.Fatal("valid task rejected:", codeOf(err))
 			}
