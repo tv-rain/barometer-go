@@ -10,6 +10,13 @@ The separate test-only [`internal/testkit/conformance`](conformance-fixtures.md)
 
 The test-only [`internal/testkit/delivery`](admission.md#delivery-record-seam) subpackage owns a synthetic remote-delivery verifier for admission tests. It imports only task models, its HMAC envelope is a test format rather than a reviewed authentication mechanism, and production code must not import it.
 
+The test-only `internal/testkit/replay` subpackage owns a bounded, fault-injectable replay store that implements `persistence.ReplayStore` for admission tests ([Atomic Rejection and Replay Persistence](admission.md#atomic-rejection-and-replay-persistence)). It keeps encoded records in memory as its model of durable state and can inject:
+- a failure at lookup, at the generation read, before a write, during a write (staged but never durable) and after a durable write (an uncertain commit);
+- corrupt records;
+- a simulated restart that keeps durable records and discards staged writes.
+
+It purges overdue records using the trusted time it is given and exposes its stored bytes for leakage checks. It is not a persistence implementation or a mobile fallback, and production code must not import it.
+
 ## Public Baseline and References
 
 Fixture categories follow Draft `0.1.0` at public revision [`05c1364af4f9a604b617fca45f060949b557d265`](https://github.com/tv-rain/barometer-spec/commit/05c1364af4f9a604b617fca45f060949b557d265):

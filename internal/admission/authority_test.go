@@ -84,7 +84,7 @@ func rebind(t *testing.T, h *harness, policy task.LocalPolicy, entries ...regist
 	if err != nil {
 		t.Fatal("registry rejected")
 	}
-	if h.admitter, err = admission.NewAdmitter(h.store, h.clock, reg, policy); err != nil {
+	if h.admitter, err = admission.NewAdmitter(h.store, h.clock, reg, policy, h.replay); err != nil {
 		t.Fatal("admitter rejected")
 	}
 }

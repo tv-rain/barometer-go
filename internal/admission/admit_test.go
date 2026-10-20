@@ -20,6 +20,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/registry"
 	"github.com/tv-rain/barometer-go/internal/taskdecode"
 	"github.com/tv-rain/barometer-go/internal/testkit"
+	"github.com/tv-rain/barometer-go/internal/testkit/replay"
 )
 
 // SYN-01 is a synthetic test-scoped registry entry, never a production entry
@@ -88,6 +89,7 @@ func (c *stepClock) Now(ctx context.Context) (time.Time, error) {
 type harness struct {
 	clock     *stepClock
 	store     *admission.DeliveryStore
+	replay    *replay.Store
 	admitter  *admission.Admitter
 	transport *testkit.Transport
 	normalize *atomic.Int32
@@ -103,6 +105,7 @@ func newHarness(t *testing.T) *harness {
 func newHarnessWith(t *testing.T, policy task.LocalPolicy) *harness {
 	t.Helper()
 	h := &harness{clock: &stepClock{fakeClock: newClock()}, normalize: &atomic.Int32{}}
+	h.replay = mustReplay(t, 256)
 	var err error
 	if h.store, err = admission.NewDeliveryStore(h.clock, admission.DeliveryLimits{Capacity: 256, Lifetime: lifetime}, 2); err != nil {
 		t.Fatal("store rejected")
@@ -111,7 +114,7 @@ func newHarnessWith(t *testing.T, policy task.LocalPolicy) *harness {
 	if err != nil {
 		t.Fatal("registry rejected")
 	}
-	if h.admitter, err = admission.NewAdmitter(h.store, h.clock, reg, policy); err != nil {
+	if h.admitter, err = admission.NewAdmitter(h.store, h.clock, reg, policy, h.replay); err != nil {
 		t.Fatal("admitter rejected")
 	}
 	// The recording transport is never given to admission; it must stay unused.
@@ -583,13 +586,16 @@ func TestNewAdmitterRejectsIncompleteConfiguration(t *testing.T) {
 	reg, _ := registry.New([]registry.Entry{{Test: task.TestVersion{ID: "SYN-01", Version: "0.1.0"}, Codec: synCodec{}, BaselineRisk: task.LowRisk, Targets: synTargets, Proxy: registry.NoProxy{}}})
 	for name, build := range map[string]func() (*admission.Admitter, error){
 		"no store": func() (*admission.Admitter, error) {
-			return admission.NewAdmitter(nil, h.clock, reg, mustPolicy(t, permissive()))
+			return admission.NewAdmitter(nil, h.clock, reg, mustPolicy(t, permissive()), h.replay)
 		},
 		"no clock": func() (*admission.Admitter, error) {
-			return admission.NewAdmitter(h.store, nil, reg, mustPolicy(t, permissive()))
+			return admission.NewAdmitter(h.store, nil, reg, mustPolicy(t, permissive()), h.replay)
 		},
 		"no registry": func() (*admission.Admitter, error) {
-			return admission.NewAdmitter(h.store, h.clock, nil, mustPolicy(t, permissive()))
+			return admission.NewAdmitter(h.store, h.clock, nil, mustPolicy(t, permissive()), h.replay)
+		},
+		"no replay store": func() (*admission.Admitter, error) {
+			return admission.NewAdmitter(h.store, h.clock, reg, mustPolicy(t, permissive()), nil)
 		},
 	} {
 		if a, err := build(); a != nil || !errors.Is(err, admission.ErrAdmitterConfig) {
@@ -621,7 +627,7 @@ func FuzzGate(f *testing.F) {
 	if err != nil {
 		f.Fatal("policy rejected")
 	}
-	admitter, err := admission.NewAdmitter(store, h.clock, reg, policy)
+	admitter, err := admission.NewAdmitter(store, h.clock, reg, policy, mustReplay(f, 256))
 	if err != nil {
 		f.Fatal("admitter rejected")
 	}
@@ -646,4 +652,13 @@ func FuzzGate(f *testing.F) {
 			t.Fatal("over-limit task passed the gates")
 		}
 	})
+}
+
+func mustReplay(t testing.TB, capacity int) *replay.Store {
+	t.Helper()
+	s, err := replay.New(capacity)
+	if err != nil {
+		t.Fatal("replay store rejected")
+	}
+	return s
 }

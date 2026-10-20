@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/tv-rain/barometer-go/internal/model/task"
+	"github.com/tv-rain/barometer-go/internal/persistence"
 )
 
 // Test-only views of the unpublished gate outcome.
@@ -21,3 +22,7 @@ func GatedRequiresConsent(g Gated) bool     { return g.authority.requireConsent 
 func GatedPolicyGeneration(g Gated) uint64  { return g.authority.generation }
 func GatedAuthority(g Gated) Authority      { return g.authority }
 func GatedEffectiveRisk(g Gated) task.Risk  { return g.authority.effectiveRisk }
+
+// Test-only views of an admitted task.
+func AdmittedRecord(a Admitted) persistence.ReplayRecord { return a.record }
+func AdmittedCandidate(a Admitted) task.Candidate        { return a.gated.candidate }
