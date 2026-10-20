@@ -216,3 +216,19 @@ No adapter is wired in production, so no binding or device test exercised a succ
 | `git diff --check` | Passed. |
 
 No adapter is wired in production, so no binding or device test exercised a replacement. Host authentication of policy updates (DEV-455), cancellation of runs (DEV-561), Network Context cache invalidation (DEV-578), collector, target, proxy and context endpoint paths, and a durable generation floor remain pending.
+
+## DEV-594 Validation Record
+
+**Validation date:** October 20, 2026
+**Scope:** Admission evidence closeout on the DEV-594 task branch based on Go commit `3bd604bcf54af6c7533831616cce9795a9bb230c`; synthetic tests only, not runtime conformance. No production code or exported signature changes.
+
+| Check | Result and scope |
+|---|---|
+| `make check` | Passed with Go 1.26.0 on macOS ARM64, including race tests and pure-Go Android/iOS ARM64 compilation. |
+| Root and admission tests | Passed. `TestAdmitTaskStrictJSON` and `TestAdmitTaskHostileSources` reject strict JSON violations and hostile sources through `AdmitTask` for both reviewed origins with exactly one public admission class and no handle, replay record or run; `TestCcTrustAcceptedTaskOrigins` executes its family case; `TestGateStepClasses` gains strict JSON rows. |
+| `TestAdmissionHasNoNetworkDependency` | Passed. The host-build dependency closure of the root package and of `internal/admission` contains no network, TLS, process-execution or plugin package. Adding a `net/http` import to a root production file made it fail. |
+| `FuzzAdmitTask` and `FuzzGate` | Passed finite 120-second runs, recorded in the [admission design](admission.md#fuzz-validation-record). CI runs only the seed corpora. |
+| `make traceability` | Passed against the unchanged manifests before the evidence rebaseline, and again after rebaselining the cross-cutting manifest to Go `09e2141`, where `CC-TRUST-ACCEPTED-TASK-ORIGINS` is executed and REQ-TRUST-0005 becomes `partial`. |
+| `git diff --check` | Passed. |
+
+No adapter is wired in production, so no binding or device test exercised admission. Production remote authentication and revocation (DEV-595), production test codecs (DEV-454), execution, results and the remaining planned admission families remain pending.

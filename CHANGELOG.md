@@ -34,7 +34,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - `TestAdmitTaskHostileSources` covers forged, foreign-instance, mismatched, unauthenticated, integrity-failing, future-issued and expired sources, and `TestCcTrustAcceptedTaskOrigins` executes the `CC-TRUST-ACCEPTED-TASK-ORIGINS` family.
   - `TestAdmissionHasNoNetworkDependency` requires the transitive dependency closure of the root package and of `internal/admission` to contain no network, TLS, process-execution or plugin package. It replaces, in the root admission tests, a recording transport that was never connected to the client. This is structural evidence for the host build, not observed runtime behavior.
 
-  The admission design records the fuzz runs and why each other admission case family stays planned. No runtime, platform or field support is claimed.
+  The admission design records the fuzz runs and why each other admission case family stays planned. The cross-cutting traceability manifest is rebaselined to Go `09e2141` with the DEV-593 mapping preserved as historical: `CC-TRUST-ACCEPTED-TASK-ORIGINS` is executed, three `UT.root.*` cases are added, REQ-TRUST-0005 becomes `partial`, and the notes of requirements whose admission families stay planned record why. No runtime, platform or field support is claimed.
 
 - Local policy activation and replacement by reinitialization (DEV-593), through an unexported root-package seam with no production caller; no identifier is exported and no policy format is added.
   - `Initialize` keeps the adapter-installed policy and its target registrations immutable for the generation and fails closed with `not_initialized` for a policy generation below the highest this instance has activated, including after clearing.
