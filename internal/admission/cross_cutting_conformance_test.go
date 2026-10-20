@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -335,6 +336,107 @@ func TestCcTrustReplayDuplicateAndRollbackHandling(t *testing.T) {
 		var nilAdmitter *admission.Admitter
 		if _, err := nilAdmitter.Admit(context.Background(), "", b); code(err) != task.TrustUnavailable {
 			t.Error("nil admitter did not fail closed")
+		}
+	})
+}
+
+// Network absence for these rows is structural: admission and the root facade
+// have no transport, resolver or Network Context dependency
+// (TestAdmissionHasNoNetworkDependency in the root package), so no recording
+// transport can be connected to them.
+// requirement-ref: REQ-TRUST-0001
+// requirement-ref: REQ-TRUST-0004
+// requirement-ref: REQ-TRUST-0005
+func TestCcTrustAcceptedTaskOrigins(t *testing.T) {
+	b := []byte(baseTask)
+	ctx := context.Background()
+	noState := func(t *testing.T, name string, h *harness, a admission.Admitted, err error, want task.AdmissionCode) {
+		t.Helper()
+		if code(err) != want {
+			t.Errorf("%s: got class %d, want %d", name, code(err), want)
+		}
+		if admission.AdmittedRecord(a) != (persistence.ReplayRecord{}) || h.replay.Len() != 0 || h.replay.Commits() != 0 || h.replay.Staged() != 0 {
+			t.Errorf("%s: rejection wrote a replay or admitted-task record", name)
+		}
+	}
+
+	t.Run("same bytes are accepted through each reviewed origin", func(t *testing.T) {
+		h := newHarness(t)
+		source, err := task.NewSourceContext(task.SourceInput{Origin: task.Embedded, IssuerID: "embedded-issuer", PolicyGeneration: 2})
+		if _, issued := source.IssuedAt(); err != nil || source.Authenticated() || issued {
+			t.Fatal("embedded origin must carry authenticated false and no issued_at")
+		}
+		if _, err := h.admitEmbedded(t, b); err != nil {
+			t.Fatal("embedded origin rejected:", code(err))
+		}
+		h = newHarness(t)
+		if _, err := h.admitRemote(t, b); err != nil {
+			t.Fatal("authenticated remote origin with issued_at at the trusted clock rejected:", code(err))
+		}
+	})
+
+	t.Run("remote origin without issuer authentication", func(t *testing.T) {
+		h := newHarness(t)
+		v := verifier()
+		v.IssuedAt = task.TimestampFromTime(h.clock.Clock.Now())
+		v.IssuerAuthenticated = false
+		ref, installErr := h.store.InstallRemote(ctx, v, v.Seal(b))
+		if installErr == nil || ref != "" {
+			t.Fatal("transport encryption without issuer authentication produced a record")
+		}
+		if _, err := task.NewSourceContext(task.SourceInput{Origin: task.Remote, IssuerID: "remote-issuer", PolicyGeneration: 2, IssuedAt: &v.IssuedAt}); err == nil {
+			t.Fatal("remote source with authenticated false was constructed")
+		}
+		a, err := h.admitter.Admit(ctx, ref, b)
+		noState(t, "unauthenticated remote", h, a, err, task.SourceUnauthenticated)
+	})
+
+	t.Run("remote record bound to bytes differing by one byte", func(t *testing.T) {
+		h := newHarness(t)
+		v := verifier()
+		v.IssuedAt = task.TimestampFromTime(h.clock.Clock.Now())
+		ref, err := h.store.InstallRemote(ctx, v, v.Seal(b))
+		if err != nil {
+			t.Fatal(err)
+		}
+		other := bytes.Clone(b)
+		other[len(other)-2] = ' '
+		a, err := h.admitter.Admit(ctx, ref, other)
+		noState(t, "byte mismatch", h, a, err, task.SourceUnauthenticated)
+		tampered := v.Seal(b)
+		tampered[len(tampered)-2] ^= 1
+		if ref, err := h.store.InstallRemote(ctx, v, tampered); err == nil || ref != "" {
+			t.Fatal("an envelope failing integrity produced a record")
+		}
+	})
+
+	t.Run("remote record without issued_at cannot exist", func(t *testing.T) {
+		h := newHarness(t)
+		if _, err := task.NewSourceContext(task.SourceInput{Origin: task.Remote, IssuerID: "remote-issuer", PolicyGeneration: 2, Authenticated: true}); err == nil {
+			t.Fatal("remote source without issued_at was constructed")
+		}
+		a, err := h.admitter.Admit(ctx, "", b)
+		noState(t, "no issued_at, hence no record", h, a, err, task.SourceUnauthenticated)
+	})
+
+	t.Run("trusted clock unavailable", func(t *testing.T) {
+		h := newHarness(t)
+		v := verifier()
+		v.IssuedAt = task.TimestampFromTime(h.clock.Clock.Now())
+		ref, err := h.store.InstallRemote(ctx, v, v.Seal(b))
+		if err != nil {
+			t.Fatal(err)
+		}
+		h.clock.down.Store(true)
+		a, err := h.admitter.Admit(ctx, ref, b)
+		noState(t, "clock unavailable", h, a, err, task.TrustUnavailable)
+	})
+
+	t.Run("no delivery record", func(t *testing.T) {
+		for _, ref := range []string{"", strings.Repeat("0", 64), "not-a-reference"} {
+			h := newHarness(t)
+			a, err := h.admitter.Admit(ctx, ref, b)
+			noState(t, "no record", h, a, err, task.SourceUnauthenticated)
 		}
 	})
 }

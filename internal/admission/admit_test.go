@@ -337,6 +337,24 @@ func TestGateStepClasses(t *testing.T) {
 		{"malformed JSON", []byte(`{"schema_version":`), task.SchemaInvalid},
 		{"invalid UTF-8", append([]byte(baseTask[:len(baseTask)-1]+`,"labels":{"k":"`), 0xff, '"', '}', '}'), task.SchemaInvalid},
 		{"duplicate member", []byte(baseTask[:len(baseTask)-1] + `,"task_id":"synthetic-task"}`), task.SchemaInvalid},
+		// Strict JSON at the admission boundary (GO-SPEC-ISSUE-001, DEV-566):
+		// names compare after decoding escapes, duplicates are rejected in
+		// nested objects even when values are equal, integers are exact, and
+		// nesting depth is bounded before any later step runs.
+		{"escaped duplicate task_id", []byte(strings.Replace(baseTask, `"task_id":"synthetic-task"`, `"task_id":"synthetic-task","task_`+esc('i')+`d":"synthetic-task"`, 1)), task.SchemaInvalid},
+		{"escaped unknown top-level name", []byte(strings.Replace(baseTask, `"options":{}`, `"options":{},"`+esc('p')+`rivate":1`, 1)), task.SchemaInvalid},
+		{"duplicate input member", []byte(strings.Replace(baseTask, `"subject":"example"`, `"subject":"example","subject":"example"`, 1)), task.SchemaInvalid},
+		{"escaped duplicate input member", []byte(strings.Replace(baseTask, `"subject":"example"`, `"subject":"example","subj`+esc('e')+`ct":"example"`, 1)), task.SchemaInvalid},
+		{"duplicate option member", []byte(strings.Replace(baseTask, `"options":{}`, `"options":{"note":"a","note":"a"}`, 1)), task.SchemaInvalid},
+		{"escaped exact schema_version", []byte(strings.Replace(baseTask, `"schema_version":"0.1.0"`, `"schema_version":"0.1.`+esc('0')+`"`, 1)), 0},
+		{"non-exact schema_version", taskWith(map[string]any{"schema_version": "0.1.00"}), task.SchemaInvalid},
+		{"negative zero integer", []byte(strings.Replace(baseTask, `"limits":{}`, `"limits":{"max_connections":-0}`, 1)), task.SchemaInvalid},
+		{"decimal integer spelling", []byte(strings.Replace(baseTask, `"limits":{}`, `"limits":{"max_connections":1.0}`, 1)), task.SchemaInvalid},
+		{"exponent integer spelling", []byte(strings.Replace(baseTask, `"limits":{}`, `"limits":{"max_connections":1e0}`, 1)), task.SchemaInvalid},
+		{"integer beyond exact float range", []byte(strings.Replace(baseTask, `"limits":{}`, `"limits":{"max_connections":9007199254740993}`, 1)), task.LimitExceeded},
+		{"trailing value", []byte(baseTask + ` {}`), task.SchemaInvalid},
+		{"byte-order mark", []byte("\xef\xbb\xbf" + baseTask), task.SchemaInvalid},
+		{"nesting beyond the parse depth", []byte(strings.Replace(baseTask, `"subject":"example"`, `"subject":"example","x":`+strings.Repeat("[", 200)+strings.Repeat("]", 200), 1)), task.SchemaInvalid},
 		// Step 4: closed top-level schema and exact versions.
 		{"unknown top-level field", taskWith(map[string]any{"private": "x"}), task.SchemaInvalid},
 		{"missing safety", taskWith(map[string]any{"safety": nil}), task.SchemaInvalid},
@@ -608,10 +626,17 @@ func TestNewAdmitterRejectsIncompleteConfiguration(t *testing.T) {
 	}
 }
 
+// esc spells r as a JSON escape sequence, so tests can vary the encoded form
+// of a name or value without changing its decoded text.
+func esc(r rune) string { return `\` + fmt.Sprintf("u%04x", r) }
+
 // FuzzGate checks that arbitrary bound bytes produce either a gate outcome or
 // exactly one code-only admission class, deterministically and without panics.
 func FuzzGate(f *testing.F) {
-	for _, seed := range [][]byte{[]byte(baseTask), taskWith(map[string]any{"private": 1}), taskWith(map[string]any{"test_version": "0.2.0"}), taskWith(map[string]any{"labels": map[string]any{"zzz": "x"}}), taskWith(map[string]any{"execution.network_path": "proxy", "safety.risk_level": "high"}), []byte(`{`), []byte(`[]`), []byte(`{"schema_version":"0.1.0"}`)} {
+	for _, seed := range [][]byte{[]byte(baseTask), taskWith(map[string]any{"private": 1}), taskWith(map[string]any{"test_version": "0.2.0"}), taskWith(map[string]any{"labels": map[string]any{"zzz": "x"}}), taskWith(map[string]any{"execution.network_path": "proxy", "safety.risk_level": "high"}), []byte(`{`), []byte(`[]`), []byte(`{"schema_version":"0.1.0"}`),
+		[]byte(strings.Replace(baseTask, `"task_id":"synthetic-task"`, `"task_id":"synthetic-task","task_`+esc('i')+`d":"synthetic-task"`, 1)),
+		[]byte(strings.Replace(baseTask, `"limits":{}`, `"limits":{"max_connections":1e0}`, 1)),
+		[]byte(strings.Replace(baseTask, `"subject":"example"`, `"subject":"example","x":`+strings.Repeat("[", 130)+strings.Repeat("]", 130), 1))} {
 		f.Add(seed)
 	}
 	h := &harness{clock: &stepClock{fakeClock: newClock()}}

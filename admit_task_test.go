@@ -14,7 +14,6 @@ import (
 	"github.com/tv-rain/barometer-go/internal/model/task"
 	"github.com/tv-rain/barometer-go/internal/persistence"
 	"github.com/tv-rain/barometer-go/internal/registry"
-	"github.com/tv-rain/barometer-go/internal/testkit"
 	"github.com/tv-rain/barometer-go/internal/testkit/delivery"
 	"github.com/tv-rain/barometer-go/internal/testkit/replay"
 )
@@ -72,8 +71,9 @@ func synPolicy(t *testing.T, generation uint64, registration string, adjust func
 
 // admittingHarness binds a synthetic generation-2 policy in which the
 // deployment, the embedded issuer and the remote issuer allow SYN-01 against
-// the one registration. The recording transport is never given to the client;
-// it must stay unused.
+// the one registration. The client has no transport seam to record, so
+// absence of network activity is checked on the dependency graph instead
+// (TestAdmissionHasNoNetworkDependency).
 func admittingHarness(t *testing.T) *harness {
 	t.Helper()
 	h := newHarness(t)
@@ -83,15 +83,6 @@ func admittingHarness(t *testing.T) *harness {
 		t.Fatal("synthetic registry rejected")
 	}
 	h.adapters.policy, h.adapters.registry = policy, reg
-	transport, err := testkit.NewTransport()
-	if err != nil {
-		t.Fatal("transport rejected")
-	}
-	t.Cleanup(func() {
-		if calls, open := transport.Counts(); calls != 0 || open != 0 {
-			t.Error("admission caused network activity")
-		}
-	})
 	return h
 }
 
@@ -194,8 +185,8 @@ func TestAdmitTaskExactRedeliveryReturnsTheSameHandle(t *testing.T) {
 	}
 }
 
-// Every rejection is atomic: no handle, no replay record and no network
-// activity, with the class of the first failing step.
+// Every rejection is atomic: no handle, no replay record and no run, with the
+// class of the first failing step.
 func TestAdmitTaskRejectionsAreAtomic(t *testing.T) {
 	valid := synTask("synthetic-task", time.Hour)
 	cases := []struct {
