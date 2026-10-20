@@ -28,6 +28,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Local policy activation and replacement by reinitialization (DEV-593), through an unexported root-package seam with no production caller; no identifier is exported and no policy format is added.
+  - `Initialize` keeps the adapter-installed policy and its target registrations immutable for the generation and fails closed with `not_initialized` for a policy generation below the highest this instance has activated, including after clearing.
+  - `replacePolicy` first validates while the current generation stays active: the policy must be complete and valid, strictly above the active generation and not below the highest generation of retained replay records, and the successor generation must build. A refusal returns the seam-only code `policy_rejected` and leaves the previous policy, its handles and its delivery references active.
+  - It then quiesces: it cancels the generation's adapter context, invalidates task and run handles, drops delivery records and moves the delivery store to the new generation, waits for reserved entry points and activates the prepared generation. A task no longer permitted is rejected when redelivered, and a delivery under the earlier generation is `policy_rollback`.
+  - A failure after validation leaves the client uninitialized with no policy (`not_initialized`), or blocked with `cleanup_incomplete` while reserved work continues; it never activates part of the new policy or an earlier generation.
+
+  Persisting a generation floor across restart or clearing stays out of scope (rollback below retained replay records is still detected). No production adapter, policy authentication, run cancellation, Network Context cache, runtime or platform support is included.
+
 - `Client.AdmitTask` (DEV-592), the public-API review point for the documented `AdmitTask(taskJSON, sourceRef string) (string, error)` signature; no other identifier is added.
   - It reserves the current generation, runs every admission step through `Admitter.Admit` and publishes a task handle only after the replay record is durable. A rejection returns the code-only public admission class and leaves no handle; calls outside the initialized state return the API-local lifecycle codes.
   - An exact redelivery, through the same or a new delivery reference, returns the same handle in the current generation without a new replay record, a run or a later expiry. Concurrent identical deliveries share one handle. After reinitialization a redelivery resolves to the retained acceptance under a new handle.

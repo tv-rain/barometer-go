@@ -36,8 +36,11 @@ type Client struct {
 	bound      *adapters
 	rt         *runtime
 	generation uint64
-	active     int           // reserved entry points of the current generation
-	drained    chan struct{} // closed when active reaches zero during a transition
+	// policyFloor is the highest valid policy generation this instance has
+	// activated. Initialization below it is a rollback and fails closed.
+	policyFloor uint64
+	active      int           // reserved entry points of the current generation
+	drained     chan struct{} // closed when active reaches zero during a transition
 }
 
 // NewClient returns an uninitialized client. It starts no measurement, creates
@@ -45,8 +48,10 @@ type Client struct {
 func NewClient() *Client { return &Client{} }
 
 // Initialize decodes the closed host configuration container and activates one
-// generation over the reviewed internal adapters. Any failure returns
-// not_initialized and leaves the client uninitialized.
+// generation over the reviewed internal adapters. The adapter-installed local
+// policy and its target registrations stay immutable for that generation. Any
+// failure, including a policy generation below one this instance has already
+// activated, returns not_initialized and leaves the client uninitialized.
 func (c *Client) Initialize(configJSON string) error { return c.initialize(configJSON) }
 
 // AdmitTask runs every admission step for the exact task bytes against the
@@ -128,7 +133,13 @@ func (c *Client) initialize(configJSON string) (err error) {
 		c.generation++
 		rt.generation = c.generation
 		c.rt, c.state = rt, initialized
+		if a.policy.Valid() {
+			c.policyFloor = max(c.policyFloor, a.policy.Generation())
+		}
 	}()
+	if a != nil && a.policy.Valid() && a.policy.Generation() < c.policyFloor {
+		return fail(notInitialized)
+	}
 	if rt = prepare(a, []byte(configJSON)); rt == nil {
 		return fail(notInitialized)
 	}

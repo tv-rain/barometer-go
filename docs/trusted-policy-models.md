@@ -22,7 +22,7 @@ The missing-authentication/issuance structural tests support the future [REQ-TRU
 
 ## Policy Snapshots
 
-`NewLocalPolicy` validates a complete `PolicyInput` before returning a valid `LocalPolicy`. It copies nested slices on ingress and getters return independent copies; callers must not mutate inputs concurrently with construction. Read-only access after construction is safe concurrently. Failure returns only the invalid zero snapshot and a fixed error, without changing an existing snapshot. No in-place policy update method exists.
+`NewLocalPolicy` validates a complete `PolicyInput` before returning a valid `LocalPolicy`. It copies nested slices on ingress and getters return independent copies; callers must not mutate inputs concurrently with construction. Read-only access after construction is safe concurrently. Failure returns only the invalid zero snapshot and a fixed error, without changing an existing snapshot. No in-place policy update method exists; the root `Client` activates a snapshot at initialization and replaces it only by reinitialization with a strictly higher generation (DEV-593, see [Implemented Subset](public-api.md#implemented-subset)).
 
 The snapshot carries:
 
@@ -65,6 +65,6 @@ Errors are fixed `ErrTrustModel` or `ErrTrustEncoding` sentinels without payload
 | `TestRevocationInputsHaveNoActivationSideEffects` | Immutable inputs and no policy activation effects. |
 | `TestTrustModelsCannotBeImportedOrExportedAsJSON`, `TestSerializedInputCannotSupplyTrustOrPolicy` | JSON boundary rejection, unchanged valid state, task/config injection rejection and opaque labels. |
 
-Validation commands are `make check`, `git diff --check`, and `python3 -B ../barometer-spec/scripts/check_requirements.py --consumer .` against the explicit public checkout. The fixtures are synthetic and perform no network measurement. Complete admission, monotonic policy activation, trust/time availability, protected persistence, replay, operational revocation, native delivery adapters, facade integration and device validation remain pending. There is no full runtime conformance, platform, field or release-support claim.
+Validation commands are `make check`, `git diff --check`, and `python3 -B ../barometer-spec/scripts/check_requirements.py --consumer .` against the explicit public checkout. The fixtures are synthetic and perform no network measurement. Complete admission, trust/time availability, protected persistence, replay, operational revocation, native delivery adapters, facade integration and device validation remain pending. There is no full runtime conformance, platform, field or release-support claim.
 
 Local validation on October 15, 2026 passed the complete `make check`: formatting, host build, unit tests, race detection, static analysis, module integrity, diff whitespace and pure-Go Android ARM64/iOS ARM64 compilation. Requirement-reference structure validation passed against the explicit public checkout above; allocation history, coverage and semantic conformance were not assessed by that checker. Native bindings, devices, CI, releases and field behavior were not tested by this change. No sibling repository was modified.
