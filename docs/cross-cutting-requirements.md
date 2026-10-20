@@ -28,6 +28,8 @@ DEV-590 rejects tasks that require egress Network Context (step 6) or NET-05 com
 
 DEV-591 adds replay, redelivery, conflict, rollback and expiry handling with atomic replay persistence at admission steps 10 and 11 ([Atomic Rejection and Replay Persistence](admission.md#atomic-rejection-and-replay-persistence)) and rebaselines this map to Go `92838706c41212cc59c306fed83da0b8ad869e90` at the same public baseline. `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING` is implemented at its planned location and passes, the first executed family case. Its post-clearing rows move to the new planned `CC-TRUST-REPLAY-AFTER-CLEARING` case for clearing (DEV-564), which holds the REQ-TRUST-0025 mapping, and its plan adds REQ-LIMIT-0023 for replay retention. `UT.internal.persistence.TestReplayRecordRetention` records retention-boundary aspects. Both are recorded in the [evidence report](../traceability/evidence/go-unit-9283870.md). REQ-TRUST-0021 to REQ-TRUST-0024, REQ-TRUST-0038 and REQ-LIMIT-0023 become `partial` (163 `partial`); REQ-TRUST-0025 stays `planned`.
 
+DEV-600 adds the root `Client` lifecycle shell ([Implemented Subset](public-api.md#implemented-subset)) and rebaselines this map to Go `73faaf565b81b6cc7512a5c070c61e979416e2b0` at the same public baseline. Four `UT.root.*` cases record the lifecycle aspects of the clear-data contract in the [evidence report](../traceability/evidence/go-unit-73faaf5.md): REQ-LINKAGE-0023 and REQ-LINKAGE-0024 become `partial` (165 `partial`), while `CC-LINKAGE-CLEAR-DATA-CONTRACT` stays planned until deletion and cancellation exist (DEV-561, DEV-564, DEV-577).
+
 The earlier DEV-471 mapping at public baseline `47d75925b3829fccfb6954b545c15f695375b76f` and Go baseline `a9136f34fad00ecc2171cbc29e835c5c50b340df` is preserved byte-for-byte as [historical manifest](../traceability/historical/cross-cutting-47d7592.json) with its unchanged [report](../traceability/reports/cross-cutting.json). It mapped 565 requirements to 185 families. It remains valid metadata only for those original baselines and is not a current claim.
 
 ## Boundaries and Maintenance
@@ -2748,6 +2750,8 @@ Public source: `library/result-linkage.md`, section **Clear-data Contract**. Int
 
 Case plan: Fault-inject each clearing step with active attempts and pending/acked bundles, caches, replay/linkage/sentinel/key state. Assert bounded cleanup, idempotence, explicit incomplete error, no upload/network/new secret, and host UI/OS reset wiring.
 
+DEV-600 unit-test evidence: the `UT.root.*` cases in the [evidence report](../traceability/evidence/go-unit-73faaf5.md) cover only the lifecycle part of clearing in the root `Client` shell; this family case stays planned.
+
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-LINKAGE-0023 -->
@@ -2986,7 +2990,7 @@ Public source: `library/task-trust.md`, section **Replay, Duplicate, and Rollbac
 
 Case plan: Exercise every replay-table row with a deterministic clock and fake persistent storage: a new replay key continues admission; the same key with identical bytes is idempotent redelivery with no duplicate runs and unchanged expiry; the same key with one changed byte (including whitespace only) is rejected as task_id_conflict; a lower policy generation than the active one is rejected as policy_rollback; an expired task is rejected as task_expired and never reactivated on later redelivery; unavailable or corrupted replay state fails closed with task_trust_unavailable for a remote task and, with the same storage fault injected, for an embedded task, which is never accepted, assigned a handle or made executable without replay state. Assert the persisted record contains only the (issuer_id, task_id) key, a SHA-256 digest equal to an independently computed digest of the exact accepted bytes, the accepted policy generation and acceptance/expiry classes with retention ending 86,400 seconds after task expiry, and that synthetic canary input, target, label, participant and result strings are absent from stored bytes. Post-clearing redelivery rows are planned separately in CC-TRUST-REPLAY-AFTER-CLEARING. Requirements: REQ-TRUST-0021, REQ-TRUST-0022, REQ-TRUST-0023, REQ-TRUST-0024, REQ-TRUST-0038, REQ-LIMIT-0023.
 
-Scope: Synthetic core contract cases. Passed at Go `9283870` ([evidence](../traceability/evidence/go-unit-9283870.md#CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING)); partial evidence only, with no production store, device-durability or support claim.
+Scope: Synthetic core contract cases. Passed at Go `9283870` and re-executed at Go `73faaf5` ([evidence](../traceability/evidence/go-unit-73faaf5.md#CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING)); partial evidence only, with no production store, device-durability or support claim.
 
 <!-- requirement-ref: REQ-TRUST-0021 -->
 <!-- requirement-ref: REQ-TRUST-0022 -->

@@ -6,7 +6,8 @@ import (
 )
 
 // lifecycleClient is a local subset of docs/public-api.md's intended facade.
-// There is no production Client to construct or inject through this interface.
+// Internal packages cannot import the root package, so no production Client
+// is constructed or injected through this interface.
 type lifecycleClient interface {
 	Initialize(string) error
 	CancelRun(string) error

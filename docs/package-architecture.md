@@ -94,7 +94,9 @@ The module root is the only initially intended public Go package. It owns:
 
 It does not own measurement logic, JSON schema implementation, trust policy, persistence implementations, platform secrets, collector behavior, or censorship classification. Exporting additional Go packages or interfaces is a public API decision and requires explicit review.
 
-The [Public Go API Boundary](public-api.md) defines the intended facade signatures and trusted adapter, lifecycle, and result-ownership contract. Runtime implementation remains pending. This architecture document fixes ownership and dependency direction; the API design does not export additional packages or create the planned internal package tree.
+The [Public Go API Boundary](public-api.md) defines the intended facade signatures and trusted adapter, lifecycle, and result-ownership contract. This architecture document fixes ownership and dependency direction; the API design does not export additional packages or create the planned internal package tree.
+
+DEV-600 adds the lifecycle shell described in [Implemented Subset](public-api.md#implemented-subset): `NewClient`, `Initialize`, `Close` and `ClearMeasurementData`, the lifecycle state machine, the per-generation task and run handle tables and the fixed API-local error codes. The root package binds trusted adapters (clock, registry, local policy, delivery store, replay store, configuration approvals and optional linkage keys) through an unexported seam with no production caller, so initialization fails closed until reviewed native wiring exists (DEV-455). It imports `internal/config`, `internal/admission`, `internal/registry`, `internal/persistence`, `internal/platform` and `internal/model/task`, and no network package. Its tests import `internal/testkit`. Admission, execution, bundle, proxy and persistent-clearing entry points remain pending.
 
 ### Domain Models
 

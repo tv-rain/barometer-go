@@ -32,6 +32,8 @@ Reusable [negative and boundary-test helpers](docs/testkit.md) provide bounded s
 
 Executable, non-normative [sanitized API examples](internal/examples/README.md) cover existing Foundation models and intended lifecycle failure handling. Client lifecycle and clearing examples use an explicit test-only script; runtime implementation remains pending.
 
+The root package exports a [`Client` lifecycle shell](docs/public-api.md#implemented-subset): `NewClient`, `Initialize`, `Close` and `ClearMeasurementData`, with bounded handle tables and fixed operational error codes. No production adapter is wired, so `Initialize` fails closed. Clearing reports `clearing_incomplete` until persistent-state deletion exists. Admission, execution, bundle and proxy methods are not exported yet, and no runtime or platform support is claimed.
+
 The [Foundation validation boundary](docs/foundation-validation.md) records which test infrastructure exists and which runtime harness extensions remain with later implementation tasks. Foundation was assessed and accepted on October 16, 2026 (see the coordination repository's assessment record); acceptance does not promote runtime, measurement or platform support.
 
 ## Versions and Releases
