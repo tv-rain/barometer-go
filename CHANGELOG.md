@@ -28,6 +28,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Admission evidence closeout (DEV-594): tests only, no behavior change.
+  - `FuzzAdmitTask` drives `Client.AdmitTask` with arbitrary task text and fuzzed sources (exact and mismatched embedded records, remote deliveries with fuzzed authentication and issuance time, forged and foreign-instance references). Every call either admits with one handle and one replay record, or returns one fixed public admission class and leaves no handle, replay record or run. `FuzzGate` gains hostile seeds.
+  - Strict JSON at the admission boundary, the admission share of GO-SPEC-ISSUE-001: escaped-equivalent and nested duplicate names, escaped unknown names, non-exact integer spellings, exact versions after decoding escapes, framing, invalid UTF-8, nesting depth and escaped complete-input bytes are rejected atomically at the gate and through the facade for both reviewed origins.
+  - `TestAdmitTaskHostileSources` covers forged, foreign-instance, mismatched, unauthenticated, integrity-failing, future-issued and expired sources, and `TestCcTrustAcceptedTaskOrigins` executes the `CC-TRUST-ACCEPTED-TASK-ORIGINS` family.
+  - `TestAdmissionHasNoNetworkDependency` requires the transitive dependency closure of the root package and of `internal/admission` to contain no network, TLS, process-execution or plugin package. It replaces, in the root admission tests, a recording transport that was never connected to the client. This is structural evidence for the host build, not observed runtime behavior.
+
+  The admission design records the fuzz runs and why each other admission case family stays planned. No runtime, platform or field support is claimed.
+
 - Local policy activation and replacement by reinitialization (DEV-593), through an unexported root-package seam with no production caller; no identifier is exported and no policy format is added.
   - `Initialize` keeps the adapter-installed policy and its target registrations immutable for the generation and fails closed with `not_initialized` for a policy generation below the highest this instance has activated, including after clearing.
   - `replacePolicy` first validates while the current generation stays active: the policy must be complete and valid, strictly above the active generation and not below the highest generation of retained replay records, and the successor generation must build. A refusal returns the seam-only code `policy_rejected` and leaves the previous policy, its handles and its delivery references active.

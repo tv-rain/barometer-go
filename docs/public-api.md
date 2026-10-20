@@ -75,7 +75,7 @@ Reviewed implementation inputs selected by DEV-600:
 | Run handle table capacity | 256 | The registered limits set no ceiling on outstanding runs; each task is still limited to 28 runs. |
 | Lifecycle deadline | 5 seconds by default, at most 30 seconds | Bounds the wait for reserved entry points, for the persistent-clear capability and, since DEV-592, for the trusted adapters during one admission. It reports incomplete work on expiry and cannot enlarge public attempt or cleanup bounds. Admission that exceeds it fails closed with `task_trust_unavailable`. |
 
-The shell and admission perform no network activity, and the production files import no network package. They establish no execution, result, bundle, proxy, production policy delivery, persistent-clearing, conformance or platform support, and admission through the facade remains synthetic until a reviewed production adapter exists.
+The shell and admission perform no network activity: the production files import no network package, and the transitive dependency closure of the root package and of `internal/admission` contains none for the host build (DEV-594, [Hostile-Input Evidence](admission.md#hostile-input-evidence)). They establish no execution, result, bundle, proxy, production policy delivery, persistent-clearing, conformance or platform support, and admission through the facade remains synthetic until a reviewed production adapter exists.
 
 ## Trusted Initialization and Admission
 

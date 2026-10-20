@@ -4,7 +4,10 @@ import (
 	"go/parser"
 	"go/token"
 	"io/fs"
+	"os"
+	"os/exec"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -357,5 +360,37 @@ func TestDependencyRulesRejectForbiddenImports(t *testing.T) {
 	}
 	if v := checkImports(allowed); len(v) != 0 {
 		t.Fatalf("allowed imports rejected: %q", v)
+	}
+}
+
+// The admission path cannot reach the network: the complete transitive
+// dependency closure of the root package and of internal/admission, as built
+// for the host platform, contains no network, TLS, process-execution or
+// plugin package. Rejected input therefore produces no network activity
+// through code linked into the facade. Activity through a future trusted
+// adapter seam, and builds for other platforms, are not covered.
+func TestAdmissionHasNoNetworkDependency(t *testing.T) {
+	// Prefer the toolchain running this test, which go test exports as GOROOT.
+	gocmd, err := exec.LookPath(filepath.Join(os.Getenv("GOROOT"), "bin", "go"))
+	if os.Getenv("GOROOT") == "" || err != nil {
+		if gocmd, err = exec.LookPath("go"); err != nil {
+			t.Fatal("go command unavailable; the dependency closure cannot be checked")
+		}
+	}
+	for _, pkg := range []string{".", "./internal/admission"} {
+		out, err := exec.Command(gocmd, "list", "-deps", pkg).Output()
+		if err != nil {
+			t.Fatalf("go list %s: %v", pkg, err)
+		}
+		deps := strings.Fields(string(out))
+		// Guard against a vacuous pass on an empty or truncated listing.
+		if len(deps) < 10 || !slices.Contains(deps, internalPath("admission")) || !slices.Contains(deps, internalPath("jsondecode")) {
+			t.Fatalf("go list %s returned an implausible closure", pkg)
+		}
+		for _, dep := range deps {
+			if networkIO(dep) || under(dep, "crypto/tls") || under(dep, "os/exec") || dep == "plugin" || under(dep, internalPath("testkit")) {
+				t.Errorf("%s transitively depends on %s", pkg, dep)
+			}
+		}
 	}
 }
