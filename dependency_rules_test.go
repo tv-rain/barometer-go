@@ -256,7 +256,7 @@ func TestDependencyRules(t *testing.T) {
 	for _, f := range files {
 		seen[f.pkg] = true
 	}
-	for _, want := range []string{modulePath, internalPath("jsondecode"), internalPath("model/task"), internalPath("taskdecode"), internalPath("validation"), internalPath("registry"), internalPath("admission"), internalPath("testkit/conformance"), internalPath("testkit/delivery")} {
+	for _, want := range []string{modulePath, internalPath("jsondecode"), internalPath("model/task"), internalPath("taskdecode"), internalPath("validation"), internalPath("registry"), internalPath("admission"), internalPath("testkit/conformance"), internalPath("testkit/delivery"), internalPath("persistence"), internalPath("testkit/replay")} {
 		if !seen[want] {
 			t.Fatalf("dependency check did not load %s", want)
 		}
@@ -306,6 +306,8 @@ func TestDependencyRulesRejectForbiddenImports(t *testing.T) {
 		{"bundle imports protocol", file("bundle", false, internalPath("protocol/http")), importRules[10].name},
 		{"capability imports adapter", file("platform", false, internalPath("platform/android")), importRules[11].name},
 		{"persistence imports orchestration", file("persistence", false, internalPath("admission")), importRules[11].name},
+		{"persistence imports testkit", file("persistence", false, internalPath("testkit/replay")), importRules[0].name},
+		{"admission imports the test replay store", file("admission", false, internalPath("testkit/replay")), importRules[0].name},
 		{"admission imports execution", file("admission", false, internalPath("execution")), importRules[12].name},
 		{"admission imports a measurement", file("admission", false, internalPath("measurement/tcp01")), importRules[12].name},
 		{"admission imports network context", file("admission", false, internalPath("networkcontext")), importRules[12].name},
@@ -341,6 +343,9 @@ func TestDependencyRulesRejectForbiddenImports(t *testing.T) {
 		file("admission", false, internalPath("registry"), internalPath("model/task"), internalPath("taskdecode"), internalPath("validation"), internalPath("platform"), internalPath("persistence"), "context", "crypto/rand", "sync"),
 		file("admission", true, internalPath("testkit"), internalPath("testkit/delivery")),
 		file("testkit/delivery", false, internalPath("model/task"), "crypto/hmac"),
+		file("persistence", false, internalPath("model/task"), "context", "crypto/sha256"),
+		file("testkit/replay", false, internalPath("persistence"), internalPath("model/task"), "encoding/json"),
+		file("admission", true, internalPath("testkit/replay")),
 		file("execution", false, internalPath("registry")),
 		file("model/observation", false, internalPath("jsondecode"), "strings", "net/netip", "net/url"),
 		file("model/result", false, internalPath("model/observation"), internalPath("model/task")),

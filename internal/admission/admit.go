@@ -3,10 +3,12 @@ package admission
 import (
 	"context"
 	"errors"
+	"sync"
 	"time"
 
 	"github.com/tv-rain/barometer-go/internal/jsondecode"
 	"github.com/tv-rain/barometer-go/internal/model/task"
+	"github.com/tv-rain/barometer-go/internal/persistence"
 	"github.com/tv-rain/barometer-go/internal/platform"
 	"github.com/tv-rain/barometer-go/internal/registry"
 	"github.com/tv-rain/barometer-go/internal/taskdecode"
@@ -29,32 +31,36 @@ var ErrAdmitterConfig = errors.New("admission: invalid admitter configuration")
 // risk with the consent requirement in step 9 (DEV-589). Tasks that require
 // egress Network Context (step 6) or NET-05 composite steps (step 8) are
 // rejected as task_unsupported until those capabilities exist (DEV-590).
-// Proxy compatibility, replay (step 10) and acceptance (step 11) are added by
-// later tasks; nothing here persists state, publishes a handle or performs
-// DNS, Network Context, proxy or measurement activity. It is safe for
-// concurrent use.
+// Admit adds replay (step 10) and acceptance (step 11) through the replay
+// store (DEV-591). Proxy compatibility is added by a later task. Nothing here
+// publishes a handle or performs DNS, Network Context, proxy or measurement
+// activity. It is safe for concurrent use.
 type Admitter struct {
 	deliveries *DeliveryStore
 	clock      platform.Clock
 	registry   *registry.Registry
 	decoder    *taskdecode.Decoder
 	policy     task.LocalPolicy
+	replay     persistence.ReplayStore
+	// accept serializes steps 10 and 11 within this instance.
+	accept sync.Mutex
 }
 
 // NewAdmitter binds the instance's delivery store, trusted clock, reviewed
-// registry and active policy snapshot. The task decoder is built from exactly
-// the registry's codecs. An invalid (zero) policy is accepted and fails every
-// task closed at step 7 as task_policy_unavailable; activating and replacing
-// policy belongs to the lifecycle owner.
-func NewAdmitter(deliveries *DeliveryStore, clock platform.Clock, reg *registry.Registry, policy task.LocalPolicy) (*Admitter, error) {
-	if deliveries == nil || clock == nil || reg == nil {
+// registry, active policy snapshot and replay store. The task decoder is built
+// from exactly the registry's codecs. An invalid (zero) policy is accepted and
+// fails every task closed at step 7 as task_policy_unavailable; activating and
+// replacing policy belongs to the lifecycle owner. A replay store is required:
+// no task is accepted without replay state (REQ-TRUST-0038).
+func NewAdmitter(deliveries *DeliveryStore, clock platform.Clock, reg *registry.Registry, policy task.LocalPolicy, replay persistence.ReplayStore) (*Admitter, error) {
+	if deliveries == nil || clock == nil || reg == nil || replay == nil {
 		return nil, ErrAdmitterConfig
 	}
 	decoder, err := taskdecode.New(reg.Codecs())
 	if err != nil {
 		return nil, ErrAdmitterConfig
 	}
-	return &Admitter{deliveries: deliveries, clock: clock, registry: reg, decoder: decoder, policy: policy}, nil
+	return &Admitter{deliveries: deliveries, clock: clock, registry: reg, decoder: decoder, policy: policy, replay: replay}, nil
 }
 
 // Gated is the unpublished outcome of the implemented gates: owned values for

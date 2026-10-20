@@ -26,6 +26,8 @@ DEV-589 completes step 9 with effective risk and the consent requirement ([Effec
 
 DEV-590 rejects tasks that require egress Network Context (step 6) or NET-05 composite steps (step 8) as `task_unsupported` ([Unsupported Capabilities](admission.md#unsupported-capabilities)) and rebaselines this map to Go `295dea9139956bc73eb04d521001ae76f0d574b8` at the same public baseline. Three `UT.*` cases record the narrow aspects that the egress-requirement, egress-precedence and composite-profile tests exercise for REQ-TRUST-0018, REQ-TRUST-0036 and REQ-TRUST-0037, as recorded in the [evidence report](../traceability/evidence/go-unit-295dea9.md). `CC-CONTEXT-EXECUTION-INTEGRATION` gains a measurable admission rejection row and maps REQ-TRUST-0036; its acquisition rows belong to Network paths and context (DEV-578), so it stays `planned`. No requirement changes status (157 `partial`).
 
+DEV-591 adds replay, redelivery, conflict, rollback and expiry handling with atomic replay persistence at admission steps 10 and 11 ([Atomic Rejection and Replay Persistence](admission.md#atomic-rejection-and-replay-persistence)) and rebaselines this map to Go `92838706c41212cc59c306fed83da0b8ad869e90` at the same public baseline. `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING` is implemented at its planned location and passes, the first executed family case. Its post-clearing rows move to the new planned `CC-TRUST-REPLAY-AFTER-CLEARING` case for clearing (DEV-564), which holds the REQ-TRUST-0025 mapping, and its plan adds REQ-LIMIT-0023 for replay retention. `UT.internal.persistence.TestReplayRecordRetention` records retention-boundary aspects. Both are recorded in the [evidence report](../traceability/evidence/go-unit-9283870.md). REQ-TRUST-0021 to REQ-TRUST-0024, REQ-TRUST-0038 and REQ-LIMIT-0023 become `partial` (163 `partial`); REQ-TRUST-0025 stays `planned`.
+
 The earlier DEV-471 mapping at public baseline `47d75925b3829fccfb6954b545c15f695375b76f` and Go baseline `a9136f34fad00ecc2171cbc29e835c5c50b340df` is preserved byte-for-byte as [historical manifest](../traceability/historical/cross-cutting-47d7592.json) with its unchanged [report](../traceability/reports/cross-cutting.json). It mapped 565 requirements to 185 families. It remains valid metadata only for those original baselines and is not a current claim.
 
 ## Boundaries and Maintenance
@@ -2980,25 +2982,39 @@ Review case `RV-CC-TRUST-TASK-IDENTIFIER-RULES` (`docs/conformance/cross-cutting
 
 ### CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING
 
-Public source: `library/task-trust.md`, section **Replay, Duplicate, and Rollback Handling**. Intended target: `internal/admission/state.go`. Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustReplayDuplicateAndRollbackHandling`.
+Public source: `library/task-trust.md`, section **Replay, Duplicate, and Rollback Handling**. Intended target: `internal/admission/state.go`. Case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustReplayDuplicateAndRollbackHandling`, executed by DEV-591.
 
-Case plan: Exercise every replay-table row with a deterministic clock and fake persistent storage: a new replay key continues admission; the same key with identical bytes is idempotent redelivery with no duplicate runs and unchanged expiry; the same key with one changed byte (including whitespace only) is rejected as task_id_conflict; a lower policy generation than the active one is rejected as policy_rollback; an expired task is rejected as task_expired and never reactivated on later redelivery; unavailable or corrupted replay state fails closed with task_trust_unavailable for a remote task and, with the same storage fault injected, for an embedded task, which is never accepted, assigned a handle or made executable without replay state. Assert the persisted record contains only the (issuer_id, task_id) key, a SHA-256 digest equal to an independently computed digest of the exact accepted bytes, the accepted policy generation and acceptance/expiry classes, and that synthetic canary input, target, label, participant and result strings are absent from stored bytes. After clearMeasurementData, assert a redelivered unexpired task is evaluated as new and an expired one is still rejected as task_expired. Requirements: REQ-TRUST-0021, REQ-TRUST-0022, REQ-TRUST-0023, REQ-TRUST-0024, REQ-TRUST-0025, REQ-TRUST-0038.
+Case plan: Exercise every replay-table row with a deterministic clock and fake persistent storage: a new replay key continues admission; the same key with identical bytes is idempotent redelivery with no duplicate runs and unchanged expiry; the same key with one changed byte (including whitespace only) is rejected as task_id_conflict; a lower policy generation than the active one is rejected as policy_rollback; an expired task is rejected as task_expired and never reactivated on later redelivery; unavailable or corrupted replay state fails closed with task_trust_unavailable for a remote task and, with the same storage fault injected, for an embedded task, which is never accepted, assigned a handle or made executable without replay state. Assert the persisted record contains only the (issuer_id, task_id) key, a SHA-256 digest equal to an independently computed digest of the exact accepted bytes, the accepted policy generation and acceptance/expiry classes with retention ending 86,400 seconds after task expiry, and that synthetic canary input, target, label, participant and result strings are absent from stored bytes. Post-clearing redelivery rows are planned separately in CC-TRUST-REPLAY-AFTER-CLEARING. Requirements: REQ-TRUST-0021, REQ-TRUST-0022, REQ-TRUST-0023, REQ-TRUST-0024, REQ-TRUST-0038, REQ-LIMIT-0023.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. Passed at Go `9283870` ([evidence](../traceability/evidence/go-unit-9283870.md#CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING)); partial evidence only, with no production store, device-durability or support claim.
 
 <!-- requirement-ref: REQ-TRUST-0021 -->
 <!-- requirement-ref: REQ-TRUST-0022 -->
 <!-- requirement-ref: REQ-TRUST-0023 -->
 <!-- requirement-ref: REQ-TRUST-0024 -->
-<!-- requirement-ref: REQ-TRUST-0025 -->
 <!-- requirement-ref: REQ-TRUST-0038 -->
+<!-- requirement-ref: REQ-LIMIT-0023 -->
 
 - [REQ-TRUST-0021](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0021) → `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING`.
 - [REQ-TRUST-0022](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0022) → `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING`.
 - [REQ-TRUST-0023](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0023) → `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING`.
 - [REQ-TRUST-0024](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0024) → `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING`.
-- [REQ-TRUST-0025](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0025) → `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING`.
 - [REQ-TRUST-0038](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0038) → `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING`.
+- [REQ-LIMIT-0023](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0023) → `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING`.
+
+### CC-TRUST-REPLAY-AFTER-CLEARING
+
+Public source: `library/task-trust.md`, section **Replay, Duplicate, and Rollback Handling**. Intended target: `internal/admission/state.go` with the clearing capability (DEV-564). Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustReplayAfterClearing`.
+
+Case plan: After clearMeasurementData deletes replay state with a deterministic clock and fake persistent storage, redeliver previously accepted exact task bytes: an unexpired task is evaluated as new, receives a fresh replay record with unchanged expiry derived from its not_after and creates no record for the cleared acceptance; an expired task is still rejected as task_expired; a failed or incomplete deletion is reported explicitly and leaves no task admitted without replay state. Requirements: REQ-TRUST-0024, REQ-TRUST-0025.
+
+Scope: Synthetic core contract cases, split from `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING` by DEV-591. No execution evidence or support claim.
+
+<!-- requirement-ref: REQ-TRUST-0024 -->
+<!-- requirement-ref: REQ-TRUST-0025 -->
+
+- [REQ-TRUST-0024](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0024) → `CC-TRUST-REPLAY-AFTER-CLEARING`.
+- [REQ-TRUST-0025](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0025) → `CC-TRUST-REPLAY-AFTER-CLEARING`.
 
 ### CC-TRUST-TARGETED-DELIVERY
 
