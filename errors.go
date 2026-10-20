@@ -16,6 +16,9 @@ const (
 	capacityExceeded
 	cleanupIncomplete
 	clearingIncomplete
+	// policyRejected is returned only by the unexported policy-replacement
+	// seam: the replacement was refused and the previous policy is active.
+	policyRejected
 )
 
 func (c code) String() string {
@@ -40,6 +43,8 @@ func (c code) String() string {
 		return "cleanup_incomplete"
 	case clearingIncomplete:
 		return "clearing_incomplete"
+	case policyRejected:
+		return "policy_rejected"
 	}
 	return "operation_failed"
 }

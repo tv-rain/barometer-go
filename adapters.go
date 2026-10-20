@@ -29,7 +29,7 @@ const (
 type adapters struct {
 	clock       platform.Clock
 	registry    *registry.Registry
-	policy      task.LocalPolicy // its Generation is the active policy generation
+	policy      task.LocalPolicy // its Generation is the active policy generation; only replacePolicy changes it
 	deliveries  *admission.DeliveryStore
 	replay      persistence.ReplayStore
 	approvals   config.Approvals
@@ -105,7 +105,13 @@ func prepare(a *adapters, configJSON []byte) *runtime {
 	if err != nil {
 		return nil
 	}
-	admitter, err := admission.NewAdmitter(a.deliveries, a.clock, a.registry, a.policy, a.replay)
+	return successor(a, init, a.policy)
+}
+
+// successor builds the generation that admits under policy, with fresh handle
+// tables and a fresh adapter context, or nothing. It does not activate it.
+func successor(a *adapters, init *config.Initialization, policy task.LocalPolicy) *runtime {
+	admitter, err := admission.NewAdmitter(a.deliveries, a.clock, a.registry, policy, a.replay)
 	if err != nil {
 		return nil
 	}

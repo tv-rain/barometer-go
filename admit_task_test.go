@@ -48,6 +48,28 @@ func synPermissions() task.Permissions {
 	}
 }
 
+func permit(*task.Permissions) {}
+
+// synPolicy is a synthetic policy of the given generation whose deployment and
+// both issuers allow SYN-01 against one registration. Only "reg-a" matches the
+// SYN-01 target; any other ID registers a different host. adjust narrows or
+// widens the deployment and issuer permissions alike.
+func synPolicy(t *testing.T, generation uint64, registration string, adjust func(*task.Permissions)) task.LocalPolicy {
+	t.Helper()
+	perm := synPermissions()
+	perm.RegistrationIDs = []string{registration}
+	adjust(&perm)
+	policy, err := task.NewLocalPolicy(task.PolicyInput{Generation: generation, Permissions: perm,
+		Issuers: []task.IssuerPermissions{{IssuerID: "embedded-issuer", Permissions: perm}, {IssuerID: "remote-issuer", Permissions: perm}},
+		Targets: []task.TargetRegistration{{ID: registration, Test: task.TestVersion{ID: "SYN-01", Version: "0.1.0"}, Role: task.MeasurementTarget,
+			Tuple: task.TargetTuple{Hostname: registration + ".example.test"}, Paths: task.Paths{Direct: true, Proxy: true}, BaselineRisk: task.LowRisk,
+			Owner: "synthetic", Purpose: "synthetic", ReviewGeneration: 1, ExpiresAt: task.TimestampFromTime(epoch.Add(48 * time.Hour))}}})
+	if err != nil {
+		t.Fatal("synthetic policy rejected")
+	}
+	return policy
+}
+
 // admittingHarness binds a synthetic generation-2 policy in which the
 // deployment, the embedded issuer and the remote issuer allow SYN-01 against
 // the one registration. The recording transport is never given to the client;
@@ -55,14 +77,7 @@ func synPermissions() task.Permissions {
 func admittingHarness(t *testing.T) *harness {
 	t.Helper()
 	h := newHarness(t)
-	policy, err := task.NewLocalPolicy(task.PolicyInput{Generation: 2, Permissions: synPermissions(),
-		Issuers: []task.IssuerPermissions{{IssuerID: "embedded-issuer", Permissions: synPermissions()}, {IssuerID: "remote-issuer", Permissions: synPermissions()}},
-		Targets: []task.TargetRegistration{{ID: "reg-a", Test: task.TestVersion{ID: "SYN-01", Version: "0.1.0"}, Role: task.MeasurementTarget,
-			Tuple: task.TargetTuple{Hostname: "reg-a.example.test"}, Paths: task.Paths{Direct: true, Proxy: true}, BaselineRisk: task.LowRisk,
-			Owner: "synthetic", Purpose: "synthetic", ReviewGeneration: 1, ExpiresAt: task.TimestampFromTime(epoch.Add(48 * time.Hour))}}})
-	if err != nil {
-		t.Fatal("synthetic policy rejected")
-	}
+	policy := synPolicy(t, 2, "reg-a", permit)
 	reg, err := registry.New([]registry.Entry{{Test: task.TestVersion{ID: "SYN-01", Version: "0.1.0"}, Codec: synCodec{}, BaselineRisk: task.LowRisk, Targets: synTargets{}, Proxy: registry.NoProxy{}}})
 	if err != nil {
 		t.Fatal("synthetic registry rejected")
