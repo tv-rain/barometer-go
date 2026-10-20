@@ -1,7 +1,7 @@
 // Package admission owns the ordered decision to accept, idempotently
-// recognize or reject a task. It currently contains only the delivery-record
-// seam (DEV-585); the admission pipeline is added by later tasks. Nothing here
-// performs network activity or establishes runtime conformance.
+// recognize or reject a task: the delivery-record seam, verification of signed
+// remote task packages and the admission pipeline. Nothing here performs
+// network activity or establishes runtime conformance.
 package admission
 
 import (
@@ -21,8 +21,6 @@ import (
 const (
 	MaxDeliveryCapacity = 256
 	MaxDeliveryLifetime = time.Hour
-	// MaxRemoteDeliveryBytes bounds the envelope handed to a remote verifier.
-	MaxRemoteDeliveryBytes = 2 * 65536
 )
 
 // Install-side errors are fixed sentinels for the reviewed adapter. They carry
@@ -42,19 +40,11 @@ type DeliveryLimits struct {
 	Lifetime time.Duration
 }
 
-// RemoteVerifier is the seam for a reviewed remote-delivery adapter. Verify
-// authenticates the issuer and the integrity of one delivery and returns the
-// authenticated remote source context with the exact task bytes it verified.
-// No production implementation exists (DEV-595); the only implementation is
-// the synthetic verifier in internal/testkit/delivery.
-type RemoteVerifier interface {
-	Verify(ctx context.Context, delivery []byte) (task.SourceContext, []byte, error)
-}
-
 // DeliveryStore holds the adapter-installed delivery records of one client
 // instance. References are opaque, random, bounded in number and lifetime,
 // and resolve only in the store that issued them. Records keep the SHA-256
-// digest of the exact bytes, never the payload. The store is safe for
+// digest of the exact bytes, never the payload. A remote record is single-use:
+// the first resolution of its reference drops it. The store is safe for
 // concurrent use and must not be copied.
 type DeliveryStore struct {
 	clock  platform.Clock
@@ -85,7 +75,7 @@ func NewDeliveryStore(clock platform.Clock, limits DeliveryLimits, generation ui
 }
 
 // InstallEmbedded installs a record for an exact task packaged with a reviewed
-// application deployment and covered by its release review (REQ-TRUST-0004).
+// application deployment and covered by its release review (REQ-TRUST-0041).
 // The caller is the reviewed adapter; calling it does not perform that review.
 func (s *DeliveryStore) InstallEmbedded(ctx context.Context, issuerID string, generation uint64, exactTask []byte) (string, error) {
 	source, err := task.NewSourceContext(task.SourceInput{Origin: task.Embedded, IssuerID: issuerID, PolicyGeneration: generation})
@@ -95,18 +85,19 @@ func (s *DeliveryStore) InstallEmbedded(ctx context.Context, issuerID string, ge
 	return s.install(ctx, source, exactTask)
 }
 
-// InstallRemote installs a record only for bytes the verifier authenticated.
-// A verifier failure, or a source that is not authenticated remote origin,
-// installs nothing.
-func (s *DeliveryStore) InstallRemote(ctx context.Context, verifier RemoteVerifier, delivery []byte) (string, error) {
-	if verifier == nil || len(delivery) == 0 || len(delivery) > MaxRemoteDeliveryBytes {
+// InstallRemote installs a record binding remote origin and the policy
+// generation to the exact received signed package bytes. The host is a
+// transport (REQ-TRUST-0042): it supplies no issuer, issuance time,
+// authentication flag, key or verdict, and installing verifies nothing.
+// Admission verifies the package against the active policy's trusted keys.
+// requirement-ref: REQ-TRUST-0042
+// requirement-ref: REQ-TRUST-0044
+func (s *DeliveryStore) InstallRemote(ctx context.Context, generation uint64, signedPackage []byte) (string, error) {
+	source, err := task.NewSourceContext(task.SourceInput{Origin: task.Remote, PolicyGeneration: generation})
+	if err != nil {
 		return "", ErrDeliveryRejected
 	}
-	source, exactTask, err := verifier.Verify(ctx, delivery)
-	if err != nil || !source.Valid() || source.Origin() != task.Remote || !source.Authenticated() {
-		return "", ErrDeliveryRejected
-	}
-	return s.install(ctx, source, exactTask)
+	return s.install(ctx, source, signedPackage)
 }
 
 func (s *DeliveryStore) install(ctx context.Context, source task.SourceContext, exactTask []byte) (string, error) {
@@ -157,25 +148,33 @@ func (e deliveryEntry) live(now time.Time) bool {
 // the active policy generation, is unexpired and matches the exact presented
 // bytes. A missing, foreign-instance, expired, stale-generation or mismatched
 // record is task_source_unauthenticated; unavailable trusted time is
-// task_trust_unavailable (step 1 of docs/admission.md). Resolution does not
-// consume the record and performs no network activity.
-func (s *DeliveryStore) Resolve(ctx context.Context, ref string, exactTask []byte) (task.DeliveryRecord, error) {
+// task_trust_unavailable (step 1 of docs/admission.md). Resolution performs no
+// network activity. It does not consume an embedded record. It drops a remote
+// record on its first resolution, whatever the outcome, so no digest of a
+// signed package outlives the admission that presented it (REQ-TRUST-0053); a
+// retried package needs a newly installed reference.
+// requirement-ref: REQ-TRUST-0053
+func (s *DeliveryStore) Resolve(ctx context.Context, ref string, presented []byte) (task.DeliveryRecord, error) {
 	if !wellFormedRef(ref) {
 		return task.DeliveryRecord{}, admissionError(task.SourceUnauthenticated)
 	}
 	now, err := s.clock.Now(ctx)
-	if err != nil || now.IsZero() {
-		return task.DeliveryRecord{}, admissionError(task.TrustUnavailable)
-	}
 	s.mu.Lock()
 	e, ok := s.records[ref]
+	if ok && e.record.Source().Origin() == task.Remote {
+		delete(s.records, ref)
+	}
+	if err != nil || now.IsZero() {
+		s.mu.Unlock()
+		return task.DeliveryRecord{}, admissionError(task.TrustUnavailable)
+	}
 	if ok && !e.live(now) {
 		delete(s.records, ref)
 		ok = false
 	}
 	ok = ok && !s.closed && e.generation == s.generation
 	s.mu.Unlock()
-	if !ok || !e.record.Matches(exactTask) {
+	if !ok || !e.record.Matches(presented) {
 		return task.DeliveryRecord{}, admissionError(task.SourceUnauthenticated)
 	}
 	return e.record, nil

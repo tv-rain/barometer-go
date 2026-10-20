@@ -16,12 +16,12 @@ const (
 
 // Egress Network Context acquisition is not provided by this build (DEV-578),
 // so a valid execution.context requirement is task_unsupported at step 6
-// (REQ-TRUST-0036, REQ-TRUST-0037), for embedded and remote origin. The
+// (REQ-TRUST-0036, REQ-TRUST-0047), for embedded and remote origin. The
 // harness's unused recording transport must see zero calls: rejection performs
 // no context lookup, endpoint call, DNS or measurement activity.
 // requirement-ref: REQ-TRUST-0018
 // requirement-ref: REQ-TRUST-0036
-// requirement-ref: REQ-TRUST-0037
+// requirement-ref: REQ-TRUST-0047
 func TestGateRejectsEgressContextRequirements(t *testing.T) {
 	cases := []struct {
 		name  string
@@ -62,9 +62,9 @@ func TestGateRejectsEgressContextRequirements(t *testing.T) {
 }
 
 // The egress check is the last check of step 6: earlier step-6 failures keep
-// their class, and every later step is not reached (REQ-TRUST-0037).
+// their class, and every later step is not reached (REQ-TRUST-0047).
 // requirement-ref: REQ-TRUST-0036
-// requirement-ref: REQ-TRUST-0037
+// requirement-ref: REQ-TRUST-0047
 func TestGateEgressContextPrecedence(t *testing.T) {
 	egress := func(extra map[string]any) []byte {
 		edits := map[string]any{requiredFields: []any{"country_code"}}
@@ -136,7 +136,7 @@ func net05Policy(edit func(*task.PolicyInput)) task.PolicyInput {
 // zero network activity. Registered SYN-01 stays admissible beside it.
 // requirement-ref: REQ-TRUST-0018
 // requirement-ref: REQ-TRUST-0036
-// requirement-ref: REQ-TRUST-0037
+// requirement-ref: REQ-TRUST-0047
 func TestGateRejectsCompositeProfiles(t *testing.T) {
 	net05 := task.TestVersion{ID: "NET-05", Version: "0.1.0"}
 	netTask := func(extra map[string]any) []byte {

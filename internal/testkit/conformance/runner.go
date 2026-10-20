@@ -72,7 +72,11 @@ func rejectionError(class string) error {
 func environment() (task.SourceContext, task.LocalPolicy, validation.TimingContext, error) {
 	at := time.Date(2026, 10, 15, 0, 0, 0, 0, time.UTC)
 	issued := task.TimestampFromTime(at)
-	source, err := task.NewSourceContext(task.SourceInput{Origin: task.Remote, IssuerID: "synthetic-issuer", PolicyGeneration: 1, Authenticated: true, IssuedAt: &issued})
+	pending, err := task.NewSourceContext(task.SourceInput{Origin: task.Remote, PolicyGeneration: 1})
+	if err != nil {
+		return pending, task.LocalPolicy{}, validation.TimingContext{}, ErrFixture
+	}
+	source, err := pending.WithVerifiedPackage("synthetic-issuer", issued)
 	if err != nil {
 		return source, task.LocalPolicy{}, validation.TimingContext{}, ErrFixture
 	}

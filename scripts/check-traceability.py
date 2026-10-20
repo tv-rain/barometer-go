@@ -13,12 +13,12 @@ import tempfile
 
 SPEC_URL = "https://github.com/tv-rain/barometer-spec"
 IMPL_URL = "https://github.com/tv-rain/barometer-go"
-TOOLING_REVISION = "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35"
+TOOLING_REVISION = "e97502747c917a16bc2b71337535ff972bbd7d64"
 # Independent reviewed inventory; never infer required mappings from the input under test.
 INVENTORY_REVISION = "c06ce6b7b73b8520f35ce10982315fcb4d05615b"
 BASELINES = {
-    "cross-cutting.json": ("d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-                           "09e21415673d9b06ef720a659bc1760f1c3a6340"),
+    "cross-cutting.json": ("e97502747c917a16bc2b71337535ff972bbd7d64",
+                           "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216"),
     "measurements.json": ("59d49364d85e48cc8e69c762d130a7a86dc1fe65",
                           "c5f4e92e06936cb677c7a03e9769ff75b1f51874"),
 }
@@ -52,6 +52,8 @@ DEV600_REVISION = "b5e9a332b1d3ef05c130f7413d66e817ad2dd825"
 DEV592_REVISION = "f4acea7323a38b112bfbc69e2bc49f391079e6b1"
 # Revision whose cross-cutting manifest DEV-594 preserved before rebaselining to Go 09e2141.
 DEV593_REVISION = "484d72e0837528a53237bbd6b46bd6ab5b883828"
+# Revision whose cross-cutting manifest DEV-612 preserved before rebaselining to public e975027 and Go e663afe.
+DEV594_REVISION = "d96b7aa18adcbad015bce21124bd6bc113098747"
 # Superseded manifests: byte-identical to the original at their recorded source revision and
 # checked at their original baselines.
 HISTORICAL = {
@@ -109,6 +111,9 @@ HISTORICAL = {
     "historical/cross-cutting-d93aff9-954b7d7.json": ("cross-cutting.json", DEV593_REVISION,
                                                       "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
                                                       "954b7d7de7c5473f261d85bacbd5f44d7aa0e15b"),
+    "historical/cross-cutting-d93aff9-09e2141.json": ("cross-cutting.json", DEV594_REVISION,
+                                                      "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
+                                                      "09e21415673d9b06ef720a659bc1760f1c3a6340"),
 }
 # Same standalone comment form as the public reference checker; history citations are excluded.
 REFERENCE = re.compile(r"// requirement-ref: (\S+)")

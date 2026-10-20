@@ -87,7 +87,7 @@ func New(codecs []TestCodec) (*Decoder, error) {
 var parseLimits = jsondecode.Limits{MaxBytes: 65536, MaxDepth: 128, MaxNodes: 32768}
 
 // Envelope is one parsed task whose closed top-level schema and exact versions
-// are valid (REQ-TRUST-0017 steps 3 and 4). Field values, numeric limits and
+// are valid (REQ-TRUST-0046 steps 3 and 4). Field values, numeric limits and
 // test-specific input and options are not yet validated. It holds the parsed
 // representation, never source context, and is not an admitted task.
 type Envelope struct {
@@ -136,7 +136,7 @@ func (e *Envelope) Test() task.TestVersion {
 
 // Fields validates every common field value and registered limit, applies
 // defaults and checks expiry against the trusted timing context
-// (REQ-TRUST-0017 step 6). Test-specific input and options are checked only
+// (REQ-TRUST-0046 step 6). Test-specific input and options are checked only
 // for their registered byte limits. Failures keep the jsondecode and
 // validation classes, including ErrLimit, ErrExpired and ErrUnsupported.
 func (e *Envelope) Fields(timing validation.TimingContext) (task.Candidate, error) {

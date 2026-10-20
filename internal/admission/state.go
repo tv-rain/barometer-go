@@ -70,21 +70,23 @@ func (Admitted) GoString() string { return "admission.Admitted" }
 //
 // An expired task never reaches step 10: step 6 rejects it as task_expired, so a
 // retained record cannot reactivate it.
-// requirement-ref: REQ-TRUST-0017
+// requirement-ref: REQ-TRUST-0046
 // requirement-ref: REQ-TRUST-0021
 // requirement-ref: REQ-TRUST-0024
 // requirement-ref: REQ-TRUST-0038
-func (a *Admitter) Admit(ctx context.Context, sourceRef string, exactTask []byte) (Admitted, error) {
+func (a *Admitter) Admit(ctx context.Context, sourceRef string, presented []byte) (Admitted, error) {
 	if a == nil {
 		return Admitted{}, admissionError(task.TrustUnavailable)
 	}
-	g, err := a.Gate(ctx, sourceRef, exactTask)
+	g, err := a.Gate(ctx, sourceRef, presented)
 	if err != nil {
 		return Admitted{}, err
 	}
-	source := g.record.Source()
+	// The replay identity is the exact task bytes: for remote origin the bytes
+	// decoded from the verified package, not the package (REQ-TRUST-0053).
+	source := g.source
 	key := persistence.ReplayKey{IssuerID: source.IssuerID(), TaskID: g.candidate.ID}
-	digest := sha256.Sum256(exactTask)
+	digest := g.digest
 	now := g.acceptedAt
 
 	a.accept.Lock()

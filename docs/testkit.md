@@ -8,7 +8,7 @@ These helpers support later model and protocol cases without creating a competin
 
 The separate test-only [`internal/testkit/conformance`](conformance-fixtures.md) subpackage owns the versioned fixture wrapper and task-decoding adapter. Unlike the parent helpers, it consumes existing internal decoding and model packages. Production code must not import either package.
 
-The test-only [`internal/testkit/delivery`](admission.md#delivery-record-seam) subpackage owns a synthetic remote-delivery verifier for admission tests. It imports only task models, its HMAC envelope is a test format rather than a reviewed authentication mechanism, and production code must not import it.
+The test-only [`internal/testkit/delivery`](admission.md#signed-remote-task-packages) subpackage builds synthetic signed remote task packages for admission tests (DEV-612; it replaced the earlier HMAC verifier). Its Ed25519 keys derive from fixed public test seeds and are not deployment keys; it builds the signed message independently of the admission code, can re-sign altered packages and returns trusted key records for synthetic policies. It imports only task models and the standard library, and production code must not import it.
 
 The test-only `internal/testkit/replay` subpackage owns a bounded, fault-injectable replay store that implements `persistence.ReplayStore` for admission tests ([Atomic Rejection and Replay Persistence](admission.md#atomic-rejection-and-replay-persistence)). It keeps encoded records in memory as its model of durable state and can inject:
 - a failure at lookup, at the generation read, before a write, during a write (staged but never durable) and after a durable write (an uncertain commit);

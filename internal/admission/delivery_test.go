@@ -49,8 +49,21 @@ func newStore(t *testing.T, c *fakeClock, capacity int) *admission.DeliveryStore
 	return s
 }
 
-func verifier() delivery.Verifier {
-	return delivery.Verifier{Key: []byte("synthetic-key"), IssuerID: "remote-issuer", PolicyGeneration: 2, IssuedAt: task.TimestampFromTime(epoch), IssuerAuthenticated: true}
+// signer is the synthetic remote issuer key; otherSigner is a trusted key of
+// the embedded issuer, used to move packages between issuers.
+func signer() delivery.Signer      { return delivery.NewSigner("remote-key-1", "remote-issuer", 1) }
+func otherSigner() delivery.Signer { return delivery.NewSigner("embedded-key-1", "embedded-issuer", 2) }
+
+// Key validity used by the synthetic policy: 30 days before epoch to 300
+// days after it, within the registered 365-day maximum.
+var (
+	keyNotBefore = epoch.Add(-30 * 24 * time.Hour)
+	keyNotAfter  = epoch.Add(300 * 24 * time.Hour)
+)
+
+// signed returns an encoded valid package for b issued at epoch+ahead.
+func signed(ahead time.Duration, b []byte) []byte {
+	return signer().Sign(epoch.Add(ahead), b).Encode()
 }
 
 func code(err error) task.AdmissionCode {
@@ -81,27 +94,78 @@ func TestDeliveryStoreBindsSourceContextToExactBytes(t *testing.T) {
 		t.Fatal("embedded record did not resolve")
 	}
 	src := r.Source()
-	if _, issued := src.IssuedAt(); src.Origin() != task.Embedded || src.IssuerID() != "embedded-issuer" || src.PolicyGeneration() != 2 || src.Authenticated() || issued {
+	if _, issued := src.IssuedAt(); src.Origin() != task.Embedded || src.IssuerID() != "embedded-issuer" || src.PolicyGeneration() != 2 || !src.Verified() || issued {
 		t.Fatal("embedded source context not preserved")
 	}
 
-	v := verifier()
-	ref, err = s.InstallRemote(ctx, v, v.Seal(exact))
-	if err != nil {
-		t.Fatal("verified remote delivery rejected")
+	// Embedded resolution is repeatable until expiry; replay handles redelivery.
+	if _, err := s.Resolve(ctx, ref, exact); err != nil {
+		t.Fatal("resolution consumed an embedded record")
 	}
-	r, err = s.Resolve(ctx, ref, exact)
+
+	// A remote record binds only origin and generation to the package bytes;
+	// the issuer and issuance time come from admission's verification.
+	pkg := signed(0, exact)
+	ref, err = s.InstallRemote(ctx, 2, pkg)
+	if err != nil {
+		t.Fatal("remote package install rejected")
+	}
+	r, err = s.Resolve(ctx, ref, pkg)
 	if err != nil {
 		t.Fatal("remote record did not resolve")
 	}
 	src = r.Source()
-	issued, ok := src.IssuedAt()
-	if src.Origin() != task.Remote || src.IssuerID() != "remote-issuer" || src.PolicyGeneration() != 2 || !src.Authenticated() || !ok || issued != task.TimestampFromTime(epoch) {
-		t.Fatal("remote source context not preserved")
+	if _, ok := src.IssuedAt(); src.Origin() != task.Remote || src.IssuerID() != "" || src.PolicyGeneration() != 2 || src.Verified() || ok {
+		t.Fatal("remote record established provenance before verification")
 	}
-	// Resolution is repeatable until expiry; replay handles redelivery.
-	if _, err := s.Resolve(ctx, ref, exact); err != nil {
-		t.Fatal("resolution consumed the record")
+	if r.Matches(exact) || !r.Matches(pkg) {
+		t.Fatal("remote record not bound to the exact package bytes")
+	}
+}
+
+// A remote record is single-use: its first resolution drops it whatever the
+// outcome, so no package digest outlives the admission that presented it.
+// requirement-ref: REQ-TRUST-0053
+func TestRemoteRecordsAreSingleUse(t *testing.T) {
+	ctx := context.Background()
+	c := newClock()
+	s := newStore(t, c, 8)
+	pkg := signed(0, exact)
+	install := func() string {
+		ref, err := s.InstallRemote(ctx, 2, pkg)
+		if err != nil {
+			t.Fatal("remote install rejected")
+		}
+		return ref
+	}
+	ref := install()
+	if _, err := s.Resolve(ctx, ref, pkg); err != nil {
+		t.Fatal("first resolution failed")
+	}
+	if _, err := s.Resolve(ctx, ref, pkg); code(err) != task.SourceUnauthenticated {
+		t.Fatal("remote record resolved twice")
+	}
+	ref = install()
+	if _, err := s.Resolve(ctx, ref, exact); code(err) != task.SourceUnauthenticated {
+		t.Fatal("mismatched bytes resolved")
+	}
+	if _, err := s.Resolve(ctx, ref, pkg); code(err) != task.SourceUnauthenticated {
+		t.Fatal("remote record survived a mismatched resolution")
+	}
+	ref = install()
+	c.down.Store(true)
+	if _, err := s.Resolve(ctx, ref, pkg); code(err) != task.TrustUnavailable {
+		t.Fatal("unavailable time not reported")
+	}
+	c.down.Store(false)
+	if _, err := s.Resolve(ctx, ref, pkg); code(err) != task.SourceUnauthenticated {
+		t.Fatal("remote record survived a resolution without trusted time")
+	}
+	// Each retry installs a new reference; resolution frees capacity.
+	for range 16 {
+		if _, err := s.Resolve(ctx, install(), pkg); err != nil {
+			t.Fatal("fresh reference did not resolve")
+		}
 	}
 }
 
@@ -292,15 +356,6 @@ func TestDeliveryStoreConfigurationBounds(t *testing.T) {
 func TestInstallRejectsUnprovenDeliveries(t *testing.T) {
 	ctx := context.Background()
 	s := newStore(t, newClock(), 16)
-	v := verifier()
-	tampered := v.Seal(exact)
-	tampered[len(tampered)-1] ^= 1
-	unauthenticated := v
-	unauthenticated.IssuerAuthenticated = false
-	wrongKey := v
-	wrongKey.Key = []byte("other-key")
-	badIssuer := v
-	badIssuer.IssuerID = "Remote Issuer"
 	cases := map[string]func() (string, error){
 		"embedded invalid issuer":  func() (string, error) { return s.InstallEmbedded(ctx, "Issuer", 2, exact) },
 		"embedded zero generation": func() (string, error) { return s.InstallEmbedded(ctx, "embedded-issuer", 0, exact) },
@@ -308,41 +363,17 @@ func TestInstallRejectsUnprovenDeliveries(t *testing.T) {
 		"embedded oversized task": func() (string, error) {
 			return s.InstallEmbedded(ctx, "embedded-issuer", 2, make([]byte, task.MaxDeliveryBytes+1))
 		},
-		"nil verifier":   func() (string, error) { return s.InstallRemote(ctx, nil, v.Seal(exact)) },
-		"empty envelope": func() (string, error) { return s.InstallRemote(ctx, v, nil) },
-		"oversized envelope": func() (string, error) {
-			return s.InstallRemote(ctx, v, make([]byte, admission.MaxRemoteDeliveryBytes+1))
+		"remote empty package": func() (string, error) { return s.InstallRemote(ctx, 2, nil) },
+		"remote oversized package": func() (string, error) {
+			return s.InstallRemote(ctx, 2, make([]byte, task.MaxDeliveryBytes+1))
 		},
-		"failed integrity":          func() (string, error) { return s.InstallRemote(ctx, v, tampered) },
-		"wrong issuer key":          func() (string, error) { return s.InstallRemote(ctx, wrongKey, v.Seal(exact)) },
-		"encryption without issuer": func() (string, error) { return s.InstallRemote(ctx, unauthenticated, unauthenticated.Seal(exact)) },
-		"verifier invalid issuer":   func() (string, error) { return s.InstallRemote(ctx, badIssuer, badIssuer.Seal(exact)) },
-		"verifier returns embedded": func() (string, error) { return s.InstallRemote(ctx, embeddedVerifier{}, exact) },
-		"verifier oversized task":   func() (string, error) { return s.InstallRemote(ctx, v, v.Seal(make([]byte, task.MaxDeliveryBytes+1))) },
-		"verifier cancelled": func() (string, error) {
-			c, cancel := context.WithCancel(ctx)
-			cancel()
-			return s.InstallRemote(c, v, v.Seal(exact))
-		},
-		"remote zero policy generation": func() (string, error) {
-			z := v
-			z.PolicyGeneration = 0
-			return s.InstallRemote(ctx, z, z.Seal(exact))
-		},
+		"remote zero policy generation": func() (string, error) { return s.InstallRemote(ctx, 0, signed(0, exact)) },
 	}
 	for name, f := range cases {
 		if ref, err := f(); ref != "" || !errors.Is(err, admission.ErrDeliveryRejected) {
 			t.Errorf("%s: installed", name)
 		}
 	}
-}
-
-// embeddedVerifier is a faulty adapter that reports a non-remote source.
-type embeddedVerifier struct{}
-
-func (embeddedVerifier) Verify(context.Context, []byte) (task.SourceContext, []byte, error) {
-	s, err := task.NewSourceContext(task.SourceInput{Origin: task.Embedded, IssuerID: "embedded-issuer", PolicyGeneration: 2})
-	return s, exact, err
 }
 
 func TestClosedStoreRefusesInstallAndResolution(t *testing.T) {
@@ -404,8 +435,6 @@ func TestDeliveryStoreConcurrentUse(t *testing.T) {
 	c := newClock()
 	const capacity = 32
 	s := newStore(t, c, capacity)
-	v := verifier()
-	sealed := v.Seal(exact)
 	var wg sync.WaitGroup
 	var generation atomic.Uint64
 	generation.Store(2)
@@ -419,7 +448,7 @@ func TestDeliveryStoreConcurrentUse(t *testing.T) {
 				if (w+i)%2 == 0 {
 					ref, err = s.InstallEmbedded(ctx, "embedded-issuer", 2, exact)
 				} else {
-					ref, err = s.InstallRemote(ctx, v, sealed)
+					ref, err = s.InstallRemote(ctx, 2, exact)
 				}
 				if err != nil && !errors.Is(err, admission.ErrDeliveryCapacity) {
 					t.Error("unexpected install error")

@@ -46,7 +46,7 @@ A Barometer Go release version is independent from a public specification versio
 
 The [Barometer coordination repository](https://github.com/tv-rain/barometer) owns project-wide principles, architecture decisions, delivery planning, and the task workflow. The [public specification](https://github.com/tv-rain/barometer-spec) is authoritative for observable library and measurement behavior. This repository owns only the Go implementation and its repository-local documentation, tests, and release history.
 
-The host application remains responsible for enablement, authenticated task delivery, scheduling, deployment policy, optional proxy operation, result delivery, participant transparency, and deployment-specific review. The Go core must enforce admission, validation, bounded execution, registered behavior, minimized results, cancellation, retention, and clearing without accepting trust assertions from task-controlled data.
+The host application remains responsible for enablement, task delivery (remote tasks arrive as signed packages that the Go core verifies against trusted keys in local policy), scheduling, deployment policy, optional proxy operation, result delivery, participant transparency, and deployment-specific review. The Go core must enforce admission, validation, bounded execution, registered behavior, minimized results, cancellation, retention, and clearing without accepting trust assertions from task-controlled data.
 
 See [Package Architecture](docs/package-architecture.md) for the intended package ownership and dependency rules. The [Public Go API Boundary](docs/public-api.md) defines the intended facade and trust/lifecycle contract; its isolated signature fixture is not a production API or runtime implementation.
 

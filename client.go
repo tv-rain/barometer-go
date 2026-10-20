@@ -178,7 +178,7 @@ func (c *Client) release() {
 // admitTask reserves the current generation, so it serializes with lifecycle
 // transitions, and publishes a handle only after Admit has durably accepted the
 // task. A panic below the facade becomes task_trust_unavailable with no handle.
-// The step order of REQ-TRUST-0037, including the complete-task byte limit
+// The step order of REQ-TRUST-0047, including the complete-task byte limit
 // after delivery resolution, is the admitter's; the facade adds no check.
 func (c *Client) admitTask(taskJSON, sourceRef string) (handle string, err error) {
 	if c == nil {

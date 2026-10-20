@@ -90,7 +90,7 @@ func (ReplayRecord) String() string   { return "persistence.ReplayRecord" }
 func (ReplayRecord) GoString() string { return "persistence.ReplayRecord" }
 
 // ReplayStore is the replay-state capability consumed by admission steps 10 and
-// 11 (REQ-TRUST-0017). Every method receives trusted time and treats records
+// 11 (REQ-TRUST-0046). Every method receives trusted time and treats records
 // overdue at that time as absent, purging them before use; implementations
 // never read the system clock. Implementations are bounded, application-scoped,
 // non-synchronizing and safe under interruption, and honor cancellation and

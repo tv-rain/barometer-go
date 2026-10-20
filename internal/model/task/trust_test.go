@@ -17,9 +17,13 @@ import (
 func stamp() task.Timestamp {
 	return task.TimestampFromTime(time.Date(2026, 10, 15, 12, 0, 0, 123, time.UTC))
 }
+func whole() task.Timestamp {
+	return task.Timestamp{Whole: time.Date(2026, 10, 15, 12, 0, 0, 0, time.UTC)}
+}
+
+// source is the host-supplied part of a remote source: origin and generation.
 func source() task.SourceInput {
-	ts := stamp()
-	return task.SourceInput{Origin: task.Remote, IssuerID: "reviewed-issuer", PolicyGeneration: 2, Authenticated: true, IssuedAt: &ts}
+	return task.SourceInput{Origin: task.Remote, PolicyGeneration: 2}
 }
 func policy() task.PolicyInput {
 	p := task.Permissions{
@@ -39,18 +43,25 @@ func policy() task.PolicyInput {
 }
 
 func TestSourceContextInvariantsAndByteBinding(t *testing.T) {
-	in := source()
-	s, err := task.NewSourceContext(in)
-	if err != nil || !s.Valid() || s.Origin() != task.Remote || !s.Authenticated() || s.IssuerID() != in.IssuerID || s.PolicyGeneration() != 2 {
-		t.Fatal("valid source rejected")
+	pending, err := task.NewSourceContext(source())
+	if err != nil || !pending.Valid() || pending.Verified() || pending.Origin() != task.Remote || pending.IssuerID() != "" || pending.PolicyGeneration() != 2 {
+		t.Fatal("pending remote source rejected or established an issuer")
 	}
-	want := *in.IssuedAt
-	in.IssuedAt.Fraction = "9"
-	got, ok := s.IssuedAt()
-	if !ok || got != want {
-		t.Fatal("source retains caller pointer")
+	if _, has := pending.IssuedAt(); has {
+		t.Fatal("pending remote source invented issuance")
 	}
-	r, err := task.NewDeliveryRecord(s, []byte(`{"a":1}`))
+	issued := whole()
+	s, err := pending.WithVerifiedPackage("reviewed-issuer", issued)
+	if err != nil || !s.Verified() || s.Origin() != task.Remote || s.IssuerID() != "reviewed-issuer" || s.PolicyGeneration() != 2 {
+		t.Fatal("verified remote source rejected")
+	}
+	if got, ok := s.IssuedAt(); !ok || got != issued {
+		t.Fatal("verified issuance lost")
+	}
+	if pending.Verified() || pending.IssuerID() != "" {
+		t.Fatal("completion mutated the pending source")
+	}
+	r, err := task.NewDeliveryRecord(pending, []byte(`{"a":1}`))
 	if err != nil || !r.Matches([]byte(`{"a":1}`)) || r.Matches([]byte(`{ "a":1}`)) || r.Matches(nil) {
 		t.Fatal("exact byte identity lost")
 	}
@@ -65,9 +76,9 @@ func TestSourceContextInvariantsAndByteBinding(t *testing.T) {
 			t.Fatal("invalid byte envelope accepted")
 		}
 	}
-	// Records bind over-limit tasks so admission can reject them by size.
-	for _, n := range []int{65536, 65537, task.MaxDeliveryBytes} {
-		if r, e := task.NewDeliveryRecord(s, bytes.Repeat([]byte{'x'}, n)); e != nil || !r.Matches(bytes.Repeat([]byte{'x'}, n)) {
+	// Records bind over-limit tasks and packages so admission can reject them by size.
+	for _, n := range []int{65536, 65537, 98304, 98305, task.MaxDeliveryBytes} {
+		if r, e := task.NewDeliveryRecord(pending, bytes.Repeat([]byte{'x'}, n)); e != nil || !r.Matches(bytes.Repeat([]byte{'x'}, n)) {
 			t.Fatal("receive byte bound rejected")
 		}
 	}
@@ -75,41 +86,78 @@ func TestSourceContextInvariantsAndByteBinding(t *testing.T) {
 		t.Fatal("zero source bound")
 	}
 	embedded, e := task.NewSourceContext(task.SourceInput{Origin: task.Embedded, IssuerID: "release", PolicyGeneration: 1})
-	if e != nil || !embedded.Valid() || embedded.Authenticated() {
+	if e != nil || !embedded.Valid() || !embedded.Verified() || embedded.IssuerID() != "release" {
 		t.Fatal("reviewed embedded shape rejected")
 	}
 	if _, has := embedded.IssuedAt(); has {
 		t.Fatal("embedded issuance invented")
 	}
+	if _, e := embedded.WithVerifiedPackage("release", issued); e != task.ErrTrustModel {
+		t.Fatal("embedded source completed as a remote package")
+	}
+	if _, e := s.WithVerifiedPackage("other-issuer", issued); e != task.ErrTrustModel {
+		t.Fatal("verified remote source re-completed with another issuer")
+	}
 }
 
-// Structural evidence for trust separation; actual provenance/time availability
-// and fail-closed admission remain with the future admission owner.
-// requirement-ref: REQ-TRUST-0001
+// A host cannot supply a remote issuer or issuance time; only a package that
+// admission verified completes a remote source. Structural evidence only:
+// trusted time, verification and fail-closed admission belong to admission.
+// requirement-ref: REQ-TRUST-0043
+// requirement-ref: REQ-TRUST-0044
 func TestMalformedSourceRejectedAtomically(t *testing.T) {
-	cases := map[string]func(*task.SourceInput){
-		"origin": func(s *task.SourceInput) { s.Origin = 0 }, "generation": func(s *task.SourceInput) { s.PolicyGeneration = 0 },
-		"issuer empty": func(s *task.SourceInput) { s.IssuerID = "" }, "issuer case": func(s *task.SourceInput) { s.IssuerID = "Issuer" }, "issuer unicode": func(s *task.SourceInput) { s.IssuerID = "é" }, "issuer long": func(s *task.SourceInput) { s.IssuerID = strings.Repeat("a", 65) },
-		"authentication": func(s *task.SourceInput) { s.Authenticated = false }, "missing time": func(s *task.SourceInput) { s.IssuedAt = nil }, "zero time": func(s *task.SourceInput) { s.IssuedAt = &task.Timestamp{} },
-		"fraction": func(s *task.SourceInput) { s.IssuedAt.Fraction = "01x" }, "trailing zero": func(s *task.SourceInput) { s.IssuedAt.Fraction = "10" }, "fraction bound": func(s *task.SourceInput) { s.IssuedAt.Fraction = strings.Repeat("1", 65537) },
-		"whole fraction": func(s *task.SourceInput) { s.IssuedAt.Whole = s.IssuedAt.Whole.Add(time.Nanosecond) }, "not UTC": func(s *task.SourceInput) { s.IssuedAt.Whole = s.IssuedAt.Whole.In(time.FixedZone("offset", 3600)) },
-		"embedded auth": func(s *task.SourceInput) { s.Origin = task.Embedded; s.IssuedAt = nil }, "embedded time": func(s *task.SourceInput) { s.Origin = task.Embedded; s.Authenticated = false },
+	inputs := map[string]task.SourceInput{
+		"origin":              {Origin: 0, PolicyGeneration: 2},
+		"unknown origin":      {Origin: task.Remote + 1, PolicyGeneration: 2},
+		"generation":          {Origin: task.Remote},
+		"remote host issuer":  {Origin: task.Remote, IssuerID: "reviewed-issuer", PolicyGeneration: 2},
+		"embedded generation": {Origin: task.Embedded, IssuerID: "release"},
+		"embedded no issuer":  {Origin: task.Embedded, PolicyGeneration: 2},
+		"issuer case":         {Origin: task.Embedded, IssuerID: "Issuer", PolicyGeneration: 2},
+		"issuer unicode":      {Origin: task.Embedded, IssuerID: "é", PolicyGeneration: 2},
+		"issuer long":         {Origin: task.Embedded, IssuerID: strings.Repeat("a", 65), PolicyGeneration: 2},
 	}
-	for name, mutate := range cases {
+	for name, in := range inputs {
 		t.Run(name, func(t *testing.T) {
-			in := source()
-			mutate(&in)
-			s, e := task.NewSourceContext(in)
-			if e != task.ErrTrustModel || s.Valid() {
+			if s, e := task.NewSourceContext(in); e != task.ErrTrustModel || s.Valid() {
 				t.Fatal("invalid source escaped")
 			}
 		})
 	}
-	in := source()
-	in.IssuerID = strings.Repeat("a", 64)
-	in.PolicyGeneration = ^uint64(0)
+	pending, err := task.NewSourceContext(source())
+	if err != nil {
+		t.Fatal(err)
+	}
+	completions := map[string]func() (string, task.Timestamp){
+		"issuer empty": func() (string, task.Timestamp) { return "", whole() },
+		"issuer case":  func() (string, task.Timestamp) { return "Issuer", whole() },
+		"issuer long":  func() (string, task.Timestamp) { return strings.Repeat("a", 65), whole() },
+		"zero time":    func() (string, task.Timestamp) { return "reviewed-issuer", task.Timestamp{} },
+		"fraction":     func() (string, task.Timestamp) { return "reviewed-issuer", stamp() },
+		"whole fraction": func() (string, task.Timestamp) {
+			return "reviewed-issuer", task.Timestamp{Whole: whole().Whole.Add(time.Nanosecond)}
+		},
+		"not UTC": func() (string, task.Timestamp) {
+			return "reviewed-issuer", task.Timestamp{Whole: whole().Whole.In(time.FixedZone("offset", 3600))}
+		},
+	}
+	for name, c := range completions {
+		t.Run("complete "+name, func(t *testing.T) {
+			issuer, issued := c()
+			if s, e := pending.WithVerifiedPackage(issuer, issued); e != task.ErrTrustModel || s.Valid() {
+				t.Fatal("invalid completion escaped")
+			}
+		})
+	}
+	if s, e := (task.SourceContext{}).WithVerifiedPackage("reviewed-issuer", whole()); e != task.ErrTrustModel || s.Valid() {
+		t.Fatal("zero source completed")
+	}
+	in := task.SourceInput{Origin: task.Embedded, IssuerID: strings.Repeat("a", 64), PolicyGeneration: ^uint64(0)}
 	if s, e := task.NewSourceContext(in); e != nil || !s.Valid() {
 		t.Fatal("exact positive generation/identifier bounds rejected")
+	}
+	if s, e := pending.WithVerifiedPackage(strings.Repeat("a", 64), whole()); e != nil || !s.Verified() {
+		t.Fatal("exact identifier bound rejected on completion")
 	}
 }
 
