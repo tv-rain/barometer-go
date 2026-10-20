@@ -26,10 +26,13 @@ var ErrAdmitterConfig = errors.New("admission: invalid admitter configuration")
 // instance. It implements steps 1 to 6 (DEV-586), issuer and policy resolution
 // in step 7 and the input, options and path-authority parts of step 8
 // (DEV-587), target registration matching in step 8 (DEV-588), and effective
-// risk with the consent requirement in step 9 (DEV-589). Proxy compatibility,
-// composite steps, replay (step 10) and acceptance (step 11) are added by
-// later tasks; nothing here persists state, publishes a handle or performs DNS, Network Context, proxy or measurement
-// activity. It is safe for concurrent use.
+// risk with the consent requirement in step 9 (DEV-589). Tasks that require
+// egress Network Context (step 6) or NET-05 composite steps (step 8) are
+// rejected as task_unsupported until those capabilities exist (DEV-590).
+// Proxy compatibility, replay (step 10) and acceptance (step 11) are added by
+// later tasks; nothing here persists state, publishes a handle or performs
+// DNS, Network Context, proxy or measurement activity. It is safe for
+// concurrent use.
 type Admitter struct {
 	deliveries *DeliveryStore
 	clock      platform.Clock
@@ -154,6 +157,11 @@ func (a *Admitter) Gate(ctx context.Context, sourceRef string, exactTask []byte)
 	if err != nil {
 		return Gated{}, admissionError(fieldClass(err))
 	}
+	// A valid execution.context requirement needs egress Network Context,
+	// which this build does not provide.
+	if requiresEgressContext(candidate) {
+		return Gated{}, admissionError(task.Unsupported)
+	}
 	// Step 7: active policy generation, issuer authority and the intersected
 	// test, composite, numeric and label bounds.
 	authority, class := resolve(a.policy, source, entry.Test, candidate, base)
@@ -162,9 +170,14 @@ func (a *Admitter) Gate(ctx context.Context, sourceRef string, exactTask []byte)
 	}
 	// Step 8: input and options through the registry-selected codec, the path
 	// permitted by issuer and local policy, then every target tuple and redirect
-	// registration. Proxy compatibility and composite steps are added later.
+	// registration. Proxy compatibility is added later.
 	if candidate.Parameters, err = envelope.Parameters(); err != nil {
 		return Gated{}, admissionError(fieldClass(err))
+	}
+	// Composite steps cannot be matched yet, so an enabled NET-05 task fails
+	// closed here rather than being admitted with its steps unchecked.
+	if requiresCompositeSteps(entry) {
+		return Gated{}, admissionError(task.Unsupported)
 	}
 	if class = authority.authorizePath(candidate.Execution.NetworkPath); class != 0 {
 		return Gated{}, admissionError(class)
