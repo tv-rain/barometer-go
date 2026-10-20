@@ -24,6 +24,8 @@ DEV-588 adds target registration matching at step 8 ([Target Registration](admis
 
 DEV-589 completes step 9 with effective risk and the consent requirement ([Effective Risk and Consent](admission.md#effective-risk-and-consent)) and rebaselines this map to Go `41c6f06b0ef46b6324f9f795299ac70af05c6086` at the same public baseline. Plans, families and allocations are unchanged. Six `UT.*` cases record the narrow aspects that the effective-risk, baseline-lowering, locally determined risk bound, fail-closed safety-input, consent-requirement and risk-combination tests exercise. REQ-SAFETY-0004, REQ-SAFETY-0005, REQ-SAFETY-0010, REQ-SAFETY-0019 and REQ-SAFETY-0021 to REQ-SAFETY-0029 become `partial` (157 in total), and REQ-SAFETY-0017, REQ-TRUST-0011 and REQ-TRUST-0037 gain aspects, as recorded in the [evidence report](../traceability/evidence/go-unit-41c6f06.md). The `CC-SAFETY-*` families stay `planned`: each also asserts acceptance (steps 10 and 11) or execution-owned rows such as consent validity, host and device restrictions and per-attempt re-evaluation. REQ-SAFETY-0020 stays `planned` because consent validity is checked at attempt start.
 
+DEV-590 rejects tasks that require egress Network Context (step 6) or NET-05 composite steps (step 8) as `task_unsupported` ([Unsupported Capabilities](admission.md#unsupported-capabilities)) and rebaselines this map to Go `295dea9139956bc73eb04d521001ae76f0d574b8` at the same public baseline. Three `UT.*` cases record the narrow aspects that the egress-requirement, egress-precedence and composite-profile tests exercise for REQ-TRUST-0018, REQ-TRUST-0036 and REQ-TRUST-0037, as recorded in the [evidence report](../traceability/evidence/go-unit-295dea9.md). `CC-CONTEXT-EXECUTION-INTEGRATION` gains a measurable admission rejection row and maps REQ-TRUST-0036; its acquisition rows belong to Network paths and context (DEV-578), so it stays `planned`. No requirement changes status (157 `partial`).
+
 The earlier DEV-471 mapping at public baseline `47d75925b3829fccfb6954b545c15f695375b76f` and Go baseline `a9136f34fad00ecc2171cbc29e835c5c50b340df` is preserved byte-for-byte as [historical manifest](../traceability/historical/cross-cutting-47d7592.json) with its unchanged [report](../traceability/reports/cross-cutting.json). It mapped 565 requirements to 185 families. It remains valid metadata only for those original baselines and is not a current claim.
 
 ## Boundaries and Maintenance
@@ -2166,7 +2168,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `library/network-context.md`, section **Execution Integration**. Intended target: `internal/networkcontext/acquire.go`. Planned case location: `internal/networkcontext/cross_cutting_conformance_test.go`, `symbol:TestCcContextExecutionIntegration`.
 
-Case plan: Inject cancellation/deadline/suspension/network changes during acquisition; distinguish missing required context, allowlist mismatch and optional egress failure.
+Case plan: Inject cancellation/deadline/suspension/network changes during acquisition; distinguish missing required context, allowlist mismatch and optional egress failure. Admission rejection row, while this build provides no egress acquisition (DEV-578): submit otherwise valid tasks that require country_code, region_code or asn individually, or a country allowlist, and assert each is rejected at admission as task_unsupported with zero transport calls, while tasks with an absent or empty context are admitted; this row is removed when acquisition is provided. Requirements: REQ-CONTEXT-0025, REQ-CONTEXT-0026, REQ-CONTEXT-0027, REQ-CONTEXT-0028, REQ-TRUST-0036.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -2174,11 +2176,13 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-CONTEXT-0026 -->
 <!-- requirement-ref: REQ-CONTEXT-0027 -->
 <!-- requirement-ref: REQ-CONTEXT-0028 -->
+<!-- requirement-ref: REQ-TRUST-0036 -->
 
 - [REQ-CONTEXT-0025](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0025) → `CC-CONTEXT-EXECUTION-INTEGRATION`.
 - [REQ-CONTEXT-0026](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0026) → `CC-CONTEXT-EXECUTION-INTEGRATION`.
 - [REQ-CONTEXT-0027](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0027) → `CC-CONTEXT-EXECUTION-INTEGRATION`.
 - [REQ-CONTEXT-0028](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0028) → `CC-CONTEXT-EXECUTION-INTEGRATION`.
+- [REQ-TRUST-0036](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0036) → `CC-CONTEXT-EXECUTION-INTEGRATION`.
 
 ### CC-CONTEXT-PROVIDER-AND-OPERATOR-INTERPRETATION
 
