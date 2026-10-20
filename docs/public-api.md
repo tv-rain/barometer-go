@@ -1,12 +1,12 @@
 # Public Go API Boundary
 
-**Status:** Defined design; runtime implementation pending
-**Task:** [DEV-476 — Define the public Go API boundary](https://app.clickup.com/t/86cbb8f0j)
+**Status:** Defined design; lifecycle shell implemented (DEV-600); runtime implementation pending
+**Task:** [DEV-476 — Define the public Go API boundary](https://app.clickup.com/t/86cbb8f0j); lifecycle shell: [DEV-600](https://app.clickup.com/t/124kk1zcdcy)
 **Specification baseline:** Draft `0.1.0` at `95dfeef1367f4c320bca7c7ae91b13ca7608b37f`
 
 ## Scope and Authority
 
-This document defines the intended root-package facade for initialization, admission, host-triggered execution, cancellation, result retrieval, and measurement-data clearing. It is an implementation-local API design subordinate to the public contracts in the [Normative Source Inventory](normative-sources.md). It introduces no production exports, task/result schema change, measurement implementation, conformance claim, release, or platform-support claim.
+This document defines the intended root-package facade for initialization, admission, host-triggered execution, cancellation, result retrieval, and measurement-data clearing. It is an implementation-local API design subordinate to the public contracts in the [Normative Source Inventory](normative-sources.md). The design itself introduces no task/result schema change, measurement implementation, conformance claim, release, or platform-support claim. Production exports are added one reviewed task at a time; [Implemented Subset](#implemented-subset) records which exist.
 
 The signatures below are checked in an isolated synthetic module. Fixture bodies deliberately panic if invoked; they validate compiler/binding compatibility only. Do not copy those bodies into production. Implementation of this facade requires admission, execution, persistence, and reviewed platform/trust adapters. No successful no-op or permissive fallback may substitute for those components.
 
@@ -49,6 +49,31 @@ func (c *Client) Close() error
 All parameters are immutable Go strings; no mutable byte-slice alias crosses the facade. Return pairs use the built-in `error` in second position, compatible with gomobile. Native wrappers translate errors into bounded operational codes and invoke blocking lifecycle operations away from the UI thread. No public `context.Context`, channel, function callback, map, generic value, platform interface, key handle, or storage object is required.
 
 The declaration-only `Client struct{}` represents hidden production state. A zero-value or binding-created instance carries no authority and behaves as uninitialized. Constructors must not begin measurements or create linkage secrets. Copies of a Go value must not establish a second owner of the same persistent state; the eventual implementation must enforce one active owner per storage scope internally.
+
+## Implemented Subset
+
+DEV-600 is the public-API review point for `NewClient`, `Initialize`, `Close` and `ClearMeasurementData`, which the root package now exports with the signatures above. They form a lifecycle shell only. The other documented methods are not exported yet; each later task adds its method as its own review point. `TestPublicSurfaceMatchesDocumentedSignatures` fails if a production export is missing from the signature block, differs from it, or is not in the implemented list, and if `Client` gains an exported field.
+
+| Area | Current behavior |
+|---|---|
+| States | Uninitialized, initialized, transitioning, blocked (a transition that did not complete) and closed, following the [Lifecycle](#lifecycle-proxy-changes-and-clearing) table. Transitioning and blocked form its "transitioning or clearing incomplete" row. |
+| Trusted adapters | An unexported seam binds the clock, registry, `task.LocalPolicy` (whose generation is the active one), `admission.DeliveryStore`, `persistence.ReplayStore`, configuration approvals and the optional linkage key store. Nothing outside the root package can bind them, and no production code does yet, so `Initialize` fails closed with `not_initialized`. Tests bind synthetic adapters from `internal/testkit`. Native wiring belongs to DEV-455. |
+| `Initialize` | Requires every mandatory adapter, then decodes the closed `proxy`/`network_context`/`result_linkage` container through `internal/config`, prepares it and builds the admitter; only a complete result becomes a new generation. Any failure returns `not_initialized` and leaves the client uninitialized; no configuration-specific class is added. An invalid local policy is accepted here and fails each later admission with `task_policy_unavailable`, as `NewAdmitter` already defines. |
+| Serialization | Lifecycle calls mark the client transitioning and release the lock before adapter work, so a losing call returns `transition_in_progress` instead of blocking. Future admission, run-reservation and bundle entry points reserve the current generation through an unexported counter; a transition waits for reservations to finish, up to the lifecycle deadline. |
+| Handles | Separate task and run tables per generation, holding 128-bit `crypto/rand` values encoded as base64url with a `T.` or `R.` prefix. The prefix keeps them distinct from `task_id` (lowercase) and from `run_id`/`bundle_id` (bare base64url). A full table returns `capacity_exceeded` without eviction; an unknown, other-instance, earlier-generation or invalidated handle returns `handle_unavailable`. Formatting redacts tables and runtime state. No public method issues handles yet (DEV-592, DEV-561). |
+| `Close` | Invalidates both handle tables, closes the delivery store (dropping delivery records) and releases the runtime and trusted adapters, keeping only the clearing capability for recovery clearing. It deletes no replay or pending state. If reserved work does not finish within the deadline it returns `cleanup_incomplete` and stays blocked and retryable. Enforcing one owner per storage scope stays with DEV-577 and DEV-455; there is no ownership capability to release yet. No context cache exists yet. |
+| `ClearMeasurementData` | Blocks new work, invalidates handles and delivery references, then calls the unexported persistent-clear capability. That capability is nil until DEV-564 and DEV-577 provide it, so clearing returns `clearing_incomplete` and keeps activity blocked; it never reports success without deletion. With a capability, success ends uninitialized, or closed if already closed. Before initialization or after close it still returns `clearing_incomplete`. |
+| Errors | An unexported error type carries one fixed API-local code with no wrapped cause. Each exported method recovers internal panics to a fixed code and keeps the client blocked when a transition is interrupted. A nil `*Client` fails closed without panicking. |
+
+Reviewed implementation inputs selected by DEV-600:
+
+| Input | Value | Basis |
+|---|---|---|
+| Task handle table capacity | 256 | Equal to `admission.MaxDeliveryCapacity`, because each admission consumes one delivery record. The registered limits set no ceiling on locally admitted tasks. |
+| Run handle table capacity | 256 | The registered limits set no ceiling on outstanding runs; each task is still limited to 28 runs. |
+| Lifecycle deadline | 5 seconds by default, at most 30 seconds | Bounds the wait for reserved entry points and for the persistent-clear capability. It reports incomplete work on expiry and cannot enlarge public attempt or cleanup bounds. |
+
+The shell performs no network activity, and its production files import no network package. It establishes no admission, execution, result, bundle, proxy, policy-replacement, persistent-clearing, conformance or platform support.
 
 ## Trusted Initialization and Admission
 
@@ -139,3 +164,21 @@ The [duplicate-member adoption record](specification-issues.md#go-spec-issue-001
 | `git diff --check` | Passed. |
 
 The Apple check initially could not write the compiler's module cache inside the restricted environment; it passed when rerun with cache-write permission. Temporary native artifacts were removed by the existing smoke helper. Neither fixture was executed on a device. Trusted delivery/native storage adapters, selected extra facade capacities/deadlines, runtime behavior, conformance, and device/lifecycle validation remain implementation gates.
+
+## DEV-600 Validation Record
+
+**Validation date:** October 20, 2026
+**Scope:** Lifecycle shell on the DEV-600 task branch based on Go commit `ee135ae4d371db9b666bdaa6583e936f146e22d5`; synthetic tests only, not runtime conformance.
+
+| Check | Result and scope |
+|---|---|
+| `make check` | Passed with Go 1.26.0 on macOS ARM64, including race tests and pure-Go Android/iOS ARM64 compilation. |
+| Root lifecycle tests | Passed, also repeated under the race detector. They cover the state × method transition table, nil and zero-value clients, fail-closed initialization for each missing adapter and rejected configuration, concurrent and mixed lifecycle calls, waiting for and expiry of reserved entry points, double close and calls during a transition, handle capacity at limit −1, limit and limit +1 for both tables, stale handles across reinitialization and instances, handle opacity and redaction, panic recovery, and canary checks on error content. |
+| `TestPublicSurfaceMatchesDocumentedSignatures` | Passed; a temporary extra exported method was rejected. |
+| `TestRootPackageImportsNoNetworkPackages` | Passed. This is an import check; indirect activity through adapters remains a review rule. |
+| `python3 scripts/check-public-api.py android` and `apple` | Passed: the documented signature fixture binds for Android ARM64 (JDK 17.0.18, NDK 28.2.13676358) and iOS ARM64. |
+| `make mobile-smoke-android` and `make mobile-smoke-apple` | Passed: the production root package, including `Client`, binds with gomobile for both targets. |
+| `make traceability` | Passed against the unchanged manifests before the evidence rebaseline. |
+| `git diff --check` | Passed. |
+
+No adapter is wired in production, so no binding or device test exercised a successful initialization. Persistent clearing, admission and the other documented methods remain pending.

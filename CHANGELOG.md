@@ -28,6 +28,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- The root `Client` lifecycle shell (DEV-600), the public-API review point for `NewClient`, `Initialize`, `Close` and `ClearMeasurementData` with the documented signatures; no other identifier is exported, and `TestPublicSurfaceMatchesDocumentedSignatures` enforces this.
+  - Lifecycle states follow the documented table. Lifecycle calls do adapter work without holding the lock and refuse concurrent transitions with `transition_in_progress`. An unexported reservation counter lets future admission, run and bundle entry points serialize with transitions.
+  - `Initialize` binds trusted adapters through an unexported seam with no production caller, so it fails closed with `not_initialized`. It decodes only the closed configuration container through `internal/config`; an invalid local policy is left to fail admission as `task_policy_unavailable`.
+  - Bounded task and run handle tables, scoped per instance and generation, hold opaque 128-bit random handles distinct from `task_id`, `run_id` and `bundle_id`. They return `capacity_exceeded` and `handle_unavailable` and are redacted from formatted output.
+  - `Close` invalidates handles and delivery records and releases runtime state without deleting replay or pending state. `ClearMeasurementData` blocks work and invalidates handles and delivery references; until persistent clearing exists (DEV-564, DEV-577) it returns `clearing_incomplete` and keeps activity blocked.
+  - Errors carry one fixed API-local code with no wrapped cause, and every exported method recovers panics to a fixed code.
+
+  Reviewed implementation inputs: 256 task handles, 256 run handles and a lifecycle deadline of 5 seconds by default, at most 30 seconds. No admission, execution, bundle, proxy, policy-replacement, persistent-clearing, runtime or platform support is claimed.
+
 - Replay, redelivery, conflict, rollback and expiry handling with atomic replay persistence at admission (DEV-591). `Admitter.Admit` runs `Gate` and then steps 10 and 11 under the instance's admission serialization:
   - the same replay key and digest is an idempotent redelivery that writes nothing and keeps the original expiry;
   - a different digest is `task_id_conflict`;

@@ -61,7 +61,7 @@ Every class is returned as a `task.AdmissionError`, which carries only the code.
 | Registry | Exact `(test_id, test_version)` lookup returning codec, baseline risk, target rule and proxy compatibility. | `internal/registry`, DEV-584. |
 | Local policy snapshot | The active immutable `task.LocalPolicy` and its generation. | `internal/model/task` (existing). Activation and replacement by reinitialization: DEV-593. |
 
-The client lifecycle that serializes admission with other transitions and owns handle tables belongs to the Runtime and execution sub-epic (DEV-576). The `Client.AdmitTask` wiring (DEV-592) depends on it.
+The client lifecycle that serializes admission with other transitions and owns handle tables belongs to the Runtime and execution sub-epic (DEV-576). DEV-600 provides it as a lifecycle shell: the root `Client` binds these capabilities through an unexported adapter seam, builds the `Admitter` at initialization and owns the task and run handle tables (see [Implemented Subset](public-api.md#implemented-subset)). The `Client.AdmitTask` wiring (DEV-592) reserves the current generation and publishes a task handle only after `Admit` accepts.
 
 ## Delivery-Record Seam
 
