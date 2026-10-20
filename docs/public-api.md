@@ -178,7 +178,7 @@ The Apple check initially could not write the compiler's module cache inside the
 | `TestRootPackageImportsNoNetworkPackages` | Passed. This is an import check; indirect activity through adapters remains a review rule. |
 | `python3 scripts/check-public-api.py android` and `apple` | Passed: the documented signature fixture binds for Android ARM64 (JDK 17.0.18, NDK 28.2.13676358) and iOS ARM64. |
 | `make mobile-smoke-android` and `make mobile-smoke-apple` | Passed: the production root package, including `Client`, binds with gomobile for both targets. |
-| `make traceability` | Passed against the unchanged manifests before the evidence rebaseline. |
+| `make traceability` | Passed against the unchanged manifests before the evidence rebaseline, and again after rebaselining the cross-cutting manifest to Go `73faaf5`, where four `UT.root.*` cases make REQ-LINKAGE-0023 and REQ-LINKAGE-0024 `partial`. |
 | `git diff --check` | Passed. |
 
 No adapter is wired in production, so no binding or device test exercised a successful initialization. Persistent clearing, admission and the other documented methods remain pending.

@@ -35,7 +35,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - `Close` invalidates handles and delivery records and releases runtime state without deleting replay or pending state. `ClearMeasurementData` blocks work and invalidates handles and delivery references; until persistent clearing exists (DEV-564, DEV-577) it returns `clearing_incomplete` and keeps activity blocked.
   - Errors carry one fixed API-local code with no wrapped cause, and every exported method recovers panics to a fixed code.
 
-  Reviewed implementation inputs: 256 task handles, 256 run handles and a lifecycle deadline of 5 seconds by default, at most 30 seconds. No admission, execution, bundle, proxy, policy-replacement, persistent-clearing, runtime or platform support is claimed.
+  Reviewed implementation inputs: 256 task handles, 256 run handles and a lifecycle deadline of 5 seconds by default, at most 30 seconds. The cross-cutting traceability manifest is rebaselined to Go `73faaf5` with the DEV-591 mapping preserved as historical; four `UT.root.*` cases make REQ-LINKAGE-0023 and REQ-LINKAGE-0024 `partial`, and `CC-LINKAGE-CLEAR-DATA-CONTRACT` stays planned. No admission, execution, bundle, proxy, policy-replacement, persistent-clearing, runtime or platform support is claimed.
 
 - Replay, redelivery, conflict, rollback and expiry handling with atomic replay persistence at admission (DEV-591). `Admitter.Admit` runs `Gate` and then steps 10 and 11 under the instance's admission serialization:
   - the same replay key and digest is an idempotent redelivery that writes nothing and keeps the original expiry;
