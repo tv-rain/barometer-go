@@ -24,12 +24,11 @@ var ErrAdmitterConfig = errors.New("admission: invalid admitter configuration")
 
 // Admitter runs the ordered admission steps of REQ-TRUST-0017 for one client
 // instance. It implements steps 1 to 6 (DEV-586), issuer and policy resolution
-// in step 7, the input, options and path-authority parts of step 8 and the
-// issuer and local risk bounds of step 9 (DEV-587), and target registration
-// matching in step 8 (DEV-588). Proxy compatibility, composite steps, locally
-// determined risk and consent, replay (step 10) and acceptance (step 11) are
-// added by later tasks; nothing here persists state,
-// publishes a handle or performs DNS, Network Context, proxy or measurement
+// in step 7 and the input, options and path-authority parts of step 8
+// (DEV-587), target registration matching in step 8 (DEV-588), and effective
+// risk with the consent requirement in step 9 (DEV-589). Proxy compatibility,
+// composite steps, replay (step 10) and acceptance (step 11) are added by
+// later tasks; nothing here persists state, publishes a handle or performs DNS, Network Context, proxy or measurement
 // activity. It is safe for concurrent use.
 type Admitter struct {
 	deliveries *DeliveryStore
@@ -56,7 +55,8 @@ func NewAdmitter(deliveries *DeliveryStore, clock platform.Clock, reg *registry.
 }
 
 // Gated is the unpublished outcome of the implemented gates: owned values for
-// the later steps. It is not an admitted task, holds no task bytes and has no
+// the later steps, including the effective risk and consent requirement that
+// acceptance records on the admitted task. It is not an admitted task, holds no task bytes and has no
 // serialized form; discarding it leaves no state behind.
 type Gated struct {
 	record     task.DeliveryRecord
@@ -172,9 +172,9 @@ func (a *Admitter) Gate(ctx context.Context, sourceRef string, exactTask []byte)
 	if class = authority.matchTargets(a.policy, entry.Targets, entry.Test, candidate.Parameters, now); class != 0 {
 		return Gated{}, admissionError(class)
 	}
-	// Step 9, issuer and local bounds only: the registered baseline and the
-	// task-declared risk.
-	if class = authority.authorizeRisk(entry.BaselineRisk, candidate.Safety.RiskLevel); class != 0 {
+	// Step 9: effective risk from the registered baseline, the declared level
+	// and the matched registrations, against the intersected risk bounds.
+	if class = authority.evaluateRisk(a.policy, entry.BaselineRisk, candidate.Safety.RiskLevel); class != 0 {
 		return Gated{}, admissionError(class)
 	}
 	return Gated{record: record, acceptedAt: now, entry: entry, candidate: candidate, authority: authority}, nil

@@ -23,7 +23,11 @@ type Authority struct {
 	limits                                    task.PolicyLimits
 	maxRisk                                   task.Risk
 	allowMedium, allowUnknown, allowComposite bool
-	requireConsent                            bool
+	// Consent required by the issuer, the deployment or the task. Execution
+	// checks consent validity at attempt start; admission never does.
+	requireConsent bool
+	// Effective risk, set by step 9.
+	effectiveRisk task.Risk
 }
 
 func (Authority) String() string   { return "admission.Authority" }
@@ -31,11 +35,16 @@ func (Authority) GoString() string { return "admission.Authority" }
 
 // resolve runs step 7 against the active policy snapshot: policy presence,
 // source generation, issuer, exact test/version and composite enablement, then
-// the task's numeric values and labels against the intersected ceilings.
+// the task's numeric values and labels against the intersected ceilings. The
+// consent requirement is the union of issuer, deployment and task: a task
+// value of false adds no requirement and clears none.
 // requirement-ref: REQ-TRUST-0010
 // requirement-ref: REQ-TRUST-0011
 // requirement-ref: REQ-TRUST-0012
 // requirement-ref: REQ-LIMIT-0030
+// requirement-ref: REQ-SAFETY-0021
+// requirement-ref: REQ-SAFETY-0022
+// requirement-ref: REQ-SAFETY-0028
 func resolve(policy task.LocalPolicy, source task.SourceContext, test task.TestVersion, c task.Candidate, base time.Time) (Authority, task.AdmissionCode) {
 	if !policy.Valid() {
 		return Authority{}, task.PolicyUnavailable
@@ -95,21 +104,29 @@ func (a *Authority) authorizePath(path string) task.AdmissionCode {
 	return 0
 }
 
-// authorizeRisk applies the intersected risk bounds to the risk already known
-// at admission: the most restrictive of the registered baseline and the
-// task-declared level. Unknown is unordered and needs both explicit opt-ins;
-// medium and higher need both medium-risk enablements. Locally determined risk
-// and consent evaluation remain DEV-589.
+// evaluateRisk is step 9. Effective risk is the most restrictive of the
+// registered baseline, the task-declared level and the locally determined
+// risk: the reviewed baseline of every target registration the task matched
+// at step 8. No input lowers it, and unknown from any input makes it unknown.
+// Unknown needs the reviewed exception on both sides; medium and higher need
+// medium-risk enablement on both sides and must not exceed the lower maximum.
+// A matched registration that can no longer be read, or a level outside the
+// reviewed set, counts as unknown, so a missing input never lowers risk. A
+// rejection is an admission error, never a measurement result.
 // requirement-ref: REQ-TRUST-0011
-func (a Authority) authorizeRisk(baseline task.Risk, declared string) task.AdmissionCode {
-	risk := baseline
-	switch declared {
-	case "medium":
-		risk = max(risk, task.MediumRisk)
-	case "high":
-		risk = max(risk, task.HighRisk)
-	case "unknown":
-		risk = task.UnknownRisk
+// requirement-ref: REQ-SAFETY-0010
+// requirement-ref: REQ-SAFETY-0023
+// requirement-ref: REQ-SAFETY-0024
+// requirement-ref: REQ-SAFETY-0025
+// requirement-ref: REQ-SAFETY-0029
+func (a *Authority) evaluateRisk(policy task.LocalPolicy, baseline task.Risk, declared string) task.AdmissionCode {
+	risk := restrictive(baseline, declaredRisk(declared))
+	for _, id := range a.registrationIDs {
+		r, ok := policy.Target(id)
+		if !ok {
+			r.BaselineRisk = task.UnknownRisk
+		}
+		risk = restrictive(risk, r.BaselineRisk)
 	}
 	switch {
 	case risk == task.UnknownRisk:
@@ -119,7 +136,30 @@ func (a Authority) authorizeRisk(baseline task.Risk, declared string) task.Admis
 	case risk > a.maxRisk, risk >= task.MediumRisk && !a.allowMedium:
 		return task.IssuerNotAuthorized
 	}
+	a.effectiveRisk = risk
 	return 0
+}
+
+// declaredRisk maps the validated task level; any other value is unknown.
+func declaredRisk(level string) task.Risk {
+	switch level {
+	case "low":
+		return task.LowRisk
+	case "medium":
+		return task.MediumRisk
+	case "high":
+		return task.HighRisk
+	}
+	return task.UnknownRisk
+}
+
+// restrictive returns the more restrictive of two levels. Unknown is
+// unordered and dominates; a value outside the reviewed set is unknown.
+func restrictive(a, b task.Risk) task.Risk {
+	if a < task.LowRisk || a >= task.UnknownRisk || b < task.LowRisk || b >= task.UnknownRisk {
+		return task.UnknownRisk
+	}
+	return max(a, b)
 }
 
 // namespaced reports whether a label key lies in one of the reviewed literal

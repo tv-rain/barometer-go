@@ -18,7 +18,7 @@ TOOLING_REVISION = "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35"
 INVENTORY_REVISION = "c06ce6b7b73b8520f35ce10982315fcb4d05615b"
 BASELINES = {
     "cross-cutting.json": ("d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-                           "cb672923cdd7668324f6ac4802d6c60edca5572c"),
+                           "41c6f06b0ef46b6324f9f795299ac70af05c6086"),
     "measurements.json": ("59d49364d85e48cc8e69c762d130a7a86dc1fe65",
                           "c5f4e92e06936cb677c7a03e9769ff75b1f51874"),
 }
@@ -38,6 +38,8 @@ DEV597_REVISION = "112812735d3b6c20a5afd2276e5320ef31432114"
 DEV586_REVISION = "e039022bd8318831bb628152d31e6a5b02a1b1f2"
 # Revision whose cross-cutting manifest DEV-588 preserved before rebaselining to Go cb67292.
 DEV587_REVISION = "922d2457453a55e6b45cc0627dd8939047e97d69"
+# Revision whose cross-cutting manifest DEV-589 preserved before rebaselining to Go 41c6f06.
+DEV588_REVISION = "2c933f6db830533fa4fba1aff0463cbc6041c765"
 # Superseded manifests: byte-identical to the original at their recorded source revision and
 # checked at their original baselines.
 HISTORICAL = {
@@ -74,6 +76,9 @@ HISTORICAL = {
     "historical/cross-cutting-d93aff9-aab88f5.json": ("cross-cutting.json", DEV587_REVISION,
                                                       "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
                                                       "aab88f59cbcf62208c9ebfa025fa795354dd072d"),
+    "historical/cross-cutting-d93aff9-cb67292.json": ("cross-cutting.json", DEV588_REVISION,
+                                                      "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
+                                                      "cb672923cdd7668324f6ac4802d6c60edca5572c"),
 }
 # Same standalone comment form as the public reference checker; history citations are excluded.
 REFERENCE = re.compile(r"// requirement-ref: (\S+)")
