@@ -265,7 +265,7 @@ Unavailable or invalid replay state fails closed for remote tasks and, under [RE
 - concurrent identical deliveries under the race detector;
 - a leakage canary over the stored bytes.
 
-Its post-clearing rows wait for clearing (DEV-564). `internal/persistence` tests cover record construction, retention boundaries and the 691,200-second cap.
+Its post-clearing rows are the planned `CC-TRUST-REPLAY-AFTER-CLEARING` case, which waits for clearing (DEV-564). `internal/persistence` tests cover record construction, retention boundaries and the 691,200-second cap.
 
 ### Rollback Detection Across Restart
 
