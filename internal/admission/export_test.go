@@ -20,3 +20,4 @@ func GatedRegistrations(g Gated) []string   { return g.authority.registrationIDs
 func GatedRequiresConsent(g Gated) bool     { return g.authority.requireConsent }
 func GatedPolicyGeneration(g Gated) uint64  { return g.authority.generation }
 func GatedAuthority(g Gated) Authority      { return g.authority }
+func GatedEffectiveRisk(g Gated) task.Risk  { return g.authority.effectiveRisk }
