@@ -2,12 +2,12 @@
   "format_version": 1,
   "specification": {
     "repository": "https://github.com/tv-rain/barometer-spec",
-    "revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
+    "revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
     "version": "0.1.0"
   },
   "implementation": {
     "repository": "https://github.com/tv-rain/barometer-go",
-    "revision": "09e21415673d9b06ef720a659bc1760f1c3a6340"
+    "revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216"
   },
   "coverage": {
     "mode": "partial",
@@ -9715,6 +9715,11 @@
           "path": "internal/admission/admit.go",
           "selector": "symbol:Admitter",
           "state": "existing"
+        },
+        {
+          "path": "internal/admission/signed.go",
+          "selector": "symbol:Admitter.verifyPackage",
+          "state": "existing"
         }
       ],
       "case_ids": [
@@ -9724,7 +9729,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Synthetic core contract cases. DEV-586: internal/admission Gate runs REQ-TRUST-0017 steps 1 to 6 and the input/options part of step 8 on synthetic delivery records; linked case UT.internal.admission.TestGateStepClasses passed at Go 9283870, covering only the aspects recorded in traceability/evidence/go-unit-9283870.md. Remaining: production remote delivery (DEV-595) and the planned family cases; no implemented, runtime, platform or field claim."
+      "notes": "Synthetic core contract cases. DEV-586: internal/admission Gate runs REQ-TRUST-0017 steps 1 to 6 and the input/options part of step 8 on synthetic delivery records; linked case UT.internal.admission.TestGateStepClasses passed at Go 9283870, covering only the aspects recorded in traceability/evidence/go-unit-9283870.md. Remaining: production remote delivery (DEV-595) and the planned family cases; no implemented, runtime, platform or field claim. DEV-612: for remote origin the 300-second issued_at bound is check 8 of signed-package verification (Admitter.verifyPackage) at Go e663afe."
     },
     {
       "id": "REQ-LIMIT-0011",
@@ -10166,6 +10171,31 @@
       "review_evidence_ids": [],
       "support": [],
       "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. DEV-594: CC-LIMIT-LIMIT-HANDLING stays planned because its runtime rows need fake clocks, scripted transports and a resource tracker in execution (DEV-576), and its NET-05 row a NET-05 codec."
+    },
+    {
+      "id": "REQ-LIMIT-0032",
+      "implementation_status": "partial",
+      "implementation_locations": [
+        {
+          "path": "internal/admission/signed.go",
+          "selector": "symbol:Admitter.verifyPackage",
+          "state": "existing"
+        },
+        {
+          "path": "internal/model/task/keys.go",
+          "selector": "symbol:TrustedKey",
+          "state": "existing"
+        }
+      ],
+      "case_ids": [
+        "CC-TRUST-SIGNED-REMOTE-PACKAGES",
+        "UT.internal.model.task.TestPolicyCarriesBoundedTrustedKeys",
+        "UT.internal.model.task.TestPolicyRejectsMalformedOrAmbiguousKeys"
+      ],
+      "issue_ids": [],
+      "review_evidence_ids": [],
+      "support": [],
+      "notes": "Partial (DEV-612): new at public e975027 for library-verified signed remote task packages (decision 0011). Existing locations implement part of this obligation at Go e663afe; linked cases passed, covering only the aspects recorded in traceability/evidence/go-unit-e663afe.md. Remaining: safety review of the 365-day maximum key validity and four keys per issuer, and the reviews that gate remote delivery (DEV-595). No implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-LINKAGE-0001",
@@ -11161,23 +11191,29 @@
       "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
     },
     {
-      "id": "REQ-TRUST-0002",
+      "id": "REQ-TRUST-0040",
       "implementation_status": "partial",
       "implementation_locations": [
         {
           "path": "internal/admission/admit.go",
           "selector": "symbol:Admitter",
           "state": "existing"
+        },
+        {
+          "path": "internal/admission/admit.go",
+          "selector": "symbol:Admitter.Gate",
+          "state": "existing"
         }
       ],
       "case_ids": [
         "CC-TRUST-OVERVIEW",
-        "UT.internal.admission.TestGateNoTaskControlledAuthorityOrInterpolation"
+        "UT.internal.admission.TestGateNoTaskControlledAuthorityOrInterpolation",
+        "UT.internal.admission.TestGateAcceptsReviewedOrigins"
       ],
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Synthetic core contract cases. DEV-586: internal/admission Gate runs REQ-TRUST-0017 steps 1 to 6 and the input/options part of step 8 on synthetic delivery records; linked case UT.internal.admission.TestGateNoTaskControlledAuthorityOrInterpolation passed at Go 9283870, covering only the aspects recorded in traceability/evidence/go-unit-9283870.md. Remaining: issuer, policy and target authority intersection (DEV-587, DEV-588) and the planned family cases; no implemented, runtime, platform or field claim. DEV-594: CC-TRUST-OVERVIEW stays planned because its rows use NET-01 tasks and no production NET-01 codec is registered (DEV-454)."
+      "notes": "Partial (DEV-612): successor of retired REQ-TRUST-0002 at public e975027 (library-verified signed remote task packages, decision 0011); carries the predecessor mapping. Existing locations implement part of this obligation at Go e663afe; linked cases passed, covering only the aspects recorded in traceability/evidence/go-unit-e663afe.md. Remaining: CC-TRUST-OVERVIEW stays planned because its rows use NET-01 tasks and no production NET-01 codec is registered (DEV-454). No implemented, runtime, platform or field claim. Predecessor notes are preserved in traceability/historical/cross-cutting-d93aff9-09e2141.json."
     },
     {
       "id": "REQ-TRUST-0003",
@@ -11198,12 +11234,17 @@
       "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. DEV-594: CC-TRUST-OVERVIEW stays planned because its rows use NET-01 tasks and no production NET-01 codec is registered (DEV-454)."
     },
     {
-      "id": "REQ-TRUST-0004",
+      "id": "REQ-TRUST-0041",
       "implementation_status": "partial",
       "implementation_locations": [
         {
           "path": "internal/admission/admit.go",
           "selector": "symbol:Admitter",
+          "state": "existing"
+        },
+        {
+          "path": "internal/admission/delivery.go",
+          "selector": "symbol:DeliveryStore.InstallRemote",
           "state": "existing"
         }
       ],
@@ -11214,10 +11255,10 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Synthetic core contract cases. DEV-586: internal/admission Gate runs REQ-TRUST-0017 steps 1 to 6 and the input/options part of step 8 on synthetic delivery records; linked case UT.internal.admission.TestGateAcceptsReviewedOrigins passed at Go 9283870, covering only the aspects recorded in traceability/evidence/go-unit-9283870.md. Remaining: release review of embedded tasks and the planned family cases; no implemented, runtime, platform or field claim. DEV-594: CC-TRUST-ACCEPTED-TASK-ORIGINS passed at Go 09e2141, covering only the aspects recorded in traceability/evidence/go-unit-09e2141.md. Remaining: release review of embedded tasks."
+      "notes": "Partial (DEV-612): successor of retired REQ-TRUST-0004 at public e975027 (library-verified signed remote task packages, decision 0011); carries the predecessor mapping. Existing locations implement part of this obligation at Go e663afe; linked cases passed, covering only the aspects recorded in traceability/evidence/go-unit-e663afe.md. Remaining: native and host delivery of embedded tasks and signed packages (DEV-455) and the reviews that gate remote delivery (DEV-595). No implemented, runtime, platform or field claim. Predecessor notes are preserved in traceability/historical/cross-cutting-d93aff9-09e2141.json."
     },
     {
-      "id": "REQ-TRUST-0005",
+      "id": "REQ-TRUST-0042",
       "implementation_status": "partial",
       "implementation_locations": [
         {
@@ -11229,18 +11270,24 @@
           "path": "internal/model/task/trust.go",
           "selector": "symbol:NewSourceContext",
           "state": "existing"
+        },
+        {
+          "path": "internal/admission/admit.go",
+          "selector": "symbol:Admitter.Gate",
+          "state": "existing"
         }
       ],
       "case_ids": [
-        "CC-TRUST-ACCEPTED-TASK-ORIGINS"
+        "CC-TRUST-ACCEPTED-TASK-ORIGINS",
+        "UT.root.TestAdmitTaskHostileSources"
       ],
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Synthetic core contract cases. DEV-594: DeliveryStore.InstallRemote installs a record only for a source the remote verifier authenticated, and NewSourceContext refuses a remote source without authentication; linked case CC-TRUST-ACCEPTED-TASK-ORIGINS passed at Go 09e2141, covering only the aspects recorded in traceability/evidence/go-unit-09e2141.md. Remaining: a reviewed production remote mechanism and revocation (DEV-595); the synthetic HMAC envelope is a test format. No implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-612): successor of retired REQ-TRUST-0005 at public e975027 (library-verified signed remote task packages, decision 0011); carries the predecessor mapping. Existing locations implement part of this obligation at Go e663afe; linked cases passed, covering only the aspects recorded in traceability/evidence/go-unit-e663afe.md. Remaining: binding and host adoption of the package-only remote path (DEV-455), host integration review of package retention and the reviews that gate remote delivery (DEV-595). No implemented, runtime, platform or field claim. Predecessor notes are preserved in traceability/historical/cross-cutting-d93aff9-09e2141.json."
     },
     {
-      "id": "REQ-TRUST-0001",
+      "id": "REQ-TRUST-0043",
       "implementation_status": "partial",
       "implementation_locations": [
         {
@@ -11252,55 +11299,55 @@
           "path": "internal/model/task/trust.go",
           "selector": "symbol:NewSourceContext",
           "state": "existing"
+        },
+        {
+          "path": "internal/admission/signed.go",
+          "selector": "symbol:Admitter.verifyPackage",
+          "state": "existing"
         }
       ],
       "case_ids": [
         "CC-TRUST-ACCEPTED-TASK-ORIGINS",
         "UT.internal.model.task.TestMalformedSourceRejectedAtomically",
-        "UT.internal.admission.TestGateAcceptsReviewedOrigins",
         "UT.internal.admission.TestGateStepClasses",
-        "UT.root.TestAdmitTaskHostileSources"
+        "UT.root.TestAdmitTaskHostileSources",
+        "CC-TRUST-SIGNED-REMOTE-PACKAGES"
       ],
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 9283870 (re-executed by DEV-597); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-9283870.md. Planned family cases are not executed; no implemented, runtime, platform or field claim. DEV-586: internal/admission Gate runs REQ-TRUST-0017 steps 1 to 6 and the input/options part of step 8 on synthetic delivery records; linked case UT.internal.admission.TestGateAcceptsReviewedOrigins, UT.internal.admission.TestGateStepClasses passed at Go 9283870, covering only the aspects recorded in traceability/evidence/go-unit-9283870.md. Remaining: production remote authentication and revocation (DEV-595) and the planned family cases; no implemented, runtime, platform or field claim. DEV-594: CC-TRUST-ACCEPTED-TASK-ORIGINS and UT.root.TestAdmitTaskHostileSources passed at Go 09e2141, covering only the aspects recorded in traceability/evidence/go-unit-09e2141.md. Remaining: production remote authentication and revocation (DEV-595); no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-612): successor of retired REQ-TRUST-0001 at public e975027 (library-verified signed remote task packages, decision 0011); carries the predecessor mapping. Existing locations implement part of this obligation at Go e663afe; linked cases passed, covering only the aspects recorded in traceability/evidence/go-unit-e663afe.md. Remaining: the reviews that gate remote delivery (DEV-595). No implemented, runtime, platform or field claim. Predecessor notes are preserved in traceability/historical/cross-cutting-d93aff9-09e2141.json."
     },
     {
-      "id": "REQ-TRUST-0006",
-      "implementation_status": "planned",
+      "id": "REQ-TRUST-0044",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
-          "path": "internal/admission/admit.go",
-          "selector": "file",
-          "state": "planned"
+          "path": "internal/model/task/trust.go",
+          "selector": "symbol:NewSourceContext",
+          "state": "existing"
+        },
+        {
+          "path": "internal/model/task/trust.go",
+          "selector": "symbol:SourceContext.WithVerifiedPackage",
+          "state": "existing"
+        },
+        {
+          "path": "internal/admission/delivery.go",
+          "selector": "symbol:DeliveryStore.InstallRemote",
+          "state": "existing"
         }
       ],
       "case_ids": [
-        "CC-TRUST-TRUSTED-SOURCE-CONTEXT"
+        "CC-TRUST-TRUSTED-SOURCE-CONTEXT",
+        "CC-TRUST-ACCEPTED-TASK-ORIGINS",
+        "UT.internal.admission.TestGateAcceptsReviewedOrigins",
+        "UT.internal.model.task.TestMalformedSourceRejectedAtomically"
       ],
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. DEV-594: CC-TRUST-TRUSTED-SOURCE-CONTEXT stays planned because it runs an admitted task against a recording transport and result sink, and runs, transports and results do not exist (DEV-576, DEV-454)."
-    },
-    {
-      "id": "REQ-TRUST-0007",
-      "implementation_status": "planned",
-      "implementation_locations": [
-        {
-          "path": "internal/admission/admit.go",
-          "selector": "file",
-          "state": "planned"
-        }
-      ],
-      "case_ids": [
-        "CC-TRUST-TRUSTED-SOURCE-CONTEXT"
-      ],
-      "issue_ids": [],
-      "review_evidence_ids": [],
-      "support": [],
-      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. DEV-594: CC-TRUST-TRUSTED-SOURCE-CONTEXT stays planned because it runs an admitted task against a recording transport and result sink, and runs, transports and results do not exist (DEV-576, DEV-454)."
+      "notes": "Partial (DEV-612): successor of retired REQ-TRUST-0006 and REQ-TRUST-0007 at public e975027 (library-verified signed remote task packages, decision 0011); carries the predecessor mapping. Existing locations implement part of this obligation at Go e663afe; linked cases passed, covering only the aspects recorded in traceability/evidence/go-unit-e663afe.md. Remaining: CC-TRUST-TRUSTED-SOURCE-CONTEXT stays planned because it runs an admitted task against a recording transport and result sink, which do not exist (DEV-576, DEV-454). No implemented, runtime, platform or field claim. Predecessor notes are preserved in traceability/historical/cross-cutting-d93aff9-09e2141.json."
     },
     {
       "id": "REQ-TRUST-0008",
@@ -11321,7 +11368,7 @@
       "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. DEV-594: CC-TRUST-TRUSTED-SOURCE-CONTEXT stays planned because it runs an admitted task against a recording transport and result sink, and runs, transports and results do not exist (DEV-576, DEV-454)."
     },
     {
-      "id": "REQ-TRUST-0009",
+      "id": "REQ-TRUST-0045",
       "implementation_status": "planned",
       "implementation_locations": [
         {
@@ -11336,7 +11383,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. DEV-594: CC-TRUST-TRUSTED-SOURCE-CONTEXT stays planned because it runs an admitted task against a recording transport and result sink, and runs, transports and results do not exist (DEV-576, DEV-454)."
+      "notes": "Planned (DEV-612): successor of retired REQ-TRUST-0009 at public e975027; carries the predecessor mapping. The Go source model has no authentication flag, and trusted keys enter only inside the trusted local policy, but no binding exists (DEV-455) and CC-TRUST-TRUSTED-SOURCE-CONTEXT stays planned. No implemented, runtime, platform or field claim. Predecessor notes are preserved in traceability/historical/cross-cutting-d93aff9-09e2141.json."
     },
     {
       "id": "REQ-TRUST-0010",
@@ -11531,7 +11578,7 @@
       "notes": "Ownership and cases are planned. Synthetic core contract cases. DEV-588 documents in docs/admission.md (Target Registration) that admission performs no DNS, redirect or network activity, so checking every resolved address and redirect target against the matched registrations and local address policy immediately before contact, including on the proxy path, is an execution obligation of Measurement implementation (DEV-454) and Network paths and context (DEV-578); no implementation exists yet. DEV-594: CC-TRUST-TARGET-REGISTRATION stays planned because its rows use TCP-01, TLS-01, HTTP-01 and DNS-01 tuples (DEV-454) and execution-time resolver and redirect checks (DEV-576)."
     },
     {
-      "id": "REQ-TRUST-0017",
+      "id": "REQ-TRUST-0046",
       "implementation_status": "partial",
       "implementation_locations": [
         {
@@ -11548,20 +11595,26 @@
           "path": "client.go",
           "selector": "symbol:Client.admitTask",
           "state": "existing"
+        },
+        {
+          "path": "internal/admission/admit.go",
+          "selector": "symbol:Admitter.Gate",
+          "state": "existing"
         }
       ],
       "case_ids": [
         "CC-TRUST-ADMISSION-PROCEDURE",
         "UT.internal.admission.TestGateStepClasses",
         "UT.root.TestAdmitTaskAcceptsReviewedOrigins",
-        "UT.root.TestAdmitTaskHostileSources"
+        "UT.root.TestAdmitTaskHostileSources",
+        "CC-TRUST-SIGNED-REMOTE-PACKAGES"
       ],
       "issue_ids": [
         "GO-SPEC-ISSUE-008"
       ],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Synthetic core contract cases. DEV-586: internal/admission Gate runs REQ-TRUST-0017 steps 1 to 6 and the input/options part of step 8 on synthetic delivery records; linked case UT.internal.admission.TestGateStepClasses passed at Go 9283870, covering only the aspects recorded in traceability/evidence/go-unit-9283870.md. DEV-591: Admit adds steps 10 and 11, exercised by the replay family case. Remaining: the proxy part of step 8 and the planned family cases; no implemented, runtime, platform or field claim. DEV-592: the root Client.admitTask runs Admit through the public facade and publishes a task handle only after acceptance; linked case UT.root.TestAdmitTaskAcceptsReviewedOrigins passed at Go 7b098a6, covering only the aspects recorded in traceability/evidence/go-unit-7b098a6.md. DEV-594: UT.root.TestAdmitTaskHostileSources passed at Go 09e2141, covering step-1 rejections of hostile sources through Client.AdmitTask. DEV-594: CC-TRUST-ADMISSION-PROCEDURE stays planned because it needs transport, DNS and Network Context fakes, the proxy-compatibility part of step 8 and a build variant that provides egress acquisition (DEV-578)."
+      "notes": "Partial (DEV-612): successor of retired REQ-TRUST-0017 at public e975027 (library-verified signed remote task packages, decision 0011); carries the predecessor mapping. Existing locations implement part of this obligation at Go e663afe; linked cases passed, covering only the aspects recorded in traceability/evidence/go-unit-e663afe.md. Remaining: the proxy-compatibility part of step 8 and CC-TRUST-ADMISSION-PROCEDURE, which needs transport, DNS and Network Context fakes and a build that provides egress acquisition (DEV-578). No implemented, runtime, platform or field claim. Predecessor notes are preserved in traceability/historical/cross-cutting-d93aff9-09e2141.json."
     },
     {
       "id": "REQ-TRUST-0018",
@@ -11838,12 +11891,13 @@
       ],
       "case_ids": [
         "CC-TRUST-LOCAL-POLICY-LIFECYCLE",
-        "CC-TRUST-LOCAL-POLICY-LIFECYCLE-RUNTIME"
+        "CC-TRUST-LOCAL-POLICY-LIFECYCLE-RUNTIME",
+        "CC-TRUST-KEY-ROTATION"
       ],
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Synthetic core contract cases. DEV-593: the root Client keeps the adapter-installed policy immutable per generation and replaces it only through the unexported replacePolicy seam by quiescing and reinitializing with a strictly higher generation; linked case CC-TRUST-LOCAL-POLICY-LIFECYCLE passed at Go 954b7d7, covering only the aspects recorded in traceability/evidence/go-unit-954b7d7.md. CC-TRUST-LOCAL-POLICY-LIFECYCLE-RUNTIME holds the rows that need components that do not exist yet. Remaining: host authentication and integrity verification of updates (DEV-455), cancellation of runs (DEV-561), Network Context cache invalidation (DEV-578) and review evidence; no implemented, runtime, platform or field claim. DEV-594: CC-TRUST-LOCAL-POLICY-LIFECYCLE-RUNTIME stays planned because it needs the host policy adapter (DEV-455), run reservation (DEV-561) and Network Context caching (DEV-578)."
+      "notes": "Synthetic core contract cases. DEV-593: the root Client keeps the adapter-installed policy immutable per generation and replaces it only through the unexported replacePolicy seam by quiescing and reinitializing with a strictly higher generation; linked case CC-TRUST-LOCAL-POLICY-LIFECYCLE passed at Go 954b7d7, covering only the aspects recorded in traceability/evidence/go-unit-954b7d7.md. CC-TRUST-LOCAL-POLICY-LIFECYCLE-RUNTIME holds the rows that need components that do not exist yet. Remaining: host authentication and integrity verification of updates (DEV-455), cancellation of runs (DEV-561), Network Context cache invalidation (DEV-578) and review evidence; no implemented, runtime, platform or field claim. DEV-594: CC-TRUST-LOCAL-POLICY-LIFECYCLE-RUNTIME stays planned because it needs the host policy adapter (DEV-455), run reservation (DEV-561) and Network Context caching (DEV-578). DEV-612: CC-TRUST-KEY-ROTATION passed at Go e663afe, covering key and issuer removal by replacement only as recorded in traceability/evidence/go-unit-e663afe.md."
     },
     {
       "id": "REQ-TRUST-0031",
@@ -11952,12 +12006,13 @@
         "CC-TRUST-ADMISSION-ERRORS",
         "UT.internal.model.task.TestAdmissionErrorVocabulary",
         "UT.internal.admission.TestGateErrorsCarryNoData",
-        "UT.root.TestAdmitTaskErrorsCarryNoInput"
+        "UT.root.TestAdmitTaskErrorsCarryNoInput",
+        "CC-TRUST-SIGNED-PACKAGE-DISCLOSURE"
       ],
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 9283870 (re-executed by DEV-597); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-9283870.md. Planned family cases are not executed; no implemented, runtime, platform or field claim. DEV-586: internal/admission Gate runs REQ-TRUST-0017 steps 1 to 6 and the input/options part of step 8 on synthetic delivery records; linked case UT.internal.admission.TestGateErrorsCarryNoData passed at Go 9283870, covering only the aspects recorded in traceability/evidence/go-unit-9283870.md. Remaining: errors of the later steps and stores and the planned family cases; no implemented, runtime, platform or field claim. DEV-592: Client.AdmitTask errors carry only one fixed admission or API-local code, with no task, reference or target content; linked case UT.root.TestAdmitTaskErrorsCarryNoInput passed at Go 7b098a6, covering only the aspects recorded in traceability/evidence/go-unit-7b098a6.md. DEV-594: errors through Client.AdmitTask are exactly one fixed, unwrapped code in UT.root.TestAdmitTaskStrictJSON and UT.root.TestAdmitTaskHostileSources. DEV-594: CC-TRUST-ADMISSION-ERRORS stays planned because it needs a build that provides egress acquisition (DEV-578), result-sink and bundle fakes and captured log output."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 9283870 (re-executed by DEV-597); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-9283870.md. Planned family cases are not executed; no implemented, runtime, platform or field claim. DEV-586: internal/admission Gate runs REQ-TRUST-0017 steps 1 to 6 and the input/options part of step 8 on synthetic delivery records; linked case UT.internal.admission.TestGateErrorsCarryNoData passed at Go 9283870, covering only the aspects recorded in traceability/evidence/go-unit-9283870.md. Remaining: errors of the later steps and stores and the planned family cases; no implemented, runtime, platform or field claim. DEV-592: Client.AdmitTask errors carry only one fixed admission or API-local code, with no task, reference or target content; linked case UT.root.TestAdmitTaskErrorsCarryNoInput passed at Go 7b098a6, covering only the aspects recorded in traceability/evidence/go-unit-7b098a6.md. DEV-594: errors through Client.AdmitTask are exactly one fixed, unwrapped code in UT.root.TestAdmitTaskStrictJSON and UT.root.TestAdmitTaskHostileSources. DEV-594: CC-TRUST-ADMISSION-ERRORS stays planned because it needs a build that provides egress acquisition (DEV-578), result-sink and bundle fakes and captured log output. DEV-612: CC-TRUST-SIGNED-PACKAGE-DISCLOSURE passed at Go e663afe, covering signed-package verification errors only as recorded in traceability/evidence/go-unit-e663afe.md."
     },
     {
       "id": "REQ-TRUST-0036",
@@ -12002,7 +12057,7 @@
       "notes": "Added by DEV-597 at public d93aff9. Partial: existing locations implement part of this obligation at Go 9283870; linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-9283870.md. task.AdmissionCode represents task_unsupported as a fixed, payload-free code. DEV-586: internal/admission Gate runs REQ-TRUST-0017 steps 1 to 6 and the input/options part of step 8 on synthetic delivery records; linked case UT.internal.admission.TestGateStepClasses passed at Go 9283870, covering only the aspects recorded in traceability/evidence/go-unit-9283870.md. DEV-590: Gate rejects a valid task that requires egress Network Context at step 6 and a registered, enabled NET-05 composite at step 8 as task_unsupported; linked case UT.internal.admission.TestGateRejectsEgressContextRequirements, UT.internal.admission.TestGateEgressContextPrecedence, UT.internal.admission.TestGateRejectsCompositeProfiles passed at Go 9283870, covering only the aspects recorded in traceability/evidence/go-unit-9283870.md. Remaining: removal of each check when egress acquisition (DEV-578) and composite-step matching (DEV-454) exist, and the planned family cases; no implemented, runtime, platform or field claim. DEV-594: CC-TRUST-ADMISSION-ERRORS stays planned because it needs a build that provides egress acquisition (DEV-578), result-sink and bundle fakes and captured log output."
     },
     {
-      "id": "REQ-TRUST-0037",
+      "id": "REQ-TRUST-0047",
       "implementation_status": "partial",
       "implementation_locations": [
         {
@@ -12023,14 +12078,174 @@
         "UT.internal.admission.TestGateRejectsEgressContextRequirements",
         "UT.internal.admission.TestGateEgressContextPrecedence",
         "UT.internal.admission.TestGateRejectsCompositeProfiles",
-        "UT.root.TestAdmitTaskRejectionsAreAtomic"
+        "UT.root.TestAdmitTaskRejectionsAreAtomic",
+        "CC-TRUST-SIGNED-REMOTE-PACKAGES"
       ],
       "issue_ids": [
         "GO-SPEC-ISSUE-008"
       ],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Added by DEV-597 at public d93aff9. Synthetic core contract cases. DEV-586: internal/admission Gate runs REQ-TRUST-0017 steps 1 to 6 and the input/options part of step 8 on synthetic delivery records; linked case UT.internal.admission.TestGateStepClasses, UT.internal.admission.TestGatePrecedence passed at Go 9283870, covering only the aspects recorded in traceability/evidence/go-unit-9283870.md. DEV-587: linked case UT.internal.admission.TestGateAuthorityPrecedence, UT.internal.admission.TestGateIssuerAuthorization, UT.internal.admission.TestGatePolicyAndIssuerResolution passed at Go 9283870 for the step-7 policy, generation and issuer rows, the step-8 issuer and local path row and the step-9 issuer and local risk-bound row. DEV-588: linked case UT.internal.admission.TestGateTargetRegistrationPrecedence passed at Go 9283870 for the step-8 target-registration row and its precedence. DEV-589: linked case UT.internal.admission.TestGateUnreliableSafetyInputsFailClosed passed at Go 9283870 for precedence of the step-8 target row over the step-9 risk row. DEV-590: linked case UT.internal.admission.TestGateRejectsEgressContextRequirements, UT.internal.admission.TestGateEgressContextPrecedence, UT.internal.admission.TestGateRejectsCompositeProfiles passed at Go 9283870 for the step-6 missing-capability row, the step-8 composite rejection and their precedence. Remaining: proxy compatibility at step 8, steps 10 and 11 (DEV-591) and the planned family cases; no implemented, runtime, platform or field claim. DEV-592: Client.AdmitTask returns the first-failing-step class for delivery, byte-limit, schema, expiry, registration, limit, issuer and rollback rejections, leaving no handle; linked case UT.root.TestAdmitTaskRejectionsAreAtomic passed at Go 7b098a6, covering only the aspects recorded in traceability/evidence/go-unit-7b098a6.md. DEV-594: CC-TRUST-ADMISSION-PROCEDURE stays planned because it needs transport, DNS and Network Context fakes, the proxy-compatibility part of step 8 and a build variant that provides egress acquisition (DEV-578)."
+      "notes": "Partial (DEV-612): successor of retired REQ-TRUST-0037 at public e975027 (library-verified signed remote task packages, decision 0011); carries the predecessor mapping. Existing locations implement part of this obligation at Go e663afe; linked cases passed, covering only the aspects recorded in traceability/evidence/go-unit-e663afe.md. Remaining: CC-TRUST-ADMISSION-PROCEDURE and CC-TRUST-ADMISSION-ERRORS stay planned for the reasons recorded in docs/admission.md. No implemented, runtime, platform or field claim. Predecessor notes are preserved in traceability/historical/cross-cutting-d93aff9-09e2141.json."
+    },
+    {
+      "id": "REQ-TRUST-0048",
+      "implementation_status": "partial",
+      "implementation_locations": [
+        {
+          "path": "internal/admission/signed.go",
+          "selector": "symbol:decodePackage",
+          "state": "existing"
+        }
+      ],
+      "case_ids": [
+        "CC-TRUST-SIGNED-REMOTE-PACKAGES",
+        "UT.internal.admission.TestDecodePackageAndMessage",
+        "UT.internal.admission.TestPackageMemberFormats"
+      ],
+      "issue_ids": [],
+      "review_evidence_ids": [],
+      "support": [],
+      "notes": "Partial (DEV-612): new at public e975027 for library-verified signed remote task packages (decision 0011). Existing locations implement part of this obligation at Go e663afe; linked cases passed, covering only the aspects recorded in traceability/evidence/go-unit-e663afe.md. Remaining: cryptographic review of the package encoding, binding and host adoption (DEV-455) and the reviews that gate remote delivery (DEV-595). No implemented, runtime, platform or field claim."
+    },
+    {
+      "id": "REQ-TRUST-0049",
+      "implementation_status": "partial",
+      "implementation_locations": [
+        {
+          "path": "internal/admission/signed.go",
+          "selector": "symbol:signedMessage",
+          "state": "existing"
+        }
+      ],
+      "case_ids": [
+        "CC-TRUST-SIGNED-REMOTE-PACKAGES",
+        "UT.internal.admission.TestDecodePackageAndMessage"
+      ],
+      "issue_ids": [],
+      "review_evidence_ids": [],
+      "support": [],
+      "notes": "Partial (DEV-612): new at public e975027 for library-verified signed remote task packages (decision 0011). Existing locations implement part of this obligation at Go e663afe; linked cases passed, covering only the aspects recorded in traceability/evidence/go-unit-e663afe.md. Remaining: cryptographic review of the signed-message construction and the reviews that gate remote delivery (DEV-595). No implemented, runtime, platform or field claim."
+    },
+    {
+      "id": "REQ-TRUST-0050",
+      "implementation_status": "partial",
+      "implementation_locations": [
+        {
+          "path": "internal/admission/signed.go",
+          "selector": "symbol:verifySignature",
+          "state": "existing"
+        }
+      ],
+      "case_ids": [
+        "CC-TRUST-SIGNED-REMOTE-PACKAGES",
+        "UT.internal.admission.TestSignatureStrictnessEdgeVectors"
+      ],
+      "issue_ids": [],
+      "review_evidence_ids": [],
+      "support": [],
+      "notes": "Partial (DEV-612): new at public e975027 for library-verified signed remote task packages (decision 0011). Existing locations implement part of this obligation at Go e663afe; linked cases passed, covering only the aspects recorded in traceability/evidence/go-unit-e663afe.md. Remaining: cryptographic review confirming the strictness relied on in Go's crypto/ed25519, which is tested here only for the recorded vectors, and the reviews that gate remote delivery (DEV-595). No implemented, runtime, platform or field claim."
+    },
+    {
+      "id": "REQ-TRUST-0051",
+      "implementation_status": "partial",
+      "implementation_locations": [
+        {
+          "path": "internal/model/task/keys.go",
+          "selector": "symbol:TrustedKey",
+          "state": "existing"
+        },
+        {
+          "path": "internal/model/task/keys.go",
+          "selector": "symbol:ValidPublicKey",
+          "state": "existing"
+        },
+        {
+          "path": "internal/model/task/policy.go",
+          "selector": "symbol:NewLocalPolicy",
+          "state": "existing"
+        }
+      ],
+      "case_ids": [
+        "CC-TRUST-KEY-ROTATION",
+        "UT.internal.model.task.TestGeneratedKeysAccepted",
+        "UT.internal.model.task.TestNonCanonicalAndOffCurveKeysRejected",
+        "UT.internal.model.task.TestPolicyCarriesBoundedTrustedKeys",
+        "UT.internal.model.task.TestPolicyRejectsMalformedOrAmbiguousKeys",
+        "UT.internal.model.task.TestSmallOrderPointsDecodeAndAreRejected"
+      ],
+      "issue_ids": [],
+      "review_evidence_ids": [],
+      "support": [],
+      "notes": "Partial (DEV-612): new at public e975027 for library-verified signed remote task packages (decision 0011). Existing locations implement part of this obligation at Go e663afe; linked cases passed, covering only the aspects recorded in traceability/evidence/go-unit-e663afe.md. Remaining: cryptographic review of public-key validation, safety review of the key bounds, a reviewed policy format and delivery (DEV-455) and the reviews that gate remote delivery (DEV-595). No implemented, runtime, platform or field claim."
+    },
+    {
+      "id": "REQ-TRUST-0052",
+      "implementation_status": "partial",
+      "implementation_locations": [
+        {
+          "path": "internal/admission/signed.go",
+          "selector": "symbol:Admitter.verifyPackage",
+          "state": "existing"
+        }
+      ],
+      "case_ids": [
+        "CC-TRUST-SIGNED-PACKAGE-DISCLOSURE",
+        "CC-TRUST-SIGNED-REMOTE-PACKAGES",
+        "UT.internal.model.task.TestTrustedKeyCoversInclusiveValidity",
+        "UT.root.TestAdmitTaskHostileSources"
+      ],
+      "issue_ids": [],
+      "review_evidence_ids": [],
+      "support": [],
+      "notes": "Partial (DEV-612): new at public e975027 for library-verified signed remote task packages (decision 0011). Existing locations implement part of this obligation at Go e663afe; linked cases passed, covering only the aspects recorded in traceability/evidence/go-unit-e663afe.md. Remaining: the reviews that gate remote delivery (DEV-595). No implemented, runtime, platform or field claim."
+    },
+    {
+      "id": "REQ-TRUST-0053",
+      "implementation_status": "partial",
+      "implementation_locations": [
+        {
+          "path": "internal/admission/delivery.go",
+          "selector": "symbol:DeliveryStore.Resolve",
+          "state": "existing"
+        },
+        {
+          "path": "internal/admission/admit.go",
+          "selector": "symbol:Gated",
+          "state": "existing"
+        }
+      ],
+      "case_ids": [
+        "CC-TRUST-SIGNED-PACKAGE-RETENTION",
+        "UT.internal.admission.TestRemoteRecordsAreSingleUse"
+      ],
+      "issue_ids": [],
+      "review_evidence_ids": [],
+      "support": [],
+      "notes": "Partial (DEV-612): new at public e975027 for library-verified signed remote task packages (decision 0011). Existing locations implement part of this obligation at Go e663afe; linked cases passed, covering only the aspects recorded in traceability/evidence/go-unit-e663afe.md. Remaining: host integration review of how hosts avoid retaining received packages and the reviews that gate remote delivery (DEV-595). No implemented, runtime, platform or field claim."
+    },
+    {
+      "id": "REQ-TRUST-0054",
+      "implementation_status": "partial",
+      "implementation_locations": [
+        {
+          "path": "policy.go",
+          "selector": "symbol:Client.replacePolicy",
+          "state": "existing"
+        },
+        {
+          "path": "internal/admission/signed.go",
+          "selector": "symbol:Admitter.verifyPackage",
+          "state": "existing"
+        }
+      ],
+      "case_ids": [
+        "CC-TRUST-KEY-ROTATION"
+      ],
+      "issue_ids": [],
+      "review_evidence_ids": [],
+      "support": [],
+      "notes": "Partial (DEV-612): new at public e975027 for library-verified signed remote task packages (decision 0011). Existing locations implement part of this obligation at Go e663afe; linked cases passed, covering only the aspects recorded in traceability/evidence/go-unit-e663afe.md. Remaining: cancellation of running tasks (DEV-561), since replacement invalidates handles and no runs exist yet; host-authenticated policy delivery (DEV-455); and the open question on re-verification after key expiry recorded in docs/specification-issues.md. No implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-TRUST-0038",
@@ -14526,7 +14741,7 @@
         "selector": "symbol:TestCcTrustOverview",
         "state": "planned"
       },
-      "scope": "Synthetic core contract cases; Admit synthetic NET-01 tasks with a fake delivery-record store, local policy, registry, deterministic clock and recording transport. A baseline task with an embedded delivery record for its exact bytes, an issuer permitted NET-01 0.1.0 and a matching target registration is accepted. Remove one prerequisite at a time (the delivery record, the issuer permission, the target registration, the registry entry for the exact version, and a numeric value raised above its registered limit) and assert rejection with, respectively, task_source_unauthenticated, task_issuer_not_authorized, target_not_registered, task_unsupported and task_limit_exceeded, and zero transport calls. Add task-controlled authority claims: top-level authenticated, issuer_id, policy_generation and trusted fields are rejected as task_schema_invalid, and a permitted label with the text \"authenticated: true\" stays opaque, producing the same authority, effective risk, targets and policy decision as the same task without it. With a synthetic registry baseline of medium, a task declaring low cannot lower effective risk. Assert no task field changes the active policy generation or registrations. Requirements: REQ-TRUST-0002, REQ-TRUST-0003.",
+      "scope": "Synthetic core contract cases; Admit synthetic NET-01 tasks with a fake delivery-record store, local policy, registry, deterministic clock and recording transport. A baseline task with an embedded delivery record for its exact bytes, an issuer permitted NET-01 0.1.0 and a matching target registration is accepted. Remove one prerequisite at a time (the delivery record, the issuer permission, the target registration, the registry entry for the exact version, and a numeric value raised above its registered limit) and assert rejection with, respectively, task_source_unauthenticated, task_issuer_not_authorized, target_not_registered, task_unsupported and task_limit_exceeded, and zero transport calls. Add task-controlled authority claims: top-level authenticated, issuer_id, policy_generation and trusted fields are rejected as task_schema_invalid, and a permitted label with the text \"authenticated: true\" stays opaque, producing the same authority, effective risk, targets and policy decision as the same task without it. With a synthetic registry baseline of medium, a task declaring low cannot lower effective risk. Assert no task field changes the active policy generation or registrations. Requirements: REQ-TRUST-0040, REQ-TRUST-0003.",
       "status": "planned",
       "evidence_ids": []
     },
@@ -14537,7 +14752,7 @@
         "selector": "symbol:TestCcTrustAcceptedTaskOrigins",
         "state": "existing"
       },
-      "scope": "Synthetic core contract cases; Admit the same synthetic task bytes through delivery records of each origin: embedded with authenticated false and no issued_at is accepted, and remote with authenticated true and issued_at equal to the fake clock is accepted. For remote origin, remove one input at a time: authenticated false is rejected as task_source_unauthenticated; a record bound to bytes differing by one byte (failed integrity) is rejected as task_source_unauthenticated; a missing issued_at cannot produce a record, so the task is rejected as task_source_unauthenticated; an unavailable trusted clock is rejected as task_trust_unavailable; no delivery record at all is rejected as task_source_unauthenticated. A test verifier that reports transport encryption without issuer authentication must yield no authenticated record, and admission then rejects. For every rejection assert no replay or admitted-task record is written. Admission has no transport seam, so zero transport calls are established by checking that the dependency closure of admission contains no network package. Requirements: REQ-TRUST-0001, REQ-TRUST-0004, REQ-TRUST-0005.",
+      "scope": "Synthetic core contract cases; Admit the same synthetic task bytes through delivery records of each origin: embedded with its issuer and no issued_at is accepted, and remote as a signed package from a trusted key of its issuer, issued at the fake clock, is accepted with a replay digest equal to the digest of the task bytes. For remote origin, remove one input at a time: a remote source with a host-supplied issuer cannot be constructed; the bare task presented as remote without a signed package, and a package with an added authenticated member, are rejected as task_source_unauthenticated; a record presented with package bytes differing by one byte is rejected as task_source_unauthenticated; an unavailable trusted clock is rejected as task_trust_unavailable; no delivery record at all is rejected as task_source_unauthenticated. For every rejection assert no replay or admitted-task record is written. Admission has no transport seam, so zero transport calls are established by checking that the dependency closure of admission contains no network package. Requirements: REQ-TRUST-0041, REQ-TRUST-0042, REQ-TRUST-0043, REQ-TRUST-0044.",
       "status": "passed",
       "evidence_ids": [
         "EV.CC-TRUST-ACCEPTED-TASK-ORIGINS"
@@ -14550,7 +14765,7 @@
         "selector": "symbol:TestCcTrustTrustedSourceContext",
         "state": "planned"
       },
-      "scope": "Synthetic core contract cases; Construct source contexts through the admission seam, varying one property at a time. origin: embedded and remote accepted, any other value rejected. issuer_id: 1 and 64 allowed bytes accepted; empty, 65 bytes, uppercase, space and \"/\" rejected. policy_generation: 1 and 2^64-1 accepted, 0 rejected. authenticated: true with embedded and false with remote rejected. issued_at: for remote, equal to the fake clock and 300 seconds ahead accepted, 301 seconds ahead rejected as task_source_unauthenticated, missing rejected; for embedded, present rejected. Assert task JSON and initialization JSON have no field that sets any property (unknown fields rejected) and the trust models reject JSON import. Admit and run a task with canary issuer_id and generation values against a recording transport and fake result sink, and assert the canaries are absent from every transmitted byte, Measurement Result and bundle. Assert the facade signature fixture accepts no raw key or authenticated flag. Requirements: REQ-TRUST-0006, REQ-TRUST-0007, REQ-TRUST-0008, REQ-TRUST-0009.",
+      "scope": "Synthetic core contract cases; Construct source contexts through the admission seam, varying one property at a time. origin: embedded and remote accepted, any other value rejected. issuer_id: for embedded, 1 and 64 allowed bytes accepted and empty, 65 bytes, uppercase, space and \"/\" rejected; for remote, any host-supplied value rejected. policy_generation: 1 and 2^64-1 accepted, 0 rejected. There is no authentication flag to set. issued_at: for remote, taken only from a verified package, so equal to the fake clock and 300 seconds ahead are accepted and 301 seconds ahead is rejected as task_source_unauthenticated; for embedded, absent. Assert task JSON and initialization JSON have no field that sets any property (unknown fields rejected) and the trust models reject JSON import. Admit and run a task with canary issuer_id and generation values against a recording transport and fake result sink, and assert the canaries are absent from every transmitted byte, Measurement Result and bundle. Assert the facade signature fixture accepts no raw key, signature verdict or authenticated flag, and that trusted keys enter only through the trusted local policy. Requirements: REQ-TRUST-0008, REQ-TRUST-0044, REQ-TRUST-0045.",
       "status": "planned",
       "evidence_ids": []
     },
@@ -14583,7 +14798,7 @@
         "selector": "symbol:TestCcTrustAdmissionProcedure",
         "state": "planned"
       },
-      "scope": "Synthetic core contract cases; Instrument admission with a fake delivery-record store, clock, registry, policy, replay store and recording transport that log the order of calls. A valid task runs the eleven public steps in order, and its handle is returned only after the replay write commits. Build tasks that each fail exactly one step and assert the listed class: missing, expired, foreign-instance or byte-mismatched delivery record, task_source_unauthenticated; unauthenticated remote origin, task_source_unauthenticated; unavailable trusted clock, task_trust_unavailable; remote issued_at 301 seconds in the future, task_source_unauthenticated, while 300 seconds is accepted; 65,537 bytes, task_limit_exceeded; unknown top-level field, task_schema_invalid; well-formed but unregistered test_version, task_unsupported; uppercase task_id, task_schema_invalid; 129-byte task_id, task_limit_exceeded; expired task, task_expired; execution.context requiring egress Network Context in a build without egress acquisition, task_unsupported; no installed policy, task_policy_unavailable; source policy_generation one above the active generation, task_policy_unavailable, and one below, policy_rollback; unknown issuer, task_issuer_not_authorized; direct or proxy path not permitted by issuer authority or local policy, task_issuer_not_authorized; path not permitted by the matched target registration, and an unregistered target, target_not_registered; effective risk above the issuer maximum or a local-policy bound, and unknown risk without a reviewed local permission, task_issuer_not_authorized; replay conflict, task_id_conflict; replay write failure, task_trust_unavailable. For each assert exactly one class, that no later step's capability is called, that no replay or admitted-task record exists, that no handle is returned and that the transport, DNS and Network Context fakes see zero calls. Precedence follows the first failing step: an unknown top-level field with an unknown issuer returns task_schema_invalid (step 4 before 7), an unregistered test_version with a 129-byte task_id returns task_unsupported (step 4 before 5), an expired task with an unregistered target returns task_expired (step 6 before 8), and a 65,537-byte task from an unauthenticated remote source returns task_source_unauthenticated (step 2 before 3). A valid task that requires egress context performs no context lookup during admission in a build that provides egress acquisition. Requirements: REQ-TRUST-0017, REQ-TRUST-0018, REQ-TRUST-0037.",
+      "scope": "Synthetic core contract cases; Instrument admission with a fake delivery-record store, clock, registry, policy, replay store and recording transport that log the order of calls. A valid task runs the eleven public steps in order, and its handle is returned only after the replay write commits. Build tasks that each fail exactly one step and assert the listed class: missing, expired, foreign-instance or byte-mismatched delivery record, task_source_unauthenticated; a remote task whose signed package fails verification, task_source_unauthenticated; unavailable trusted clock, task_trust_unavailable; a remote package issued 301 seconds after acceptance, task_source_unauthenticated, while 300 seconds is accepted; 65,537 bytes, task_limit_exceeded; unknown top-level field, task_schema_invalid; well-formed but unregistered test_version, task_unsupported; uppercase task_id, task_schema_invalid; 129-byte task_id, task_limit_exceeded; expired task, task_expired; execution.context requiring egress Network Context in a build without egress acquisition, task_unsupported; no installed policy, task_policy_unavailable; source policy_generation one above the active generation, task_policy_unavailable, and one below, policy_rollback; unknown issuer, task_issuer_not_authorized; direct or proxy path not permitted by issuer authority or local policy, task_issuer_not_authorized; path not permitted by the matched target registration, and an unregistered target, target_not_registered; effective risk above the issuer maximum or a local-policy bound, and unknown risk without a reviewed local permission, task_issuer_not_authorized; replay conflict, task_id_conflict; replay write failure, task_trust_unavailable. For each assert exactly one class, that no later step's capability is called, that no replay or admitted-task record exists, that no handle is returned and that the transport, DNS and Network Context fakes see zero calls. Precedence follows the first failing step: an unknown top-level field with an unknown issuer returns task_schema_invalid (step 4 before 7), an unregistered test_version with a 129-byte task_id returns task_unsupported (step 4 before 5), an expired task with an unregistered target returns task_expired (step 6 before 8), and a 65,537-byte task presented as remote without a signed package returns task_source_unauthenticated (step 2 before 3). A valid task that requires egress context performs no context lookup during admission in a build that provides egress acquisition. Requirements: REQ-TRUST-0046, REQ-TRUST-0018, REQ-TRUST-0047.",
       "status": "planned",
       "evidence_ids": []
     },
@@ -15251,6 +15466,84 @@
       "status": "passed",
       "evidence_ids": [
         "EV.UT.internal.model.task.TestMalformedSourceRejectedAtomically"
+      ]
+    },
+    {
+      "id": "UT.internal.model.task.TestPolicyCarriesBoundedTrustedKeys",
+      "location": {
+        "path": "internal/model/task/keys_test.go",
+        "selector": "symbol:TestPolicyCarriesBoundedTrustedKeys",
+        "state": "existing"
+      },
+      "scope": "Existing synthetic Go unit test TestPolicyCarriesBoundedTrustedKeys in package internal/model/task, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "status": "passed",
+      "evidence_ids": [
+        "EV.UT.internal.model.task.TestPolicyCarriesBoundedTrustedKeys"
+      ]
+    },
+    {
+      "id": "UT.internal.model.task.TestPolicyRejectsMalformedOrAmbiguousKeys",
+      "location": {
+        "path": "internal/model/task/keys_test.go",
+        "selector": "symbol:TestPolicyRejectsMalformedOrAmbiguousKeys",
+        "state": "existing"
+      },
+      "scope": "Existing synthetic Go unit test TestPolicyRejectsMalformedOrAmbiguousKeys in package internal/model/task, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "status": "passed",
+      "evidence_ids": [
+        "EV.UT.internal.model.task.TestPolicyRejectsMalformedOrAmbiguousKeys"
+      ]
+    },
+    {
+      "id": "UT.internal.model.task.TestTrustedKeyCoversInclusiveValidity",
+      "location": {
+        "path": "internal/model/task/keys_test.go",
+        "selector": "symbol:TestTrustedKeyCoversInclusiveValidity",
+        "state": "existing"
+      },
+      "scope": "Existing synthetic Go unit test TestTrustedKeyCoversInclusiveValidity in package internal/model/task, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "status": "passed",
+      "evidence_ids": [
+        "EV.UT.internal.model.task.TestTrustedKeyCoversInclusiveValidity"
+      ]
+    },
+    {
+      "id": "UT.internal.model.task.TestSmallOrderPointsDecodeAndAreRejected",
+      "location": {
+        "path": "internal/model/task/keys_internal_test.go",
+        "selector": "symbol:TestSmallOrderPointsDecodeAndAreRejected",
+        "state": "existing"
+      },
+      "scope": "Existing synthetic Go unit test TestSmallOrderPointsDecodeAndAreRejected in package internal/model/task, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "status": "passed",
+      "evidence_ids": [
+        "EV.UT.internal.model.task.TestSmallOrderPointsDecodeAndAreRejected"
+      ]
+    },
+    {
+      "id": "UT.internal.model.task.TestNonCanonicalAndOffCurveKeysRejected",
+      "location": {
+        "path": "internal/model/task/keys_internal_test.go",
+        "selector": "symbol:TestNonCanonicalAndOffCurveKeysRejected",
+        "state": "existing"
+      },
+      "scope": "Existing synthetic Go unit test TestNonCanonicalAndOffCurveKeysRejected in package internal/model/task, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "status": "passed",
+      "evidence_ids": [
+        "EV.UT.internal.model.task.TestNonCanonicalAndOffCurveKeysRejected"
+      ]
+    },
+    {
+      "id": "UT.internal.model.task.TestGeneratedKeysAccepted",
+      "location": {
+        "path": "internal/model/task/keys_internal_test.go",
+        "selector": "symbol:TestGeneratedKeysAccepted",
+        "state": "existing"
+      },
+      "scope": "Existing synthetic Go unit test TestGeneratedKeysAccepted in package internal/model/task, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "status": "passed",
+      "evidence_ids": [
+        "EV.UT.internal.model.task.TestGeneratedKeysAccepted"
       ]
     },
     {
@@ -15982,6 +16275,58 @@
       ]
     },
     {
+      "id": "UT.internal.admission.TestDecodePackageAndMessage",
+      "location": {
+        "path": "internal/admission/signed_internal_test.go",
+        "selector": "symbol:TestDecodePackageAndMessage",
+        "state": "existing"
+      },
+      "scope": "Existing synthetic Go unit test TestDecodePackageAndMessage in package internal/admission, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "status": "passed",
+      "evidence_ids": [
+        "EV.UT.internal.admission.TestDecodePackageAndMessage"
+      ]
+    },
+    {
+      "id": "UT.internal.admission.TestPackageMemberFormats",
+      "location": {
+        "path": "internal/admission/signed_internal_test.go",
+        "selector": "symbol:TestPackageMemberFormats",
+        "state": "existing"
+      },
+      "scope": "Existing synthetic Go unit test TestPackageMemberFormats in package internal/admission, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "status": "passed",
+      "evidence_ids": [
+        "EV.UT.internal.admission.TestPackageMemberFormats"
+      ]
+    },
+    {
+      "id": "UT.internal.admission.TestSignatureStrictnessEdgeVectors",
+      "location": {
+        "path": "internal/admission/signed_internal_test.go",
+        "selector": "symbol:TestSignatureStrictnessEdgeVectors",
+        "state": "existing"
+      },
+      "scope": "Existing synthetic Go unit test TestSignatureStrictnessEdgeVectors in package internal/admission, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "status": "passed",
+      "evidence_ids": [
+        "EV.UT.internal.admission.TestSignatureStrictnessEdgeVectors"
+      ]
+    },
+    {
+      "id": "UT.internal.admission.TestRemoteRecordsAreSingleUse",
+      "location": {
+        "path": "internal/admission/delivery_test.go",
+        "selector": "symbol:TestRemoteRecordsAreSingleUse",
+        "state": "existing"
+      },
+      "scope": "Existing synthetic Go unit test TestRemoteRecordsAreSingleUse in package internal/admission, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "status": "passed",
+      "evidence_ids": [
+        "EV.UT.internal.admission.TestRemoteRecordsAreSingleUse"
+      ]
+    },
+    {
       "id": "UT.internal.validation.TestTaskIDRulesAndLimitClass",
       "location": {
         "path": "internal/validation/limits_test.go",
@@ -16030,6 +16375,58 @@
       "scope": "Synthetic core contract cases; After clearMeasurementData deletes replay state with a deterministic clock and fake persistent storage, redeliver previously accepted exact task bytes: an unexpired task is evaluated as new, receives a fresh replay record with unchanged expiry derived from its not_after and creates no record for the cleared acceptance; an expired task is still rejected as task_expired; a failed or incomplete deletion is reported explicitly and leaves no task admitted without replay state. Requirements: REQ-TRUST-0024, REQ-TRUST-0025.",
       "status": "planned",
       "evidence_ids": []
+    },
+    {
+      "id": "CC-TRUST-SIGNED-REMOTE-PACKAGES",
+      "location": {
+        "path": "internal/admission/signed_test.go",
+        "selector": "symbol:TestCcTrustSignedRemotePackages",
+        "state": "existing"
+      },
+      "scope": "Synthetic core contract cases; Present signed remote task packages built from synthetic Ed25519 keys through a fake delivery store, a policy holding two keys of the remote issuer and one of another issuer, and a fake clock, changing one property of an otherwise valid package per case. Assert acceptance for a valid package, a second key of the issuer, a package padded with whitespace to exactly 98,304 bytes, acceptance exactly at not_after, issued_at exactly at not_before and issued_at 300 seconds ahead. Assert task_limit_exceeded for 98,305 bytes; task_policy_unavailable with no installed policy; task_source_unauthenticated for malformed packages (not JSON, a bare task, unknown, duplicate, escaped-duplicate or missing members, wrong member types, padded, standard-alphabet or newline-containing base64url, nonzero trailing bits, an empty task, a 63- or 65-byte signature, fractional, offset, lowercase, leap-second or invalid-date issued_at, invalid identifiers), an unknown key_id, a key of another issuer or a package re-wrapped under another issuer, acceptance one second after not_after, issued_at one second before not_before or after not_after, issued_at 301 seconds ahead, an altered task byte, issued_at, key_id or signature, and a signature over another context or over the bare task; and task_trust_unavailable when trusted time is unavailable at check 6. Assert exactly one class, from the first failing check, for packages failing several checks, and that no rejected package reaches the task codec. A validly signed package whose task is invalid or over 65,536 bytes fails its later step instead. Requirements: REQ-TRUST-0043, REQ-TRUST-0046, REQ-TRUST-0047, REQ-TRUST-0048, REQ-TRUST-0049, REQ-TRUST-0050, REQ-TRUST-0052, REQ-LIMIT-0032.",
+      "status": "passed",
+      "evidence_ids": [
+        "EV.CC-TRUST-SIGNED-REMOTE-PACKAGES"
+      ]
+    },
+    {
+      "id": "CC-TRUST-SIGNED-PACKAGE-DISCLOSURE",
+      "location": {
+        "path": "internal/admission/signed_test.go",
+        "selector": "symbol:TestCcTrustSignedPackageErrorsDiscloseNothing",
+        "state": "existing"
+      },
+      "scope": "Synthetic core contract cases; Reject six synthetic signed packages that each fail a different verification check (a bad signature, an issuer moved after signing, an unknown key, malformed JSON, issuance one hour ahead and 98,305 bytes), with canaries in the task payload, key IDs, issuers, signature and public-key prefixes and the raw clock error. Assert that each error formats under %v, %+v, %#v and Error() without any canary or the words ed25519, base64, check, key or signature, and that the six errors produce only the two fixed class strings task_source_unauthenticated and task_limit_exceeded, so the failing check cannot be distinguished beyond its class. Requirements: REQ-TRUST-0035, REQ-TRUST-0052.",
+      "status": "passed",
+      "evidence_ids": [
+        "EV.CC-TRUST-SIGNED-PACKAGE-DISCLOSURE"
+      ]
+    },
+    {
+      "id": "CC-TRUST-SIGNED-PACKAGE-RETENTION",
+      "location": {
+        "path": "internal/admission/signed_test.go",
+        "selector": "symbol:TestCcTrustSignedPackageNotRetained",
+        "state": "existing"
+      },
+      "scope": "Synthetic core contract cases; Admit a synthetic signed package through a fake delivery store and the test replay store, then assert the replay record holds the remote issuer, the task_id and the SHA-256 digest of the exact task bytes, not of the package, and that neither the record nor the dumped replay store contains the key ID, the encoded signature, the package bytes or the package digest in hex or base64. Assert the remote delivery record no longer resolves after admission, that a package re-signed later over the same task bytes and presented through a new reference resolves to the same admitted identity as a redelivery, and that a package with a corrupted signature leaves no replay record, staged write or resolvable delivery record. Requirements: REQ-TRUST-0053.",
+      "status": "passed",
+      "evidence_ids": [
+        "EV.CC-TRUST-SIGNED-PACKAGE-RETENTION"
+      ]
+    },
+    {
+      "id": "CC-TRUST-KEY-ROTATION",
+      "location": {
+        "path": "policy_test.go",
+        "selector": "symbol:TestCcTrustKeyRotationByPolicyReplacement",
+        "state": "existing"
+      },
+      "scope": "Synthetic core contract cases; Initialize a client with a generation-2 policy holding two keys of the remote issuer and admit one synthetic task signed with each. Replace it with generation 3 holding only the second key and assert every task handle and queued delivery reference is invalidated, that the task signed with the removed key and a new task signed with it are rejected as task_source_unauthenticated on redelivery, and that the task signed with the retained key resolves to its retained acceptance without a new replay record. Replace it with generation 4 without the remote issuer and assert its handles are invalidated and its packages rejected with no replay write. Assert that a policy whose key names an issuer it does not authorize is not constructed and the active policy is unchanged. With a key valid until one hour after acceptance, admit a task valid for three hours, advance the clock two hours, and assert the handle still resolves with its original expiry while a new presentation of the same package is rejected as task_source_unauthenticated. Requirements: REQ-TRUST-0030, REQ-TRUST-0051, REQ-TRUST-0054.",
+      "status": "passed",
+      "evidence_ids": [
+        "EV.CC-TRUST-KEY-ROTATION"
+      ]
     },
     {
       "id": "UT.internal.persistence.TestReplayRecordRetention",
@@ -16246,12 +16643,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.bundle.TestBundleValidationPrecedence"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-BUNDLE-0002",
         "REQ-BUNDLE-0022",
@@ -16270,12 +16667,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.bundle.TestContractMembershipAndIdentity"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-BUNDLE-0001",
         "REQ-BUNDLE-0002",
@@ -16300,12 +16697,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.bundle.TestExactEncodedBoundaries"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-BUNDLE-0004",
         "REQ-BUNDLE-0021",
@@ -16325,12 +16722,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.bundle.TestImmutableRetryBytesAndViews"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-BUNDLE-0007",
         "REQ-BUNDLE-0013",
@@ -16349,12 +16746,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.bundle.TestMixedResultMembershipIsPreserved"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-BUNDLE-0002",
         "REQ-BUNDLE-0013",
@@ -16373,12 +16770,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.bundle.TestTrustedOptionalLinkage"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-BUNDLE-0003",
         "REQ-BUNDLE-0004",
@@ -16404,12 +16801,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.config.TestAtomicRejectionCorpus"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-JSON-0004",
         "REQ-JSON-0005",
@@ -16429,12 +16826,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.config.TestClosedSchemasAndTrustSeparation"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-JSON-0004"
       ],
@@ -16451,12 +16848,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.config.TestConfigurationValidationPrecedence"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-JSON-0010",
         "REQ-JSON-0011"
@@ -16474,12 +16871,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.config.TestVersionsApprovalsAndBounds"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-JSON-0008",
         "REQ-JSON-0009"
@@ -16497,12 +16894,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.execution.TestAllTerminationReasons"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-RESULT-0020",
         "REQ-RESULT-0021",
@@ -16522,12 +16919,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.execution.TestProtocolOutcomesAndInvalidReasons"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-RESULT-0001",
         "REQ-RESULT-0020",
@@ -16547,12 +16944,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.jsondecode.TestBounds"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-JSON-0009",
         "REQ-JSON-0010"
@@ -16570,12 +16967,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.jsondecode.TestConfigurationAndNoFallback"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-JSON-0008"
       ],
@@ -16592,12 +16989,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.jsondecode.TestErrorsAndDeterminism"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-JSON-0011"
       ],
@@ -16614,12 +17011,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.jsondecode.TestPositiveAndPresence"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-JSON-0001",
         "REQ-JSON-0002",
@@ -16640,12 +17037,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.jsondecode.TestRejectionCorpus"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-LABEL-0010",
         "REQ-JSON-0001",
@@ -16670,12 +17067,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.jsondecode.TestValueContainers"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-JSON-0002"
       ],
@@ -16692,12 +17089,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.model.observation.TestAcceptedProducerMappings"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-OBS-0044",
         "REQ-OBS-0045",
@@ -16720,12 +17117,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.model.observation.TestAccessOnlySnapshot"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-OBS-0006",
         "REQ-CONTEXT-FORMAT-0004",
@@ -16744,12 +17141,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.model.observation.TestContextNormalizationStaysWithinASCIICodes"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-CONTEXT-FORMAT-0006",
         "REQ-CONTEXT-FORMAT-0018",
@@ -16769,12 +17166,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.model.observation.TestContextPathGenerationAndPrivacy"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-CONTEXT-FORMAT-0001",
         "REQ-CONTEXT-FORMAT-0005",
@@ -16795,12 +17192,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.model.observation.TestContextRejectionAndNormalization"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-CONTEXT-FORMAT-0004",
         "REQ-CONTEXT-FORMAT-0006",
@@ -16826,12 +17223,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.model.observation.TestContextUnknownAndFreshnessStates"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-CONTEXT-FORMAT-0006",
         "REQ-CONTEXT-FORMAT-0007",
@@ -16851,12 +17248,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.model.observation.TestDNSBoundsAndPrivacy"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-OBS-0009",
         "REQ-OBS-0042",
@@ -16880,12 +17277,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.model.observation.TestDNSCollectionAndAnswerBoundaries"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-OBS-0009",
         "REQ-OBS-0042",
@@ -16905,12 +17302,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.model.observation.TestHTTPBoundsAndConsistency"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-OBS-0025",
         "REQ-OBS-0028",
@@ -16931,12 +17328,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.model.observation.TestIncompleteFailureAbsentForEveryType"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-OBS-0051"
       ],
@@ -16953,12 +17350,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.model.observation.TestProtocolPresenceAndVocabulary"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-OBS-0003",
         "REQ-OBS-0044",
@@ -16979,12 +17376,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.model.observation.TestProtocolPrivacyAndImmutableViews"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-OBS-0004",
         "REQ-OBS-0018",
@@ -17004,12 +17401,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.model.observation.TestProtocolValidationPrecedenceAndStableEncoding"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-OBS-0004",
         "REQ-OBS-0044",
@@ -17029,12 +17426,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.model.observation.TestTLSVocabularyAndConsistency"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-OBS-0043",
         "REQ-OBS-0045",
@@ -17055,12 +17452,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.model.task.TestAdmissionErrorVocabulary"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-TRUST-0034",
         "REQ-TRUST-0035",
@@ -17079,14 +17476,15 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.model.task.TestMalformedSourceRejectedAtomically"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
-        "REQ-TRUST-0001"
+        "REQ-TRUST-0043",
+        "REQ-TRUST-0044"
       ],
       "scope": "Existing synthetic Go unit test TestMalformedSourceRejectedAtomically in package internal/model/task, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
       "case_results": [
@@ -17097,16 +17495,150 @@
       ]
     },
     {
+      "id": "EV.UT.internal.model.task.TestPolicyCarriesBoundedTrustedKeys",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
+        "selector": "anchor:UT.internal.model.task.TestPolicyCarriesBoundedTrustedKeys"
+      },
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
+      "requirement_ids": [
+        "REQ-LIMIT-0032",
+        "REQ-TRUST-0051"
+      ],
+      "scope": "Existing synthetic Go unit test TestPolicyCarriesBoundedTrustedKeys in package internal/model/task, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "case_results": [
+        {
+          "case_id": "UT.internal.model.task.TestPolicyCarriesBoundedTrustedKeys",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "EV.UT.internal.model.task.TestPolicyRejectsMalformedOrAmbiguousKeys",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
+        "selector": "anchor:UT.internal.model.task.TestPolicyRejectsMalformedOrAmbiguousKeys"
+      },
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
+      "requirement_ids": [
+        "REQ-LIMIT-0032",
+        "REQ-TRUST-0051"
+      ],
+      "scope": "Existing synthetic Go unit test TestPolicyRejectsMalformedOrAmbiguousKeys in package internal/model/task, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "case_results": [
+        {
+          "case_id": "UT.internal.model.task.TestPolicyRejectsMalformedOrAmbiguousKeys",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "EV.UT.internal.model.task.TestTrustedKeyCoversInclusiveValidity",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
+        "selector": "anchor:UT.internal.model.task.TestTrustedKeyCoversInclusiveValidity"
+      },
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
+      "requirement_ids": [
+        "REQ-TRUST-0052"
+      ],
+      "scope": "Existing synthetic Go unit test TestTrustedKeyCoversInclusiveValidity in package internal/model/task, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "case_results": [
+        {
+          "case_id": "UT.internal.model.task.TestTrustedKeyCoversInclusiveValidity",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "EV.UT.internal.model.task.TestSmallOrderPointsDecodeAndAreRejected",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
+        "selector": "anchor:UT.internal.model.task.TestSmallOrderPointsDecodeAndAreRejected"
+      },
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
+      "requirement_ids": [
+        "REQ-TRUST-0051"
+      ],
+      "scope": "Existing synthetic Go unit test TestSmallOrderPointsDecodeAndAreRejected in package internal/model/task, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "case_results": [
+        {
+          "case_id": "UT.internal.model.task.TestSmallOrderPointsDecodeAndAreRejected",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "EV.UT.internal.model.task.TestNonCanonicalAndOffCurveKeysRejected",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
+        "selector": "anchor:UT.internal.model.task.TestNonCanonicalAndOffCurveKeysRejected"
+      },
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
+      "requirement_ids": [
+        "REQ-TRUST-0051"
+      ],
+      "scope": "Existing synthetic Go unit test TestNonCanonicalAndOffCurveKeysRejected in package internal/model/task, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "case_results": [
+        {
+          "case_id": "UT.internal.model.task.TestNonCanonicalAndOffCurveKeysRejected",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "EV.UT.internal.model.task.TestGeneratedKeysAccepted",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
+        "selector": "anchor:UT.internal.model.task.TestGeneratedKeysAccepted"
+      },
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
+      "requirement_ids": [
+        "REQ-TRUST-0051"
+      ],
+      "scope": "Existing synthetic Go unit test TestGeneratedKeysAccepted in package internal/model/task, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "case_results": [
+        {
+          "case_id": "UT.internal.model.task.TestGeneratedKeysAccepted",
+          "result": "passed"
+        }
+      ]
+    },
+    {
       "id": "EV.UT.internal.result.TestBindingBoundsAndProducerContext",
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.result.TestBindingBoundsAndProducerContext"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-RESULT-0011",
         "REQ-RESULT-0038"
@@ -17124,12 +17656,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.result.TestCompositeCompletionAndPartialBoundaries"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-RESULT-0021",
         "REQ-RESULT-0027",
@@ -17148,12 +17680,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.result.TestCompositeVersionPrecisionAndMarkerPresence"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-JSON-0007"
       ],
@@ -17170,12 +17702,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.result.TestEncodedAndObservationBoundaries"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-RESULT-0004",
         "REQ-RESULT-0026",
@@ -17195,12 +17727,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.result.TestEnvelopePresenceAndBounds"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-RESULT-0002",
         "REQ-RESULT-0016",
@@ -17224,12 +17756,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.result.TestExecutionContextAndAttemptBinding"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-RESULT-0019",
         "REQ-RESULT-0020",
@@ -17253,12 +17785,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.result.TestImmutableViewsAndProducerBuild"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-RESULT-0004"
       ],
@@ -17275,12 +17807,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.result.TestIndependentVersionsAndNegativeCompletion"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-RESULT-0001",
         "REQ-RESULT-0011",
@@ -17300,12 +17832,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.result.TestInitialPayloadSchemasAndEvidence"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-RESULT-0024",
         "REQ-RESULT-0026",
@@ -17327,12 +17859,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.result.TestProducerTimingAndRandomIdentity"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-RESULT-0006",
         "REQ-RESULT-0016",
@@ -17352,12 +17884,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.result.TestResultValidationPrecedence"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-RESULT-0032",
         "REQ-JSON-0008",
@@ -17376,12 +17908,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.result.TestUninitializedDecoderRejectsBeforeInput"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-JSON-0010"
       ],
@@ -17398,12 +17930,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.result.TestUnknownPrivateAndMalformedFields"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-RESULT-0003",
         "REQ-RESULT-0005",
@@ -17428,12 +17960,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.taskdecode.TestByteAndLabelBounds"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-LABEL-0005",
         "REQ-JSON-0009"
@@ -17451,12 +17983,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.taskdecode.TestDefaultsAndDeterminism"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-EXECUTION-0013",
         "REQ-LABEL-0004"
@@ -17474,12 +18006,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.taskdecode.TestExactSchemaSelection"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-JSON-0008"
       ],
@@ -17496,12 +18028,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.taskdecode.TestHostConfigurationCannotComeFromTask"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-LABEL-0001",
         "REQ-TASK-0001",
@@ -17520,12 +18052,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.taskdecode.TestModelValidationPrecedenceAndExactCodec"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-JSON-0008",
         "REQ-JSON-0010",
@@ -17544,12 +18076,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.taskdecode.TestRegisteredNumericalBoundaries"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-EXECUTION-0013",
         "REQ-LABEL-0005"
@@ -17567,12 +18099,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.taskdecode.TestRejectionCorpus"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-EXECUTION-0013",
         "REQ-LABEL-0014",
@@ -17591,12 +18123,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.taskdecode.TestRepresentationAndSanitizedErrors"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-JSON-0003",
         "REQ-JSON-0006",
@@ -17615,12 +18147,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.taskdecode.TestSerializedInputCannotSupplyTrustOrPolicy"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-LABEL-0001",
         "REQ-TASK-0001",
@@ -17639,12 +18171,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.validation.TestCommonLabelInvariants"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-LABEL-0004",
         "REQ-LABEL-0005",
@@ -17664,12 +18196,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.validation.TestCommonNormalizationIsIdempotentAndConservative"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-EXECUTION-0013",
         "REQ-LABEL-0001",
@@ -17688,12 +18220,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.validation.TestCommonRiskFactorAndTimezoneDomains"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-SAFETY-0012",
         "REQ-SAFETY-0013",
@@ -17715,12 +18247,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.taskdecode.TestRiskFactorAndTimezoneDomains"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-SAFETY-0012",
         "REQ-SAFETY-0013",
@@ -17742,12 +18274,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.testkit.conformance.TestConformanceFixtures"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-SAFETY-0012",
         "REQ-SAFETY-0013",
@@ -17769,15 +18301,16 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateAcceptsReviewedOrigins"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
-        "REQ-TRUST-0001",
-        "REQ-TRUST-0004"
+        "REQ-TRUST-0040",
+        "REQ-TRUST-0041",
+        "REQ-TRUST-0044"
       ],
       "scope": "Existing synthetic Go unit test TestGateAcceptsReviewedOrigins in package internal/admission, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
       "case_results": [
@@ -17792,22 +18325,22 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateStepClasses"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-LIMIT-0004",
         "REQ-LIMIT-0005",
         "REQ-LIMIT-0010",
         "REQ-SAFETY-0017",
-        "REQ-TRUST-0001",
-        "REQ-TRUST-0017",
+        "REQ-TRUST-0043",
+        "REQ-TRUST-0046",
         "REQ-TRUST-0018",
         "REQ-TRUST-0036",
-        "REQ-TRUST-0037"
+        "REQ-TRUST-0047"
       ],
       "scope": "Existing synthetic Go unit test TestGateStepClasses in package internal/admission, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
       "case_results": [
@@ -17822,12 +18355,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateTaskIdentifierRules"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-LIMIT-0004",
         "REQ-TRUST-0019"
@@ -17845,14 +18378,14 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGatePrecedence"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
-        "REQ-TRUST-0037"
+        "REQ-TRUST-0047"
       ],
       "scope": "Existing synthetic Go unit test TestGatePrecedence in package internal/admission, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
       "case_results": [
@@ -17867,14 +18400,14 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateNoTaskControlledAuthorityOrInterpolation"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
-        "REQ-TRUST-0002",
+        "REQ-TRUST-0040",
         "REQ-TRUST-0026",
         "REQ-TRUST-0027"
       ],
@@ -17891,12 +18424,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateErrorsCarryNoData"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-TRUST-0033",
         "REQ-TRUST-0035"
@@ -17914,12 +18447,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateAdmissionLimitHandling"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-LIMIT-0026",
         "REQ-LIMIT-0030"
@@ -17937,14 +18470,14 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateAuthorityPrecedence"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
-        "REQ-TRUST-0037"
+        "REQ-TRUST-0047"
       ],
       "scope": "Existing synthetic Go unit test TestGateAuthorityPrecedence in package internal/admission, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
       "case_results": [
@@ -17959,12 +18492,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateIssuerAndLocalCeilings"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-LIMIT-0030",
         "REQ-TRUST-0010",
@@ -17984,16 +18517,16 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateIssuerAuthorization"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-TRUST-0010",
         "REQ-TRUST-0011",
-        "REQ-TRUST-0037"
+        "REQ-TRUST-0047"
       ],
       "scope": "Existing synthetic Go unit test TestGateIssuerAuthorization in package internal/admission, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
       "case_results": [
@@ -18008,12 +18541,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateIssuerLocalConflicts"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-TRUST-0010"
       ],
@@ -18030,15 +18563,15 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGatePolicyAndIssuerResolution"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-TRUST-0010",
-        "REQ-TRUST-0037"
+        "REQ-TRUST-0047"
       ],
       "scope": "Existing synthetic Go unit test TestGatePolicyAndIssuerResolution in package internal/admission, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
       "case_results": [
@@ -18053,12 +18586,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateTargetRegistrationExactMatch"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-TRUST-0013",
         "REQ-TRUST-0014"
@@ -18076,12 +18609,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateTargetRegistrationSingleComponentMutations"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-TRUST-0014",
         "REQ-TRUST-0015"
@@ -18099,12 +18632,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateTargetRegistrationNormalization"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-TRUST-0015"
       ],
@@ -18121,12 +18654,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateTargetRegistrationExpiry"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-TRUST-0013",
         "REQ-TRUST-0014"
@@ -18144,12 +18677,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateTargetRegistrationAuthority"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-TRUST-0011",
         "REQ-TRUST-0013",
@@ -18168,12 +18701,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateTargetRegistrationRequiresCompleteTuples"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-TRUST-0013",
         "REQ-TRUST-0014"
@@ -18191,14 +18724,14 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateTargetRegistrationPrecedence"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
-        "REQ-TRUST-0037"
+        "REQ-TRUST-0047"
       ],
       "scope": "Existing synthetic Go unit test TestGateTargetRegistrationPrecedence in package internal/admission, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
       "case_results": [
@@ -18213,12 +18746,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestTargetRegistrationRejectsCredentialsAndInterpolation"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-TRUST-0015"
       ],
@@ -18235,12 +18768,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateConsentRequirement"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-SAFETY-0021",
         "REQ-SAFETY-0022",
@@ -18259,12 +18792,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateEffectiveRisk"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-SAFETY-0004",
         "REQ-SAFETY-0005",
@@ -18286,12 +18819,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateLocallyDeterminedRiskBounds"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-SAFETY-0010",
         "REQ-SAFETY-0023",
@@ -18311,12 +18844,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateTaskCannotLowerBaseline"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-SAFETY-0010",
         "REQ-SAFETY-0024",
@@ -18335,17 +18868,17 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateUnreliableSafetyInputsFailClosed"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-SAFETY-0017",
         "REQ-SAFETY-0019",
         "REQ-SAFETY-0029",
-        "REQ-TRUST-0037"
+        "REQ-TRUST-0047"
       ],
       "scope": "Existing synthetic Go unit test TestGateUnreliableSafetyInputsFailClosed in package internal/admission, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
       "case_results": [
@@ -18360,12 +18893,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestRestrictiveFailsClosed"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-SAFETY-0029"
       ],
@@ -18382,15 +18915,15 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateEgressContextPrecedence"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-TRUST-0036",
-        "REQ-TRUST-0037"
+        "REQ-TRUST-0047"
       ],
       "scope": "Existing synthetic Go unit test TestGateEgressContextPrecedence in package internal/admission, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
       "case_results": [
@@ -18405,16 +18938,16 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateRejectsCompositeProfiles"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-TRUST-0018",
         "REQ-TRUST-0036",
-        "REQ-TRUST-0037"
+        "REQ-TRUST-0047"
       ],
       "scope": "Existing synthetic Go unit test TestGateRejectsCompositeProfiles in package internal/admission, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
       "case_results": [
@@ -18429,16 +18962,16 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.admission.TestGateRejectsEgressContextRequirements"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-TRUST-0018",
         "REQ-TRUST-0036",
-        "REQ-TRUST-0037"
+        "REQ-TRUST-0047"
       ],
       "scope": "Existing synthetic Go unit test TestGateRejectsEgressContextRequirements in package internal/admission, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
       "case_results": [
@@ -18449,16 +18982,105 @@
       ]
     },
     {
+      "id": "EV.UT.internal.admission.TestDecodePackageAndMessage",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
+        "selector": "anchor:UT.internal.admission.TestDecodePackageAndMessage"
+      },
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
+      "requirement_ids": [
+        "REQ-TRUST-0048",
+        "REQ-TRUST-0049"
+      ],
+      "scope": "Existing synthetic Go unit test TestDecodePackageAndMessage in package internal/admission, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "case_results": [
+        {
+          "case_id": "UT.internal.admission.TestDecodePackageAndMessage",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "EV.UT.internal.admission.TestPackageMemberFormats",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
+        "selector": "anchor:UT.internal.admission.TestPackageMemberFormats"
+      },
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
+      "requirement_ids": [
+        "REQ-TRUST-0048"
+      ],
+      "scope": "Existing synthetic Go unit test TestPackageMemberFormats in package internal/admission, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "case_results": [
+        {
+          "case_id": "UT.internal.admission.TestPackageMemberFormats",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "EV.UT.internal.admission.TestSignatureStrictnessEdgeVectors",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
+        "selector": "anchor:UT.internal.admission.TestSignatureStrictnessEdgeVectors"
+      },
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
+      "requirement_ids": [
+        "REQ-TRUST-0050"
+      ],
+      "scope": "Existing synthetic Go unit test TestSignatureStrictnessEdgeVectors in package internal/admission, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "case_results": [
+        {
+          "case_id": "UT.internal.admission.TestSignatureStrictnessEdgeVectors",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "EV.UT.internal.admission.TestRemoteRecordsAreSingleUse",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
+        "selector": "anchor:UT.internal.admission.TestRemoteRecordsAreSingleUse"
+      },
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
+      "requirement_ids": [
+        "REQ-TRUST-0053"
+      ],
+      "scope": "Existing synthetic Go unit test TestRemoteRecordsAreSingleUse in package internal/admission, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "case_results": [
+        {
+          "case_id": "UT.internal.admission.TestRemoteRecordsAreSingleUse",
+          "result": "passed"
+        }
+      ]
+    },
+    {
       "id": "EV.UT.internal.validation.TestTaskIDRulesAndLimitClass",
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.validation.TestTaskIDRulesAndLimitClass"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-LIMIT-0004",
         "REQ-TRUST-0019"
@@ -18476,12 +19098,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.validation.TestRefiningClasses"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-LIMIT-0002",
         "REQ-SAFETY-0017"
@@ -18499,12 +19121,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.taskdecode.TestStagedDecoding"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-JSON-0008"
       ],
@@ -18521,12 +19143,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-LIMIT-0023",
         "REQ-TRUST-0021",
@@ -18548,12 +19170,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:CC-TRUST-LOCAL-POLICY-LIFECYCLE"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-TRUST-0029",
         "REQ-TRUST-0030",
@@ -18573,21 +19195,120 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:CC-TRUST-ACCEPTED-TASK-ORIGINS"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
-        "REQ-TRUST-0001",
-        "REQ-TRUST-0004",
-        "REQ-TRUST-0005"
+        "REQ-TRUST-0043",
+        "REQ-TRUST-0041",
+        "REQ-TRUST-0042",
+        "REQ-TRUST-0044"
       ],
-      "scope": "Synthetic core contract cases; Admit the same synthetic task bytes through delivery records of each origin: embedded with authenticated false and no issued_at is accepted, and remote with authenticated true and issued_at equal to the fake clock is accepted. For remote origin, remove one input at a time: authenticated false is rejected as task_source_unauthenticated; a record bound to bytes differing by one byte (failed integrity) is rejected as task_source_unauthenticated; a missing issued_at cannot produce a record, so the task is rejected as task_source_unauthenticated; an unavailable trusted clock is rejected as task_trust_unavailable; no delivery record at all is rejected as task_source_unauthenticated. A test verifier that reports transport encryption without issuer authentication must yield no authenticated record, and admission then rejects. For every rejection assert no replay or admitted-task record is written. Admission has no transport seam, so zero transport calls are established by checking that the dependency closure of admission contains no network package. Requirements: REQ-TRUST-0001, REQ-TRUST-0004, REQ-TRUST-0005.",
+      "scope": "Synthetic core contract cases; Admit the same synthetic task bytes through delivery records of each origin: embedded with its issuer and no issued_at is accepted, and remote as a signed package from a trusted key of its issuer, issued at the fake clock, is accepted with a replay digest equal to the digest of the task bytes. For remote origin, remove one input at a time: a remote source with a host-supplied issuer cannot be constructed; the bare task presented as remote without a signed package, and a package with an added authenticated member, are rejected as task_source_unauthenticated; a record presented with package bytes differing by one byte is rejected as task_source_unauthenticated; an unavailable trusted clock is rejected as task_trust_unavailable; no delivery record at all is rejected as task_source_unauthenticated. For every rejection assert no replay or admitted-task record is written. Admission has no transport seam, so zero transport calls are established by checking that the dependency closure of admission contains no network package. Requirements: REQ-TRUST-0041, REQ-TRUST-0042, REQ-TRUST-0043, REQ-TRUST-0044.",
       "case_results": [
         {
           "case_id": "CC-TRUST-ACCEPTED-TASK-ORIGINS",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "EV.CC-TRUST-SIGNED-REMOTE-PACKAGES",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
+        "selector": "anchor:CC-TRUST-SIGNED-REMOTE-PACKAGES"
+      },
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
+      "requirement_ids": [
+        "REQ-LIMIT-0032",
+        "REQ-TRUST-0043",
+        "REQ-TRUST-0046",
+        "REQ-TRUST-0047",
+        "REQ-TRUST-0048",
+        "REQ-TRUST-0049",
+        "REQ-TRUST-0050",
+        "REQ-TRUST-0052"
+      ],
+      "scope": "Synthetic core contract cases; Present signed remote task packages built from synthetic Ed25519 keys through a fake delivery store, a policy holding two keys of the remote issuer and one of another issuer, and a fake clock, changing one property of an otherwise valid package per case. Assert acceptance for a valid package, a second key of the issuer, a package padded with whitespace to exactly 98,304 bytes, acceptance exactly at not_after, issued_at exactly at not_before and issued_at 300 seconds ahead. Assert task_limit_exceeded for 98,305 bytes; task_policy_unavailable with no installed policy; task_source_unauthenticated for malformed packages (not JSON, a bare task, unknown, duplicate, escaped-duplicate or missing members, wrong member types, padded, standard-alphabet or newline-containing base64url, nonzero trailing bits, an empty task, a 63- or 65-byte signature, fractional, offset, lowercase, leap-second or invalid-date issued_at, invalid identifiers), an unknown key_id, a key of another issuer or a package re-wrapped under another issuer, acceptance one second after not_after, issued_at one second before not_before or after not_after, issued_at 301 seconds ahead, an altered task byte, issued_at, key_id or signature, and a signature over another context or over the bare task; and task_trust_unavailable when trusted time is unavailable at check 6. Assert exactly one class, from the first failing check, for packages failing several checks, and that no rejected package reaches the task codec. A validly signed package whose task is invalid or over 65,536 bytes fails its later step instead. Requirements: REQ-TRUST-0043, REQ-TRUST-0046, REQ-TRUST-0047, REQ-TRUST-0048, REQ-TRUST-0049, REQ-TRUST-0050, REQ-TRUST-0052, REQ-LIMIT-0032.",
+      "case_results": [
+        {
+          "case_id": "CC-TRUST-SIGNED-REMOTE-PACKAGES",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "EV.CC-TRUST-SIGNED-PACKAGE-DISCLOSURE",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
+        "selector": "anchor:CC-TRUST-SIGNED-PACKAGE-DISCLOSURE"
+      },
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
+      "requirement_ids": [
+        "REQ-TRUST-0035",
+        "REQ-TRUST-0052"
+      ],
+      "scope": "Synthetic core contract cases; Reject six synthetic signed packages that each fail a different verification check (a bad signature, an issuer moved after signing, an unknown key, malformed JSON, issuance one hour ahead and 98,305 bytes), with canaries in the task payload, key IDs, issuers, signature and public-key prefixes and the raw clock error. Assert that each error formats under %v, %+v, %#v and Error() without any canary or the words ed25519, base64, check, key or signature, and that the six errors produce only the two fixed class strings task_source_unauthenticated and task_limit_exceeded, so the failing check cannot be distinguished beyond its class. Requirements: REQ-TRUST-0035, REQ-TRUST-0052.",
+      "case_results": [
+        {
+          "case_id": "CC-TRUST-SIGNED-PACKAGE-DISCLOSURE",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "EV.CC-TRUST-SIGNED-PACKAGE-RETENTION",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
+        "selector": "anchor:CC-TRUST-SIGNED-PACKAGE-RETENTION"
+      },
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
+      "requirement_ids": [
+        "REQ-TRUST-0053"
+      ],
+      "scope": "Synthetic core contract cases; Admit a synthetic signed package through a fake delivery store and the test replay store, then assert the replay record holds the remote issuer, the task_id and the SHA-256 digest of the exact task bytes, not of the package, and that neither the record nor the dumped replay store contains the key ID, the encoded signature, the package bytes or the package digest in hex or base64. Assert the remote delivery record no longer resolves after admission, that a package re-signed later over the same task bytes and presented through a new reference resolves to the same admitted identity as a redelivery, and that a package with a corrupted signature leaves no replay record, staged write or resolvable delivery record. Requirements: REQ-TRUST-0053.",
+      "case_results": [
+        {
+          "case_id": "CC-TRUST-SIGNED-PACKAGE-RETENTION",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "EV.CC-TRUST-KEY-ROTATION",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
+        "selector": "anchor:CC-TRUST-KEY-ROTATION"
+      },
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
+      "requirement_ids": [
+        "REQ-TRUST-0030",
+        "REQ-TRUST-0051",
+        "REQ-TRUST-0054"
+      ],
+      "scope": "Synthetic core contract cases; Initialize a client with a generation-2 policy holding two keys of the remote issuer and admit one synthetic task signed with each. Replace it with generation 3 holding only the second key and assert every task handle and queued delivery reference is invalidated, that the task signed with the removed key and a new task signed with it are rejected as task_source_unauthenticated on redelivery, and that the task signed with the retained key resolves to its retained acceptance without a new replay record. Replace it with generation 4 without the remote issuer and assert its handles are invalidated and its packages rejected with no replay write. Assert that a policy whose key names an issuer it does not authorize is not constructed and the active policy is unchanged. With a key valid until one hour after acceptance, admit a task valid for three hours, advance the clock two hours, and assert the handle still resolves with its original expiry while a new presentation of the same package is rejected as task_source_unauthenticated. Requirements: REQ-TRUST-0030, REQ-TRUST-0051, REQ-TRUST-0054.",
+      "case_results": [
+        {
+          "case_id": "CC-TRUST-KEY-ROTATION",
           "result": "passed"
         }
       ]
@@ -18597,12 +19318,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.internal.persistence.TestReplayRecordRetention"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-LIMIT-0023",
         "REQ-TRUST-0021"
@@ -18620,12 +19341,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.root.TestAdmissionHasNoNetworkDependency"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-TRUST-0018"
       ],
@@ -18642,14 +19363,14 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.root.TestAdmitTaskAcceptsReviewedOrigins"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
-        "REQ-TRUST-0017"
+        "REQ-TRUST-0046"
       ],
       "scope": "Existing synthetic Go unit test TestAdmitTaskAcceptsReviewedOrigins in the root package, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
       "case_results": [
@@ -18664,12 +19385,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.root.TestAdmitTaskErrorsCarryNoInput"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-TRUST-0035"
       ],
@@ -18686,12 +19407,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.root.TestAdmitTaskExactRedeliveryReturnsTheSameHandle"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-TRUST-0024"
       ],
@@ -18708,15 +19429,17 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.root.TestAdmitTaskHostileSources"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
-        "REQ-TRUST-0001",
-        "REQ-TRUST-0017"
+        "REQ-TRUST-0042",
+        "REQ-TRUST-0043",
+        "REQ-TRUST-0046",
+        "REQ-TRUST-0052"
       ],
       "scope": "Existing synthetic Go unit test TestAdmitTaskHostileSources in the root package, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
       "case_results": [
@@ -18731,14 +19454,14 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.root.TestAdmitTaskRejectionsAreAtomic"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
-        "REQ-TRUST-0037",
+        "REQ-TRUST-0047",
         "REQ-TRUST-0038"
       ],
       "scope": "Existing synthetic Go unit test TestAdmitTaskRejectionsAreAtomic in the root package, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
@@ -18754,12 +19477,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.root.TestAdmitTaskStrictJSON"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-JSON-0001",
         "REQ-JSON-0002",
@@ -18784,12 +19507,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.root.TestClearInvalidatesHandlesAndDeliveryReferences"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-LINKAGE-0023"
       ],
@@ -18806,12 +19529,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.root.TestLifecycleTransitionTable"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-LINKAGE-0023",
         "REQ-LINKAGE-0024"
@@ -18829,12 +19552,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.root.TestPanicsAreRecoveredToFixedCodes"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-LINKAGE-0023"
       ],
@@ -18851,12 +19574,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "aab804d24fa1a224053e39ffb47d7f3b9522cd14",
-        "path": "traceability/evidence/go-unit-09e2141.md",
+        "revision": "7ef878f6c96b1232bfe93d11fe1bbeaed5105618",
+        "path": "traceability/evidence/go-unit-e663afe.md",
         "selector": "anchor:UT.root.TestRootPackageImportsNoNetworkPackages"
       },
-      "specification_revision": "d93aff93cbc17e7c065fb40d8f6e2e01a697bf35",
-      "implementation_revision": "09e21415673d9b06ef720a659bc1760f1c3a6340",
+      "specification_revision": "e97502747c917a16bc2b71337535ff972bbd7d64",
+      "implementation_revision": "e663afeb0f9a6f5cc57c914b8f13ff75bb71e216",
       "requirement_ids": [
         "REQ-LINKAGE-0024"
       ],

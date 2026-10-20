@@ -36,6 +36,8 @@ DEV-593 adds local policy activation and replacement by reinitialization ([Imple
 
 DEV-594 closes out the admission evidence ([Hostile-Input Evidence](admission.md#hostile-input-evidence)) and rebaselines this map to Go `09e21415673d9b06ef720a659bc1760f1c3a6340` at the same public baseline. The executed `CC-TRUST-ACCEPTED-TASK-ORIGINS` family case and three new `UT.root.*` cases record their aspects in the [evidence report](../traceability/evidence/go-unit-09e2141.md); REQ-TRUST-0005 becomes `partial` (170 `partial`). Every other admission-scope family stays `planned`, and the [admission design](admission.md#admission-case-families) and the requirement notes record why.
 
+DEV-612 adopts library-verified signed remote task packages ([Signed Remote Task Packages](admission.md#signed-remote-task-packages), coordination decision 0011) and rebaselines this map to public `e97502747c917a16bc2b71337535ff972bbd7d64` (Draft `0.1.0`, the verified merge of public PR #18) and Go `e663afeb0f9a6f5cc57c914b8f13ff75bb71e216`, preserving the DEV-594 mapping as [historical manifest](../traceability/historical/cross-cutting-d93aff9-09e2141.json). The successors REQ-TRUST-0040 to REQ-TRUST-0047 take over the mappings of the retired REQ-TRUST-0001, REQ-TRUST-0002, REQ-TRUST-0004 to REQ-TRUST-0007, REQ-TRUST-0009, REQ-TRUST-0017 and REQ-TRUST-0037; REQ-TRUST-0048 to REQ-TRUST-0054 and REQ-LIMIT-0032 are new. Four new family cases, `CC-TRUST-SIGNED-REMOTE-PACKAGES`, `CC-TRUST-SIGNED-PACKAGE-DISCLOSURE`, `CC-TRUST-SIGNED-PACKAGE-RETENTION` and `CC-TRUST-KEY-ROTATION`, and ten new `UT.*` cases are executed, with aspects in the [evidence report](../traceability/evidence/go-unit-e663afe.md). The map holds 585 requirements (179 `partial`, 406 `planned`). The same public revision also activates REQ-TRUST-0039 and REQ-PROXY-0042 from the GO-SPEC-ISSUE-009 disposition (DEV-598); their mapping belongs to the Go adoption task DEV-599 and they remain reported gaps here.
+
 The earlier DEV-471 mapping at public baseline `47d75925b3829fccfb6954b545c15f695375b76f` and Go baseline `a9136f34fad00ecc2171cbc29e835c5c50b340df` is preserved byte-for-byte as [historical manifest](../traceability/historical/cross-cutting-47d7592.json) with its unchanged [report](../traceability/reports/cross-cutting.json). It mapped 565 requirements to 185 families. It remains valid metadata only for those original baselines and is not a current claim.
 
 ## Boundaries and Maintenance
@@ -2880,49 +2882,49 @@ Review case `RV-CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS` (`docs/conformance/c
 
 Public source: `library/task-trust.md`, section **Overview**. Intended target: `internal/admission/admit.go`. Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustOverview`.
 
-Case plan: Admit synthetic NET-01 tasks with a fake delivery-record store, local policy, registry, deterministic clock and recording transport. A baseline task with an embedded delivery record for its exact bytes, an issuer permitted NET-01 0.1.0 and a matching target registration is accepted. Remove one prerequisite at a time (the delivery record, the issuer permission, the target registration, the registry entry for the exact version, and a numeric value raised above its registered limit) and assert rejection with, respectively, task_source_unauthenticated, task_issuer_not_authorized, target_not_registered, task_unsupported and task_limit_exceeded, and zero transport calls. Add task-controlled authority claims: top-level authenticated, issuer_id, policy_generation and trusted fields are rejected as task_schema_invalid, and a permitted label with the text "authenticated: true" stays opaque, producing the same authority, effective risk, targets and policy decision as the same task without it. With a synthetic registry baseline of medium, a task declaring low cannot lower effective risk. Assert no task field changes the active policy generation or registrations. Requirements: REQ-TRUST-0002, REQ-TRUST-0003.
+Case plan: Admit synthetic NET-01 tasks with a fake delivery-record store, local policy, registry, deterministic clock and recording transport. A baseline task with an embedded delivery record for its exact bytes, an issuer permitted NET-01 0.1.0 and a matching target registration is accepted. Remove one prerequisite at a time (the delivery record, the issuer permission, the target registration, the registry entry for the exact version, and a numeric value raised above its registered limit) and assert rejection with, respectively, task_source_unauthenticated, task_issuer_not_authorized, target_not_registered, task_unsupported and task_limit_exceeded, and zero transport calls. Add task-controlled authority claims: top-level authenticated, issuer_id, policy_generation and trusted fields are rejected as task_schema_invalid, and a permitted label with the text "authenticated: true" stays opaque, producing the same authority, effective risk, targets and policy decision as the same task without it. With a synthetic registry baseline of medium, a task declaring low cannot lower effective risk. Assert no task field changes the active policy generation or registrations. Requirements: REQ-TRUST-0040, REQ-TRUST-0003.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
-<!-- requirement-ref: REQ-TRUST-0002 -->
+<!-- requirement-ref: REQ-TRUST-0040 -->
 <!-- requirement-ref: REQ-TRUST-0003 -->
 
-- [REQ-TRUST-0002](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0002) → `CC-TRUST-OVERVIEW`.
-- [REQ-TRUST-0003](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0003) → `CC-TRUST-OVERVIEW`.
+- [REQ-TRUST-0040](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0040) → `CC-TRUST-OVERVIEW`.
+- [REQ-TRUST-0003](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0003) → `CC-TRUST-OVERVIEW`.
 
 ### CC-TRUST-ACCEPTED-TASK-ORIGINS
 
 Public source: `library/task-trust.md`, section **Accepted Task Origins**. Intended target: `internal/admission/admit.go`. Case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustAcceptedTaskOrigins`, executed by DEV-594.
 
-Case plan: Admit the same synthetic task bytes through delivery records of each origin: embedded with authenticated false and no issued_at is accepted, and remote with authenticated true and issued_at equal to the fake clock is accepted. For remote origin, remove one input at a time: authenticated false is rejected as task_source_unauthenticated; a record bound to bytes differing by one byte (failed integrity) is rejected as task_source_unauthenticated; a missing issued_at cannot produce a record, so the task is rejected as task_source_unauthenticated; an unavailable trusted clock is rejected as task_trust_unavailable; no delivery record at all is rejected as task_source_unauthenticated. A test verifier that reports transport encryption without issuer authentication must yield no authenticated record, and admission then rejects. For every rejection assert no replay or admitted-task record is written. Admission has no transport seam, so zero transport calls are established by checking that the dependency closure of admission contains no network package. Requirements: REQ-TRUST-0001, REQ-TRUST-0004, REQ-TRUST-0005.
+Case plan: Admit the same synthetic task bytes through delivery records of each origin: embedded with its issuer and no issued_at is accepted, and remote as a signed package from a trusted key of its issuer, issued at the fake clock, is accepted with a replay digest equal to the digest of the task bytes. For remote origin, remove one input at a time: a remote source with a host-supplied issuer cannot be constructed; the bare task presented as remote without a signed package, and a package with an added authenticated member, are rejected as task_source_unauthenticated; a record presented with package bytes differing by one byte is rejected as task_source_unauthenticated; an unavailable trusted clock is rejected as task_trust_unavailable; no delivery record at all is rejected as task_source_unauthenticated. For every rejection assert no replay or admitted-task record is written. Admission has no transport seam, so zero transport calls are established by checking that the dependency closure of admission contains no network package. Requirements: REQ-TRUST-0041, REQ-TRUST-0042, REQ-TRUST-0043, REQ-TRUST-0044.
 
-Scope: Synthetic core contract cases. Passed at Go `09e2141` ([evidence](../traceability/evidence/go-unit-09e2141.md#CC-TRUST-ACCEPTED-TASK-ORIGINS)); partial evidence only, with a synthetic test verifier, structural rather than observed network absence and no production remote mechanism or support claim.
+Scope: Synthetic core contract cases. Passed at Go `09e2141` and, rewritten for signed packages by DEV-612, at Go `e663afe` ([evidence](../traceability/evidence/go-unit-e663afe.md#CC-TRUST-ACCEPTED-TASK-ORIGINS)); partial evidence only, with synthetic keys, structural rather than runtime network absence and no support claim.
 
-<!-- requirement-ref: REQ-TRUST-0001 -->
-<!-- requirement-ref: REQ-TRUST-0004 -->
-<!-- requirement-ref: REQ-TRUST-0005 -->
+<!-- requirement-ref: REQ-TRUST-0041 -->
+<!-- requirement-ref: REQ-TRUST-0042 -->
+<!-- requirement-ref: REQ-TRUST-0043 -->
+<!-- requirement-ref: REQ-TRUST-0044 -->
 
-- [REQ-TRUST-0001](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0001) → `CC-TRUST-ACCEPTED-TASK-ORIGINS`.
-- [REQ-TRUST-0004](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0004) → `CC-TRUST-ACCEPTED-TASK-ORIGINS`.
-- [REQ-TRUST-0005](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0005) → `CC-TRUST-ACCEPTED-TASK-ORIGINS`.
+- [REQ-TRUST-0041](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0041) → `CC-TRUST-ACCEPTED-TASK-ORIGINS`.
+- [REQ-TRUST-0042](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0042) → `CC-TRUST-ACCEPTED-TASK-ORIGINS`.
+- [REQ-TRUST-0043](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0043) → `CC-TRUST-ACCEPTED-TASK-ORIGINS`.
+- [REQ-TRUST-0044](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0044) → `CC-TRUST-ACCEPTED-TASK-ORIGINS`.
 
 ### CC-TRUST-TRUSTED-SOURCE-CONTEXT
 
 Public source: `library/task-trust.md`, section **Trusted Source Context**. Intended target: `internal/admission/admit.go`. Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustTrustedSourceContext`.
 
-Case plan: Construct source contexts through the admission seam, varying one property at a time. origin: embedded and remote accepted, any other value rejected. issuer_id: 1 and 64 allowed bytes accepted; empty, 65 bytes, uppercase, space and "/" rejected. policy_generation: 1 and 2^64-1 accepted, 0 rejected. authenticated: true with embedded and false with remote rejected. issued_at: for remote, equal to the fake clock and 300 seconds ahead accepted, 301 seconds ahead rejected as task_source_unauthenticated, missing rejected; for embedded, present rejected. Assert task JSON and initialization JSON have no field that sets any property (unknown fields rejected) and the trust models reject JSON import. Admit and run a task with canary issuer_id and generation values against a recording transport and fake result sink, and assert the canaries are absent from every transmitted byte, Measurement Result and bundle. Assert the facade signature fixture accepts no raw key or authenticated flag. Requirements: REQ-TRUST-0006, REQ-TRUST-0007, REQ-TRUST-0008, REQ-TRUST-0009.
+Case plan: Construct source contexts through the admission seam, varying one property at a time. origin: embedded and remote accepted, any other value rejected. issuer_id: for embedded, 1 and 64 allowed bytes accepted and empty, 65 bytes, uppercase, space and "/" rejected; for remote, any host-supplied value rejected. policy_generation: 1 and 2^64-1 accepted, 0 rejected. There is no authentication flag to set. issued_at: for remote, taken only from a verified package, so equal to the fake clock and 300 seconds ahead are accepted and 301 seconds ahead is rejected as task_source_unauthenticated; for embedded, absent. Assert task JSON and initialization JSON have no field that sets any property (unknown fields rejected) and the trust models reject JSON import. Admit and run a task with canary issuer_id and generation values against a recording transport and fake result sink, and assert the canaries are absent from every transmitted byte, Measurement Result and bundle. Assert the facade signature fixture accepts no raw key, signature verdict or authenticated flag, and that trusted keys enter only through the trusted local policy. Requirements: REQ-TRUST-0008, REQ-TRUST-0044, REQ-TRUST-0045.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
-<!-- requirement-ref: REQ-TRUST-0006 -->
-<!-- requirement-ref: REQ-TRUST-0007 -->
+<!-- requirement-ref: REQ-TRUST-0044 -->
 <!-- requirement-ref: REQ-TRUST-0008 -->
-<!-- requirement-ref: REQ-TRUST-0009 -->
+<!-- requirement-ref: REQ-TRUST-0045 -->
 
-- [REQ-TRUST-0006](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0006) → `CC-TRUST-TRUSTED-SOURCE-CONTEXT`.
-- [REQ-TRUST-0007](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0007) → `CC-TRUST-TRUSTED-SOURCE-CONTEXT`.
-- [REQ-TRUST-0008](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0008) → `CC-TRUST-TRUSTED-SOURCE-CONTEXT`.
-- [REQ-TRUST-0009](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0009) → `CC-TRUST-TRUSTED-SOURCE-CONTEXT`.
+- [REQ-TRUST-0044](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0044) → `CC-TRUST-TRUSTED-SOURCE-CONTEXT`.
+- [REQ-TRUST-0008](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0008) → `CC-TRUST-TRUSTED-SOURCE-CONTEXT`.
+- [REQ-TRUST-0045](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0045) → `CC-TRUST-TRUSTED-SOURCE-CONTEXT`.
 
 ### CC-TRUST-ISSUER-AUTHORIZATION
 
@@ -2962,17 +2964,17 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 Public source: `library/task-trust.md`, section **Admission Procedure**. Intended target: `internal/admission/admit.go`. Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustAdmissionProcedure`.
 
-Case plan: Instrument admission with a fake delivery-record store, clock, registry, policy, replay store and recording transport that log the order of calls. A valid task runs the eleven public steps in order, and its handle is returned only after the replay write commits. Build tasks that each fail exactly one step and assert the listed class: missing, expired, foreign-instance or byte-mismatched delivery record, task_source_unauthenticated; unauthenticated remote origin, task_source_unauthenticated; unavailable trusted clock, task_trust_unavailable; remote issued_at 301 seconds in the future, task_source_unauthenticated, while 300 seconds is accepted; 65,537 bytes, task_limit_exceeded; unknown top-level field, task_schema_invalid; well-formed but unregistered test_version, task_unsupported; uppercase task_id, task_schema_invalid; 129-byte task_id, task_limit_exceeded; expired task, task_expired; execution.context requiring egress Network Context in a build without egress acquisition, task_unsupported; no installed policy, task_policy_unavailable; source policy_generation one above the active generation, task_policy_unavailable, and one below, policy_rollback; unknown issuer, task_issuer_not_authorized; direct or proxy path not permitted by issuer authority or local policy, task_issuer_not_authorized; path not permitted by the matched target registration, and an unregistered target, target_not_registered; effective risk above the issuer maximum or a local-policy bound, and unknown risk without a reviewed local permission, task_issuer_not_authorized; replay conflict, task_id_conflict; replay write failure, task_trust_unavailable. For each assert exactly one class, that no later step's capability is called, that no replay or admitted-task record exists, that no handle is returned and that the transport, DNS and Network Context fakes see zero calls. Precedence follows the first failing step: an unknown top-level field with an unknown issuer returns task_schema_invalid (step 4 before 7), an unregistered test_version with a 129-byte task_id returns task_unsupported (step 4 before 5), an expired task with an unregistered target returns task_expired (step 6 before 8), and a 65,537-byte task from an unauthenticated remote source returns task_source_unauthenticated (step 2 before 3). A valid task that requires egress context performs no context lookup during admission in a build that provides egress acquisition. Requirements: REQ-TRUST-0017, REQ-TRUST-0018, REQ-TRUST-0037.
+Case plan: Instrument admission with a fake delivery-record store, clock, registry, policy, replay store and recording transport that log the order of calls. A valid task runs the eleven public steps in order, and its handle is returned only after the replay write commits. Build tasks that each fail exactly one step and assert the listed class: missing, expired, foreign-instance or byte-mismatched delivery record, task_source_unauthenticated; a remote task whose signed package fails verification, task_source_unauthenticated; unavailable trusted clock, task_trust_unavailable; a remote package issued 301 seconds after acceptance, task_source_unauthenticated, while 300 seconds is accepted; 65,537 bytes, task_limit_exceeded; unknown top-level field, task_schema_invalid; well-formed but unregistered test_version, task_unsupported; uppercase task_id, task_schema_invalid; 129-byte task_id, task_limit_exceeded; expired task, task_expired; execution.context requiring egress Network Context in a build without egress acquisition, task_unsupported; no installed policy, task_policy_unavailable; source policy_generation one above the active generation, task_policy_unavailable, and one below, policy_rollback; unknown issuer, task_issuer_not_authorized; direct or proxy path not permitted by issuer authority or local policy, task_issuer_not_authorized; path not permitted by the matched target registration, and an unregistered target, target_not_registered; effective risk above the issuer maximum or a local-policy bound, and unknown risk without a reviewed local permission, task_issuer_not_authorized; replay conflict, task_id_conflict; replay write failure, task_trust_unavailable. For each assert exactly one class, that no later step's capability is called, that no replay or admitted-task record exists, that no handle is returned and that the transport, DNS and Network Context fakes see zero calls. Precedence follows the first failing step: an unknown top-level field with an unknown issuer returns task_schema_invalid (step 4 before 7), an unregistered test_version with a 129-byte task_id returns task_unsupported (step 4 before 5), an expired task with an unregistered target returns task_expired (step 6 before 8), and a 65,537-byte task presented as remote without a signed package returns task_source_unauthenticated (step 2 before 3). A valid task that requires egress context performs no context lookup during admission in a build that provides egress acquisition. Requirements: REQ-TRUST-0046, REQ-TRUST-0018, REQ-TRUST-0047.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
-<!-- requirement-ref: REQ-TRUST-0017 -->
+<!-- requirement-ref: REQ-TRUST-0046 -->
 <!-- requirement-ref: REQ-TRUST-0018 -->
-<!-- requirement-ref: REQ-TRUST-0037 -->
+<!-- requirement-ref: REQ-TRUST-0047 -->
 
-- [REQ-TRUST-0017](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0017) → `CC-TRUST-ADMISSION-PROCEDURE`.
-- [REQ-TRUST-0018](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0018) → `CC-TRUST-ADMISSION-PROCEDURE`.
-- [REQ-TRUST-0037](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0037) → `CC-TRUST-ADMISSION-PROCEDURE`.
+- [REQ-TRUST-0046](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0046) → `CC-TRUST-ADMISSION-PROCEDURE`.
+- [REQ-TRUST-0018](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0018) → `CC-TRUST-ADMISSION-PROCEDURE`.
+- [REQ-TRUST-0047](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0047) → `CC-TRUST-ADMISSION-PROCEDURE`.
 
 ### CC-TRUST-TASK-IDENTIFIER-RULES
 
@@ -2996,7 +2998,7 @@ Public source: `library/task-trust.md`, section **Replay, Duplicate, and Rollbac
 
 Case plan: Exercise every replay-table row with a deterministic clock and fake persistent storage: a new replay key continues admission; the same key with identical bytes is idempotent redelivery with no duplicate runs and unchanged expiry; the same key with one changed byte (including whitespace only) is rejected as task_id_conflict; a lower policy generation than the active one is rejected as policy_rollback; an expired task is rejected as task_expired and never reactivated on later redelivery; unavailable or corrupted replay state fails closed with task_trust_unavailable for a remote task and, with the same storage fault injected, for an embedded task, which is never accepted, assigned a handle or made executable without replay state. Assert the persisted record contains only the (issuer_id, task_id) key, a SHA-256 digest equal to an independently computed digest of the exact accepted bytes, the accepted policy generation and acceptance/expiry classes with retention ending 86,400 seconds after task expiry, and that synthetic canary input, target, label, participant and result strings are absent from stored bytes. Post-clearing redelivery rows are planned separately in CC-TRUST-REPLAY-AFTER-CLEARING. Requirements: REQ-TRUST-0021, REQ-TRUST-0022, REQ-TRUST-0023, REQ-TRUST-0024, REQ-TRUST-0038, REQ-LIMIT-0023.
 
-Scope: Synthetic core contract cases. Passed at Go `9283870` and re-executed at Go `73faaf5`, `7b098a6`, `954b7d7` and `09e2141` ([evidence](../traceability/evidence/go-unit-09e2141.md#CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING)); partial evidence only, with no production store, device-durability or support claim.
+Scope: Synthetic core contract cases. Passed at Go `9283870` and re-executed at Go `73faaf5`, `7b098a6`, `954b7d7`, `09e2141` and `e663afe` ([evidence](../traceability/evidence/go-unit-e663afe.md#CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING)); partial evidence only, with no production store, device-durability or support claim.
 
 <!-- requirement-ref: REQ-TRUST-0021 -->
 <!-- requirement-ref: REQ-TRUST-0022 -->
@@ -3050,7 +3052,7 @@ Public source: `library/task-trust.md`, section **Local Policy Lifecycle**. Inte
 
 Case plan: Initialize with policy generation 2 and admit a task. Assert from the root package source that only the replacement seam assigns the active policy, adapters or admitter, that admission leaves the active generation unchanged and that Initialize on an initialized client returns already_initialized. Drive replacement by quiesce and reinitialization with fault injection at each implemented step. Validation refuses generation 2 (equal) and 1 (lower), an incomplete policy, retained replay acceptances above the new generation, unavailable replay generations and a panicking trusted clock with policy_rejected. After quiescing, a panic while cancelling the current generation and a delivery store that refuses the new generation leave the client uninitialized, and reserved work outliving the lifecycle deadline leaves it blocked with cleanup_incomplete until close. After each validation failure assert the complete generation-2 policy, its handles and its delivery references stay active and its tasks still admit; after each later failure assert no policy remains and that a reinitialized client rejects generation-2 and generation-3 deliveries with task_policy_unavailable, never mixing registrations. Assert in-flight admission is cancelled with no replay record or handle. On a successful generation-3 replacement that removes the task's registration, assert the previous generation's context is cancelled, its task handles and delivery records no longer resolve, a generation-3 redelivery is rejected as target_not_registered and a generation-2 delivery as policy_rollback; after a generation-4 replacement restoring the registration, a redelivery resolves to the retained acceptance under a new handle, and after clearing, initializing generation 2 or 3 fails closed while generation 4 initializes. Send policy-shaped content through permitted task labels and unknown task members and assert the active generation, issuers and registrations are unchanged. Run concurrent replacements and admissions and assert one highest winning generation. Host authentication of policy updates, run cancellation, Network Context cache invalidation and collector, target, proxy and context endpoint paths are planned separately in CC-TRUST-LOCAL-POLICY-LIFECYCLE-RUNTIME. Requirements: REQ-TRUST-0029, REQ-TRUST-0030, REQ-TRUST-0031, REQ-TRUST-0032.
 
-Scope: Synthetic core contract cases. Passed at Go `954b7d7` and re-executed at Go `09e2141` ([evidence](../traceability/evidence/go-unit-09e2141.md#CC-TRUST-LOCAL-POLICY-LIFECYCLE)); partial evidence only, with no production policy adapter, durable generation floor or support claim.
+Scope: Synthetic core contract cases. Passed at Go `954b7d7` and re-executed at Go `09e2141` and `e663afe` ([evidence](../traceability/evidence/go-unit-e663afe.md#CC-TRUST-LOCAL-POLICY-LIFECYCLE)); partial evidence only, with no production policy adapter, durable generation floor or support claim.
 
 <!-- requirement-ref: REQ-TRUST-0029 -->
 <!-- requirement-ref: REQ-TRUST-0030 -->
@@ -3092,6 +3094,74 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 - [REQ-TRUST-0034](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0034) → `CC-TRUST-ADMISSION-ERRORS`.
 - [REQ-TRUST-0035](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0035) → `CC-TRUST-ADMISSION-ERRORS`.
 - [REQ-TRUST-0036](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0036) → `CC-TRUST-ADMISSION-ERRORS`.
+
+### CC-TRUST-SIGNED-REMOTE-PACKAGES
+
+Public source: `library/task-trust.md`, section **Signed Remote Task Packages**, and `library/registered-limits.md`. Intended target: `internal/admission/signed.go`. Case location: `internal/admission/signed_test.go`, `symbol:TestCcTrustSignedRemotePackages`, executed by DEV-612.
+
+Case plan: Present signed remote task packages built from synthetic Ed25519 keys through a fake delivery store, a policy holding two keys of the remote issuer and one of another issuer, and a fake clock, changing one property of an otherwise valid package per case. Assert acceptance for a valid package, a second key of the issuer, a package padded with whitespace to exactly 98,304 bytes, acceptance exactly at not_after, issued_at exactly at not_before and issued_at 300 seconds ahead. Assert task_limit_exceeded for 98,305 bytes; task_policy_unavailable with no installed policy; task_source_unauthenticated for malformed packages (not JSON, a bare task, unknown, duplicate, escaped-duplicate or missing members, wrong member types, padded, standard-alphabet or newline-containing base64url, nonzero trailing bits, an empty task, a 63- or 65-byte signature, fractional, offset, lowercase, leap-second or invalid-date issued_at, invalid identifiers), an unknown key_id, a key of another issuer or a package re-wrapped under another issuer, acceptance one second after not_after, issued_at one second before not_before or after not_after, issued_at 301 seconds ahead, an altered task byte, issued_at, key_id or signature, and a signature over another context or over the bare task; and task_trust_unavailable when trusted time is unavailable at check 6. Assert exactly one class, from the first failing check, for packages failing several checks, and that no rejected package reaches the task codec. A validly signed package whose task is invalid or over 65,536 bytes fails its later step instead. Requirements: REQ-TRUST-0043, REQ-TRUST-0046, REQ-TRUST-0047, REQ-TRUST-0048, REQ-TRUST-0049, REQ-TRUST-0050, REQ-TRUST-0052, REQ-LIMIT-0032.
+
+Scope: Synthetic core contract cases. Passed at Go `e663afe` ([evidence](../traceability/evidence/go-unit-e663afe.md#CC-TRUST-SIGNED-REMOTE-PACKAGES)); partial evidence only, with synthetic keys, no cryptographic review and no support claim.
+
+<!-- requirement-ref: REQ-LIMIT-0032 -->
+<!-- requirement-ref: REQ-TRUST-0043 -->
+<!-- requirement-ref: REQ-TRUST-0046 -->
+<!-- requirement-ref: REQ-TRUST-0047 -->
+<!-- requirement-ref: REQ-TRUST-0048 -->
+<!-- requirement-ref: REQ-TRUST-0049 -->
+<!-- requirement-ref: REQ-TRUST-0050 -->
+<!-- requirement-ref: REQ-TRUST-0052 -->
+
+- [REQ-LIMIT-0032](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/registered-limits.md#REQ-LIMIT-0032) → `CC-TRUST-SIGNED-REMOTE-PACKAGES`.
+- [REQ-TRUST-0043](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0043) → `CC-TRUST-SIGNED-REMOTE-PACKAGES`.
+- [REQ-TRUST-0046](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0046) → `CC-TRUST-SIGNED-REMOTE-PACKAGES`.
+- [REQ-TRUST-0047](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0047) → `CC-TRUST-SIGNED-REMOTE-PACKAGES`.
+- [REQ-TRUST-0048](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0048) → `CC-TRUST-SIGNED-REMOTE-PACKAGES`.
+- [REQ-TRUST-0049](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0049) → `CC-TRUST-SIGNED-REMOTE-PACKAGES`.
+- [REQ-TRUST-0050](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0050) → `CC-TRUST-SIGNED-REMOTE-PACKAGES`.
+- [REQ-TRUST-0052](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0052) → `CC-TRUST-SIGNED-REMOTE-PACKAGES`.
+
+### CC-TRUST-SIGNED-PACKAGE-DISCLOSURE
+
+Public source: `library/task-trust.md`, sections **Signed Remote Task Packages** and **Admission Errors**. Intended target: `internal/admission/signed.go`. Case location: `internal/admission/signed_test.go`, `symbol:TestCcTrustSignedPackageErrorsDiscloseNothing`, executed by DEV-612.
+
+Case plan: Reject six synthetic signed packages that each fail a different verification check (a bad signature, an issuer moved after signing, an unknown key, malformed JSON, issuance one hour ahead and 98,305 bytes), with canaries in the task payload, key IDs, issuers, signature and public-key prefixes and the raw clock error. Assert that each error formats under %v, %+v, %#v and Error() without any canary or the words ed25519, base64, check, key or signature, and that the six errors produce only the two fixed class strings task_source_unauthenticated and task_limit_exceeded, so the failing check cannot be distinguished beyond its class. Requirements: REQ-TRUST-0035, REQ-TRUST-0052.
+
+Scope: Synthetic core contract cases. Passed at Go `e663afe` ([evidence](../traceability/evidence/go-unit-e663afe.md#CC-TRUST-SIGNED-PACKAGE-DISCLOSURE)); partial evidence only, with synthetic keys, no cryptographic review and no support claim.
+
+<!-- requirement-ref: REQ-TRUST-0035 -->
+<!-- requirement-ref: REQ-TRUST-0052 -->
+
+- [REQ-TRUST-0035](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0035) → `CC-TRUST-SIGNED-PACKAGE-DISCLOSURE`.
+- [REQ-TRUST-0052](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0052) → `CC-TRUST-SIGNED-PACKAGE-DISCLOSURE`.
+
+### CC-TRUST-SIGNED-PACKAGE-RETENTION
+
+Public source: `library/task-trust.md`, section **Signed Remote Task Packages**, and `library/registered-limits.md`. Intended target: `internal/admission/signed.go`. Case location: `internal/admission/signed_test.go`, `symbol:TestCcTrustSignedPackageNotRetained`, executed by DEV-612.
+
+Case plan: Admit a synthetic signed package through a fake delivery store and the test replay store, then assert the replay record holds the remote issuer, the task_id and the SHA-256 digest of the exact task bytes, not of the package, and that neither the record nor the dumped replay store contains the key ID, the encoded signature, the package bytes or the package digest in hex or base64. Assert the remote delivery record no longer resolves after admission, that a package re-signed later over the same task bytes and presented through a new reference resolves to the same admitted identity as a redelivery, and that a package with a corrupted signature leaves no replay record, staged write or resolvable delivery record. Requirements: REQ-TRUST-0053.
+
+Scope: Synthetic core contract cases. Passed at Go `e663afe` ([evidence](../traceability/evidence/go-unit-e663afe.md#CC-TRUST-SIGNED-PACKAGE-RETENTION)); partial evidence only, with synthetic keys, no cryptographic review and no support claim.
+
+<!-- requirement-ref: REQ-TRUST-0053 -->
+
+- [REQ-TRUST-0053](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0053) → `CC-TRUST-SIGNED-PACKAGE-RETENTION`.
+
+### CC-TRUST-KEY-ROTATION
+
+Public source: `library/task-trust.md`, section **Local Policy Lifecycle**. Intended target: the root `Client` (`policy.go`) and `internal/admission/signed.go`. Case location: `policy_test.go`, `symbol:TestCcTrustKeyRotationByPolicyReplacement`, executed by DEV-612.
+
+Case plan: Initialize a client with a generation-2 policy holding two keys of the remote issuer and admit one synthetic task signed with each. Replace it with generation 3 holding only the second key and assert every task handle and queued delivery reference is invalidated, that the task signed with the removed key and a new task signed with it are rejected as task_source_unauthenticated on redelivery, and that the task signed with the retained key resolves to its retained acceptance without a new replay record. Replace it with generation 4 without the remote issuer and assert its handles are invalidated and its packages rejected with no replay write. Assert that a policy whose key names an issuer it does not authorize is not constructed and the active policy is unchanged. With a key valid until one hour after acceptance, admit a task valid for three hours, advance the clock two hours, and assert the handle still resolves with its original expiry while a new presentation of the same package is rejected as task_source_unauthenticated. Requirements: REQ-TRUST-0030, REQ-TRUST-0051, REQ-TRUST-0054.
+
+Scope: Synthetic core contract cases. Passed at Go `e663afe` ([evidence](../traceability/evidence/go-unit-e663afe.md#CC-TRUST-KEY-ROTATION)); partial evidence only, with synthetic keys, no cryptographic review and no support claim.
+
+<!-- requirement-ref: REQ-TRUST-0030 -->
+<!-- requirement-ref: REQ-TRUST-0051 -->
+<!-- requirement-ref: REQ-TRUST-0054 -->
+
+- [REQ-TRUST-0030](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0030) → `CC-TRUST-KEY-ROTATION`.
+- [REQ-TRUST-0051](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0051) → `CC-TRUST-KEY-ROTATION`.
+- [REQ-TRUST-0054](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0054) → `CC-TRUST-KEY-ROTATION`.
 
 ### CC-JSON-UNIT-0001
 

@@ -236,3 +236,19 @@ No adapter is wired in production, so no binding or device test exercised a repl
 | `git diff --check` | Passed. |
 
 No adapter is wired in production, so no binding or device test exercised admission. Production remote authentication and revocation (DEV-595), production test codecs (DEV-454), execution, results and the remaining planned admission families remain pending.
+
+## DEV-612 Validation Record
+
+**Validation date:** October 20, 2026
+**Scope:** Library verification of signed remote task packages at public `e97502747c917a16bc2b71337535ff972bbd7d64`, implemented at Go commit `e663afeb0f9a6f5cc57c914b8f13ff75bb71e216` on the DEV-612 task branch; synthetic tests only, not runtime conformance. `Client.AdmitTask` keeps its signature; for remote origin its presented bytes are the signed package. No identifier is exported.
+
+| Check | Result and scope |
+|---|---|
+| `make check` | Passed with Go 1.26.0 on macOS ARM64, including race tests and pure-Go Android/iOS ARM64 compilation. |
+| Root, admission and model tests | Passed: 229 top-level tests from a clean `git archive` export, recorded in the [evidence report](../traceability/evidence/go-unit-e663afe.md). Synthetic Ed25519 keys from fixed public test seeds; no deployment key. `TestAdmitTaskAcceptsReviewedOrigins`, `TestAdmitTaskStrictJSON` and `TestAdmitTaskHostileSources` present remote tasks as signed packages through the facade; `TestCcTrustKeyRotationByPolicyReplacement` removes a key and then an issuer by policy replacement. |
+| `FuzzSignedPackage` and `FuzzAdmitTask` | Passed finite 60-second runs, recorded in the [admission design](admission.md#fuzz-validation-record). CI runs only the seed corpora. |
+| `make traceability` | Passed after rebaselining the cross-cutting manifest to public `e975027` and Go `e663afe`, with the DEV-594 mapping preserved as historical. |
+| Public requirement-reference checker | Passed against the public checkout at `e975027`; no current reference cites a retired ID. |
+| `git diff --check` | Passed. |
+
+No adapter is wired in production, so no binding, native or device test exercised the package path. Cryptographic, safety and host integration reviews, binding and host adoption (DEV-455) and the remote-delivery gate (DEV-595) remain open.
