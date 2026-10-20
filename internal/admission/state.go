@@ -3,6 +3,7 @@ package admission
 import (
 	"context"
 	"crypto/sha256"
+	"time"
 
 	"github.com/tv-rain/barometer-go/internal/model/task"
 	"github.com/tv-rain/barometer-go/internal/persistence"
@@ -22,6 +23,31 @@ type Admitted struct {
 // Redelivery reports whether this outcome recognized an earlier acceptance
 // rather than creating one. A redelivery must not create a run.
 func (a Admitted) Redelivery() bool { return a.redelivery }
+
+// Identity is the replay identity of an admitted task: its replay key and the
+// digest of the exact accepted bytes. A redelivery of the same bytes has the
+// same identity. It is comparable so that the lifecycle owner can resolve a
+// redelivery to the handle it already published (DEV-592). It has no
+// serialized form and formats as its type name only.
+type Identity struct {
+	key    persistence.ReplayKey
+	digest [sha256.Size]byte
+}
+
+func (Identity) String() string   { return "admission.Identity" }
+func (Identity) GoString() string { return "admission.Identity" }
+
+// Identity returns the replay identity this outcome resolved to.
+func (a Admitted) Identity() Identity {
+	return Identity{key: a.record.Key, digest: a.record.Digest}
+}
+
+// ExpiresAt is the end of the admitted task's validity, taken from the
+// retained replay record, so a redelivery reports the original expiry.
+func (a Admitted) ExpiresAt() time.Time { return a.record.ExpiresAt }
+
+// EvaluatedAt is the trusted time at which this outcome was evaluated.
+func (a Admitted) EvaluatedAt() time.Time { return a.gated.acceptedAt }
 
 // String and GoString keep source context, the replay key and parameters out
 // of formatted output.

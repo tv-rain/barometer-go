@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	"github.com/tv-rain/barometer-go/internal/model/task"
 )
 
 // state follows the Lifecycle table in docs/public-api.md. transitioning and
@@ -21,10 +23,11 @@ const (
 // Client is the opaque lifecycle owner. It has no exported fields. A zero-value
 // Client is uninitialized and usable; do not copy a Client after first use.
 //
-// The current implementation provides the lifecycle shell only (DEV-600):
+// The current implementation provides the lifecycle shell (DEV-600):
 // initialization through reviewed internal adapters, bounded handle tables,
-// close and the lifecycle part of clearing. Admission, runs, bundles, proxy
-// changes and persistent-state deletion are added by later tasks.
+// close and the lifecycle part of clearing, and task admission (DEV-592). Runs,
+// bundles, proxy changes and persistent-state deletion are added by later
+// tasks.
 type Client struct {
 	mu         sync.Mutex
 	state      state
@@ -45,6 +48,17 @@ func NewClient() *Client { return &Client{} }
 // generation over the reviewed internal adapters. Any failure returns
 // not_initialized and leaves the client uninitialized.
 func (c *Client) Initialize(configJSON string) error { return c.initialize(configJSON) }
+
+// AdmitTask runs every admission step for the exact task bytes against the
+// adapter-installed delivery record that sourceRef names, and returns a local
+// opaque task handle only on acceptance. It starts no measurement and performs
+// no network activity. An exact redelivery returns the same handle while the
+// current initialization lasts, without a new replay record or a later expiry.
+// A rejection returns the code-only public admission class; a call outside the
+// initialized state returns an API-local code.
+func (c *Client) AdmitTask(taskJSON string, sourceRef string) (string, error) {
+	return c.admitTask(taskJSON, sourceRef)
+}
 
 // Close stops new work, invalidates handles, delivery references and context
 // state and releases runtime ownership. It deletes no replay or pending state
@@ -148,6 +162,51 @@ func (c *Client) release() {
 		close(c.drained)
 		c.drained = nil
 	}
+}
+
+// admitTask reserves the current generation, so it serializes with lifecycle
+// transitions, and publishes a handle only after Admit has durably accepted the
+// task. A panic below the facade becomes task_trust_unavailable with no handle.
+// The step order of REQ-TRUST-0037, including the complete-task byte limit
+// after delivery resolution, is the admitter's; the facade adds no check.
+func (c *Client) admitTask(taskJSON, sourceRef string) (handle string, err error) {
+	if c == nil {
+		return "", fail(notInitialized)
+	}
+	rt, err := c.reserve()
+	if err != nil {
+		return "", err
+	}
+	defer c.release()
+	defer func() {
+		if recover() != nil {
+			handle, err = "", trustUnavailable()
+		}
+	}()
+	ctx, cancel := context.WithTimeout(rt.ctx, rt.deadline)
+	defer cancel()
+	admitted, err := rt.admitter.Admit(ctx, sourceRef, []byte(taskJSON))
+	if err != nil {
+		return "", err
+	}
+	// The replay record is durable. If a transition invalidated the table
+	// meanwhile, no handle is published; a redelivery to a later generation
+	// resolves to the same admitted task.
+	handle, err = rt.tasks.publish(admitted, admitted.EvaluatedAt())
+	if err == (opError{code: handleUnavailable}) {
+		return "", fail(transitionInProgress)
+	}
+	return handle, err
+}
+
+// trustUnavailable is the admission class for a failure that admission cannot
+// attribute to the task.
+func trustUnavailable() error {
+	e, err := task.NewAdmissionError(task.TrustUnavailable)
+	if err != nil {
+		return fail(notInitialized)
+	}
+	return e
 }
 
 // quiesceLocked starts a transition and returns a channel to wait on when
