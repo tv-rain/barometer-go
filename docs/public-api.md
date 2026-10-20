@@ -196,7 +196,7 @@ No adapter is wired in production, so no binding or device test exercised a succ
 | `TestPublicSurfaceMatchesDocumentedSignatures` | Passed with `AdmitTask` added to the implemented list; it failed before the list was updated, showing the new export is gated. |
 | `python3 scripts/check-public-api.py android` and `apple` | Passed: the documented signature fixture binds for Android ARM64 (JDK 17.0.18, NDK 28.2.13676358) and iOS ARM64. |
 | `make mobile-smoke-android` and `make mobile-smoke-apple` | Passed: the production root package, including `Client.AdmitTask`, binds with gomobile for both targets. |
-| `make traceability` | Passed against the unchanged manifests before the evidence rebaseline. |
+| `make traceability` | Passed against the unchanged manifests before the evidence rebaseline, and again after rebaselining the cross-cutting manifest to Go `7b098a6`, where four `UT.root.*` cases add facade-level aspects to REQ-TRUST-0017, REQ-TRUST-0024, REQ-TRUST-0035, REQ-TRUST-0037 and REQ-TRUST-0038. |
 | `git diff --check` | Passed. |
 
 No adapter is wired in production, so no binding or device test exercised a successful admission. Policy replacement through the facade (DEV-593), proxy compatibility at admission, execution and the other documented methods remain pending.
