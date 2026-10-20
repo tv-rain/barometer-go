@@ -293,7 +293,9 @@ func TestGateIssuerAuthorization(t *testing.T) {
 		{"label sharing a namespace prefix", func(p *task.Permissions) { p.LabelNamespaces = []string{"campaign"} }, map[string]any{"labels": map[string]any{"campaignx": "a"}}, task.MediumRisk, task.IssuerNotAuthorized},
 		{"label above a dotted namespace", func(p *task.Permissions) { p.LabelNamespaces = []string{"campaign.wave"} }, map[string]any{"labels": map[string]any{"campaign": "a"}}, task.MediumRisk, task.IssuerNotAuthorized},
 		{"composite disabled", func(p *task.Permissions) { p.AllowComposite = false }, map[string]any{"test_id": "NET-05"}, task.MediumRisk, task.IssuerNotAuthorized},
-		{"composite enabled", func(*task.Permissions) {}, map[string]any{"test_id": "NET-05"}, task.MediumRisk, 0},
+		// Enablement passes step 7, but composite steps cannot be matched yet,
+		// so step 8 fails closed (DEV-590).
+		{"composite enabled", func(*task.Permissions) {}, map[string]any{"test_id": "NET-05"}, task.MediumRisk, task.Unsupported},
 	}
 	for _, c := range cases {
 		for _, side := range []string{"issuer", "local"} {
