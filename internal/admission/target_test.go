@@ -164,12 +164,19 @@ func (r tupleRule) Targets(p task.Parameters) ([]registry.Target, bool) {
 	return out, true
 }
 
+// tupleProxy lets every synthetic tuple through the proxy, so path cases reach
+// target registration.
+var tupleProxy = proxyRule(func(p task.Parameters) bool {
+	_, ok := p.(tupleParameters)
+	return ok
+})
+
 var tupleTests = []string{"TCP-01", "TLS-01", "HTTP-01", "DNS-01"}
 
 func tupleEntries() []registry.Entry {
 	var out []registry.Entry
 	for _, id := range tupleTests {
-		out = append(out, registry.Entry{Test: task.TestVersion{ID: id, Version: "0.1.0"}, Codec: tupleCodec{id: id}, BaselineRisk: task.LowRisk, Targets: tupleRule{id: id}, Proxy: registry.NoProxy{}})
+		out = append(out, registry.Entry{Test: task.TestVersion{ID: id, Version: "0.1.0"}, Codec: tupleCodec{id: id}, BaselineRisk: task.LowRisk, Targets: tupleRule{id: id}, Proxy: tupleProxy})
 	}
 	return out
 }

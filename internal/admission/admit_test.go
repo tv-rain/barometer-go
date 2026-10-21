@@ -67,6 +67,20 @@ func (f fixedTargets) Targets(p task.Parameters) ([]registry.Target, bool) {
 	return slices.Clone(f), true
 }
 
+// proxyRule is a synthetic test-scoped proxy-compatibility rule; it is not the
+// REQ-PROXY-0026 rule of any registered test.
+type proxyRule func(task.Parameters) bool
+
+func (r proxyRule) Compatible(p task.Parameters) bool { return r(p) }
+
+// synProxy lets every SYN-01 parameter value through the proxy, so gate tests
+// that do not exercise compatibility reach the later step-8 checks. Parameters
+// of another type are incompatible, as ProxyRule requires.
+var synProxy = proxyRule(func(p task.Parameters) bool {
+	_, ok := p.(synParameters)
+	return ok
+})
+
 var (
 	synTargets   = fixedTargets{{Role: task.MeasurementTarget, Tuple: task.TargetTuple{Hostname: "reg-a.example.test"}}}
 	net05Targets = fixedTargets{{Role: task.MeasurementTarget, Tuple: task.TargetTuple{Hostname: "reg-net05.example.test"}}}
@@ -110,7 +124,7 @@ func newHarnessWith(t *testing.T, policy task.LocalPolicy) *harness {
 	if h.store, err = admission.NewDeliveryStore(h.clock, admission.DeliveryLimits{Capacity: 256, Lifetime: lifetime}, 2); err != nil {
 		t.Fatal("store rejected")
 	}
-	reg, err := registry.New([]registry.Entry{{Test: task.TestVersion{ID: "SYN-01", Version: "0.1.0"}, Codec: synCodec{calls: h.normalize}, BaselineRisk: task.MediumRisk, Targets: synTargets, Proxy: registry.NoProxy{}}})
+	reg, err := registry.New([]registry.Entry{{Test: task.TestVersion{ID: "SYN-01", Version: "0.1.0"}, Codec: synCodec{calls: h.normalize}, BaselineRisk: task.MediumRisk, Targets: synTargets, Proxy: synProxy}})
 	if err != nil {
 		t.Fatal("registry rejected")
 	}

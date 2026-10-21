@@ -91,7 +91,7 @@ func resolve(policy task.LocalPolicy, source task.SourceContext, test task.TestV
 // authorizePath is the authority part of step 8: the task's single network
 // path must be permitted by both issuer and local policy (REQ-TRUST-0047).
 // The matched registration's paths are checked by matchTargets; registry
-// proxy compatibility stays with later step-8 work.
+// proxy compatibility is checked before this, in Gate (REQ-TRUST-0039).
 func (a *Authority) authorizePath(path string) task.AdmissionCode {
 	switch {
 	case path == "direct" && a.paths.Direct:

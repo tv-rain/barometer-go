@@ -91,7 +91,7 @@ func rebind(t *testing.T, h *harness, policy task.LocalPolicy, entries ...regist
 }
 
 func synEntry(h *harness, baseline task.Risk) registry.Entry {
-	return registry.Entry{Test: task.TestVersion{ID: "SYN-01", Version: "0.1.0"}, Codec: synCodec{calls: h.normalize}, BaselineRisk: baseline, Targets: synTargets, Proxy: registry.NoProxy{}}
+	return registry.Entry{Test: task.TestVersion{ID: "SYN-01", Version: "0.1.0"}, Codec: synCodec{calls: h.normalize}, BaselineRisk: baseline, Targets: synTargets, Proxy: synProxy}
 }
 
 func retry(initial, maxDelay, jitter int) map[string]any {

@@ -28,12 +28,12 @@ var ErrAdmitterConfig = errors.New("admission: invalid admitter configuration")
 // Admitter runs the ordered admission steps of REQ-TRUST-0046 for one client
 // instance. It implements steps 1 to 6 (DEV-586), issuer and policy resolution
 // in step 7 and the input, options and path-authority parts of step 8
-// (DEV-587), target registration matching in step 8 (DEV-588), and effective
-// risk with the consent requirement in step 9 (DEV-589). Tasks that require
-// egress Network Context (step 6) or NET-05 composite steps (step 8) are
-// rejected as task_unsupported until those capabilities exist (DEV-590).
-// Admit adds replay (step 10) and acceptance (step 11) through the replay
-// store (DEV-591). Proxy compatibility is added by a later task. Nothing here
+// (DEV-587), target registration matching in step 8 (DEV-588), registry proxy
+// compatibility in step 8 (DEV-599), and effective risk with the consent
+// requirement in step 9 (DEV-589). Tasks that require egress Network Context
+// (step 6) or NET-05 composite steps (step 8) are rejected as task_unsupported
+// until those capabilities exist (DEV-590). Admit adds replay (step 10) and
+// acceptance (step 11) through the replay store (DEV-591). Nothing here
 // publishes a handle or performs DNS, Network Context, proxy or measurement
 // activity. It is safe for concurrent use.
 type Admitter struct {
@@ -189,9 +189,9 @@ func (a *Admitter) Gate(ctx context.Context, sourceRef string, presented []byte)
 	if class != 0 {
 		return Gated{}, admissionError(class)
 	}
-	// Step 8: input and options through the registry-selected codec, the path
-	// permitted by issuer and local policy, then every target tuple and redirect
-	// registration. Proxy compatibility is added later.
+	// Step 8: input and options through the registry-selected codec, proxy
+	// compatibility, the path permitted by issuer and local policy, then every
+	// target tuple and redirect registration (REQ-TRUST-0039).
 	if candidate.Parameters, err = envelope.Parameters(); err != nil {
 		return Gated{}, admissionError(fieldClass(err))
 	}
@@ -199,6 +199,13 @@ func (a *Admitter) Gate(ctx context.Context, sourceRef string, presented []byte)
 	// closed here rather than being admitted with its steps unchecked.
 	if requiresCompositeSteps(entry) {
 		return Gated{}, admissionError(task.Unsupported)
+	}
+	// A proxy task whose test, input or options HTTP CONNECT cannot carry is
+	// invalid for its selected path, whatever authority would permit
+	// (REQ-TRUST-0039). It is never admitted to end in proxy_path_unsupported
+	// at execution (REQ-PROXY-0042).
+	if candidate.Execution.NetworkPath == "proxy" && !entry.Proxy.Compatible(candidate.Parameters) {
+		return Gated{}, admissionError(task.SchemaInvalid)
 	}
 	if class = authority.authorizePath(candidate.Execution.NetworkPath); class != 0 {
 		return Gated{}, admissionError(class)
