@@ -252,3 +252,19 @@ No adapter is wired in production, so no binding or device test exercised admiss
 | `git diff --check` | Passed. |
 
 No adapter is wired in production, so no binding, native or device test exercised the package path. Cryptographic, safety and host integration reviews, binding and host adoption (DEV-455) and the remote-delivery gate (DEV-595) remain open.
+
+## DEV-566 Validation Record
+
+**Validation date:** October 21, 2026
+**Scope:** Strict JSON evidence for the existing Go consumers ([GO-SPEC-ISSUE-001](specification-issues.md#existing-consumer-adoption-addendum--october-21-2026)) at public `e97502747c917a16bc2b71337535ff972bbd7d64`, recorded at Go commit `baa3adaa74bd2e3474bc518e257567cbf20b2c00` on the DEV-566 task branch; tests and documentation only, no behavior or signature change, not runtime conformance.
+
+| Check | Result and scope |
+|---|---|
+| `make check` | Passed with Go 1.26.0 on macOS ARM64, including race tests and pure-Go Android/iOS ARM64 compilation. |
+| Root and model tests | Passed: 233 top-level tests from a clean `git archive` export, recorded in the [evidence report](../traceability/evidence/go-unit-baa3ada.md). `TestAdmitTaskSignedPackageStrictJSON` presents hostile signed package envelopes through `Client.AdmitTask`, and `TestInitializeStrictJSON` presents hostile host configuration through `Client.Initialize` with synthetic approvals and a counting linkage key store. |
+| `FuzzInitialize` and `FuzzAdmitTask` | Passed finite 60-second runs, recorded in the [configuration models](configuration-models.md#synthetic-evidence) and the [admission design](admission.md#fuzz-validation-record). CI runs only the seed corpora. |
+| `make traceability` | Passed after rebaselining the cross-cutting manifest to Go `baa3ada`, with the DEV-612 mapping preserved as historical. |
+| Public requirement-reference checker | Passed against the public checkout. |
+| `git diff --check` | Passed. |
+
+No adapter is wired in production, so no binding, native or device test exercised these entry points. Registered test schemas and measurement runtime consumers (DEV-622) and binding and host consumers (DEV-623) remain open.
