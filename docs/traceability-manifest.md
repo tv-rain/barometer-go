@@ -46,6 +46,8 @@ DEV-612 adopts library-verified signed remote task packages and rebaselines the 
 
 DEV-566 rebaselines the cross-cutting manifest to Go `baa3adaa74bd2e3474bc518e257567cbf20b2c00` at the unchanged public `e97502747c917a16bc2b71337535ff972bbd7d64`, preserving the DEV-612 mapping as a [historical manifest](../traceability/README.md). It adds two `UT.root.*` cases for strict JSON in the signed package envelope and the host configuration container; no requirement status, allocation or family case changes. All cross-cutting cases were executed at the new Go baseline and recorded in a [new evidence report](../traceability/evidence/go-unit-baa3ada.md) committed at `5e19230555d80ad34e5384efeb64525c6365addd`.
 
+DEV-599 adopts the GO-SPEC-ISSUE-009 disposition and rebaselines the cross-cutting manifest to Go `d309b5b08ad27449523990d3eb1dca080209b757` at the unchanged public `e97502747c917a16bc2b71337535ff972bbd7d64`, preserving the DEV-566 mapping as a [historical manifest](../traceability/README.md). REQ-TRUST-0039 and REQ-PROXY-0042 are mapped with existing admission locations, so all 587 active shared requirements are mapped, and two `UT.internal.admission.*` cases are added for the step-8 proxy-compatibility row. REQ-TRUST-0039, REQ-PROXY-0042, REQ-PROXY-0026 and REQ-PROXY-0027 become `partial` (183 `partial`, 404 `planned`); no family case changes status. All cross-cutting cases were executed at the new Go baseline and recorded in a [new evidence report](../traceability/evidence/go-unit-d309b5b.md) committed at `7b5c27a1fd6cfe23e86513d884d1a2b76426fa55`.
+
 ### Typed Review Cases
 
 The public case record has no type field, so this repository types a human review case by convention within the existing format:

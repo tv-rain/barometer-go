@@ -479,7 +479,7 @@ The finding stays open until the admission tasks record adoption evidence for ev
 
 ## GO-SPEC-ISSUE-009: Admission Class for Proxy-Incompatible Task Parameters
 
-**Current state:** Open; public proposal in review under [DEV-598](https://app.clickup.com/t/124kk1zcbfb). No class is chosen and Go behavior is unchanged. Raised October 19, 2026 while implementing target registration matching at admission step 8 under [DEV-588](https://app.clickup.com/t/124kk1zcae0).
+**Current state:** Open; public disposition merged at [59b192d498bf011e331928d192702e1205a89f35](https://github.com/tv-rain/barometer-spec/tree/59b192d498bf011e331928d192702e1205a89f35) (public PR #16, [DEV-598](https://app.clickup.com/t/124kk1zcbfb)) and adopted in admission step 8, the admission design, case plans and traceability at public `e975027` by [DEV-599](https://app.clickup.com/t/124kk1zcbfc). Production compatibility rules, internal task-trust review alignment and the safety review of the mapping remain open. See the [disposition addendum](#disposition-addendum--october-19-2026-2) and the [adoption addendum](#adoption-addendum--october-21-2026). The sections before the addenda keep their original wording as historical evidence. Raised October 19, 2026 while implementing target registration matching at admission step 8 under [DEV-588](https://app.clickup.com/t/124kk1zcae0).
 
 ### Identity, Baselines and Requirements
 
@@ -506,6 +506,25 @@ The public text requires admission to validate proxy compatibility but assigns n
 ### Ordering and Closure
 
 Public record and disposition first, then internal task-trust review alignment if its validation plan names the class, then Go adoption in DEV-599, then bindings. Closure requires the public disposition and Go adoption evidence.
+
+### Disposition Addendum — October 19, 2026
+
+The public record [Admission Class for Proxy-Incompatible Task Parameters](https://github.com/tv-rain/barometer-spec/blob/59b192d498bf011e331928d192702e1205a89f35/specification-issues/proxy-compatibility-admission-class.md) was prepared under DEV-598. The project owner and public maintainer, Lev, accepted alternative (a) on October 19, 2026; the accepted wording merged with public PR #16 at `59b192d`, retaining Draft `0.1.0`, and is unchanged in the current baseline `e975027`.
+
+- **Class:** [REQ-TRUST-0039](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0039) rejects a task with `network_path: proxy` whose test, input or options are not compatible with HTTP CONNECT under REQ-PROXY-0026, including a NET-05 profile with any incompatible step, at step 8 with `task_schema_invalid`. Within step 8, compatibility is evaluated after input and options and before path authority and target registration. `task_unsupported` stays the class for a combination REQ-PROXY-0026 permits but an implementation does not provide through the proxy.
+- **Execution state:** [REQ-PROXY-0042](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/proxy.md#REQ-PROXY-0042) states that an incompatible task is not admitted to fail at execution; `proxy_path_unsupported` records only an incompatibility found by the pre-attempt check of REQ-EXECUTION-0008 in an admitted task.
+- **Requirement IDs:** REQ-TRUST-0039 and REQ-PROXY-0042 are new. The later signed remote task change (`e975027`) relinks REQ-TRUST-0039's step reference to REQ-TRUST-0046; its text is otherwise unchanged.
+- **Reviews:** internal task-trust review alignment is required by the disposition and has not been recorded. The required safety review of the mapping is not represented as completed.
+
+### Adoption Addendum — October 21, 2026
+
+[DEV-599](https://app.clickup.com/t/124kk1zcbfc) adopts the disposition against public Draft `0.1.0` at [e97502747c917a16bc2b71337535ff972bbd7d64](https://github.com/tv-rain/barometer-spec/tree/e97502747c917a16bc2b71337535ff972bbd7d64), the baseline of the current traceability manifest. The internal alignment was explicitly left as a separate gap by the task owner; it does not block the Go adoption of public text.
+
+- **Admission:** Go commit `d309b5b08ad27449523990d3eb1dca080209b757`. `Admitter.Gate` passes the codec's normalized parameters of a `proxy` task to the registered test's `registry.ProxyRule` after input and options and before path authority, target registration and the step-9 risk bounds, and rejects an incompatible task with `task_schema_invalid`. `direct` tasks are not checked. See [Proxy Compatibility](admission.md#proxy-compatibility).
+- **Evidence:** `TestGateProxyCompatibility` and `TestGateCompositeBeforeProxyCompatibility` use synthetic test-scoped rules; all 235 top-level tests passed at `d309b5b` ([evidence](../traceability/evidence/go-unit-d309b5b.md)). The recording transport sees zero calls on every case.
+- **Case plans and traceability:** `CC-PROXY-INITIAL-TEST-COMPATIBILITY` and `CC-TRUST-ADMISSION-PROCEDURE` assert `task_schema_invalid` and the step-8 precedence; both stay `planned`. The [cross-cutting manifest](../traceability/cross-cutting.json) maps REQ-TRUST-0039 and REQ-PROXY-0042 and links this finding as `accepted_adoption_pending`; REQ-TRUST-0039, REQ-PROXY-0042, REQ-PROXY-0026 and REQ-PROXY-0027 are `partial`. None is `implemented`.
+- **NET-05:** the composite-capability rejection (DEV-590) still runs first, so an enabled NET-05 task is `task_unsupported` and its rule is not consulted. Rejecting a profile with an incompatible step as `task_schema_invalid` needs the NET-05 codec (DEV-454).
+- **Remaining scope:** production compatibility rules for the registered tests and NET-05 (DEV-454), a case for `task_unsupported` on a permitted but unprovided combination once a production rule distinguishes one, the execution-time pre-attempt check and `proxy_path_unsupported` (DEV-578), internal task-trust review alignment, and the safety review of the mapping. Binding and host adoption is unassessed. This finding stays open until those are recorded.
 
 ## Signed Remote Task Package Adoption
 
