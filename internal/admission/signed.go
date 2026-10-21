@@ -151,9 +151,13 @@ func verifySignature(key [task.PublicKeySize]byte, p signedPackage) bool {
 // success it returns the remote source completed from the verified package,
 // owned task bytes and the acceptance time read at check 6. The task bytes are
 // not parsed or evaluated here. No result carries the package, key ID, key,
-// signature, issuer or which check failed (REQ-TRUST-0035).
+// signature, issuer or which check failed (REQ-TRUST-0035). Every presentation
+// of a package is verified at its own acceptance time before replay handling,
+// including an exact redelivery and a redelivery after policy replacement,
+// reinitialization or clearing; nothing retained exempts it (REQ-TRUST-0055).
 // requirement-ref: REQ-TRUST-0043
 // requirement-ref: REQ-TRUST-0052
+// requirement-ref: REQ-TRUST-0055
 func (a *Admitter) verifyPackage(ctx context.Context, pending task.SourceContext, presented []byte) (task.SourceContext, []byte, time.Time, task.AdmissionCode) {
 	fail := func(c task.AdmissionCode) (task.SourceContext, []byte, time.Time, task.AdmissionCode) {
 		return task.SourceContext{}, nil, time.Time{}, c

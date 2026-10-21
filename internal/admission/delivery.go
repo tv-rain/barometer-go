@@ -147,34 +147,49 @@ func (e deliveryEntry) live(now time.Time) bool {
 // Resolve returns the record for ref when it was issued by this store under
 // the active policy generation, is unexpired and matches the exact presented
 // bytes. A missing, foreign-instance, expired, stale-generation or mismatched
-// record is task_source_unauthenticated; unavailable trusted time is
-// task_trust_unavailable (step 1 of docs/admission.md). Resolution performs no
-// network activity. It does not consume an embedded record. It drops a remote
-// record on its first resolution, whatever the outcome, so no digest of a
-// signed package outlives the admission that presented it (REQ-TRUST-0053); a
-// retried package needs a newly installed reference.
+// record is task_source_unauthenticated (step 1 of docs/admission.md). The
+// binding is checked before trusted time is read, so such a reference is
+// task_source_unauthenticated even when the clock is unavailable: REQ-TRUST-0047
+// places the binding row at step 1, before the trusted-time row. Only a held,
+// current record that matches the presented bytes, whose expiry needs trusted
+// time, is task_trust_unavailable when the clock is unavailable. Resolution
+// performs no network activity. It does not consume an embedded record. It
+// drops a remote record on its first resolution, whatever the outcome, so no
+// digest of a signed package outlives the admission that presented it
+// (REQ-TRUST-0053); a retried package needs a newly installed reference.
 // requirement-ref: REQ-TRUST-0053
+// requirement-ref: REQ-TRUST-0047
 func (s *DeliveryStore) Resolve(ctx context.Context, ref string, presented []byte) (task.DeliveryRecord, error) {
 	if !wellFormedRef(ref) {
 		return task.DeliveryRecord{}, admissionError(task.SourceUnauthenticated)
 	}
-	now, err := s.clock.Now(ctx)
 	s.mu.Lock()
 	e, ok := s.records[ref]
 	if ok && e.record.Source().Origin() == task.Remote {
 		delete(s.records, ref)
 	}
-	if err != nil || now.IsZero() {
-		s.mu.Unlock()
-		return task.DeliveryRecord{}, admissionError(task.TrustUnavailable)
-	}
-	if ok && !e.live(now) {
-		delete(s.records, ref)
-		ok = false
-	}
 	ok = ok && !s.closed && e.generation == s.generation
 	s.mu.Unlock()
 	if !ok || !e.record.Matches(presented) {
+		return task.DeliveryRecord{}, admissionError(task.SourceUnauthenticated)
+	}
+	// The clock is read outside the lock; the record is checked again under it,
+	// so a record invalidated, replaced or closed meanwhile does not resolve.
+	now, err := s.clock.Now(ctx)
+	if err != nil || now.IsZero() {
+		return task.DeliveryRecord{}, admissionError(task.TrustUnavailable)
+	}
+	s.mu.Lock()
+	current := !s.closed && e.generation == s.generation
+	if e.record.Source().Origin() != task.Remote {
+		_, held := s.records[ref]
+		current = current && held
+		if held && !e.live(now) {
+			delete(s.records, ref)
+		}
+	}
+	s.mu.Unlock()
+	if !current || !e.live(now) {
 		return task.DeliveryRecord{}, admissionError(task.SourceUnauthenticated)
 	}
 	return e.record, nil

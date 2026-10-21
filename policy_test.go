@@ -522,8 +522,11 @@ func TestPolicyReplacementConcurrency(t *testing.T) {
 // admitted, while a task signed with a retained key resolves to its retained
 // acceptance. A task admitted while its key was valid is not re-verified when
 // the key later expires: its handle stays until its own expiry, but a new
-// presentation of its package is verified at that time and rejected.
+// presentation of its package is verified at that time and rejected, also
+// after a replacement that keeps the key, while the same task bytes re-signed
+// with a valid key resolve to the retained acceptance (REQ-TRUST-0055).
 // requirement-ref: REQ-TRUST-0054
+// requirement-ref: REQ-TRUST-0055
 // requirement-ref: REQ-TRUST-0030
 // requirement-ref: REQ-TRUST-0051
 func TestCcTrustKeyRotationByPolicyReplacement(t *testing.T) {
@@ -645,6 +648,81 @@ func TestCcTrustKeyRotationByPolicyReplacement(t *testing.T) {
 		ref, _ = h.deliveries.InstallRemote(context.Background(), 2, []byte(pkg))
 		if _, err := c.AdmitTask(pkg, ref); codeOf(err) != "task_source_unauthenticated" {
 			t.Fatal("a package presented after its key expired was accepted, got", codeOf(err))
+		}
+		if a, err := c.rt.tasks.lookup(handle); err != nil || !a.ExpiresAt().Equal(epoch.Add(3*time.Hour)) {
+			t.Fatal("a rejected presentation invalidated the held acceptance")
+		}
+	})
+
+	// REQ-TRUST-0055: after a replacement the instance no longer holds the
+	// task, so its redelivery is verified at its own acceptance time even
+	// though the new policy keeps the key and a replay record exists.
+	t.Run("redelivery after a replacement that keeps an expired key", func(t *testing.T) {
+		h := admittingHarness(t)
+		expiring := remoteSigner().Key(keyNotBefore, epoch.Add(time.Hour))
+		h.adapters.policy = withKeys(t, 2, both, expiring)
+		c := h.initialized(t)
+		b := synTask("expired-key-redelivery", 3*time.Hour)
+		pkg := string(remoteSigner().Sign(epoch, []byte(b)).Encode())
+		ref, _ := h.deliveries.InstallRemote(context.Background(), 2, []byte(pkg))
+		handle, err := c.AdmitTask(pkg, ref)
+		if err != nil {
+			t.Fatal(codeOf(err))
+		}
+		if err := h.clock.Advance(2 * time.Hour); err != nil {
+			t.Fatal(err)
+		}
+		if err := c.replacePolicy(withKeys(t, 3, both, expiring)); err != nil {
+			t.Fatal("valid replacement rejected:", codeOf(err))
+		}
+		if _, err := c.rt.tasks.lookup(handle); codeOf(err) != "handle_unavailable" {
+			t.Fatal("a task handle survived replacement")
+		}
+		ref, _ = h.deliveries.InstallRemote(context.Background(), 3, []byte(pkg))
+		if _, err := c.AdmitTask(pkg, ref); codeOf(err) != "task_source_unauthenticated" {
+			t.Fatal("a redelivery signed with an expired key was admitted, got", codeOf(err))
+		}
+		if h.replay.Commits() != 1 {
+			t.Fatal("a rejected redelivery wrote replay state")
+		}
+	})
+
+	// REQ-TRUST-0055 with REQ-TRUST-0024: the replay identity is the task
+	// bytes, so a package re-signed with a currently valid key is an exact
+	// redelivery with the original expiry, within the generation and after a
+	// replacement.
+	t.Run("a package re-signed with a valid key after key expiry", func(t *testing.T) {
+		h := admittingHarness(t)
+		h.adapters.policy = withKeys(t, 2, both, remoteSigner().Key(keyNotBefore, epoch.Add(time.Hour)), rotated.Key(keyNotBefore, keyNotAfter))
+		c := h.initialized(t)
+		b := synTask("re-signed-task", 3*time.Hour)
+		pkg := string(remoteSigner().Sign(epoch, []byte(b)).Encode())
+		ref, _ := h.deliveries.InstallRemote(context.Background(), 2, []byte(pkg))
+		handle, err := c.AdmitTask(pkg, ref)
+		if err != nil {
+			t.Fatal(codeOf(err))
+		}
+		if err := h.clock.Advance(2 * time.Hour); err != nil {
+			t.Fatal(err)
+		}
+		again, err := present(t, h, c, 2, rotated, b)
+		if err != nil || again != handle {
+			t.Fatal("a re-signed package did not resolve to the held acceptance, got", codeOf(err))
+		}
+		if err := c.replacePolicy(withKeys(t, 3, both, remoteSigner().Key(keyNotBefore, epoch.Add(time.Hour)), rotated.Key(keyNotBefore, keyNotAfter))); err != nil {
+			t.Fatal("valid replacement rejected:", codeOf(err))
+		}
+		ref, _ = h.deliveries.InstallRemote(context.Background(), 3, []byte(pkg))
+		if _, err := c.AdmitTask(pkg, ref); codeOf(err) != "task_source_unauthenticated" {
+			t.Fatal("the original package was admitted after its key expired, got", codeOf(err))
+		}
+		after, err := present(t, h, c, 3, rotated, b)
+		if err != nil {
+			t.Fatal("a re-signed package was rejected after replacement:", codeOf(err))
+		}
+		a, err := c.rt.tasks.lookup(after)
+		if err != nil || !a.Redelivery() || !a.ExpiresAt().Equal(epoch.Add(3*time.Hour)) || h.replay.Commits() != 1 {
+			t.Fatal("the re-signed package did not resolve to the retained acceptance with its original expiry")
 		}
 	})
 }
