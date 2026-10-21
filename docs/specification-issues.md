@@ -18,7 +18,7 @@ The open finding below exercises the template without choosing decoding behavior
 
 ## GO-SPEC-ISSUE-001: Duplicate JSON Member Names Outside Labels
 
-**Status:** Public contract, required internal alignment and shared Go decoder adoption are merged. Foundation model consumers are delivered, with their scope recorded in the model documentation. The admission share is delivered by DEV-594 ([Admission Adoption Addendum](#admission-adoption-addendum--october-20-2026)). Applicable production-schema, runtime, producer and binding/host evidence remains pending under the [downstream adoption task](https://app.clickup.com/t/124kk1zc4ag). The finding remains open; historical pending statements below do not describe the current Foundation merge state.
+**Status:** Public contract, required internal alignment and shared Go decoder adoption are merged. Foundation model consumers are delivered, with their scope recorded in the model documentation. The admission share is delivered by DEV-594 ([Admission Adoption Addendum](#admission-adoption-addendum--october-20-2026)). DEV-566 records evidence for the remaining existing consumers and an inventory of every JSON consumer ([Existing-Consumer Adoption Addendum](#existing-consumer-adoption-addendum--october-21-2026)). Registered production test schemas and measurement runtime consumers ([DEV-622](https://app.clickup.com/t/124kk1zcge1)) and binding/host consumers ([DEV-623](https://app.clickup.com/t/124kk1zcge2)) do not exist yet and remain pending. The finding remains open; historical pending statements below do not describe the current Foundation merge state.
 
 ### Identity, Ownership, and Affected Versions
 
@@ -92,6 +92,36 @@ DEV-594 delivers the admission share of the [downstream adoption task](https://a
 - **Not covered.** The registered production test schemas do not exist yet (DEV-454), so their `input` and `options` decoding is exercised only through synthetic schemas. Producer, runtime and binding/host consumers remain under the downstream adoption task.
 
 This finding stays open until the remaining consumers record evidence or reviewed non-applicability.
+
+### Existing-Consumer Adoption Addendum — October 21, 2026
+
+DEV-566 records the strict-JSON evidence for the JSON consumers that exist in this repository after DEV-594, against the accepted public contract at [05c1364af4f9a604b617fca45f060949b557d265](https://github.com/tv-rain/barometer-spec/commit/05c1364af4f9a604b617fca45f060949b557d265). The contract text is unchanged at the current cross-cutting baseline `e97502747c917a16bc2b71337535ff972bbd7d64`; the public disposition record there only adds its merge record. DEV-566 adds tests and records only; no decoding behavior changes.
+
+**Inventory.** Every package that imports `internal/jsondecode` or `encoding/json` outside tests, and every public entry point that accepts JSON text:
+
+| Consumer | Role | Disposition | Evidence |
+|---|---|---|---|
+| `internal/jsondecode` | Shared strict parser and schema validation | Delivered (DEV-477) | [Shared Strict JSON Decoding](json-decoding.md) |
+| `internal/taskdecode`, called by `internal/admission` steps 4 and 8; `Client.AdmitTask` | Task envelope, `input` and `options` | Delivered (DEV-594) | [Admission Adoption Addendum](#admission-adoption-addendum--october-20-2026) |
+| `internal/admission` signed package decoding (`signed.go`, DEV-612); `Client.AdmitTask` for remote origin | Signed remote package envelope | Adopted here | `TestAdmitTaskSignedPackageStrictJSON`; internal `TestCcTrustSignedRemotePackages` and `FuzzSignedPackage` ([Hostile-Input Evidence](admission.md#hostile-input-evidence)) |
+| `internal/config`, called by `Client.Initialize` | Host configuration container | Model delivered (DEV-486); facade adopted here | `TestAtomicRejectionCorpus`, `FuzzConfiguration`; `TestInitializeStrictJSON`, `FuzzInitialize` ([Synthetic Evidence](configuration-models.md#synthetic-evidence)) |
+| `internal/model/observation` | Protocol observations and Network Context: decoder and producer | Delivered (DEV-481) | [Observation models](observation-models.md); producer output re-decodes in `TestProtocolValidationPrecedenceAndStableEncoding` and `TestContextNormalizationStaysWithinASCIICodes` |
+| `internal/result` | Measurement Results: decoder and producer | Delivered (DEV-482) | [Result models](result-models.md); producer output re-decodes in `FuzzResult` and `TestImmutableViewsAndProducerBuild` |
+| `internal/bundle` | Result bundle: producer only, no decoder | Producer evidence adopted here | `TestProducedBundleIsStrictJSON` ([Synthetic Evidence](bundle-models.md#synthetic-evidence)) |
+| `internal/execution`, `internal/persistence`, `internal/registry`, `internal/validation`, `internal/platform`; delivery records, source context and local policy | No serialized JSON form; `execution.Attempt` refuses JSON encoding | Not applicable | — |
+| `internal/testkit` | Test-only fixtures, conformance runner, synthetic signer and replay store | Not applicable | `TestAdmissionHasNoNetworkDependency` requires `internal/testkit` to be absent from the production closure |
+| Registered production test schemas and measurement runtime | Not implemented | Deferred | [DEV-622](https://app.clickup.com/t/124kk1zcge1) |
+| Native, Flutter and host validation | Not implemented; the gomobile smoke build is not binding evidence | Deferred | [DEV-623](https://app.clickup.com/t/124kk1zcge2) |
+
+`internal/result` and `internal/model/observation` decode a second time with `encoding/json` into closed wire structures. That second pass runs only after `jsondecode.DecodeSelected` has accepted the same bytes and rejected duplicate, unknown and case-variant names, so its case-insensitive matching and last-member precedence cannot select a different value.
+
+**Evidence.**
+
+- **Signed package envelope.** `TestAdmitTaskSignedPackageStrictJSON` presents package bytes through `Client.AdmitTask`. Equal, conflicting and escaped-equivalent duplicate members, escaped unknown and case-variant names, a nested value, nesting beyond the parse depth, a trailing value, a byte-order mark, invalid UTF-8 in a name or value and a lone surrogate escape are `task_source_unauthenticated`. A fully escaped `task` member padded one byte over the 98,304-byte limit is `task_limit_exceeded` and admits at exactly the limit. Escaped spellings of a member name and a member value admit. Each rejection leaves no handle, replay record or run. The package has string members only, so integer spellings do not apply.
+- **Host configuration.** `TestInitializeStrictJSON` presents configuration through `Client.Initialize` with trusted synthetic approvals. Duplicate and escaped-equivalent names at the top level and in `proxy`, `network_context` and `result_linkage`, escaped unknown and case-variant names, `-0`, decimal, exponent and quoted spellings for `port` and `rotation_period_seconds`, an integer beyond the exact float range, a trailing value, a byte-order mark, invalid UTF-8, a lone surrogate, nesting depth and escaped content one byte over the 16,384-byte limit are `not_initialized`. Each leaves the client uninitialized with no runtime generation and no linkage key call, and a later valid initialization succeeds. Escaped spellings of a name and an approved value, and escaped content at exactly the limit, are accepted. `FuzzInitialize` requires the facade outcome to match the decoder for the same bytes and checks the same no-side-effect property.
+- **Producers.** The result, observation and configuration producers re-decode through their strict decoders in the tests listed above. The bundle has no decoder, so `TestProducedBundleIsStrictJSON` parses produced bundles with the strict shared parser, with and without linkage, at 1 and 16 results and at the largest result size.
+
+**Not covered.** The 64-node configuration parse bound and the 6-node package bound are exercised only by the shared decoder tests, not at these facades. Producer evidence shows that the tested outputs satisfy the strict parser and re-decode; it is not a proof for every reachable value. Registered production test schemas, measurement runtime consumers and binding/host consumers remain under DEV-622 and DEV-623, so this finding stays open until they record evidence or reviewed non-applicability.
 
 ## GO-SPEC-ISSUE-002: Missing Registered Observation Vocabularies
 

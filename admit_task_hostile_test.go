@@ -2,6 +2,7 @@ package barometer
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"strings"
@@ -95,6 +96,84 @@ func TestAdmitTaskStrictJSON(t *testing.T) {
 			t.Fatal("escaped exact version rejected:", codeOf(err))
 		}
 	})
+}
+
+// The strict JSON rules apply to the signed package envelope at the public
+// boundary (GO-SPEC-ISSUE-001, DEV-566). The host installs the package bytes
+// and presents them with their reference; every malformed envelope is
+// task_source_unauthenticated before the task is parsed, and the package
+// limit is counted on the original escaped bytes. Escaped spellings of known
+// names and of member values decode to the same package and admit.
+func TestAdmitTaskSignedPackageStrictJSON(t *testing.T) {
+	h0 := admittingHarness(t)
+	taskJSON := synTask("synthetic-task", time.Hour)
+	valid := h0.sign(taskJSON)
+	replace := func(old, new string) string {
+		if !strings.Contains(valid, old) {
+			t.Fatal("fixture edit does not apply:", old)
+		}
+		return strings.Replace(valid, old, new, 1)
+	}
+	// escapeAll spells every byte of an ASCII string as a JSON escape.
+	escapeAll := func(s string) string {
+		var b strings.Builder
+		for _, r := range s {
+			b.WriteString(esc(r))
+		}
+		return b.String()
+	}
+	encodedTask := base64.RawURLEncoding.EncodeToString([]byte(taskJSON))
+	escapedTask := replace(`"task":"`+encodedTask+`"`, `"task":"`+escapeAll(encodedTask)+`"`)
+	pad := func(pkg string, total int) string { return pkg + strings.Repeat(" ", total-len(pkg)) }
+
+	cases := []struct {
+		name, pkg, want string
+	}{
+		{"equal duplicate member", replace(`{`, `{"key_id":"remote-key-1",`), "task_source_unauthenticated"},
+		{"conflicting duplicate member", replace(`{`, `{"key_id":"other-key",`), "task_source_unauthenticated"},
+		{"escaped duplicate member", replace(`{`, `{"key_`+esc('i')+`d":"remote-key-1",`), "task_source_unauthenticated"},
+		{"escaped duplicate task member", replace(`{`, `{"t`+esc('a')+`sk":"`+encodedTask+`",`), "task_source_unauthenticated"},
+		{"unknown member", replace(`{`, `{"algorithm":"ed25519",`), "task_source_unauthenticated"},
+		{"escaped unknown member", replace(`{`, `{"`+esc('a')+`uthenticated":"true",`), "task_source_unauthenticated"},
+		{"case variant of a member name", replace(`"key_id"`, `"Key_id"`), "task_source_unauthenticated"},
+		{"member as a nested object", replace(`"key_id":"remote-key-1"`, `"key_id":{"id":"remote-key-1"}`), "task_source_unauthenticated"},
+		{"nesting beyond the package depth", replace(`"key_id":"remote-key-1"`, `"key_id":`+strings.Repeat("[", 200)+strings.Repeat("]", 200)), "task_source_unauthenticated"},
+		{"trailing value", valid + ` {}`, "task_source_unauthenticated"},
+		{"byte-order mark", "\xef\xbb\xbf" + valid, "task_source_unauthenticated"},
+		{"invalid UTF-8 in a member name", replace(`{`, "{\"x\xff\":\"1\","), "task_source_unauthenticated"},
+		{"invalid UTF-8 in a member value", replace(`"remote-key-1"`, "\"remote-key-1\xff\""), "task_source_unauthenticated"},
+		{"lone surrogate escape", replace(`"remote-key-1"`, `"remote-key-1\ud800"`), "task_source_unauthenticated"},
+		{"escaped package one byte over the limit", pad(escapedTask, admission.MaxPackageBytes+1), "task_limit_exceeded"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			h := admittingHarness(t)
+			c := h.initialized(t)
+			th, err := c.AdmitTask(tc.pkg, h.installPackage(t, tc.pkg))
+			if codeOf(err) != tc.want {
+				t.Fatalf("got %s, want %s", codeOf(err), tc.want)
+			}
+			wantRejected(t, h, c, th, err)
+		})
+	}
+
+	accepted := []struct{ name, pkg string }{
+		{"escaped spelling of a member name", replace(`"key_id"`, `"key_`+esc('i')+`d"`)},
+		{"escaped spelling of a member value", replace(`"remote-key-1"`, `"remote`+esc('-')+`key-1"`)},
+		{"escaped task member padded to exactly the limit", pad(escapedTask, admission.MaxPackageBytes)},
+	}
+	for _, tc := range accepted {
+		t.Run(tc.name, func(t *testing.T) {
+			if len(tc.pkg) > admission.MaxPackageBytes {
+				t.Fatal("positive control exceeds the package limit")
+			}
+			h := admittingHarness(t)
+			c := h.initialized(t)
+			if th, err := c.AdmitTask(tc.pkg, h.installPackage(t, tc.pkg)); err != nil || th == "" {
+				t.Fatal("equivalent package rejected:", codeOf(err))
+			}
+		})
+	}
 }
 
 // Hostile source contexts presented through the facade never admit, and each
