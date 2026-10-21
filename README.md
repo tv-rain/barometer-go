@@ -8,11 +8,11 @@ Barometer Go is the platform-neutral core planned for the Barometer mobile netwo
 
 ## Current Status
 
-This repository is at the engineering-foundation stage. It currently contains the Go module bootstrap, an accepted package-architecture plan, [shared strict JSON decoding infrastructure](docs/json-decoding.md), and [common task and schedule models](docs/task-models.md). Common task decoding and pure validation produce candidates using explicitly supplied test schemas; production test-specific schemas, complete admission, registered measurements, full runtime conformance, native adapters, mobile release artifacts, and a supported public API remain pending.
+This repository is at the engineering-foundation stage. It currently contains the Go module bootstrap, an accepted package-architecture plan, [shared strict JSON decoding infrastructure](docs/json-decoding.md), and [common task and schedule models](docs/task-models.md). Common task decoding and pure validation produce candidates using explicitly supplied test schemas, and the [admission pipeline](docs/admission.md) is implemented with synthetic evidence; production test-specific schemas, registered measurements, runtime execution, production persistence adapters, full runtime conformance, native adapters and bindings, mobile release artifacts, and a supported public API remain pending.
 
 The Barometer `0.1.0` public specifications are Draft implementation inputs. A specification, package plan, successful Go build, or successful cross-compilation check is not evidence that a measurement or platform is implemented, conformant, field-validated, or supported.
 
-The [conformance fixture format and runner](docs/conformance-fixtures.md) add versioned, strictly validated synthetic task-decoding cases with separate context/policy profiles and exact expected candidate projections or rejection classes. Admission, policy enforcement and measurement execution remain pending.
+The [conformance fixture format and runner](docs/conformance-fixtures.md) add versioned, strictly validated synthetic task-decoding cases with separate context/policy profiles and exact expected candidate projections or rejection classes. The fixtures exercise decoding only; admission and local policy enforcement are implemented separately with synthetic evidence ([Admission Design](docs/admission.md)), and measurement execution remains pending.
 
 Reusable [negative and boundary-test helpers](docs/testkit.md) provide bounded synthetic fixtures, rejection diagnostics, and deterministic time/transport controls for future tests. They do not implement runtime schemas or measurements.
 
@@ -20,7 +20,7 @@ Reusable [negative and boundary-test helpers](docs/testkit.md) provide bounded s
 
 [Trusted context and local policy models](docs/trusted-policy-models.md) provide separate internal source metadata, exact-byte delivery binding, immutable issuer/target policy snapshots and revocation inputs. They have no JSON import/export path and do not implement authentication, effective authorization, admission, replay, policy activation or revocation enforcement.
 
-[Execution-state and error models](docs/execution-models.md) add bounded internal admission errors, pure attempt transitions and the complete execution-reason vocabulary. Admission, runtime orchestration, budget enforcement and runtime result integration remain pending.
+[Execution-state and error models](docs/execution-models.md) add bounded internal admission errors, pure attempt transitions and the complete execution-reason vocabulary. Admission returns these errors ([Admission Design](docs/admission.md)); runtime orchestration, budget enforcement and runtime result integration remain pending.
 
 [Observation and Network Context models](docs/observation-models.md) add bounded internal DNS/TCP/TLS/HTTP observations and immutable minimized access/egress snapshots bound to local path generations. The models adopt the merged public vocabulary contract and internal alignment recorded in [Specification Issues](docs/specification-issues.md#go-spec-issue-002-missing-registered-observation-vocabularies). Acquisition, caching, measurement execution and runtime result integration remain pending.
 

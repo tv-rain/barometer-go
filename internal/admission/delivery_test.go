@@ -293,6 +293,134 @@ func TestResolveExpiryBoundaries(t *testing.T) {
 	}
 }
 
+// The binding row of step 1 precedes the trusted-time row (REQ-TRUST-0047):
+// with the clock unavailable, a reference that is unknown, foreign, stale,
+// closed or presented with other bytes is still task_source_unauthenticated,
+// and only a held, matching record, whose expiry needs trusted time, is
+// task_trust_unavailable. Remote records stay single-use and embedded records
+// are not consumed.
+// requirement-ref: REQ-TRUST-0047
+// requirement-ref: REQ-TRUST-0053
+func TestResolveChecksBindingBeforeTrustedTime(t *testing.T) {
+	ctx := context.Background()
+	oneByte := append([]byte(nil), exact...)
+	oneByte[len(oneByte)-2] ^= 1
+	unauthenticated := []struct {
+		name    string
+		prepare func(*testing.T, *admission.DeliveryStore) (string, []byte)
+	}{
+		{"unknown reference", func(*testing.T, *admission.DeliveryStore) (string, []byte) {
+			return strings.Repeat("ab", 16), exact
+		}},
+		{"foreign instance", func(t *testing.T, _ *admission.DeliveryStore) (string, []byte) {
+			return mustEmbedded(t, newStore(t, newClock(), 4), exact), exact
+		}},
+		{"embedded one-byte mismatch", func(t *testing.T, s *admission.DeliveryStore) (string, []byte) {
+			return mustEmbedded(t, s, exact), oneByte
+		}},
+		{"remote one-byte mismatch", func(t *testing.T, s *admission.DeliveryStore) (string, []byte) {
+			pkg := signed(0, exact)
+			ref, err := s.InstallRemote(ctx, 2, pkg)
+			if err != nil {
+				t.Fatal("remote install rejected")
+			}
+			return ref, append(append([]byte(nil), pkg...), ' ')
+		}},
+		{"stale generation", func(t *testing.T, s *admission.DeliveryStore) (string, []byte) {
+			ref := mustEmbedded(t, s, exact)
+			if err := s.ReplacePolicy(3); err != nil {
+				t.Fatal("higher policy generation rejected")
+			}
+			return ref, exact
+		}},
+		{"invalidated", func(t *testing.T, s *admission.DeliveryStore) (string, []byte) {
+			ref := mustEmbedded(t, s, exact)
+			s.Invalidate()
+			return ref, exact
+		}},
+		{"closed store", func(t *testing.T, s *admission.DeliveryStore) (string, []byte) {
+			ref := mustEmbedded(t, s, exact)
+			s.Close()
+			return ref, exact
+		}},
+	}
+	for _, tc := range unauthenticated {
+		t.Run(tc.name+" with the clock unavailable", func(t *testing.T) {
+			c := newClock()
+			s := newStore(t, c, 4)
+			ref, presented := tc.prepare(t, s)
+			c.down.Store(true)
+			if _, err := s.Resolve(ctx, ref, presented); code(err) != task.SourceUnauthenticated {
+				t.Fatalf("got %v, want task_source_unauthenticated", err)
+			}
+		})
+	}
+
+	t.Run("a mismatch keeps an embedded record and drops a remote one", func(t *testing.T) {
+		c := newClock()
+		s := newStore(t, c, 4)
+		embedded := mustEmbedded(t, s, exact)
+		pkg := signed(0, exact)
+		remote, err := s.InstallRemote(ctx, 2, pkg)
+		if err != nil {
+			t.Fatal("remote install rejected")
+		}
+		c.down.Store(true)
+		for _, ref := range []string{embedded, remote} {
+			if _, err := s.Resolve(ctx, ref, oneByte); code(err) != task.SourceUnauthenticated {
+				t.Fatalf("got %v, want task_source_unauthenticated", err)
+			}
+		}
+		c.down.Store(false)
+		if _, err := s.Resolve(ctx, embedded, exact); err != nil {
+			t.Fatal("a mismatched presentation consumed an embedded record")
+		}
+		if _, err := s.Resolve(ctx, remote, pkg); code(err) != task.SourceUnauthenticated {
+			t.Fatal("a remote record survived its first resolution")
+		}
+	})
+
+	t.Run("a held matching record needs trusted time", func(t *testing.T) {
+		c := newClock()
+		s := newStore(t, c, 4)
+		embedded := mustEmbedded(t, s, exact)
+		pkg := signed(0, exact)
+		remote, err := s.InstallRemote(ctx, 2, pkg)
+		if err != nil {
+			t.Fatal("remote install rejected")
+		}
+		expired := mustEmbedded(t, s, oneByte)
+		c.down.Store(true)
+		for _, p := range []struct {
+			ref       string
+			presented []byte
+		}{{embedded, exact}, {remote, pkg}} {
+			if _, err := s.Resolve(ctx, p.ref, p.presented); code(err) != task.TrustUnavailable {
+				t.Fatalf("got %v, want task_trust_unavailable", err)
+			}
+		}
+		c.down.Store(false)
+		if _, err := s.Resolve(ctx, embedded, exact); err != nil {
+			t.Fatal("an embedded record was lost while the clock was unavailable")
+		}
+		if _, err := s.Resolve(ctx, remote, pkg); code(err) != task.SourceUnauthenticated {
+			t.Fatal("a remote record survived its first resolution")
+		}
+		// Whether a held record has expired cannot be decided without time.
+		if err := c.Advance(lifetime); err != nil {
+			t.Fatal(err)
+		}
+		c.down.Store(true)
+		if _, err := s.Resolve(ctx, expired, oneByte); code(err) != task.TrustUnavailable {
+			t.Fatalf("got %v, want task_trust_unavailable", err)
+		}
+		c.down.Store(false)
+		if _, err := s.Resolve(ctx, expired, oneByte); code(err) != task.SourceUnauthenticated {
+			t.Fatal("an expired record resolved")
+		}
+	})
+}
+
 func TestDeliveryStoreCapacityBoundaries(t *testing.T) {
 	ctx := context.Background()
 	c := newClock()

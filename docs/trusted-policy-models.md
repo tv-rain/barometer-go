@@ -23,7 +23,7 @@ An internal reviewed adapter supplies `SourceInput`: origin and positive `uint64
 <!-- requirement-ref: REQ-TRUST-0043 -->
 <!-- requirement-history: REQ-TRUST-0001 -->
 
-The structural tests support [REQ-TRUST-0043](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0043), the successor of REQ-TRUST-0001, only: a host cannot construct a verified remote source. Trusted-time availability, package verification and fail-closed admission are implemented by admission over synthetic delivery records and synthetic keys (DEV-586 to DEV-594 and DEV-612, [Admission Design](admission.md)); remote delivery stays gated by DEV-595 until the required reviews.
+The structural tests support [REQ-TRUST-0043](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0043), the successor of REQ-TRUST-0001, only: a host cannot construct a verified remote source. Trusted-time availability, package verification and fail-closed admission are implemented by admission over synthetic delivery records and synthetic keys (DEV-586 to DEV-594 and DEV-612, [Admission Design](admission.md)); the remote-delivery gate (DEV-595) was lifted on October 21, 2026 after the required reviews ([Remote-Delivery Gate](admission.md#remote-delivery-gate)), and no binding or host adoption exists yet (DEV-455).
 
 ## Trusted Issuer Keys
 

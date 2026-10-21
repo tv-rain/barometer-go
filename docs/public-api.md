@@ -235,7 +235,7 @@ No adapter is wired in production, so no binding or device test exercised a repl
 | `make traceability` | Passed against the unchanged manifests before the evidence rebaseline, and again after rebaselining the cross-cutting manifest to Go `09e2141`, where `CC-TRUST-ACCEPTED-TASK-ORIGINS` is executed and REQ-TRUST-0005 becomes `partial`. |
 | `git diff --check` | Passed. |
 
-No adapter is wired in production, so no binding or device test exercised admission. Production remote authentication and revocation (DEV-595), production test codecs (DEV-454), execution, results and the remaining planned admission families remain pending.
+No adapter is wired in production, so no binding or device test exercised admission. Production test codecs (DEV-454), binding and host delivery of packages (DEV-455), execution, results and the remaining planned admission families remain pending; remote package verification (DEV-612) and key or issuer removal by policy replacement (DEV-593, DEV-612) are implemented with synthetic evidence, and the remote-delivery gate (DEV-595) is lifted ([Remote-Delivery Gate](admission.md#remote-delivery-gate)).
 
 ## DEV-612 Validation Record
 
@@ -251,7 +251,7 @@ No adapter is wired in production, so no binding or device test exercised admiss
 | Public requirement-reference checker | Passed against the public checkout at `e975027`; no current reference cites a retired ID. |
 | `git diff --check` | Passed. |
 
-No adapter is wired in production, so no binding, native or device test exercised the package path. Cryptographic, safety and host integration reviews, binding and host adoption (DEV-455) and the remote-delivery gate (DEV-595) remain open.
+No adapter is wired in production, so no binding, native or device test exercised the package path. The cryptographic, safety and host integration reviews were performed by the project maintainer in DEV-615 with no findings and the remote-delivery gate (DEV-595) is lifted ([Remote-Delivery Gate](admission.md#remote-delivery-gate)); binding and host adoption (DEV-455) remain open, so hosts cannot yet pass packages.
 
 ## DEV-566 Validation Record
 
