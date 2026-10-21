@@ -50,8 +50,12 @@ Exact-byte/generation binding, immutable authenticated local policy/target regis
 | Required clock, typed-nil ports, unavailable linkage storage, no eager key operations | `TestCapabilityPreparation` |
 | Task-field injection and opaque labels cannot supply reviewed host configuration | `internal/taskdecode/config_boundary_test.go`: `TestHostConfigurationCannotComeFromTask` |
 | Deterministic bounded atomic outcomes under mutation | `FuzzConfiguration` |
+| Strict JSON through `Client.Initialize` (DEV-566, [GO-SPEC-ISSUE-001](specification-issues.md#go-spec-issue-001-duplicate-json-member-names-outside-labels)): duplicate and escaped-equivalent names at the top level and in every section, escaped unknown and case-variant names, `-0`, decimal, exponent and quoted spellings for `port` and `rotation_period_seconds`, an integer beyond the exact float range, framing, invalid UTF-8, a lone surrogate, nesting depth, and the 16,384-byte limit counted on original escaped bytes; escaped spellings of names and approved values are accepted | root `initialize_hostile_test.go`: `TestInitializeStrictJSON` |
+| A rejected `Initialize` leaves the client uninitialized with no runtime generation and no linkage key call, a later valid initialization succeeds, and the facade outcome matches the decoder for the same bytes | `TestInitializeStrictJSON`, `FuzzInitialize` |
 
 Run `make check`, `git diff --check`, and `python3 -B ../barometer-spec/scripts/check_requirements.py --consumer .`. A finite fuzz check uses `go test ./internal/config -run='^$' -fuzz='^FuzzConfiguration$' -fuzztime=20s -parallel=2`. These synthetic checks do not establish runtime activation, native storage, mobile resource behavior, binding agreement, field validation or release support.
+
+On October 21, 2026, with Go 1.26.0 on darwin/arm64, a 60-second, two-worker `FuzzInitialize` run passed with 1,461,706 executions (`go test . -run='^$' -fuzz='^FuzzInitialize$' -fuzztime=60s -fuzzminimizetime=200x -parallel=2`). This finite run is regression evidence, not exhaustive proof (DEV-566).
 
 ## Local Validation — October 15, 2026
 

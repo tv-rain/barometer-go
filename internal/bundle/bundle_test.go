@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -330,6 +331,35 @@ func TestMixedResultMembershipIsPreserved(t *testing.T) {
 	view.Results[0].Measurement.Outcome = "changed"
 	if v.View().Results[0].Measurement.Outcome != "timeout" {
 		t.Fatal("nested result alias")
+	}
+}
+
+// The bundle has no decoder, so its output is checked with the strict shared
+// parser (GO-SPEC-ISSUE-001 producer evidence, DEV-566): it is one complete
+// value of valid UTF-8 with unique decoded names in every object, within the
+// bundle byte bound, with and without linkage and at the largest result size.
+func TestProducedBundleIsStrictJSON(t *testing.T) {
+	limits := jsondecode.Limits{MaxBytes: bundle.MaxBytes, MaxDepth: 128, MaxNodes: bundle.MaxBytes}
+	for _, linked := range []bool{false, true} {
+		var linkage *model.RotatingLinkage
+		if linked {
+			linkage = &model.RotatingLinkage{Scope: "org.example.production", Epoch: 7}
+		}
+		for name, items := range map[string][]result.Value{
+			"one result":           {notRun(t)},
+			"sixteen results":      slices.Repeat([]result.Value{notRun(t)}, bundle.MaxResults),
+			"large profile result": {largeResult(t, 0)},
+		} {
+			t.Run(fmt.Sprintf("%s linked=%v", name, linked), func(t *testing.T) {
+				v, err := builder(t, linked).Build(items, linkage)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if _, err := jsondecode.Decode(encoded(t, v), &jsondecode.Schema{Kind: jsondecode.Any}, limits); err != nil {
+					t.Fatal("produced bundle is not strict JSON:", err)
+				}
+			})
+		}
 	}
 }
 

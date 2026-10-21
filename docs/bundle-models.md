@@ -41,6 +41,7 @@ Linkage remains sensitive pseudonymous data. Runtime enforcement must still keep
 | `TestImmutableRetryBytesAndViews` | Detached buffers/views, copied caller inputs, concurrent exact-byte retries, fresh identity after linkage changes |
 | `TestMixedResultMembershipIsPreserved` | Byte-for-byte membership, negative completed outcomes versus incomplete/not-run execution, retained context and detached nested observations |
 | `TestExactEncodedBoundaries` | Validated DNS composite results producing exactly 262,143/262,144/262,145 encoded bundle bytes with and without linkage; atomic over-limit rejection |
+| `TestProducedBundleIsStrictJSON` | Produced output, with and without linkage and at 1, 16 and the largest result, parses with the strict shared parser: one complete value, valid UTF-8 and unique decoded names in every object within the bundle byte bound (DEV-566 producer evidence for [GO-SPEC-ISSUE-001](specification-issues.md#go-spec-issue-001-duplicate-json-member-names-outside-labels)) |
 | `FuzzBundleProducer` | Membership, invalid-member and optional-linkage boundaries, atomic errors, bounded valid serialization and exact-byte retries |
 
 These are local synthetic model cases. They do not promote historical mixed runtime conformance families to implemented/passed, establish CI or device evidence, or claim released measurement, privacy-lifecycle or platform support.
