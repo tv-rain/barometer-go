@@ -39,6 +39,10 @@ type Store struct {
 	faultAt int
 	fault   Fault
 	records [][]byte
+	// limit, when positive, lowers the reported capacity below MaxRecords;
+	// capacityErr fails every Capacity call.
+	limit       int
+	capacityErr bool
 }
 
 func New() *Store { return &Store{} }
@@ -94,4 +98,35 @@ func (s *Store) Records() [][]byte {
 		out[i] = append([]byte(nil), r...)
 	}
 	return out
+}
+
+// SetLimit lowers the capacity the store reports to limit records in total.
+func (s *Store) SetLimit(limit int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.limit = limit
+}
+
+// FailCapacity makes every later Capacity call fail.
+func (s *Store) FailCapacity() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.capacityErr = true
+}
+
+// Capacity reports how many more records the store accepts.
+func (s *Store) Capacity(ctx context.Context) (int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.capacityErr {
+		return 0, ErrInjected
+	}
+	if err := ctx.Err(); err != nil {
+		return 0, err
+	}
+	limit := MaxRecords
+	if s.limit > 0 {
+		limit = min(s.limit, MaxRecords)
+	}
+	return max(limit-len(s.records), 0), nil
 }

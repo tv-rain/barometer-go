@@ -378,6 +378,7 @@ Admission decides only whether consent is required. Whether valid consent covers
 
 - **Capability (Mobile and application integration, DEV-455).** The host supplies consent status outside task-controlled data, through trusted initialization or a platform capability. For one admitted task at attempt start it reports exactly one of: valid consent covering this measurement; absent; expired or withdrawn; or unavailable. It carries no user, account, device or consent-record identifier, and no task value selects or changes the answer. Consent UI, storage and signals remain with the host.
 - **Consumer (Runtime and execution, DEV-576).** Before reserving an attempt in `StartRun` ([Public API](public-api.md)), execution queries the capability only for a task whose recorded consent requirement is set. Only valid consent permits the attempt. Absent, expired, withdrawn, unavailable, an error or a missing capability means no attempt starts and no Measurement Result is produced. The outcome is a bounded local not-run or operational state, distinct from every network failure reason and never interpreted as censorship ([REQ-SAFETY-0030](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-safety.md#REQ-SAFETY-0030)). A task without a recorded requirement does not query the capability.
+- **Consumer, implemented (DEV-636).** `Client.StartRun` and the engine apply this through `execution.Gates` before reservation and before each attempt, including a retry, using the internal `platform.Consent` capability ([Attempt-Start Gates](execution-models.md#attempt-start-gates)). The query carries no task value. An unsatisfied check returns `run_not_due` and produces no result. Tests use the synthetic `internal/testkit/capability` provider; no native provider exists.
 - **Review points.** The capability's Go and binding shape is a public-API change, and it may need a public specification issue before it is fixed. Both need safety and privacy review. The execution-owned rows of `CC-SAFETY-USER-CONSENT` and `CC-SAFETY-SAFETY-EVALUATION` stay `planned` until this work exists.
 
 ## Package-Creation Checklist
@@ -452,19 +453,19 @@ Only `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING` (DEV-591), `CC-TRUST-LOCA
 | Family | Remains planned because |
 |---|---|
 | `CC-TRUST-OVERVIEW` | Its rows use NET-01 tasks; no production NET-01 codec is registered (DEV-454). |
-| `CC-TRUST-TRUSTED-SOURCE-CONTEXT` | It runs an admitted task against a recording transport and result sink; runs, transports and results do not exist (DEV-576, DEV-454). |
+| `CC-TRUST-TRUSTED-SOURCE-CONTEXT` | It runs an admitted task against a recording transport and result sink. Runs and the pending-output port exist synthetically since DEV-636, but its rows use registered test codecs and runners (DEV-454) and the production path seam (DEV-578). |
 | `CC-TRUST-ISSUER-AUTHORIZATION` | Its rows use NET-01 and NET-05 tasks and a platform-capability dimension; no production codecs (DEV-454) or NET-05 composite matching exist. |
-| `CC-TRUST-TARGET-REGISTRATION` | Its rows use TCP-01, TLS-01, HTTP-01 and DNS-01 tuples (DEV-454) and execution-time resolver and redirect checks (DEV-576). |
+| `CC-TRUST-TARGET-REGISTRATION` | Its rows use TCP-01, TLS-01, HTTP-01 and DNS-01 tuples (DEV-454) and execution-time resolver and redirect checks, which belong to path handling and the registered runners (DEV-578, DEV-454). |
 | `CC-TRUST-ADMISSION-PROCEDURE` | It needs transport, DNS and Network Context fakes, production proxy-compatibility rules (DEV-454) and a build variant that provides egress acquisition (DEV-578). |
 | `CC-TRUST-TASK-IDENTIFIER-RULES` | Its campaign-identity rows compare task IDs emitted in results across installations with linkage tokens; results do not exist. |
-| `CC-TRUST-TARGETED-DELIVERY` | Its linkage rows compare scheduling decisions and host task-selection hooks, which do not exist (DEV-576, DEV-455). |
+| `CC-TRUST-TARGETED-DELIVERY` | Its linkage rows compare scheduling decisions and host task-selection hooks, which do not exist; run reservation exists since DEV-636, the host task-selection hooks remain DEV-455's. |
 | `CC-TRUST-ADMISSION-ERRORS` | It needs a build that provides egress acquisition (DEV-578), result-sink and bundle fakes and captured log output. |
-| `CC-TRUST-LOCAL-POLICY-LIFECYCLE-RUNTIME` | It needs the host policy adapter (DEV-455), run reservation (DEV-561) and Network Context caching (DEV-578). |
+| `CC-TRUST-LOCAL-POLICY-LIFECYCLE-RUNTIME` | It needs the host policy adapter (DEV-455), cancellation of runs on replacement with recorded reasons (DEV-561) and Network Context caching (DEV-578); run reservation exists since DEV-636. |
 | `CC-TRUST-REPLAY-AFTER-CLEARING` | It needs the persistent clearing capability (DEV-564, DEV-577). |
 | `CC-LIMIT-TASK-AND-IDENTIFIER-LIMITS` | Its rows use a NET-05 `step_id` (DEV-454) and a counting reader at the native adapter (DEV-455). |
-| `CC-LIMIT-LIMIT-HANDLING` | Its runtime rows need fake clocks, scripted transports and a resource tracker in execution (DEV-576), and its NET-05 row a NET-05 codec. |
+| `CC-LIMIT-LIMIT-HANDLING` | Its runtime rows need fake clocks, scripted transports and a resource tracker in execution (DEV-562, DEV-561), and its NET-05 row a NET-05 codec. |
 | `CC-INPUT-JSON-STRUCTURE` | Its rows use the registered NET-01 and DNS-01 input schemas (DEV-454). |
-| `CC-SAFETY-ENVELOPE`, `CC-SAFETY-USER-CONSENT`, `CC-SAFETY-EFFECTIVE-RISK`, `CC-SAFETY-SAFETY-EVALUATION` | Their per-attempt rows need runs, a host consent provider and host or device restrictions (DEV-576, DEV-455). |
+| `CC-SAFETY-ENVELOPE`, `CC-SAFETY-USER-CONSENT`, `CC-SAFETY-EFFECTIVE-RISK`, `CC-SAFETY-SAFETY-EVALUATION` | Their per-attempt rows need a host consent provider and host or device restrictions (DEV-455), and rows using registered tests need production codecs (DEV-454). DEV-636 checks consent and device state at attempt start through synthetic capabilities ([Consent Handoff](#consent-handoff)); the families stay planned. |
 
 The admission rows of several planned families are already exercised by `UT.*` cases recorded in the traceability manifest. Splitting those rows into separately executable cases, as DEV-593 did for local policy, is follow-up work; it does not change admission behavior.
 

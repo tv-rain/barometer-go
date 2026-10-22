@@ -7,6 +7,7 @@ import (
 
 	"github.com/tv-rain/barometer-go/internal/admission"
 	"github.com/tv-rain/barometer-go/internal/config"
+	"github.com/tv-rain/barometer-go/internal/execution"
 	"github.com/tv-rain/barometer-go/internal/model/task"
 	"github.com/tv-rain/barometer-go/internal/persistence"
 	"github.com/tv-rain/barometer-go/internal/platform"
@@ -40,8 +41,34 @@ type adapters struct {
 	// while nil, ClearMeasurementData returns clearing_incomplete.
 	clearStorage func(context.Context) error
 
+	// run holds the inputs of run reservation and execution (DEV-636).
+	run runAdapters
+
 	// deadline overrides defaultLifecycleDeadline when positive.
 	deadline time.Duration
+}
+
+// runAdapters are the trusted inputs of StartRun. The clock, jitter source,
+// pending-output port, run ledger and path seam are required; initialization
+// fails closed without them. Consent, device state and time zone are optional:
+// a task that needs a missing one never runs. Production implementations
+// belong to DEV-563 (output), DEV-577 (ledger), DEV-578 (paths) and DEV-455
+// (consent, device and time zone); tests bind synthetic ones.
+type runAdapters struct {
+	clock    execution.Clock
+	jitter   execution.Jitter
+	output   execution.Output
+	ledger   persistence.RunLedger
+	paths    pathSource
+	consent  platform.Consent
+	device   platform.Device
+	zone     platform.TimeZone
+	registry *registry.Registry // the adapters' registry, set by successor
+}
+
+// complete reports whether every required run input is present.
+func (r runAdapters) complete() bool {
+	return !absent(r.clock) && !absent(r.jitter) && !absent(r.output) && !absent(r.ledger) && !absent(r.paths)
 }
 
 func (a *adapters) lifecycleDeadline() time.Duration {
@@ -59,6 +86,9 @@ type runtime struct {
 	admitter   *admission.Admitter
 	tasks      *taskTable
 	runs       *handleTable[runRecord]
+	runSet     *runSet
+	run        runAdapters
+	engine     *execution.Engine
 
 	// ctx bounds adapter calls made for this generation. invalidate cancels
 	// it, so a transition does not wait on a stalled trusted adapter.
@@ -86,7 +116,7 @@ func (r *runtime) invalidate() {
 // prepare builds a complete generation or nothing. It decodes only the closed
 // host configuration container and performs no network activity.
 func prepare(a *adapters, configJSON []byte) *runtime {
-	if a == nil || absent(a.clock) || a.registry == nil || a.deliveries == nil || absent(a.replay) {
+	if a == nil || absent(a.clock) || a.registry == nil || a.deliveries == nil || absent(a.replay) || !a.run.complete() {
 		return nil
 	}
 	decoder, err := config.NewDecoder(config.Contract, a.approvals)
@@ -115,10 +145,17 @@ func successor(a *adapters, init *config.Initialization, policy task.LocalPolicy
 	if err != nil {
 		return nil
 	}
+	engine, err := execution.NewEngine(a.registry, a.run.clock, a.run.jitter, a.run.output)
+	if err != nil {
+		return nil
+	}
+	run := a.run
+	run.registry = a.registry
 	ctx, cancel := context.WithCancel(context.Background())
 	return &runtime{init: init, admitter: admitter, tasks: newTaskTable(),
-		runs: newHandleTable[runRecord](runHandlePrefix, runHandleCapacity),
-		ctx:  ctx, cancel: cancel, deadline: a.lifecycleDeadline()}
+		runs:   newHandleTable[runRecord](runHandlePrefix, runHandleCapacity),
+		runSet: newRunSet(), run: run, engine: engine,
+		ctx: ctx, cancel: cancel, deadline: a.lifecycleDeadline()}
 }
 
 // absent also treats typed nil values in an interface as missing.

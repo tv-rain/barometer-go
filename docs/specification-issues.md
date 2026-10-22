@@ -628,6 +628,41 @@ The class of a step-8 input or options failure is unmapped. Go selected `task_sc
 
 Public record and disposition first, then internal task-trust review alignment if its validation plan names the class, then Go adoption with exact-class cases, then bindings. Closure requires the public disposition, its immutable revision if wording changes, and Go adoption evidence or recorded non-applicability.
 
+## GO-SPEC-ISSUE-011: Due Times and Catch-Up for Interval Repetition
+
+**Current state:** Open, raised October 22, 2026 under DEV-636 while implementing `StartRun`. No public record exists yet; public maintainers own disposition. Go implements the conservative interim rule below, as approved by the task owner.
+
+### Identity, Baselines and Requirements
+
+- **Reporter:** the Go implementation agent, under the task owner's instruction. **Duplicates:** none.
+- **Baseline:** Draft `0.1.0` at [5d01879cfd1d47396c780befa2567f7e90439948](https://github.com/tv-rain/barometer-spec/tree/5d01879cfd1d47396c780befa2567f7e90439948).
+  - [REQ-SCHEDULE-0019](https://github.com/tv-rain/barometer-spec/blob/5d01879cfd1d47396c780befa2567f7e90439948/data-formats/task-schedule.md#REQ-SCHEDULE-0019) defines `interval` as the seconds "between scheduled runs", and [REQ-SCHEDULE-0020](https://github.com/tv-rain/barometer-spec/blob/5d01879cfd1d47396c780befa2567f7e90439948/data-formats/task-schedule.md#REQ-SCHEDULE-0020) says a repeated run "becomes due according to the interval" and may start later.
+  - [REQ-SCHEDULE-0021](https://github.com/tv-rain/barometer-spec/blob/5d01879cfd1d47396c780befa2567f7e90439948/data-formats/task-schedule.md#REQ-SCHEDULE-0021) draws jitter "independently for each due run" and forbids it to move a run before `starts_at`, after `not_after` or outside a time window.
+  - [REQ-SCHEDULE-0007](https://github.com/tv-rain/barometer-spec/blob/5d01879cfd1d47396c780befa2567f7e90439948/data-formats/task-schedule.md#REQ-SCHEDULE-0007), [REQ-SCHEDULE-0009](https://github.com/tv-rain/barometer-spec/blob/5d01879cfd1d47396c780befa2567f7e90439948/data-formats/task-schedule.md#REQ-SCHEDULE-0009), [REQ-SCHEDULE-0030](https://github.com/tv-rain/barometer-spec/blob/5d01879cfd1d47396c780befa2567f7e90439948/data-formats/task-schedule.md#REQ-SCHEDULE-0030), [REQ-SCHEDULE-0032](https://github.com/tv-rain/barometer-spec/blob/5d01879cfd1d47396c780befa2567f7e90439948/data-formats/task-schedule.md#REQ-SCHEDULE-0032), [REQ-SCHEDULE-0034](https://github.com/tv-rain/barometer-spec/blob/5d01879cfd1d47396c780befa2567f7e90439948/data-formats/task-schedule.md#REQ-SCHEDULE-0034) and [REQ-SCHEDULE-0035](https://github.com/tv-rain/barometer-spec/blob/5d01879cfd1d47396c780befa2567f7e90439948/data-formats/task-schedule.md#REQ-SCHEDULE-0035) give the start time, the run limit and the eligibility conjunction, with final authority to delay or skip at the probe.
+- **Implementation:** `tv-rain/barometer-go` on the DEV-636 task branch, based on `3707cf0`. `execution.Occurrence` computes the current occurrence ([Run Reservation](execution-models.md#run-reservation)).
+
+### Finding and Interim Handling
+
+The contract does not say what the interval is measured from (the first run's due time, `starts_at`, acceptance, or the actual start of the previous run), whether the first run of a repeated task is jittered, or what happens to occurrences that become due while the host does not call: whether they are run late, one after another, or skipped, and whether a skipped occurrence counts toward `max_runs`. These choices change how many runs a task makes and how close together they can be, which is observable behavior and a traffic-pattern concern.
+
+**Blocked:** nothing; the task owner approved implementing the interim rule while this finding is open. **Interim rule:**
+
+1. The anchor is `starts_at` when present, otherwise the time the task was accepted by this instance's admission of it. When no run has been reserved before reinitialization, a redelivery's acceptance time is used, which can only move occurrences later.
+2. Occurrence 0 is due at the anchor without jitter (REQ-SCHEDULE-0009). For `interval`, occurrence *k* ≥ 1 is due at anchor + *k* × `interval` + *j*ₖ, where *j*ₖ is drawn locally from `crypto/rand` in [0, `jitter`] once, when the occurrence first becomes current, and recorded with the run accounting.
+3. The current occurrence is the latest *k* whose unjittered time anchor + *k* × `interval` has passed. Once that *k* reaches `max_runs`, no occurrence is current and the schedule has ended. Earlier occurrences that never started are skipped and do not start late. A skipped occurrence consumes no run, so a task makes at most `max_runs` runs and can make fewer.
+4. The current occurrence starts only after its jittered due time and while every other eligibility condition holds. A due time at or after `not_after` never starts. A call outside a time window leaves the occurrence current, so it can start when the window opens before the next occurrence becomes current.
+5. At most one run is reserved per occurrence. A repeated start for the occurrence that already has a run returns that run's handle while its record is kept.
+
+### Impact, Reviews and Alternatives
+
+- **Safety:** the interim rule never starts more runs than `max_runs`, and never runs missed occurrences in a burst. Two runs can still start close together when a window or constraint delays one occurrence until the next becomes current. Its cost is fewer runs when the host wakes rarely. Safety review of the chosen public rule is required, because catch-up behavior can make measurement traffic more distinctive.
+- **Alternatives:** (a) the interim rule; (b) anchor each run to the actual start of the previous run, so no occurrence is ever skipped but the schedule drifts with host wakeups; (c) a fixed grid with catch-up that runs each missed occurrence once, one per call; (d) jitter occurrence 0 as well, delaying the first run by up to `jitter` after `starts_at`.
+- **Compatibility:** each alternative is a Draft `0.1.0` clarification with no new field; (b) and (c) produce more runs than (a) for the same host behavior.
+
+### Ordering and Closure
+
+Public record and disposition first, then internal schedule-review alignment if its validation plan names due times, then Go adoption with due-time cases, then bindings. Closure requires the public disposition, its immutable revision if wording changes, and Go adoption evidence or recorded non-applicability.
+
 ## Signed Remote Task Package Adoption
 
 **Status:** Public contract and internal review alignment are merged; the Go core adopts them in DEV-612 with synthetic evidence only. The cryptographic, safety and host integration reviews were performed by the project maintainer in DEV-615 with no findings, and the remote-delivery gate (DEV-595) is lifted. The interpretation question below is closed by REQ-TRUST-0055, adopted by DEV-624. Binding and host adoption remain open (DEV-455).

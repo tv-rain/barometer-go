@@ -25,8 +25,14 @@ const (
 	runHandlePrefix  = "R."
 )
 
-// runRecord is the run-table value; run reservation (DEV-561) extends it.
-type runRecord struct{ taskHandle string }
+// runRecord is the run-table value. A record without a status was never
+// launched and is terminal.
+type runRecord struct {
+	taskHandle string
+	status     *runStatus
+}
+
+func (r runRecord) terminal() bool { return r.status == nil || r.status.done.Load() }
 
 // handleTable maps unguessable local references to values owned by one client
 // instance and one initialization generation. A new generation gets a new

@@ -49,6 +49,27 @@ func (a Admitted) ExpiresAt() time.Time { return a.record.ExpiresAt }
 // EvaluatedAt is the trusted time at which this outcome was evaluated.
 func (a Admitted) EvaluatedAt() time.Time { return a.gated.acceptedAt }
 
+// The accessors below are the execution inputs of Outputs Consumed by
+// Execution in docs/admission.md. They expose no source context, task bytes or
+// delivery record. Nested values are shared and must be treated as read-only.
+
+// Key is the replay key, which also keys the task's run accounting.
+func (a Admitted) Key() persistence.ReplayKey { return a.record.Key }
+
+// Test is the exact registered test version the task was admitted for.
+func (a Admitted) Test() task.TestVersion { return a.gated.entry.Test }
+
+// Candidate is the validated candidate: normalized parameters, schedule,
+// execution constraints, labels and expiry.
+func (a Admitted) Candidate() task.Candidate { return a.gated.candidate }
+
+// AttemptLimits are the effective attempt limits after intersection.
+func (a Admitted) AttemptLimits() task.AttemptLimits { return a.gated.authority.limits.Attempt }
+
+// ConsentRequired reports the recorded consent requirement. Whether valid
+// consent covers an attempt is decided by execution at attempt start.
+func (a Admitted) ConsentRequired() bool { return a.gated.authority.requireConsent }
+
 // String and GoString keep source context, the replay key and parameters out
 // of formatted output.
 func (Admitted) String() string   { return "admission.Admitted" }
