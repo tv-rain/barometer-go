@@ -1,6 +1,7 @@
 package testkit
 
 import (
+	"context"
 	"errors"
 	"sync"
 	"time"
@@ -43,4 +44,36 @@ func TimeBoundaries(at time.Time, quantum time.Duration) (TimeBoundary, error) {
 		return TimeBoundary{}, errors.New("testkit: time quantum must be positive")
 	}
 	return TimeBoundary{at.Add(-quantum), at, at.Add(quantum)}, nil
+}
+
+// WaitClock adds a deterministic Wait to Clock for engines that wait on an
+// injected clock. Wait returns the context error if ctx is done; otherwise it
+// records the requested duration and advances the clock by it at once. It
+// creates no timers or goroutines, so tests assert delays without sleeping.
+type WaitClock struct {
+	*Clock
+	mu    sync.Mutex
+	waits []time.Duration
+}
+
+func NewWaitClock(now time.Time) *WaitClock { return &WaitClock{Clock: NewClock(now)} }
+
+func (c *WaitClock) Wait(ctx context.Context, d time.Duration) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := c.Advance(d); err != nil {
+		return err
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.waits = append(c.waits, d)
+	return nil
+}
+
+// Waits returns a copy of the durations waited, in order.
+func (c *WaitClock) Waits() []time.Duration {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return append([]time.Duration(nil), c.waits...)
 }

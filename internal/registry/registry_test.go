@@ -1,12 +1,14 @@
 package registry
 
 import (
+	"context"
 	"errors"
 	"strconv"
 	"sync"
 	"testing"
 
 	"github.com/tv-rain/barometer-go/internal/jsondecode"
+	"github.com/tv-rain/barometer-go/internal/measurement"
 	"github.com/tv-rain/barometer-go/internal/model/task"
 	"github.com/tv-rain/barometer-go/internal/taskdecode"
 )
@@ -221,4 +223,35 @@ func TestConcurrentReads(t *testing.T) {
 		}()
 	}
 	wg.Wait()
+}
+
+// fixtureRunner is a test-scoped runner identity; it performs no work.
+type fixtureRunner struct{ name string }
+
+func (fixtureRunner) Run(context.Context, measurement.Input) (measurement.Output, error) {
+	return measurement.Output{}, measurement.ErrRunner
+}
+
+func TestRunnerCompositionIsExactAndFailsClosed(t *testing.T) {
+	entries := fixtureEntries()
+	entries[0].Runner = fixtureRunner{name: "syn-0.1.0"}
+	r := mustNew(t, entries)
+	got, ok := r.Runner(entries[0].Test)
+	if !ok || got != (fixtureRunner{name: "syn-0.1.0"}) {
+		t.Fatalf("Runner(%v) = %v, %v", entries[0].Test, got, ok)
+	}
+	for _, miss := range []task.TestVersion{
+		{ID: "SYN-01", Version: "0.2.0"}, // registered entry without a runner
+		{ID: "SYN-01", Version: "0.3.0"}, // no latest-version fallback
+		{ID: "syn-01", Version: "0.1.0"}, // no case folding
+		{ID: "TCP-01", Version: "0.1.0"}, // not registered here
+	} {
+		if got, ok := r.Runner(miss); ok || got != nil {
+			t.Errorf("Runner(%q) = %v, %v; want miss", miss, got, ok)
+		}
+	}
+	var nilRegistry *Registry
+	if got, ok := nilRegistry.Runner(entries[0].Test); ok || got != nil {
+		t.Fatal("nil registry must not resolve runners")
+	}
 }
