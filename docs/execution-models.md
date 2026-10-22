@@ -151,5 +151,77 @@ When no run was reserved before a reinitialization, the anchor of a task without
 - `internal/registry/registry_test.go` covers exact runner lookup with no version fallback and fail-closed lookup for entries without a runner; `dependency_rules_test.go` covers the registry and runner-contract import rules.
 - `internal/model/task/admission_error_test.go` checks all eleven public codes, the entire invalid numeric domain, bounded error text, sensitive-input rejection and separation from execution reasons.
 - Existing task-decoding and schedule tests remain applicable to the four allowed retry reasons.
+- `runtime_conformance_test.go` in the root package and `internal/execution/cross_cutting_conformance_test.go` (DEV-640) execute the runtime case families listed under [Runtime Case Families](#runtime-case-families).
 
 These tests establish local model and synthetic orchestration invariants, and deadline, cancellation and generic stream budget behavior on the host test platform with loopback sockets. They do not establish admission correctness, per-protocol byte accounting, runtime cancellation or suspension behavior on devices, registered measurement conformance, result serialization, device behavior or platform support. The existing traceability manifests remain planned cross-cutting coverage; this task does not promote their broader case families to implemented or passed status.
+
+## Runtime Case Families
+
+DEV-640 classifies the 49 runtime-scope cross-cutting families for the runtime and execution closeout (DEV-576): the `CC-EXECUTION-*`, `CC-SCHEDULE-*` and `CC-LIMIT-*` families, their `RV-` review cases, and the run-dependent `CC-RESULT-EXECUTION-OBJECT`, `CC-RESULT-TIME-OBJECT`, `CC-SAFETY-USER-CONSENT`, `CC-OPTIONS-EXECUTION-PRECEDENCE`, `CC-CONTEXT-FORMAT-USE-IN-EXECUTION`, `CC-CONTEXT-EXECUTION-INTEGRATION`, `CC-PROXY-EXECUTION-STATES` and `CC-TRUST-LOCAL-POLICY-LIFECYCLE-RUNTIME`. A family is executed only when every row of its case plan runs with synthetic adapters, the injected clock and the test-only loopback runner. Mixed families are not split, and planned cases are not conformance.
+
+Where a plan names a registered test only as the vehicle for a schedule or execution rule (for example the NET-01 tasks of `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW`), the synthetic runner registered under the TCP-01 identifier stands in for it, and no behavior of the named test is asserted. This substitution was approved for DEV-640.
+
+### Executed
+
+These 18 families are executed with synthetic evidence:
+
+| Family | Test |
+|---|---|
+| `CC-RESULT-EXECUTION-OBJECT` | `TestCcResultExecutionObject` (`internal/execution`) |
+| `CC-EXECUTION-FIELDS` | `TestCcExecutionFields` (root) |
+| `CC-EXECUTION-FIELDS-LIMITS` | `TestCcExecutionFieldsLimits` (`internal/execution`, real loopback sockets) |
+| `CC-EXECUTION-FIELDS-CONCURRENCY` | `TestCcExecutionFieldsConcurrency` (root) |
+| `CC-SAFETY-USER-CONSENT` | `TestCcSafetyUserConsent` (root) |
+| `CC-SCHEDULE-FIELDS` | `TestCcScheduleFields` (root) |
+| `CC-SCHEDULE-SCHEDULING-MODEL` | `TestCcScheduleSchedulingModel` (root) |
+| `CC-SCHEDULE-SCHEDULING-MODEL-START-TIME` | `TestCcScheduleSchedulingModelStartTime` (root) |
+| `CC-SCHEDULE-SCHEDULING-MODEL-TIME-LIMIT` | `TestCcScheduleSchedulingModelTimeLimit` (root) |
+| `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW` | `TestCcScheduleSchedulingModelTimeWindow` (root) |
+| `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-FIELDS` | `TestCcScheduleSchedulingModelTimeWindowFields` (root) |
+| `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-RANGE-FIELDS` | `TestCcScheduleSchedulingModelTimeWindowRangeFields` (root) |
+| `CC-SCHEDULE-SCHEDULING-MODEL-REPEAT` | `TestCcScheduleSchedulingModelRepeat` (root) |
+| `CC-SCHEDULE-SCHEDULING-MODEL-RETRY` | `TestCcScheduleSchedulingModelRetry` (root) |
+| `CC-SCHEDULE-SCHEDULING-MODEL-RETRY-RETRY-FIELDS` | `TestCcScheduleSchedulingModelRetryRetryFields` (root) |
+| `CC-SCHEDULE-VALIDATION` | `TestCcScheduleValidation` (root) |
+| `CC-SCHEDULE-VALIDATION-ELIGIBILITY-RULES` | `TestCcScheduleValidationEligibilityRules` (root) |
+| `CC-LIMIT-SCHEDULE-AND-RETRY-LIMITS` | `TestCcLimitScheduleAndRetryLimits` (root) |
+
+Two rows run below the facade. The embedded one-time exception (REQ-LIMIT-0013) is a trusted release-review input that `Client.AdmitTask` does not take, so through the facade an embedded task without `not_after` fails closed with `task_schema_invalid`; the cases assert that, and assert the exception itself through `validation.ScheduleAt`. Where a rejection class is not fixed by the case plan, the cases assert the class of the [admission design](admission.md): a value above a registered maximum is `task_limit_exceeded`, a value below a minimum or outside a relationship is `task_schema_invalid`, and a future `issued_at` is `task_source_unauthenticated`.
+
+### Planned
+
+Every other runtime-scope family stays `planned` because a row of its case plan needs something that does not exist yet:
+
+| Family | Remains planned because | Owner |
+|---|---|---|
+| `CC-RESULT-TIME-OBJECT` | Stage rounding needs protocol stages from registered runners. | DEV-454 |
+| `CC-OPTIONS-EXECUTION-PRECEDENCE` | It needs per-test options with a protocol timeout. | DEV-454 |
+| `CC-EXECUTION-FIELDS-LIMITS-FIELDS` | Its rows count HTTP headers, DNS messages and length prefixes. | DEV-454 |
+| `CC-LIMIT-PURPOSE` | Its rows need HTTP-01, NET-03, DNS-01, DNS-03 and DNS-04 runners at the counted boundary. | DEV-454 |
+| `CC-LIMIT-TASK-AND-IDENTIFIER-LIMITS` | Its rows use production input and options schemas and the NET-05 `step_id`. | DEV-454 |
+| `CC-LIMIT-ATTEMPT-LIMITS` | Its rows need the NET-01 zero-traffic exception and the 15,000 ms protocol ceiling. | DEV-454 |
+| `CC-LIMIT-DNS-LIMITS` | It needs DNS runners. | DEV-454 |
+| `CC-LIMIT-HTTP-AND-VALIDATION-LIMITS` | It needs HTTP-01 and NET-03 runners. | DEV-454 |
+| `CC-LIMIT-NET-05-COMPOSITE-LIMITS` | It needs the NET-05 codec and composite budgets. | DEV-454 |
+| `CC-LIMIT-LIMIT-HANDLING` | Its rows need an HTTP-01 body bound, a NET-05 profile and production codecs. | DEV-454 |
+| `CC-EXECUTION-ENVELOPE` | It checks protocol semantics through the direct and proxy transports. | DEV-578 |
+| `CC-EXECUTION-FIELDS-NETWORK-PATH` | It needs proxy path selection and path failures. | DEV-578 |
+| `CC-EXECUTION-FIELDS-NETWORK` | A task must run once the platform reports the required network values; network conditions are unsatisfied until they are evaluated. | DEV-578 |
+| `CC-EXECUTION-FIELDS-NETWORK-FIELDS` | It needs network-type, VPN and validation evaluation. | DEV-578 |
+| `CC-EXECUTION-FIELDS-NETWORK-FIELDS-VPN-POLICY` | It needs VPN-state evaluation. | DEV-578 |
+| `CC-EXECUTION-FIELDS-NETWORK-FIELDS-NETWORK-CONTEXT-REQUIREMENTS` | It needs Network Context acquisition and endpoints. | DEV-578 |
+| `CC-CONTEXT-FORMAT-USE-IN-EXECUTION` | It needs context requirement evaluation. | DEV-578 |
+| `CC-CONTEXT-EXECUTION-INTEGRATION` | It needs context acquisition during execution. | DEV-578 |
+| `CC-PROXY-EXECUTION-STATES` | It needs the proxy path and its failures. | DEV-578 |
+| `CC-SCHEDULE-ENVELOPE` | It needs a platform suspension signal. | DEV-455 |
+| `CC-EXECUTION-EXECUTION-MODEL` | Its retry rows need a `platform_suspended` attempt outcome from a platform signal. | DEV-455 |
+| `CC-SCHEDULE-SCHEDULING-MODEL-LIMITS-FIELDS` | Its retry row needs a `platform_suspended` attempt outcome from a platform signal. | DEV-455 |
+| `CC-EXECUTION-CONSTRAINT-EVALUATION` | Its rows need operating-system and user vetoes. | DEV-455 |
+| `CC-EXECUTION-FIELDS-DEVICE-FIELDS` | Its rows need local device policy stricter than the task; local policy has no device constraints yet. | DEV-455 |
+| `CC-TRUST-LOCAL-POLICY-LIFECYCLE-RUNTIME` | It needs the host policy adapter and Network Context caches. | DEV-455, DEV-578 |
+| `CC-LIMIT-RESULT-AND-BUNDLE-LIMITS` | It needs pending storage and its maxima. | DEV-577 |
+| `CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS` | It needs context endpoints, linkage and pending-bundle retention. | DEV-577, DEV-578 |
+| `CC-SCHEDULE-SCHEDULING-MODEL-REPEAT-INTERVAL-FIELDS` | Delayed due runs depend on the open [GO-SPEC-ISSUE-011](specification-issues.md#go-spec-issue-011-due-times-and-catch-up-for-interval-repetition). | DEV-453 |
+| `RV-CC-LIMIT-PURPOSE` | Human review of the per-test accounting mapping, which needs the registered runners. | DEV-454; review is non-gating |
+| `RV-CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS` | Human review of deployment retention documentation. | DEV-456; review is non-gating |
+| `RV-CC-LIMIT-LIMIT-HANDLING` | Human review of the limit history by an independent reviewer. | DEV-618; review is non-gating |

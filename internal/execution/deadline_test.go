@@ -264,6 +264,7 @@ func TestAttemptScopeReleasesSockets(t *testing.T) {
 	f.plan.Parameters = loopback.Parameters{Address: srv.Address()}
 	o := <-f.start(t, f.run, leaky{t: t})
 	f.expect(t, o.rep, o.err, nil, []want{{"completed", "", "connected"}}, nil)
+	waitAccepted(t, srv, 1)
 	waitOpen(t, srv, 0)
 	if srv.Accepted() != 1 {
 		t.Fatalf("accepted = %d", srv.Accepted())
@@ -346,6 +347,18 @@ func holdServer(t *testing.T) *loopback.Server {
 
 // waitOpen waits for the server to observe n open connections. The timeout
 // only bounds a failing test; no assertion depends on elapsed time.
+// waitAccepted waits until the server has accepted n connections, so later
+// accept counts and server-side byte counts are final rather than racing the
+// server's accept loop.
+func waitAccepted(t *testing.T, srv *loopback.Server, n int) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.WaitAccepted(ctx, n); err != nil {
+		t.Fatalf("server accepted %d connections, want %d", srv.Accepted(), n)
+	}
+}
+
 func waitOpen(t *testing.T, srv *loopback.Server, n int) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

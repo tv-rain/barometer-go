@@ -64,6 +64,7 @@ func (c budgetCase) run(t *testing.T) (*fixture, execution.Report) {
 	if got := o.rep.Attempts[0].Usage; got != c.usage {
 		t.Fatalf("metered usage = %+v, want %+v", got, c.usage)
 	}
+	waitAccepted(t, srv, c.accepted)
 	in, _ := serverBytes(t, srv)
 	if in != c.serverIn || srv.Accepted() != c.accepted {
 		t.Fatalf("server read %d bytes on %d connections, want %d on %d", in, srv.Accepted(), c.serverIn, c.accepted)
@@ -316,6 +317,7 @@ func TestExhaustedBudgetDispatchesNoFurtherIO(t *testing.T) {
 			t.Fatalf("operation %d after exhaustion succeeded", i+1)
 		}
 	}
+	waitAccepted(t, srv, 2)
 	if in, out := serverBytes(t, srv); in != 0 || out != 0 || srv.Accepted() != 2 {
 		t.Fatalf("server read %d, wrote %d, accepted %d", in, out, srv.Accepted())
 	}
