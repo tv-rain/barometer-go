@@ -36,7 +36,7 @@ The candidate is not permission to execute. `validation.RetryEligible` must stil
 
 ## Run Orchestration
 
-DEV-635 adds `execution.Engine`, the internal engine for one run of an admitted task. It is not exported through the root package; `StartRun`, `RunState` and `CancelRun` are later tasks. Public baseline: Draft `0.1.0` at [`4743b63`](https://github.com/tv-rain/barometer-spec/tree/4743b636f29feb1f0f8d042866d04ccda3532938) for [Retry](https://github.com/tv-rain/barometer-spec/blob/4743b636f29feb1f0f8d042866d04ccda3532938/data-formats/task-schedule.md#retry) and [Schedule and Retry Limits](https://github.com/tv-rain/barometer-spec/blob/4743b636f29feb1f0f8d042866d04ccda3532938/library/registered-limits.md#schedule-and-retry-limits).
+DEV-635 adds `execution.Engine`, the internal engine for one run of an admitted task. It is not exported through the root package; `Client.StartRun` (DEV-636, [Run Reservation](#run-reservation)) launches it, and `CancelRun` is a later task. Public baseline: Draft `0.1.0` at [`4743b63`](https://github.com/tv-rain/barometer-spec/tree/4743b636f29feb1f0f8d042866d04ccda3532938) for [Retry](https://github.com/tv-rain/barometer-spec/blob/4743b636f29feb1f0f8d042866d04ccda3532938/data-formats/task-schedule.md#retry) and [Schedule and Retry Limits](https://github.com/tv-rain/barometer-spec/blob/4743b636f29feb1f0f8d042866d04ccda3532938/library/registered-limits.md#schedule-and-retry-limits).
 
 `NewEngine` takes the registry, a `Clock` (monotonic `Now` and a cancellable `Wait`), a `Jitter` source and the `Output` port; any missing input fails with `ErrEngine`. `SystemClock` and `LocalJitter` (uniform, from `crypto/rand`; a read failure yields no jitter) are the non-test implementations. A `Plan` carries only trusted local inputs prepared after admission: task ID, exact test version, normalized parameters, the validated schedule, the host-directed eligibility snapshot (`validation.StartContext`, whose `Now` the engine sets), the implementation identity, a `result.Decoder` bound to the same task, a `ContextSource` and a `DialerSource`.
 
@@ -72,11 +72,46 @@ The engine applies the rule in force at its baseline: an attempt is `not_run` be
 | `ContextSource` | Test fakes | Network Context acquisition: DEV-578 |
 | `DialerSource` / `measurement.Dialer` | Test-only `internal/testkit/loopback` | Path, proxy and budget accounting: DEV-578, DEV-562 |
 | `Clock` | `SystemClock`; `testkit.WaitClock` in tests | Deadline coordination: DEV-561 |
+| `Preconditions` (DEV-636) | `execution.Gates`; scripted fakes in tests | Network conditions: DEV-578 |
+
+Since DEV-636 the engine also evaluates the plan's optional `Preconditions` before every attempt: unsatisfied before the first attempt, `Run` fails closed with `ErrNotEligible` and no result; unsatisfied before a retry, the run ends with the first attempt's result unchanged and no second attempt. The `Output` port gains `Capacity`, which run reservation checks before a run starts.
+
+## Run Reservation
+
+DEV-636 adds the start-time decisions behind `Client.StartRun` ([Implemented Subset](public-api.md#implemented-subset)). The host directs every wakeup; nothing here starts a run on its own.
+
+### Run Accounting
+
+`persistence.RunRecord` is the schedule accounting of one admitted task, keyed by its replay key and held in the `persistence.RunLedger` port: the anchor of occurrence 0, the number of reserved runs, the next occurrence that has neither been reserved nor skipped, and that occurrence's due time with jitter included. The record is written before a run exists, so an interrupted or uncertain write can only lose a run. Reinitialization does not reset it; the production store, its retention and its deletion by clearing belong to DEV-577 and DEV-563, and the only implementation is the test-only `internal/testkit/ledger`.
+
+`execution.NewAccounting`, `Occurrence`, `Advance`, `Due` and `Reserve` implement the interim rule of [GO-SPEC-ISSUE-011](specification-issues.md#go-spec-issue-011-due-times-and-catch-up-for-interval-repetition): the anchor is `starts_at` (rounded up to a whole second) or the acceptance time; occurrence 0 is due at the anchor without jitter; occurrence *k* of an `interval` schedule is due at anchor + *k* × `interval` plus jitter drawn from the engine's `Jitter` source once, capped at the task's `jitter`; the current occurrence is the latest whose unjittered time has passed, and once that reaches `max_runs` the schedule has ended; earlier unreserved occurrences are skipped and consume no run. Repeat mode `none` permits one run. `validation.RunEligible` still decides `starts_at`, `not_after`, the time window and `max_runs` for the due occurrence.
+
+When no run was reserved before a reinitialization, the anchor of a task without `starts_at` is the redelivery's acceptance time, which can only move occurrences later. This and every other part of the rule are interim until public disposition.
+
+### Attempt-Start Gates
+
+`execution.Gates` is the plan's `Preconditions`, evaluated by `StartRun` before reservation and by the engine before each attempt. Every missing capability, error or undetermined value is unsatisfied; nothing is guessed:
+
+- **Network conditions.** Until DEV-578 evaluates them, a `proxy` path, `allowed_transports`, a `vpn_policy` other than `any`, `require_validated` and Network Context requirements are unsatisfied ([REQ-EXECUTION-0031](https://github.com/tv-rain/barometer-spec/blob/5d01879cfd1d47396c780befa2567f7e90439948/data-formats/task-execution.md#REQ-EXECUTION-0031)), so such a task never runs and never reaches the path seam. Admission still rejects tasks that require egress Network Context as `task_unsupported`.
+- **Device.** `minimum_battery_percent` needs a known battery level at or above it, and `allow_charging_only` a known charging state, from `platform.Device`.
+- **Consent.** Only for a task whose consent requirement admission recorded, `platform.Consent` must report `ConsentValid` ([Consent Handoff](admission.md#consent-handoff)). The query carries no task value. Absent, ended, unavailable, an error or a missing capability start no attempt and produce no result.
+
+`StartRun` maps an unsatisfied gate to `run_not_due`, so no result is written for it. Concurrency is the facade's, because it spans runs: an `exclusive` run starts only when no other run is active, and no run starts beside an active exclusive run. An absent concurrency member states no requirement and is treated as `shared`.
+
+### Reviewed Inputs
+
+| Input | Value | Basis |
+|---|---|---|
+| Active runs per client | 4, each on one goroutine | Implementation choice; the registered limits set no ceiling |
+| Pending-output check | Free capacity at least the new run's `max_attempts` plus the `max_attempts` of every active run | Backpressure before capacity is exhausted ([Results and Delivery](public-api.md#results-and-delivery)) |
+| Reservation lock | One per generation, held only for calls bounded by the generation context and the lifecycle deadline | Serializes the due check, the ledger write and the run handle |
 
 ## Synthetic Evidence and Remaining Work
 
 - `internal/execution/attempt_test.go` covers every phase/operation pair, all registered reasons before and after start, preservation of the first condition, invalid/protocol/admission reasons, JSON rejection and integration with bounded schedule eligibility.
 - `internal/execution/run_test.go` (DEV-635) covers attempt and retry sequencing on an injected clock with no sleeps: completed and negative outcomes without retry, runner failure with and without a retry object, a reason outside `retry_on`, retry then completion, an exhausted retry budget, the jitter cap at `max_delay_ms`, no retry when the delay reaches `not_after`, re-checked eligibility after the wait, pre-start `not_run` paths without Network Context, invalid runner output, host cancellation, output-port failures before and after a durable write, fail-closed plan, runner and eligibility checks, and real loopback TCP I/O through the attempt-scoped dialer (not TCP-01 evidence).
+- `internal/execution/occurrence_test.go` (DEV-636) covers the anchor, interval due times with jitter drawn once and capped, skipped occurrences, the end of the schedule after the last occurrence, one run for repeat mode `none`, and the run budget at limit −1, limit and limit +1. `gates_test.go` covers every unsatisfiable network condition, consent statuses, errors and a missing capability, battery and charging boundaries, and that consent and device state are queried only for a requirement. `TestPreconditionsAreRecheckedBeforeEachAttempt` covers the engine's check before each attempt.
+- `runs_test.go` in the root package (DEV-636) covers `StartRun` and `RunState` end to end with synthetic adapters; see the [DEV-636 validation record](public-api.md#dev-636-validation-record).
 - `internal/registry/registry_test.go` covers exact runner lookup with no version fallback and fail-closed lookup for entries without a runner; `dependency_rules_test.go` covers the registry and runner-contract import rules.
 - `internal/model/task/admission_error_test.go` checks all eleven public codes, the entire invalid numeric domain, bounded error text, sensitive-input rejection and separation from execution reasons.
 - Existing task-decoding and schedule tests remain applicable to the four allowed retry reasons.

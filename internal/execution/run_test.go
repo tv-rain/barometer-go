@@ -530,3 +530,45 @@ func TestLoopbackRunnerOnRealSockets(t *testing.T) {
 		t.Fatalf("records = %s", recs)
 	}
 }
+
+// scriptedPreconditions answers each attempt-start check in turn.
+type scriptedPreconditions struct {
+	answers []bool
+	calls   int
+}
+
+func (p *scriptedPreconditions) Satisfied(context.Context) bool {
+	p.calls++
+	return p.answers[p.calls-1]
+}
+
+// Preconditions are evaluated before every attempt: unsatisfied before the
+// first, the run fails closed with no result; unsatisfied before a retry, the
+// run ends with the first attempt's result unchanged.
+func TestPreconditionsAreRecheckedBeforeEachAttempt(t *testing.T) {
+	f := newFixture(t, schedule(2, task.InternalError), failure(), connected(t))
+	f.plan.Preconditions = &scriptedPreconditions{answers: []bool{false}}
+	rep, err := f.engine.Run(f.run, f.plan)
+	f.expect(t, rep, err, execution.ErrNotEligible, nil, nil)
+	if f.runner.Calls() != 0 || f.ctx.calls != 0 {
+		t.Fatal("work before an unsatisfied first precondition")
+	}
+
+	f = newFixture(t, schedule(2, task.InternalError), failure(), connected(t))
+	p := &scriptedPreconditions{answers: []bool{true, false}}
+	f.plan.Preconditions = p
+	rep, err = f.engine.Run(f.run, f.plan)
+	f.expect(t, rep, err, nil, []want{{"incomplete", "internal_error", ""}}, []time.Duration{35 * time.Second})
+	if f.runner.Calls() != 1 || p.calls != 2 {
+		t.Fatalf("retry ran with unsatisfied preconditions: runner %d, checks %d", f.runner.Calls(), p.calls)
+	}
+
+	f = newFixture(t, schedule(2, task.InternalError), failure(), connected(t))
+	p = &scriptedPreconditions{answers: []bool{true, true}}
+	f.plan.Preconditions = p
+	rep, err = f.engine.Run(f.run, f.plan)
+	f.expect(t, rep, err, nil, []want{{"incomplete", "internal_error", ""}, {"completed", "", "connected"}}, []time.Duration{35 * time.Second})
+	if p.calls != 2 {
+		t.Fatal("preconditions not checked before each attempt")
+	}
+}

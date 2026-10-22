@@ -52,6 +52,10 @@ type Jitter interface {
 // store is a production fallback.
 type Output interface {
 	Put(ctx context.Context, v result.Value) error
+	// Capacity reports how many more results the store can accept now. The
+	// caller checks it before reserving a run, so execution stops before
+	// pending-output capacity is exhausted; an error means no capacity.
+	Capacity(ctx context.Context) (int, error)
 }
 
 // ContextSource supplies the attempt's Network Context for the run's path. It
@@ -126,6 +130,7 @@ type Plan struct {
 	Result         *result.Decoder
 	Context        ContextSource
 	Dialers        DialerSource
+	Preconditions  Preconditions // optional attempt-start check
 }
 
 // AttemptReport is the execution record of one terminal attempt. Usage is the
@@ -144,7 +149,8 @@ type Report struct {
 }
 
 // Run executes attempts sequentially. Before any work it fails closed on an
-// invalid plan, a missing runner or an ineligible run. Each terminal attempt is
+// invalid plan, a missing runner, an ineligible run or unsatisfied
+// preconditions, which are evaluated again before a retry. Each terminal attempt is
 // built through result construction and written to the output port before the
 // next decision. A retry happens only when the attempt's reason is a retry
 // candidate, the schedule permits it (validation.RetryEligible) both before and
@@ -163,13 +169,16 @@ func (e *Engine) Run(ctx context.Context, p Plan) (Report, error) {
 	if !ok {
 		return Report{}, ErrNoRunner
 	}
-	if !validation.RunEligible(p.Schedule, e.conditions(p)) {
+	if !validation.RunEligible(p.Schedule, e.conditions(p)) || !p.satisfied(ctx) {
 		return Report{}, ErrNotEligible
 	}
 	report := Report{RunID: result.NewRunID()}
 	for n := 1; n <= p.Schedule.Retry.MaxAttempts; n++ {
 		if ctx.Err() != nil {
 			return report, ErrCancelled
+		}
+		if n > 1 && !p.satisfied(ctx) {
+			break
 		}
 		a, usage, v, err := e.attempt(ctx, p, runner, report.RunID, n)
 		if err != nil {
@@ -185,6 +194,11 @@ func (e *Engine) Run(ctx context.Context, p Plan) (Report, error) {
 		}
 	}
 	return report, nil
+}
+
+// satisfied re-evaluates the plan's preconditions at attempt start.
+func (p Plan) satisfied(ctx context.Context) bool {
+	return p.Preconditions == nil || p.Preconditions.Satisfied(ctx)
 }
 
 func (e *Engine) conditions(p Plan) validation.StartContext {

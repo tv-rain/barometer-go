@@ -58,6 +58,7 @@ type harness struct {
 	deliveries *admission.DeliveryStore
 	replay     *replay.Store
 	adapters   adapters
+	run        runFakes // synthetic run adapters, see runs_test.go
 }
 
 func newHarness(t *testing.T) *harness {
@@ -75,6 +76,7 @@ func newHarness(t *testing.T) *harness {
 		t.Fatal("synthetic registry rejected")
 	}
 	h.adapters = adapters{clock: h.clock, registry: reg, deliveries: h.deliveries, replay: h.replay, deadline: 200 * time.Millisecond}
+	h.bindRunAdapters(t)
 	return h
 }
 
@@ -273,6 +275,11 @@ func TestInitializeFailsClosed(t *testing.T) {
 		"no delivery store": func(a *adapters) { a.deliveries = nil },
 		"no replay store":   func(a *adapters) { a.replay = nil },
 		"typed nil replay":  func(a *adapters) { a.replay = typedNilReplay },
+		"no run clock":      func(a *adapters) { a.run.clock = nil },
+		"no run jitter":     func(a *adapters) { a.run.jitter = nil },
+		"no pending output": func(a *adapters) { a.run.output = nil },
+		"no run ledger":     func(a *adapters) { a.run.ledger = nil },
+		"no path seam":      func(a *adapters) { a.run.paths = nil },
 	}
 	for name, edit := range edits {
 		t.Run(name, func(t *testing.T) {
