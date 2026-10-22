@@ -121,11 +121,11 @@ var importRules = []importRule{
 		},
 	},
 	{
-		name:    "registry imports only task models, task decoding and strict JSON",
+		name:    "registry imports only task models, task decoding, strict JSON and the runner contract",
 		applies: func(pkg string) bool { return underAny(pkg, "registry") },
 		forbidden: func(_, imp string) bool {
 			if moduleImport(imp) {
-				return !underAny(imp, "model/task", "taskdecode", "jsondecode")
+				return !underAny(imp, "model/task", "taskdecode", "jsondecode") && imp != internalPath("measurement")
 			}
 			return !standardLibrary(imp) || directIO(imp)
 		},
@@ -182,6 +182,17 @@ var importRules = []importRule{
 		name:      "measurement packages must not import admission",
 		applies:   func(pkg string) bool { return underAny(pkg, "measurement") },
 		forbidden: func(_, imp string) bool { return underAny(imp, "admission") },
+	},
+	{
+		// The registry, and through it admission, links the contract package.
+		name:    "the runner contract imports only task and observation models",
+		applies: func(pkg string) bool { return pkg == internalPath("measurement") },
+		forbidden: func(_, imp string) bool {
+			if moduleImport(imp) {
+				return !underAny(imp, "model/task", "model/observation")
+			}
+			return !standardLibrary(imp) || directIO(imp)
+		},
 	},
 }
 
@@ -259,7 +270,7 @@ func TestDependencyRules(t *testing.T) {
 	for _, f := range files {
 		seen[f.pkg] = true
 	}
-	for _, want := range []string{modulePath, internalPath("jsondecode"), internalPath("model/task"), internalPath("taskdecode"), internalPath("validation"), internalPath("registry"), internalPath("admission"), internalPath("testkit/conformance"), internalPath("testkit/delivery"), internalPath("persistence"), internalPath("testkit/replay")} {
+	for _, want := range []string{modulePath, internalPath("jsondecode"), internalPath("model/task"), internalPath("taskdecode"), internalPath("validation"), internalPath("registry"), internalPath("admission"), internalPath("testkit/conformance"), internalPath("testkit/delivery"), internalPath("persistence"), internalPath("testkit/replay"), internalPath("measurement"), internalPath("execution")} {
 		if !seen[want] {
 			t.Fatalf("dependency check did not load %s", want)
 		}
@@ -324,6 +335,9 @@ func TestDependencyRulesRejectForbiddenImports(t *testing.T) {
 		{"model imports admission", file("model/task", false, internalPath("admission")), importRules[2].name},
 		{"measurement imports admission", file("measurement/tcp01", false, internalPath("admission")), importRules[13].name},
 		{"protocol imports admission", file("protocol/http", false, internalPath("admission")), importRules[9].name},
+		{"runner contract imports a runner", file("measurement", false, internalPath("measurement/tcp01")), importRules[14].name},
+		{"runner contract imports execution", file("measurement", false, internalPath("execution")), importRules[14].name},
+		{"runner contract opens sockets", file("measurement", false, "net"), importRules[14].name},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -350,6 +364,9 @@ func TestDependencyRulesRejectForbiddenImports(t *testing.T) {
 		file("testkit/replay", false, internalPath("persistence"), internalPath("model/task"), "encoding/json"),
 		file("admission", true, internalPath("testkit/replay")),
 		file("execution", false, internalPath("registry")),
+		file("registry", false, internalPath("measurement")),
+		file("measurement", false, internalPath("model/task"), internalPath("model/observation"), "context", "io", "time"),
+		file("execution", false, internalPath("measurement"), internalPath("result"), internalPath("validation"), "crypto/rand"),
 		file("model/observation", false, internalPath("jsondecode"), "strings", "net/netip", "net/url"),
 		file("model/result", false, internalPath("model/observation"), internalPath("model/task")),
 		file("measurement/dns01", false, internalPath("measurement"), internalPath("protocol/dns"), internalPath("model/observation")),

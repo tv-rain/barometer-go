@@ -1,13 +1,15 @@
 // Package registry holds the reviewed mapping from an exact registered test ID
 // and version to the codec, baseline risk, target rule, proxy compatibility and
-// composite eligibility admission needs. It performs no I/O, holds no participant data
-// and has no runtime registration. Presence of an entry is not evidence of
-// released, conformant or field-validated support.
+// composite eligibility admission needs, and to the runner execution invokes.
+// It performs no I/O, holds no participant data and has no runtime
+// registration. Presence of an entry is not evidence of released, conformant
+// or field-validated support.
 package registry
 
 import (
 	"errors"
 
+	"github.com/tv-rain/barometer-go/internal/measurement"
 	"github.com/tv-rain/barometer-go/internal/model/task"
 	"github.com/tv-rain/barometer-go/internal/taskdecode"
 )
@@ -49,14 +51,16 @@ type TargetRule interface {
 	Targets(task.Parameters) ([]Target, bool)
 }
 
-// Entry is one reviewed test version. Codec, Targets and Proxy must remain
-// immutable for the registry's lifetime.
+// Entry is one reviewed test version. Codec, Targets, Proxy and Runner must
+// remain immutable for the registry's lifetime. Runner is optional so that an
+// admission-only entry stays valid; execution fails closed without one.
 type Entry struct {
 	Test         task.TestVersion
 	Codec        taskdecode.TestCodec
 	BaselineRisk task.Risk
 	Targets      TargetRule
 	Proxy        ProxyRule
+	Runner       measurement.Runner
 	// Composite marks the NET-05 composite, which also requires explicit
 	// composite permission. Step marks a primitive permitted as a NET-05 step.
 	Composite, Step bool
@@ -121,6 +125,17 @@ func (r *Registry) Lookup(test task.TestVersion) (Entry, bool) {
 		return Entry{}, false
 	}
 	return r.entries[i], true
+}
+
+// Runner returns the runner composed for the exact test ID and version. A
+// missing entry or an entry without a runner reports false; there is no
+// fallback to another version or a default runner.
+func (r *Registry) Runner(test task.TestVersion) (measurement.Runner, bool) {
+	e, ok := r.Lookup(test)
+	if !ok || e.Runner == nil {
+		return nil, false
+	}
+	return e.Runner, true
 }
 
 // Codecs returns a fresh copy of the registered codecs, in construction order,

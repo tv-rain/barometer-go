@@ -4,7 +4,7 @@
 
 DEV-480 consumes Draft `0.1.0` at public revision `59d49364d85e48cc8e69c762d130a7a86dc1fe65`: [Measurement Result](https://github.com/tv-rain/barometer-spec/blob/59d49364d85e48cc8e69c762d130a7a86dc1fe65/data-formats/measurement-result.md#REQ-RESULT-0019), [Task Trust](https://github.com/tv-rain/barometer-spec/blob/59d49364d85e48cc8e69c762d130a7a86dc1fe65/library/task-trust.md#REQ-TRUST-0033) and [Task Schedule](https://github.com/tv-rain/barometer-spec/blob/59d49364d85e48cc8e69c762d130a7a86dc1fe65/data-formats/task-schedule.md#REQ-SCHEDULE-0022). Public text controls behavior; this document records the narrower Go implementation.
 
-`internal/model/task` owns the eleven admission-error codes (the ten initial REQ-TRUST-0034 classes and `task_unsupported`, added by DEV-597 for REQ-TRUST-0036) and all fifteen execution reasons. `internal/execution` owns a pure attempt value. Both use only existing dependencies and introduce no public facade, third-party dependency or new serialized schema. `task.ErrorContract` and `execution.Contract` identify the `0.1.0` vocabularies. Internal enum ordinals are not wire identifiers. Admission errors and attempts reject JSON import and export, including import into an existing value; future result and operational interfaces must use their reviewed contracts.
+`internal/model/task` owns the eleven admission-error codes (the ten initial REQ-TRUST-0034 classes and `task_unsupported`, added by DEV-597 for REQ-TRUST-0036) and all fifteen execution reasons. `internal/execution` owns a pure attempt value and, since DEV-635, the [run orchestration](#run-orchestration) engine that drives it. Both use only existing dependencies and introduce no public facade, third-party dependency or new serialized schema. `task.ErrorContract` and `execution.Contract` identify the `0.1.0` vocabularies. Internal enum ordinals are not wire identifiers. Admission errors and attempts reject JSON import and export, including import into an existing value; future result and operational interfaces must use their reviewed contracts.
 
 ## Admission Errors
 
@@ -34,10 +34,51 @@ The future result constructor must require measurement data for completed result
 
 The candidate is not permission to execute. `validation.RetryEligible` must still enforce the accepted retry allowlist, attempt count, expiry, time window, realized due time, supported behavior and execution/safety constraints. Retry candidates create no new runs and do not bypass local policy or authorize network work.
 
+## Run Orchestration
+
+DEV-635 adds `execution.Engine`, the internal engine for one run of an admitted task. It is not exported through the root package; `StartRun`, `RunState` and `CancelRun` are later tasks. Public baseline: Draft `0.1.0` at [`4743b63`](https://github.com/tv-rain/barometer-spec/tree/4743b636f29feb1f0f8d042866d04ccda3532938) for [Retry](https://github.com/tv-rain/barometer-spec/blob/4743b636f29feb1f0f8d042866d04ccda3532938/data-formats/task-schedule.md#retry) and [Schedule and Retry Limits](https://github.com/tv-rain/barometer-spec/blob/4743b636f29feb1f0f8d042866d04ccda3532938/library/registered-limits.md#schedule-and-retry-limits).
+
+`NewEngine` takes the registry, a `Clock` (monotonic `Now` and a cancellable `Wait`), a `Jitter` source and the `Output` port; any missing input fails with `ErrEngine`. `SystemClock` and `LocalJitter` (uniform, from `crypto/rand`; a read failure yields no jitter) are the non-test implementations. A `Plan` carries only trusted local inputs prepared after admission: task ID, exact test version, normalized parameters, the validated schedule, the host-directed eligibility snapshot (`validation.StartContext`, whose `Now` the engine sets), the implementation identity, a `result.Decoder` bound to the same task, a `ContextSource` and a `DialerSource`.
+
+`Run` fails closed before any work, with no result, no context capture, no dialer and no runner call, on an invalid plan (`ErrPlan`), a missing runner (`ErrNoRunner`) or a run that `validation.RunEligible` rejects (`ErrNotEligible`). Otherwise it draws one run ID (`result.NewRunID`) shared by every attempt of the run and executes attempts in order:
+
+1. Capture Network Context. A failure stops the attempt before it starts: `not_run` with `network_context_unavailable`.
+2. Obtain a fresh dialer for the attempt number. A failure is `not_run` with `internal_error`.
+3. Start the attempt and invoke the registered runner once. A terminal output becomes `completed` with its measurement and Network Context. A runner error becomes `incomplete` with `internal_error`, or `cancelled_by_host` when the host context is done. Output that result construction rejects for the test is not retained: the attempt becomes `incomplete` with `internal_error`.
+4. Build the result through `result.Decoder.Build` and write it to the `Output` port. A `not_run` result never carries Network Context. Any write error, including an uncertain commit, ends the run with `ErrOutput`; the write is not repeated and no further attempt starts.
+5. Decide a retry. Only an attempt whose reason is a registered retry candidate (`Attempt.RetryReason`) can retry, and only when `validation.RetryEligible` accepts it before the wait. With at most two attempts, `fixed` and `exponential` backoff both produce `initial_delay_ms`; the engine adds local jitter in `[0, jitter_ms]` and caps the realized delay at `max_delay_ms` (REQ-SCHEDULE-0029). It does not retry when the realized delay would reach `not_after`, waits on the injected clock, and checks `validation.RetryEligible` again afterwards, so a closed time window or expired task ends the run. Completed attempts, including negative protocol outcomes, never retry (REQ-SCHEDULE-0025).
+
+A host context that is done before an attempt ends the run with `ErrCancelled` and no result for that attempt. The `Report` lists each terminal attempt written to the port, with its attempt value and the runner's `Usage`; it stays valid when `Run` returns an error.
+
+### Reviewed Bounds
+
+These are reviewed implementation inputs, not new public limits:
+
+| Bound | Value | Source |
+|---|---|---|
+| Attempts per run | At most `MaxAttempts` = 2; the plan's `max_attempts` must be 1 or 2 | REQ-LIMIT-0011, REQ-SCHEDULE-0023 |
+| Workers per run | 1: attempts run sequentially in the caller's goroutine; the engine starts no goroutines | Implementation choice; concurrent runs are the caller's responsibility |
+| Retry delay | `initial_delay_ms` plus jitter up to `jitter_ms`, capped at `max_delay_ms`, never reaching `not_after` | REQ-SCHEDULE-0028, REQ-SCHEDULE-0029 |
+
+### State Mapping and GO-SPEC-ISSUE-004
+
+The engine applies the rule in force at its baseline: an attempt is `not_run` before the runner is invoked and `incomplete` after. The [GO-SPEC-ISSUE-004 disposition](specification-issues.md#go-spec-issue-004-boundary-between-not_run-and-incomplete) moves the start point to the test's first network operation or own network-state observation (REQ-RESULT-0051), keeps a recorded terminal outcome `completed` (REQ-RESULT-0052) and forbids Network Context in every `not_run` result (REQ-RESULT-0053). Adopting REQ-RESULT-0051 and REQ-RESULT-0052 in runner and execution code belongs to DEV-561. The engine already omits Network Context from every `not_run` result, which satisfies both the current decoder (no captured-context binding) and REQ-RESULT-0053. Mapping of host cancellation to `cancelled_by_host`, and the fact that a result for a cancelled attempt is written with the host context, are interim choices that DEV-561 revisits with deadline and cancellation coordination.
+
+### Seams and Owners
+
+| Seam | Interim implementation | Owner |
+|---|---|---|
+| `Output` (pending results) | Test-only `internal/testkit/output` | Production store: DEV-563 |
+| `ContextSource` | Test fakes | Network Context acquisition: DEV-578 |
+| `DialerSource` / `measurement.Dialer` | Test-only `internal/testkit/loopback` | Path, proxy and budget accounting: DEV-578, DEV-562 |
+| `Clock` | `SystemClock`; `testkit.WaitClock` in tests | Deadline coordination: DEV-561 |
+
 ## Synthetic Evidence and Remaining Work
 
 - `internal/execution/attempt_test.go` covers every phase/operation pair, all registered reasons before and after start, preservation of the first condition, invalid/protocol/admission reasons, JSON rejection and integration with bounded schedule eligibility.
+- `internal/execution/run_test.go` (DEV-635) covers attempt and retry sequencing on an injected clock with no sleeps: completed and negative outcomes without retry, runner failure with and without a retry object, a reason outside `retry_on`, retry then completion, an exhausted retry budget, the jitter cap at `max_delay_ms`, no retry when the delay reaches `not_after`, re-checked eligibility after the wait, pre-start `not_run` paths without Network Context, invalid runner output, host cancellation, output-port failures before and after a durable write, fail-closed plan, runner and eligibility checks, and real loopback TCP I/O through the attempt-scoped dialer (not TCP-01 evidence).
+- `internal/registry/registry_test.go` covers exact runner lookup with no version fallback and fail-closed lookup for entries without a runner; `dependency_rules_test.go` covers the registry and runner-contract import rules.
 - `internal/model/task/admission_error_test.go` checks all eleven public codes, the entire invalid numeric domain, bounded error text, sensitive-input rejection and separation from execution reasons.
 - Existing task-decoding and schedule tests remain applicable to the four allowed retry reasons.
 
-These tests establish local model invariants. They do not establish admission correctness, runtime concurrency/cancellation, registered measurement conformance, result serialization, device behavior or platform support. The existing traceability manifests remain planned cross-cutting coverage; this task does not promote their broader case families to implemented or passed status.
+These tests establish local model and synthetic orchestration invariants. They do not establish admission correctness, deadline or budget enforcement, runtime cancellation behavior on devices, registered measurement conformance, result serialization, device behavior or platform support. The existing traceability manifests remain planned cross-cutting coverage; this task does not promote their broader case families to implemented or passed status.

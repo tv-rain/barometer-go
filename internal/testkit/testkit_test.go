@@ -273,3 +273,27 @@ func TestTransportConstructionBounds(t *testing.T) {
 		}
 	}
 }
+
+func TestWaitClockAdvancesWithoutTimers(t *testing.T) {
+	start := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
+	c := testkit.NewWaitClock(start)
+	if err := c.Wait(context.Background(), 30*time.Second); err != nil || !c.Now().Equal(start.Add(30*time.Second)) {
+		t.Fatalf("Wait() = %v, now %v", err, c.Now())
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if err := c.Wait(ctx, time.Minute); !errors.Is(err, context.Canceled) || !c.Now().Equal(start.Add(30*time.Second)) {
+		t.Fatalf("cancelled Wait() = %v, now %v", err, c.Now())
+	}
+	if err := c.Wait(context.Background(), -time.Second); err == nil {
+		t.Fatal("negative wait accepted")
+	}
+	waits := c.Waits()
+	if len(waits) != 1 || waits[0] != 30*time.Second {
+		t.Fatalf("Waits() = %v", waits)
+	}
+	waits[0] = 0
+	if c.Waits()[0] != 30*time.Second {
+		t.Fatal("Waits() aliases clock state")
+	}
+}
