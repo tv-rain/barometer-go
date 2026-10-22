@@ -102,11 +102,27 @@ func (s *State) Replay() ReplayStore { return replayView{s} }
 // Runs returns the run-ledger view of s.
 func (s *State) Runs() RunLedger { return runView{s} }
 
+// Forget drops the index after Clear has deleted the records it describes,
+// so a later operation finds no retention, capacity or generation of a
+// cleared record. It writes nothing. Calling it while records remain only
+// loses index entries: a record found later is indexed again on access, but
+// retention and generation reads miss it until State is reopened.
+func (s *State) Forget() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	clear(s.replay)
+	clear(s.runs)
+}
+
 func (*State) String() string   { return "persistence.State" }
 func (*State) GoString() string { return "persistence.State" }
 
 type replayView struct{ s *State }
 type runView struct{ s *State }
+
+// Forget on either view forgets the shared State.
+func (v replayView) Forget() { v.s.Forget() }
+func (v runView) Forget()    { v.s.Forget() }
 
 func (v replayView) Lookup(ctx context.Context, key ReplayKey, now time.Time) (ReplayRecord, bool, error) {
 	s := v.s

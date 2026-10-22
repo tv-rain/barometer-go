@@ -62,7 +62,7 @@ func (h *harness) bindRunAdapters(t *testing.T) {
 		paths: &fakePaths{t: t}, runner: newRunRunner(), consent: capability.NewConsent(platform.ConsentValid), device: capability.NewDevice(platform.DeviceState{})}
 	h.adapters.run = runAdapters{clock: h.run.clock, jitter: fixedJitter(0), ledger: h.run.ledger, paths: h.run.paths,
 		consent: h.run.consent, device: h.run.device, zone: capability.Zone{Loc: time.UTC}}
-	h.adapters.pending = h.run.output.Store
+	h.adapters.records = h.run.output.Store
 }
 
 // pendingStore is the harness view of the synthetic pending record port. The

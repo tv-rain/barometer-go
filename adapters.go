@@ -39,18 +39,21 @@ type adapters struct {
 	linkageKeys platform.LinkageKeyStore // optional; absence disables linkage only
 
 	// clearStorage deletes Barometer-owned persistent state for the storage
-	// scope. It is nil until the clearing capability exists (DEV-564, DEV-577);
-	// while nil, ClearMeasurementData returns clearing_incomplete.
+	// scope (DEV-564). bind derives it from the record port with
+	// storageClearer when it is unset; tests may substitute it. Without a
+	// record port it stays nil and ClearMeasurementData returns
+	// clearing_incomplete.
 	clearStorage func(context.Context) error
 
 	// run holds the inputs of run reservation and execution (DEV-636).
 	run runAdapters
 
-	// pending is the record port that holds pending results and bundles
-	// (DEV-563); each generation opens a pending.Store over it, which is the
-	// engine's output and the source of NextBundle. pendingLimits may lower
-	// the registered pending maxima; zero selects them.
-	pending       persistence.Records
+	// records is the state record port of the storage scope. Each generation
+	// opens a pending.Store over it (DEV-563), which is the engine's output
+	// and the source of NextBundle; Initialize reads the clearing marker from
+	// it and clearing deletes every record class in it. pendingLimits may
+	// lower the registered pending maxima; zero selects them.
+	records       persistence.Records
 	pendingLimits pending.Limits
 
 	// deadline overrides defaultLifecycleDeadline when positive.
@@ -78,6 +81,40 @@ type runAdapters struct {
 // complete reports whether every required run input is present.
 func (r runAdapters) complete() bool {
 	return !absent(r.clock) && !absent(r.jitter) && !absent(r.ledger) && !absent(r.paths)
+}
+
+// storageClearer is the persistent-clear capability over the adapters'
+// storage scope, or nil without a record port. It is the registration point
+// of clearing: record classes are cleared by persistence.Clear, and every
+// other piece of Barometer-owned state an adapter holds is added here as an
+// eraser or forgetter. TestClearingCoversEveryAdapter fails for an adapter
+// field that is neither listed here nor recorded as holding no such state.
+// It captures what it needs, so it reaches the same scope after Close.
+func storageClearer(a *adapters) func(context.Context) error {
+	if a == nil || absent(a.records) {
+		return nil
+	}
+	records := a.records
+	var erasers []persistence.Eraser
+	if !absent(a.linkageKeys) {
+		// Deleting the key creates no replacement (REQ-LINKAGE-0023 item 8).
+		erasers = append(erasers, a.linkageKeys.Delete)
+	}
+	var forget []persistence.Forgetter
+	for _, v := range []any{a.replay, a.run.ledger} {
+		if f, ok := v.(persistence.Forgetter); ok && !absent(f) {
+			forget = append(forget, f)
+		}
+	}
+	return func(ctx context.Context) error {
+		if err := persistence.Clear(ctx, records, erasers...); err != nil {
+			return err
+		}
+		for _, f := range forget {
+			f.Forget()
+		}
+		return nil
+	}
 }
 
 func (a *adapters) lifecycleDeadline() time.Duration {
@@ -126,7 +163,7 @@ func (r *runtime) invalidate() {
 // prepare builds a complete generation or nothing. It decodes only the closed
 // host configuration container and performs no network activity.
 func prepare(a *adapters, configJSON []byte) *runtime {
-	if a == nil || absent(a.clock) || a.registry == nil || a.deliveries == nil || absent(a.replay) || !a.run.complete() || absent(a.pending) {
+	if a == nil || absent(a.clock) || a.registry == nil || a.deliveries == nil || absent(a.replay) || !a.run.complete() || absent(a.records) {
 		return nil
 	}
 	decoder, err := config.NewDecoder(config.Contract, a.approvals)
@@ -173,7 +210,7 @@ func successor(a *adapters, init *config.Initialization, policy task.LocalPolicy
 	if err != nil {
 		return nil
 	}
-	store, err := pending.New(a.pending, builder, a.run.clock, a.pendingLimits, a.lifecycleDeadline())
+	store, err := pending.New(a.records, builder, a.run.clock, a.pendingLimits, a.lifecycleDeadline())
 	if err != nil {
 		return nil
 	}

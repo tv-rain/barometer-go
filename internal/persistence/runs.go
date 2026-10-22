@@ -39,7 +39,8 @@ func (RunRecord) GoString() string { return "persistence.RunRecord" }
 // replay record of the same key, and one overdue at that time is purged before
 // use. Implementations never read the system clock, are bounded,
 // application-scoped, non-synchronizing and safe under interruption, and honor
-// cancellation and finite deadlines. Clearing is DEV-564's.
+// cancellation and finite deadlines. After Clear, Forget drops a State
+// index of the deleted records.
 type RunLedger interface {
 	// Lookup returns the record for key; ok is false when none is retained.
 	// Any error, including an unreadable or invalid record, means accounting

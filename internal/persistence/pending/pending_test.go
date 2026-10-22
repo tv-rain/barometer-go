@@ -665,3 +665,34 @@ func TestConcurrentDeliveryAndRetention(t *testing.T) {
 		}
 	}
 }
+
+// After clearing deletes the stored bundles, Forget drops the index and the
+// open bundle, so the store reloads empty storage and returns nothing. It
+// does not wait for an operation in progress.
+func TestForgetAfterClear(t *testing.T) {
+	f := newFixture(t, pending.Limits{})
+	f.mustPut()
+	if err := persistence.Clear(context.Background(), f.records); err != nil {
+		t.Fatal(err)
+	}
+	if !f.store.Forget() {
+		t.Fatal("idle store did not forget")
+	}
+	if _, _, ok := f.next(); ok || f.capacity() == 0 {
+		t.Fatal("forgotten store still holds a cleared bundle")
+	}
+	f.records.Inject(records.Stall, true)
+	v := value(t)
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+		defer cancel()
+		_ = f.store.Put(ctx, v)
+	}()
+	time.Sleep(50 * time.Millisecond)
+	if f.store.Forget() {
+		t.Error("forget did not report a busy store")
+	}
+	<-done
+}

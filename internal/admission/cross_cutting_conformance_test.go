@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -15,6 +16,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/model/task"
 	"github.com/tv-rain/barometer-go/internal/persistence"
 	"github.com/tv-rain/barometer-go/internal/registry"
+	"github.com/tv-rain/barometer-go/internal/testkit/records"
 	"github.com/tv-rain/barometer-go/internal/testkit/replay"
 )
 
@@ -437,6 +439,98 @@ func TestCcTrustAcceptedTaskOrigins(t *testing.T) {
 			h := newHarness(t)
 			a, err := h.admitter.Admit(ctx, ref, signed(0, b))
 			noState(t, "no record", h, a, err, task.SourceUnauthenticated)
+		}
+	})
+}
+
+// TestCcTrustReplayAfterClearing executes CC-TRUST-REPLAY-AFTER-CLEARING
+// against the production persistence.State: after clearing deletes replay
+// state, redelivery of previously accepted exact bytes is evaluated as new
+// within task expiry, an expired task is still rejected, and a failed
+// clearing is reported explicitly and admits nothing without replay state.
+// The root Client keeps admission blocked while the clearing marker exists
+// (TestClearFaultAtEachStep).
+// requirement-ref: REQ-TRUST-0024
+// requirement-ref: REQ-TRUST-0025
+func TestCcTrustReplayAfterClearing(t *testing.T) {
+	ctx := context.Background()
+	b := []byte(baseTask)
+	newHarness := func(t *testing.T) (*harness, *stateBackend) {
+		h := newHarnessOn(t, productionReplay, mustPolicy(t, permissive()))
+		return h, h.replay.(*stateBackend)
+	}
+
+	t.Run("unexpired redelivery is evaluated as new", func(t *testing.T) {
+		for _, origin := range []task.Origin{task.Embedded, task.Remote} {
+			h, state := newHarness(t)
+			admit, issuer := h.admitEmbedded, "embedded-issuer"
+			if origin == task.Remote {
+				admit, issuer = h.admitRemote, "remote-issuer"
+			}
+			first, err := admit(t, b)
+			if err != nil {
+				t.Fatal("first delivery rejected")
+			}
+			if err := h.clock.Advance(time.Hour); err != nil {
+				t.Fatal("clock")
+			}
+			if err := state.clear(ctx); err != nil || h.replay.Len() != 0 {
+				t.Fatalf("origin %d: replay state not cleared", origin)
+			}
+			again, err := admit(t, b)
+			if err != nil || again.Redelivery() {
+				t.Fatalf("origin %d: redelivery after clearing not evaluated as new", origin)
+			}
+			// A fresh record, written once, with the expiry derived from the
+			// task's not_after rather than from the cleared acceptance.
+			wantRecord(t, "after clearing", admission.AdmittedRecord(again), issuer, origin, b)
+			if admission.AdmittedRecord(again).ExpiresAt != admission.AdmittedRecord(first).ExpiresAt || h.replay.Len() != 1 || h.replay.Commits() != 3 {
+				t.Errorf("origin %d: redelivery did not write exactly one fresh record with unchanged expiry", origin)
+			}
+			if third, err := admit(t, b); err != nil || !third.Redelivery() {
+				t.Errorf("origin %d: the fresh record does not govern later redelivery", origin)
+			}
+		}
+	})
+
+	t.Run("expired task stays task_expired", func(t *testing.T) {
+		h, state := newHarness(t)
+		if _, err := h.admitEmbedded(t, b); err != nil {
+			t.Fatal("task rejected")
+		}
+		h.clock.Clock = newClock().Clock
+		if err := h.clock.Advance(baseNotAfter.Sub(epoch)); err != nil {
+			t.Fatal("clock")
+		}
+		if err := state.clear(ctx); err != nil {
+			t.Fatal("clear failed")
+		}
+		commits := h.replay.Commits()
+		_, err := h.admitEmbedded(t, b)
+		expect(t, "expired redelivery after clearing", err, task.Expired)
+		if h.replay.Len() != 0 || h.replay.Commits() != commits {
+			t.Error("expired redelivery after clearing wrote replay state")
+		}
+	})
+
+	t.Run("failed clearing is explicit and admits nothing new", func(t *testing.T) {
+		h, state := newHarness(t)
+		first, err := h.admitEmbedded(t, b)
+		if err != nil {
+			t.Fatal("task rejected")
+		}
+		state.records.Inject(records.FailBeforeDelete, true)
+		if !errors.Is(state.clear(ctx), persistence.ErrClearIncomplete) || !state.marked() {
+			t.Fatal("failed clearing not reported, or the scope left unmarked")
+		}
+		state.records.Inject(records.FailBeforeDelete, false)
+		// The replay record was not deleted, so it still governs redelivery.
+		again, err := h.admitEmbedded(t, b)
+		if err != nil || !again.Redelivery() || admission.AdmittedRecord(again) != admission.AdmittedRecord(first) || h.replay.Len() != 1 {
+			t.Fatal("a failed clearing changed replay state")
+		}
+		if err := state.clear(ctx); err != nil || state.marked() || h.replay.Len() != 0 {
+			t.Fatal("recovery clearing did not complete")
 		}
 	})
 }

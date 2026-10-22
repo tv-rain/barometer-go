@@ -139,6 +139,23 @@ func (s *Store) Open(ctx context.Context) error {
 	return s.ready(ctx)
 }
 
+// Forget drops the in-memory index and the open bundle's results after Clear
+// has deleted the stored bundles, so the store reloads storage before its
+// next operation. It waits for no operation: when one is in progress it
+// leaves the store unchanged and returns false. Dropping references does not
+// overwrite memory the garbage collector already copied or has not reclaimed.
+func (s *Store) Forget() bool {
+	select {
+	case s.sem <- struct{}{}:
+	default:
+		return false
+	}
+	defer func() { <-s.sem }()
+	clear(s.open)
+	s.entries, s.open, s.loaded = nil, nil, false
+	return true
+}
+
 // Put adds one validated result to the open bundle or, when it cannot hold
 // it, to a new bundle. A result no bundle can hold within the limits is
 // rejected with ErrFull; it is never truncated. ErrUnavailable means the

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/tv-rain/barometer-go/internal/model/task"
+	"github.com/tv-rain/barometer-go/internal/persistence"
 )
 
 // state follows the Lifecycle table in docs/public-api.md. transitioning and
@@ -26,8 +27,8 @@ const (
 // The current implementation provides the lifecycle shell (DEV-600):
 // initialization through reviewed internal adapters, bounded handle tables,
 // close and the lifecycle part of clearing, and task admission (DEV-592). Runs
-// (DEV-636, DEV-561) and pending bundles (DEV-563) followed; proxy changes and
-// persistent-state deletion are added by later tasks.
+// (DEV-636, DEV-561), pending bundles (DEV-563) and persistent clearing
+// (DEV-564) followed; proxy changes are added by a later task.
 type Client struct {
 	mu         sync.Mutex
 	state      state
@@ -49,9 +50,12 @@ func NewClient() *Client { return &Client{} }
 
 // Initialize decodes the closed host configuration container and activates one
 // generation over the reviewed internal adapters. The adapter-installed local
-// policy and its target registrations stay immutable for that generation. Any
-// failure, including a policy generation below one this instance has already
-// activated, returns not_initialized and leaves the client uninitialized.
+// policy and its target registrations stay immutable for that generation. If
+// an earlier clear of the storage scope did not complete, including before a
+// restart, it returns clearing_incomplete and blocks the client until recovery
+// clearing succeeds. Any other failure, including a policy generation below
+// one this instance has already activated, returns not_initialized and leaves
+// the client uninitialized.
 func (c *Client) Initialize(configJSON string) error { return c.initialize(configJSON) }
 
 // AdmitTask runs every admission step for the exact task bytes against the
@@ -70,10 +74,13 @@ func (c *Client) AdmitTask(taskJSON string, sourceRef string) (string, error) {
 // and does not replace ClearMeasurementData. Repeated close succeeds.
 func (c *Client) Close() error { return c.close() }
 
-// ClearMeasurementData blocks new work and invalidates handles and delivery
-// references, then requests deletion of Barometer-owned persistent state. Until
-// that capability exists it returns clearing_incomplete and keeps activity
-// blocked rather than reporting success.
+// ClearMeasurementData blocks new work, invalidates handles and delivery
+// references and cancels active runs, then deletes Barometer-owned persistent
+// state: pending bundles, run accounting, replay records and the linkage key.
+// It uploads nothing, sends no request and creates no replacement secret.
+// Success leaves the client uninitialized, or closed if it was closed. Any
+// failure returns clearing_incomplete and keeps activity blocked, across a
+// restart, until a later clear succeeds.
 func (c *Client) ClearMeasurementData() error { return c.clearMeasurementData() }
 
 // refusal is the error for a call that requires an uninitialized client.
@@ -102,8 +109,22 @@ func (c *Client) bind(a adapters) error {
 	if err := c.refusal(); err != nil {
 		return err
 	}
+	if a.clearStorage == nil {
+		a.clearStorage = storageClearer(&a)
+	}
 	c.bound = &a
 	return nil
+}
+
+// marked reports whether the storage scope holds the clearing marker of an
+// incomplete clear. An unreadable marker fails initialization closed.
+func marked(a *adapters) (bool, error) {
+	if a == nil || absent(a.records) {
+		return false, nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), a.lifecycleDeadline())
+	defer cancel()
+	return persistence.Clearing(ctx, a.records)
 }
 
 func (c *Client) initialize(configJSON string) (err error) {
@@ -120,12 +141,19 @@ func (c *Client) initialize(configJSON string) (err error) {
 	c.mu.Unlock()
 
 	var rt *runtime
+	clearing := false
 	defer func() {
 		if recover() != nil {
 			rt, err = nil, fail(notInitialized)
 		}
 		c.mu.Lock()
 		defer c.mu.Unlock()
+		if clearing {
+			// An earlier clear did not complete, possibly before a restart:
+			// only recovery clearing or close may proceed.
+			c.state, c.blockedBy = blocked, clearingIncomplete
+			return
+		}
 		if rt == nil {
 			c.state = uninitialized
 			return
@@ -137,6 +165,13 @@ func (c *Client) initialize(configJSON string) (err error) {
 			c.policyFloor = max(c.policyFloor, a.policy.Generation())
 		}
 	}()
+	switch found, err := marked(a); {
+	case err != nil:
+		return fail(notInitialized)
+	case found:
+		clearing = true
+		return fail(clearingIncomplete)
+	}
 	if a != nil && a.policy.Valid() && a.policy.Generation() < c.policyFloor {
 		return fail(notInitialized)
 	}
@@ -340,6 +375,11 @@ func (c *Client) clearMeasurementData() (err error) {
 	defer cancel()
 	if a.clearStorage(ctx) != nil {
 		return fail(clearingIncomplete)
+	}
+	// Drop the cleared generation's in-memory results as far as Go allows;
+	// its reservations have drained, so the store is idle.
+	if rt != nil {
+		rt.bundles.Forget()
 	}
 	cleared = true
 	return nil

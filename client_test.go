@@ -132,10 +132,17 @@ func (g *gate) clear(ctx context.Context) error {
 func TestLifecycleTransitionTable(t *testing.T) {
 	type setup func(t *testing.T, h *harness) *Client
 	setups := map[string]setup{
-		"zero value":       func(*testing.T, *harness) *Client { return &Client{} },
-		"uninitialized":    func(t *testing.T, h *harness) *Client { return h.client(t) },
-		"initialized":      func(t *testing.T, h *harness) *Client { return h.initialized(t) },
-		"clear incomplete": func(t *testing.T, h *harness) *Client { c := h.initialized(t); _ = c.ClearMeasurementData(); return c },
+		"zero value":    func(*testing.T, *harness) *Client { return &Client{} },
+		"uninitialized": func(t *testing.T, h *harness) *Client { return h.client(t) },
+		"initialized":   func(t *testing.T, h *harness) *Client { return h.initialized(t) },
+		"clear incomplete": func(t *testing.T, h *harness) *Client {
+			c := h.initialized(t)
+			h.failClearing()
+			if err := c.ClearMeasurementData(); codeOf(err) != "clearing_incomplete" {
+				t.Fatal("expected clearing_incomplete, got", codeOf(err))
+			}
+			return c
+		},
 		"close incomplete": func(t *testing.T, h *harness) *Client {
 			c := h.initialized(t)
 			if _, err := c.reserve(); err != nil {
@@ -163,11 +170,11 @@ func TestLifecycleTransitionTable(t *testing.T) {
 		{"zero value", "Close", outcome{"ok", closed}},
 		{"uninitialized", "Initialize", outcome{"ok", initialized}},
 		{"uninitialized", "reserve", outcome{"not_initialized", uninitialized}},
-		{"uninitialized", "Clear", outcome{"clearing_incomplete", blocked}},
+		{"uninitialized", "Clear", outcome{"ok", uninitialized}},
 		{"uninitialized", "Close", outcome{"ok", closed}},
 		{"initialized", "Initialize", outcome{"already_initialized", initialized}},
 		{"initialized", "reserve", outcome{"ok", initialized}},
-		{"initialized", "Clear", outcome{"clearing_incomplete", blocked}},
+		{"initialized", "Clear", outcome{"ok", uninitialized}},
 		{"initialized", "Close", outcome{"ok", closed}},
 		{"clear incomplete", "Initialize", outcome{"clearing_incomplete", blocked}},
 		{"clear incomplete", "reserve", outcome{"clearing_incomplete", blocked}},
@@ -175,11 +182,11 @@ func TestLifecycleTransitionTable(t *testing.T) {
 		{"clear incomplete", "Close", outcome{"ok", closed}},
 		{"close incomplete", "Initialize", outcome{"cleanup_incomplete", blocked}},
 		{"close incomplete", "reserve", outcome{"cleanup_incomplete", blocked}},
-		{"close incomplete", "Clear", outcome{"clearing_incomplete", blocked}},
+		{"close incomplete", "Clear", outcome{"ok", uninitialized}},
 		{"close incomplete", "Close", outcome{"ok", closed}},
 		{"closed", "Initialize", outcome{"client_closed", closed}},
 		{"closed", "reserve", outcome{"client_closed", closed}},
-		{"closed", "Clear", outcome{"clearing_incomplete", closed}},
+		{"closed", "Clear", outcome{"ok", closed}},
 		{"closed", "Close", outcome{"ok", closed}},
 	}
 	for _, tc := range cases {
@@ -277,7 +284,7 @@ func TestInitializeFailsClosed(t *testing.T) {
 		"typed nil replay":  func(a *adapters) { a.replay = typedNilReplay },
 		"no run clock":      func(a *adapters) { a.run.clock = nil },
 		"no run jitter":     func(a *adapters) { a.run.jitter = nil },
-		"no pending output": func(a *adapters) { a.pending = nil },
+		"no record port":    func(a *adapters) { a.records = nil },
 		"no run ledger":     func(a *adapters) { a.run.ledger = nil },
 		"no path seam":      func(a *adapters) { a.run.paths = nil },
 	}
@@ -377,7 +384,7 @@ func TestConcurrentLifecycleCalls(t *testing.T) {
 	close(results)
 	for r := range results {
 		switch r {
-		case "close:ok", "close:transition_in_progress", "close:cleanup_incomplete", "clear:clearing_incomplete", "clear:transition_in_progress":
+		case "close:ok", "close:transition_in_progress", "close:cleanup_incomplete", "clear:ok", "clear:clearing_incomplete", "clear:transition_in_progress":
 		default:
 			t.Fatal("unexpected concurrent result", r)
 		}
@@ -484,8 +491,8 @@ func TestCloseInvalidatesWithoutDeletingReplayState(t *testing.T) {
 	if h.replay.Len() != 1 {
 		t.Fatal("close deleted replay state")
 	}
-	// Clearing without the persistent-clear capability deletes nothing and
-	// does not report success.
+	// A clear whose deletion fails does not report success.
+	h.failClearing()
 	if codeOf(c.ClearMeasurementData()) != "clearing_incomplete" || h.replay.Len() != 1 {
 		t.Fatal("clearing must not report success without deleting persistent state")
 	}
@@ -501,8 +508,9 @@ func TestClearInvalidatesHandlesAndDeliveryReferences(t *testing.T) {
 	}
 	rt := c.rt
 	th, _ := rt.tasks.add(admission.Admitted{})
+	h.failClearing()
 	if codeOf(c.ClearMeasurementData()) != "clearing_incomplete" || stateOf(c) != blocked {
-		t.Fatal("clear without the capability must stay blocked")
+		t.Fatal("a failed clear must stay blocked")
 	}
 	if _, err := rt.tasks.lookup(th); codeOf(err) != "handle_unavailable" {
 		t.Fatal("handle survived clearing")
