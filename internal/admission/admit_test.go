@@ -103,7 +103,8 @@ func (c *stepClock) Now(ctx context.Context) (time.Time, error) {
 type harness struct {
 	clock     *stepClock
 	store     *admission.DeliveryStore
-	replay    *replay.Store
+	replay    replayBackend
+	kind      backendKind
 	admitter  *admission.Admitter
 	transport *testkit.Transport
 	normalize *atomic.Int32
@@ -118,8 +119,14 @@ func newHarness(t *testing.T) *harness {
 // instance with no installed policy.
 func newHarnessWith(t *testing.T, policy task.LocalPolicy) *harness {
 	t.Helper()
-	h := &harness{clock: &stepClock{fakeClock: newClock()}, normalize: &atomic.Int32{}}
-	h.replay = mustReplay(t, 256)
+	return newHarnessOn(t, syntheticReplay, policy)
+}
+
+// newHarnessOn binds the given replay backend and policy snapshot.
+func newHarnessOn(t *testing.T, kind backendKind, policy task.LocalPolicy) *harness {
+	t.Helper()
+	h := &harness{clock: &stepClock{fakeClock: newClock()}, normalize: &atomic.Int32{}, kind: kind}
+	h.replay = h.newReplay(t, 256)
 	var err error
 	if h.store, err = admission.NewDeliveryStore(h.clock, admission.DeliveryLimits{Capacity: 256, Lifetime: lifetime}, 2); err != nil {
 		t.Fatal("store rejected")

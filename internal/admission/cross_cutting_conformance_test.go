@@ -88,7 +88,15 @@ func wantRecord(t *testing.T, name string, r persistence.ReplayRecord, issuer st
 // requirement-ref: REQ-TRUST-0038
 // requirement-ref: REQ-LIMIT-0023
 func TestCcTrustReplayDuplicateAndRollbackHandling(t *testing.T) {
+	for _, kind := range replayBackends {
+		t.Run(string(kind), func(t *testing.T) { ccTrustReplay(t, kind) })
+	}
+}
+
+// ccTrustReplay runs the replay rows against one replay-store backend.
+func ccTrustReplay(t *testing.T, kind backendKind) {
 	b := []byte(baseTask)
+	newHarness := func(t *testing.T) *harness { return newHarnessOn(t, kind, mustPolicy(t, permissive())) }
 
 	t.Run("new key continues admission and commits before acceptance", func(t *testing.T) {
 		for _, origin := range []task.Origin{task.Embedded, task.Remote} {
@@ -230,8 +238,7 @@ func TestCcTrustReplayDuplicateAndRollbackHandling(t *testing.T) {
 				h.replay.Corrupt(persistence.ReplayKey{IssuerID: "other", TaskID: "x"}, []byte(`{"IssuerID":"other","TaskID":"x","Digest":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=","PolicyGeneration":1,"Origin":1,"ExpiresAt":"2026-10-20T12:00:00Z","RetainUntil":"2026-10-21T12:00:00Z"}`))
 			},
 			"capacity exhausted": func(h *harness) {
-				s, _ := replay.New(1)
-				h.replay = s
+				h.replay = h.newReplay(t, 1)
 				h.restart(t, 2)
 				if _, err := h.admitAt(t, 2, taskWith(map[string]any{"task_id": "filler"})); err != nil {
 					t.Fatal("filler rejected")

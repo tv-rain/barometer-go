@@ -1,6 +1,7 @@
 // Package persistence owns narrow capability contracts for Barometer-owned
-// state. It defines what core consumers need, not a storage technology: no
-// files, SQL, platform storage or concrete implementation lives here.
+// state, the state record port and the Go stores built on it. It defines what
+// core consumers need, not a storage technology: no files, SQL or platform
+// storage lives here; a platform backend implements Records and stores bytes.
 package persistence
 
 import (

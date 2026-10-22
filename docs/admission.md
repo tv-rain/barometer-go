@@ -66,7 +66,7 @@ Every class is returned as a `task.AdmissionError`, which carries only the code.
 |---|---|---|
 | Delivery-record lookup | Resolve a transient reference to one `DeliveryRecord` in this client instance; bounded lifetime and capacity; invalidated on clearing, close and policy replacement. | `internal/admission` (seam and embedded origin, DEV-585; package-only remote records and signed-package verification, DEV-612). Release gate for remote delivery: DEV-595, lifted October 21, 2026 ([Remote-Delivery Gate](#remote-delivery-gate)). |
 | Trusted clock | `platform.Clock`; unavailable time fails closed. | `internal/platform`, supplied through `internal/config` (existing). |
-| Replay store | Read by replay key; highest retained accepted generation; one atomic conditional write of the replay record; delete on clearing. | `persistence.ReplayStore` contract in `internal/persistence`, defined from admission's needs (DEV-591) and agreed with the State, retention and clearing sub-epic (DEV-577), which owns the production implementation; clearing is DEV-564 and platform storage DEV-455. |
+| Replay store | Read by replay key; highest retained accepted generation; one atomic conditional write of the replay record; delete on clearing. | `persistence.ReplayStore` contract in `internal/persistence`, defined from admission's needs (DEV-591) and agreed with the State, retention and clearing sub-epic (DEV-577), which owns the production implementation: `persistence.State` over the state record port (DEV-641). Clearing is DEV-564 and platform storage DEV-455. |
 | Registry | Exact `(test_id, test_version)` lookup returning codec, baseline risk, target rule and proxy compatibility. | `internal/registry`, DEV-584. |
 | Local policy snapshot | The active immutable `task.LocalPolicy` and its generation. | `internal/model/task` (existing). Activation and replacement by reinitialization: the root `Client` (DEV-593, see [Implemented Subset](public-api.md#implemented-subset)). |
 
@@ -331,9 +331,11 @@ Retention ends 86,400 seconds after the task's expiry, capped at 691,200 seconds
 
 Unavailable or invalid replay state fails closed for remote tasks and, under [REQ-TRUST-0038](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0038), for embedded tasks. This covers a store error, an undecodable record, a record that fails `ReplayRecord.Valid` or does not match its key, and a full store. Admission returns `task_trust_unavailable` and never accepts an embedded task without replay state. Store failures carry no detail and are never wrapped.
 
+The production replay store is `persistence.State` over the state record port (DEV-641, [Persistence Ports](package-architecture.md#persistence-ports)). It purges overdue records before every operation and at initialization after a restart, reports a record it cannot read or validate as invalid state, never as absent, and fails initialization closed on an invalid record. An uncertain commit is accounted for as possibly durable: it counts toward capacity and `HighestGeneration` until it is found absent or purged. No production code binds it yet (DEV-455).
+
 `ClearMeasurementData` must delete replay records, so that a later redelivery is evaluated as new within task expiry ([REQ-TRUST-0025](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/task-trust.md#REQ-TRUST-0025)). Clearing is not implemented here (DEV-564).
 
-`TestCcTrustReplayDuplicateAndRollbackHandling` in `internal/admission/cross_cutting_conformance_test.go` uses the fault-injectable [test replay store](testkit.md#scope-and-ownership) and the manual test clock. It exercises:
+`TestCcTrustReplayDuplicateAndRollbackHandling` in `internal/admission/cross_cutting_conformance_test.go` runs against the fault-injectable [test replay store](testkit.md#scope-and-ownership) and, since DEV-641, against the production `persistence.State` over the fault-injectable record store, with the manual test clock. For the production store, write faults are record-port faults, a restart reopens the state, a corrupt record fails reopening and makes replay state unavailable, and the lookup and generation-read faults fail the store call. It exercises:
 - every row of the replay table for embedded and remote origin;
 - whitespace-only and one-byte changes;
 - expiry and retention boundaries;
@@ -343,7 +345,7 @@ Unavailable or invalid replay state fails closed for remote tasks and, under [RE
 - concurrent identical deliveries under the race detector;
 - a leakage canary over the stored bytes.
 
-Its post-clearing rows are the planned `CC-TRUST-REPLAY-AFTER-CLEARING` case, which waits for clearing (DEV-564). `internal/persistence` tests cover record construction, retention boundaries and the 691,200-second cap.
+Its post-clearing rows are the planned `CC-TRUST-REPLAY-AFTER-CLEARING` case, which waits for clearing (DEV-564). `internal/persistence` tests cover record construction, retention boundaries and the 691,200-second cap, and the production store's conditional commit, capacity, retention on access and on initialization, write, delete and read faults, corruption, cancellation, restart and concurrent callers.
 
 ### Rollback Detection Across Restart
 

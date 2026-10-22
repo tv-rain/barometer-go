@@ -961,11 +961,11 @@ func TestRunErrorsCarryOnlyFixedCodes(t *testing.T) {
 // published.
 type panickingLedger struct{ *ledger.Ledger }
 
-func (l panickingLedger) Put(ctx context.Context, k persistence.ReplayKey, rec persistence.RunRecord) error {
+func (l panickingLedger) Put(ctx context.Context, k persistence.ReplayKey, rec persistence.RunRecord, now time.Time) error {
 	if rec.Runs > 0 {
 		panic("synthetic ledger panic")
 	}
-	return l.Ledger.Put(ctx, k, rec)
+	return l.Ledger.Put(ctx, k, rec, now)
 }
 
 // A panic after the run handle is published withdraws the handle: no record

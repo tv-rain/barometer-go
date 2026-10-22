@@ -167,7 +167,7 @@ func (rt *runtime) reserveRun(ctx context.Context, taskHandle string, a admissio
 	defer rt.runSet.mu.Unlock()
 
 	now := run.clock.Now()
-	rec, known, err := run.ledger.Lookup(ctx, key)
+	rec, known, err := run.ledger.Lookup(ctx, key, now)
 	if err != nil || known && !rec.Valid() {
 		return "", execution.Plan{}, nil, notDue
 	}
@@ -183,7 +183,7 @@ func (rt *runtime) reserveRun(ctx context.Context, taskHandle string, a admissio
 	// A skipped occurrence is recorded before anything else, so its jitter is
 	// drawn once and it never starts late.
 	if advanced := execution.Advance(s, rec, now, run.jitter); !known || advanced != rec {
-		if run.ledger.Put(ctx, key, advanced) != nil {
+		if run.ledger.Put(ctx, key, advanced, now) != nil {
 			return "", execution.Plan{}, nil, notDue
 		}
 		rec = advanced
@@ -234,7 +234,7 @@ func (rt *runtime) reserveRun(ctx context.Context, taskHandle string, a admissio
 	}()
 	// The run is counted before it can do anything; an uncertain write
 	// loses this occurrence rather than risking an extra run.
-	if run.ledger.Put(ctx, key, execution.Reserve(s, rec, run.jitter)) != nil {
+	if run.ledger.Put(ctx, key, execution.Reserve(s, rec, run.jitter), now) != nil {
 		return "", execution.Plan{}, nil, notDue
 	}
 	if rt.ctx.Err() != nil {
