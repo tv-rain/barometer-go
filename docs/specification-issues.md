@@ -307,7 +307,7 @@ DEV-561 adopts the disposition in Go execution and result code, as described in 
 
 ## GO-SPEC-ISSUE-005: Which Bytes Count Toward Attempt Byte Limits
 
-**Current state:** Open; public disposition accepted October 22, 2026 under [DEV-580](https://app.clickup.com/t/124kk1zcaaf) in the public record [Bytes Counted Toward Attempt Byte Limits](https://github.com/tv-rain/barometer-spec/blob/main/specification-issues/attempt-byte-accounting.md); wording merged at public [`5d01879`](https://github.com/tv-rain/barometer-spec/tree/5d01879cfd1d47396c780befa2567f7e90439948) and internal alignment merged; Go adoption under [DEV-562](https://app.clickup.com/t/124kk1zc4ab) and DEV-454 pending. See the [disposition addendum](#disposition-addendum--october-22-2026-1) and the [merge addendum](#merge-addendum--october-22-2026-1). The sections before it keep their original wording as historical evidence. Originally raised October 16, 2026 under [DEV-573](https://app.clickup.com/t/124kk1zc613) from the DEV-572 triage.
+**Current state:** Open; public disposition accepted October 22, 2026 under [DEV-580](https://app.clickup.com/t/124kk1zcaaf) in the public record [Bytes Counted Toward Attempt Byte Limits](https://github.com/tv-rain/barometer-spec/blob/main/specification-issues/attempt-byte-accounting.md); wording merged at public [`5d01879`](https://github.com/tv-rain/barometer-spec/tree/5d01879cfd1d47396c780befa2567f7e90439948) and internal alignment merged; generic stream-layer Go adoption delivered under [DEV-562](https://app.clickup.com/t/124kk1zc4ab); per-protocol adoption under DEV-454 pending. See the [disposition addendum](#disposition-addendum--october-22-2026-1), the [merge addendum](#merge-addendum--october-22-2026-1) and the [generic-layer adoption addendum](#generic-layer-adoption-addendum--october-22-2026). The sections before it keep their original wording as historical evidence. Originally raised October 16, 2026 under [DEV-573](https://app.clickup.com/t/124kk1zc613) from the DEV-572 triage.
 
 ### Identity, Baselines and Requirements
 
@@ -357,6 +357,17 @@ The sections above keep their wording as historical evidence, including their th
 - **Internal alignment:** merged through internal review repository PR #11 at `dc421a80b3fb19bd07b17a0a4181390ad6e50d2b`.
 - **Go state:** unchanged. The traceability mapping stays on public `4743b63`, where the retired IDs are still active, so current references remain valid until the rebaseline to `5d01879` during adoption.
 - **Remaining before closure:** Go adoption evidence, as listed under the disposition addendum. Binding and host adoption follow. No runtime, platform or field support is claimed.
+
+### Generic-Layer Adoption Addendum — October 22, 2026
+
+DEV-562 adopts the disposition for the generic stream layer, as described in [Attempt Byte and Connection Budgets](execution-models.md#attempt-byte-and-connection-budgets). Every runner connection is the attempt scope's metered `measurement.Conn`, which is where test bytes cross a TCP stream at REQ-LIMIT-0034's boundary:
+
+- **Sent and received (REQ-LIMIT-0034):** a write that would exceed the remaining `max_bytes_sent` is not issued, a partial write counts the bytes accepted, each read requests no more than the remaining `max_bytes_received`, and bytes read ahead count when read. Evidence: `TestSentBudgetBoundaries`, `TestReceivedBudgetBoundaries`, `TestBudgetAcrossConnectionReuse`, `TestReadAheadIsCountedAndCapped` and `TestPartialTransfersAreCountedExactly`; the loopback cases compare the metered counts with the bytes the server read and wrote.
+- **Stop (REQ-LIMIT-0027, REQ-LIMIT-0028):** an operation the budget cannot cover ends the attempt as `incomplete` with `resource_limit`, closes every connection and refuses further I/O without another dialer. Evidence: `TestExhaustedBudgetDispatchesNoFurtherIO` and `TestExhaustionReleasesBlockedSockets`.
+- **Connections (REQ-LIMIT-0006):** every dial, including a failed one, counts before it is issued. Evidence: `TestConnectionBudgetBoundaries`, `TestFailedConnectCountsTowardConnections` and `TestZeroLimitsPermitNoTraffic`.
+- **Not counted (REQ-LIMIT-0033):** TLS records, IP headers, retransmissions, proxy framing and the loopback-proxy `CONNECT` exchange lie below the stream a runner receives, and Network Context acquisition is outside the scope.
+- **Traceability:** the cross-cutting manifest is rebaselined to public `5d01879` together with this adoption, so the `requirement-ref` comments cite REQ-LIMIT-0033, REQ-LIMIT-0034 and REQ-EXECUTION-0032 instead of the retired REQ-LIMIT-0003 and REQ-EXECUTION-0014.
+- **Remaining before closure:** per-protocol evidence that HTTP-01, NET-03, DNS-01, DNS-03, DNS-04 and the NET-05 aggregate route their counted bytes (headers, DNS messages, DoH framing, DoT prefixes, TLS plaintext and UDP payloads) through this scope, with the `CC-LIMIT-PURPOSE` protocol rows (DEV-454); the path and proxy seam that keeps the `CONNECT` exchange below it (DEV-578); and binding and host adoption. No runtime, platform or field support is claimed.
 
 ## GO-SPEC-ISSUE-006: NET-03 Over-Bound Response Classification
 

@@ -247,6 +247,7 @@ func (rt *runtime) reserveRun(ctx context.Context, taskHandle string, a admissio
 	rt.runSet.exclusive = rt.runSet.exclusive || exclusive
 	plan := execution.Plan{TaskID: c.ID, Test: a.Test(), Parameters: c.Parameters, Schedule: s, Conditions: start,
 		Deadline:       time.Duration(a.AttemptLimits().DurationMS) * time.Millisecond,
+		Limits:         a.AttemptLimits(),
 		Implementation: path.Implementation, Result: path.Result, Context: path.Context, Dialers: path.Dialers, Preconditions: gates}
 	return handle, plan, r, nil
 }

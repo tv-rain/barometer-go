@@ -171,6 +171,9 @@ var now = time.Now().UTC().Truncate(time.Hour).Add(12 * time.Hour)
 // attemptDeadline is the registered default max_duration_ms.
 const attemptDeadline = 30 * time.Second
 
+// defaultLimits are the registered default attempt limits.
+var defaultLimits = task.AttemptLimits{DurationMS: 30000, BytesSent: 32768, BytesReceived: 131072, Connections: 8}
+
 func schedule(maxAttempts int, on ...task.ExecutionReason) task.Schedule {
 	maxRuns := 1
 	expires := task.TimestampFromTime(now.Add(time.Hour))
@@ -206,7 +209,7 @@ func newFixture(t *testing.T, s task.Schedule, steps ...step) *fixture {
 		t.Fatal(err)
 	}
 	f.engine = engine
-	f.plan = execution.Plan{TaskID: "campaign-1", Test: tcp01, Parameters: loopback.Parameters{}, Schedule: s, Deadline: attemptDeadline,
+	f.plan = execution.Plan{TaskID: "campaign-1", Test: tcp01, Parameters: loopback.Parameters{}, Schedule: s, Deadline: attemptDeadline, Limits: defaultLimits,
 		Conditions:     validation.StartContext{DueAt: now, Supported: true, ConstraintsSatisfied: true, SafetySatisfied: true},
 		Implementation: implementation, Result: decoder(t), Context: f.ctx, Dialers: f.dialers}
 	return f
@@ -539,7 +542,7 @@ func TestLoopbackRunnerOnRealSockets(t *testing.T) {
 	maxRuns := 1
 	expires := task.TimestampFromTime(start.Add(time.Hour))
 	plan := execution.Plan{TaskID: "campaign-1", Test: tcp01, Parameters: loopback.Parameters{Address: srv.Address()},
-		Schedule: task.Schedule{NotAfter: &expires, Repeat: task.Repeat{Mode: "none"}, MaxRuns: &maxRuns, Retry: task.Retry{MaxAttempts: 1}}, Deadline: attemptDeadline,
+		Schedule: task.Schedule{NotAfter: &expires, Repeat: task.Repeat{Mode: "none"}, MaxRuns: &maxRuns, Retry: task.Retry{MaxAttempts: 1}}, Deadline: attemptDeadline, Limits: defaultLimits,
 		Conditions:     validation.StartContext{DueAt: start, Supported: true, ConstraintsSatisfied: true, SafetySatisfied: true},
 		Implementation: implementation, Result: decoder(t), Context: &contextSource{t: t}, Dialers: dialers}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
