@@ -277,7 +277,7 @@ func TestInitializeFailsClosed(t *testing.T) {
 		"typed nil replay":  func(a *adapters) { a.replay = typedNilReplay },
 		"no run clock":      func(a *adapters) { a.run.clock = nil },
 		"no run jitter":     func(a *adapters) { a.run.jitter = nil },
-		"no pending output": func(a *adapters) { a.run.output = nil },
+		"no pending output": func(a *adapters) { a.pending = nil },
 		"no run ledger":     func(a *adapters) { a.run.ledger = nil },
 		"no path seam":      func(a *adapters) { a.run.paths = nil },
 	}
@@ -650,7 +650,8 @@ func TestPanicsAreRecoveredToFixedCodes(t *testing.T) {
 func TestErrorsCarryOnlyFixedCodes(t *testing.T) {
 	fixed := map[string]bool{"not_initialized": true, "already_initialized": true, "client_closed": true, "transition_in_progress": true, "handle_unavailable": true,
 		"bundle_unavailable": true, "run_not_due": true, "capacity_exceeded": true, "cleanup_incomplete": true, "clearing_incomplete": true,
-		"policy_rejected": true} // returned only by the unexported policy-replacement seam
+		"storage_unavailable": true,
+		"policy_rejected":     true} // returned only by the unexported policy-replacement seam
 	for c := notInitialized; c <= policyRejected; c++ {
 		if !fixed[c.String()] {
 			t.Fatal("unregistered code", c.String())

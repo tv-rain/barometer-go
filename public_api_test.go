@@ -27,6 +27,8 @@ var implementedAPI = []string{
 	"func (c *Client) StartRun(taskHandle string) (string, error)",
 	"func (c *Client) RunState(runHandle string) (string, error)",
 	"func (c *Client) CancelRun(runHandle string) error",
+	"func (c *Client) NextBundle() (string, error)",
+	"func (c *Client) AcknowledgeBundle(bundleID string) error",
 	"func (c *Client) ClearMeasurementData() error",
 	"func (c *Client) Close() error",
 }

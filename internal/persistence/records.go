@@ -6,12 +6,14 @@ import (
 )
 
 // Record-port bounds. A record value holds at most one encoded Result Bundle
-// (REQ-LIMIT-0021), the largest state class planned over the port; replay and
+// (262,144 bytes, REQ-LIMIT-0021) and a store header of at most
+// RecordHeaderSize bytes, the largest state class over the port; replay and
 // run records are far smaller. A class lists at most MaxClassRecords keys.
 const (
-	RecordNameSize  = 32
-	MaxRecordValue  = 262144
-	MaxClassRecords = 4096
+	RecordNameSize   = 32
+	RecordHeaderSize = 64
+	MaxRecordValue   = 262144 + RecordHeaderSize
+	MaxClassRecords  = 4096
 )
 
 // ErrRecordsUnavailable is returned by a Records implementation for any
@@ -27,10 +29,12 @@ const (
 	ReplayClass RecordClass = iota + 1
 	// RunClass holds run accounting records.
 	RunClass
+	// PendingClass holds pending Result Bundles, one per record.
+	PendingClass
 )
 
 // Valid reports whether c is a known class.
-func (c RecordClass) Valid() bool { return c == ReplayClass || c == RunClass }
+func (c RecordClass) Valid() bool { return c >= ReplayClass && c <= PendingClass }
 
 // RecordKey names one record. Name is a fixed-size digest chosen by the Go
 // store, so no issuer, task or other value appears in a platform key.

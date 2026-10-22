@@ -696,6 +696,40 @@ The sections above keep their wording as historical evidence, including the stat
 - **Go state:** unchanged; the interim rule stays in force. The planned `CC-SCHEDULE-SCHEDULING-MODEL-REPEAT-INTERVAL-FIELDS` family, whose delayed due runs depend on this rule, stays `planned` ([Runtime Case Families](execution-models.md#runtime-case-families)).
 - **Remaining before closure:** the public disposition, its immutable revision if wording changes, and Go adoption evidence. No runtime, platform or field support is claimed.
 
+## GO-SPEC-ISSUE-012: Start of Unacknowledged Bundle Retention
+
+**Current state:** Open, raised October 22, 2026 under DEV-563 while implementing the pending-result store. No public record exists yet; public maintainers own the disposition. Go implements the conservative interim rule below, which the task owner approved with the DEV-563 plan.
+
+### Identity, Baselines and Requirements
+
+- **Reporter:** the Go implementation agent, under the task owner's instruction. **Duplicates:** none.
+- **Baseline:** Draft `0.1.0` at [9804ab34f21863723a94caba0541fd4e64870fce](https://github.com/tv-rain/barometer-spec/tree/9804ab34f21863723a94caba0541fd4e64870fce).
+  - [REQ-LIMIT-0023](https://github.com/tv-rain/barometer-spec/blob/9804ab34f21863723a94caba0541fd4e64870fce/library/registered-limits.md#REQ-LIMIT-0023) sets "Unacknowledged local bundle retention" to at most 86,400 seconds, and [REQ-LIMIT-0024](https://github.com/tv-rain/barometer-spec/blob/9804ab34f21863723a94caba0541fd4e64870fce/library/registered-limits.md#REQ-LIMIT-0024) deletes expired pending bundles rather than uploading them late.
+  - [REQ-BUNDLE-0015](https://github.com/tv-rain/barometer-spec/blob/9804ab34f21863723a94caba0541fd4e64870fce/data-formats/result-bundle.md#REQ-BUNDLE-0015) step 8 deletes the local bundle "after at most 86,400 seconds without acknowledgement", after steps 1 to 5 finish the selected attempts, generate the identifier and persist the bundle.
+- **Implementation:** `tv-rain/barometer-go` on the DEV-563 task branch, based on `9253fdd`. `internal/persistence/pending` ([Pending Results and Bundles](package-architecture.md#persistence-ports)).
+
+### Finding and Interim Handling
+
+The contract does not say when the 86,400 seconds start: when an attempt result is completed or first persisted, when the logical bundle holding it is finally persisted with its identifier (step 5), or when the bundle is first offered for delivery. Results wait locally before their bundle is complete, so the later readings let a result stay on the device longer than 86,400 seconds, and the reading changes when data is deleted, which is observable behavior and a privacy concern. The contract also defines no separate retention for results not yet in a bundle.
+
+**Blocked:** nothing; the interim rule is the most conservative reading. **Interim rule:**
+
+1. Every pending result is persisted inside a bundle record from its first write; there is no separate unbundled result state.
+2. A bundle's retention starts when its first result is persisted, on the engine clock's wall reading, and is stored with the bundle so it survives a restart. Adding a result to the open bundle, sealing it, returning it from `NextBundle` or reinitializing does not move it.
+3. A bundle is deleted, and never returned, once 86,400 seconds have passed since that start: at the start time plus 86,400 seconds exactly, on every pending-store access and when initialization opens the store. A failed deletion fails the access rather than returning the bundle.
+
+Every result is therefore retained for at most 86,400 seconds after it was persisted, which follows its completion only by the time of the write. A wall clock moved backwards can delay expiry; the same limitation applies to replay retention.
+
+### Impact, Reviews and Alternatives
+
+- **Privacy:** the interim rule never retains a result longer than any other reading allows. Its cost is that results added late to a bundle are deleted sooner than 86,400 seconds after their own completion. A privacy review of the chosen public rule is required, because the retention start decides how long measurement results stay on the device.
+- **Alternatives:** (a) the interim rule; (b) start at the final persistence of the complete logical bundle (step 5), so a result can wait up to the time its bundle stays open plus 86,400 seconds; (c) start when the bundle is first offered to the host; (d) start per result at its completion, which needs per-result expiry inside a bundle and contradicts immutable bundle bytes.
+- **Compatibility:** each alternative is a Draft `0.1.0` clarification with no new field.
+
+### Ordering and Closure
+
+Public record and disposition first, then internal alignment if a retention validation plan names the start point, then Go adoption with retention cases, then bindings. Closure requires the public disposition, its immutable revision if wording changes, and Go adoption evidence or recorded non-applicability.
+
 ## Signed Remote Task Package Adoption
 
 **Status:** Public contract and internal review alignment are merged; the Go core adopts them in DEV-612 with synthetic evidence only. The cryptographic, safety and host integration reviews were performed by the project maintainer in DEV-615 with no findings, and the remote-delivery gate (DEV-595) is lifted. The interpretation question below is closed by REQ-TRUST-0055, adopted by DEV-624. Binding and host adoption remain open (DEV-455).

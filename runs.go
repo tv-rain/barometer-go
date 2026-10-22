@@ -208,7 +208,7 @@ func (rt *runtime) reserveRun(ctx context.Context, taskHandle string, a admissio
 		return "", execution.Plan{}, nil, fail(capacityExceeded)
 	}
 	attempts := s.Retry.MaxAttempts
-	if free, err := run.output.Capacity(ctx); err != nil || free < rt.runSet.results+attempts {
+	if free, err := rt.bundles.Capacity(ctx); err != nil || free < rt.runSet.results+attempts {
 		return "", execution.Plan{}, nil, notDue
 	}
 	path, err := run.paths.direct(ctx, pathRequest{TaskID: c.ID, Test: a.Test(), MaxAttempts: attempts, MaxDurationMS: a.AttemptLimits().DurationMS})

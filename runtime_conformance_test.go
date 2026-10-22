@@ -12,6 +12,7 @@ import (
 
 	"github.com/tv-rain/barometer-go/internal/admission"
 	"github.com/tv-rain/barometer-go/internal/model/task"
+	"github.com/tv-rain/barometer-go/internal/persistence/pending"
 	"github.com/tv-rain/barometer-go/internal/platform"
 	"github.com/tv-rain/barometer-go/internal/registry"
 	"github.com/tv-rain/barometer-go/internal/validation"
@@ -697,8 +698,10 @@ func TestCcScheduleSchedulingModelRepeat(t *testing.T) {
 			if n != maxRuns || h.run.runner.Calls() != maxRuns {
 				t.Fatalf("%d runs, want %d", n, maxRuns)
 			}
-			if got := fullRecords(t, h); len(got) != maxRuns || maxRuns > 1 && got[0].RunID == got[1].RunID {
-				t.Fatalf("results = %+v", got)
+			// Each run wrote one result. Results older than the pending
+			// retention are purged, so only the retained ones are compared.
+			if got := fullRecords(t, h); h.run.output.Calls() != maxRuns || len(got) > 1 && got[0].RunID == got[1].RunID {
+				t.Fatalf("%d results written, retained %+v", h.run.output.Calls(), got)
 			}
 		})
 	}
@@ -960,7 +963,11 @@ func TestCcScheduleValidationEligibilityRules(t *testing.T) {
 		{"safety requirement unsatisfied", runningHarness, notAfter, "", true, 0,
 			func(h *harness) { h.run.consent.Set(platform.ConsentAbsent) }},
 		{"probe declines: no pending-output capacity", runningHarness, notAfter, "", false, 0,
-			func(h *harness) { h.run.output.FailCapacity() }},
+			func(h *harness) {
+				// The only bundle slot holds a stored bundle.
+				h.adapters.pendingLimits = pending.Limits{Bundles: 1}
+				seedPending(h, 0, h.run.clock.Now(), "AAAAAAAAAAAAAAAAAAAAAA")
+			}},
 	}
 	for _, tc := range initial {
 		t.Run("first attempt: "+tc.name, func(t *testing.T) {
@@ -974,7 +981,7 @@ func TestCcScheduleValidationEligibilityRules(t *testing.T) {
 			if code := startCode(t, c, th); code != "run_not_due" {
 				t.Fatal("started:", code)
 			}
-			if h.run.runner.Calls() != 0 || h.run.paths.Calls() != 0 || len(h.run.output.Records()) != 0 {
+			if h.run.runner.Calls() != 0 || h.run.paths.Calls() != 0 || h.run.output.Calls() != 0 {
 				t.Fatal("an ineligible run reached the path, the runner or the output")
 			}
 			if rec, _ := h.run.ledger.Record(key("elig-1")); rec.Runs != 0 {
