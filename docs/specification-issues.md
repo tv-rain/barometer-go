@@ -654,7 +654,7 @@ Public record and disposition first, then internal task-trust review alignment i
 
 ## GO-SPEC-ISSUE-011: Due Times and Catch-Up for Interval Repetition
 
-**Current state:** Open, raised October 22, 2026 under DEV-636 while implementing `StartRun`. No public record exists yet; public maintainers own disposition. Go implements the conservative interim rule below, as approved by the task owner.
+**Current state:** Open, raised October 22, 2026 under DEV-636 while implementing `StartRun`. The public record [Interval Due Times and Catch-Up](https://github.com/tv-rain/barometer-spec/blob/9804ab34f21863723a94caba0541fd4e64870fce/specification-issues/interval-due-times-catch-up.md) is open with no disposition; public maintainers own the disposition, and the coordination epic DEV-453 owns its follow-up. Go implements the conservative interim rule below, as approved by the task owner. See the [public record addendum](#public-record-addendum--october-22-2026).
 
 ### Identity, Baselines and Requirements
 
@@ -686,6 +686,15 @@ The contract does not say what the interval is measured from (the first run's du
 ### Ordering and Closure
 
 Public record and disposition first, then internal schedule-review alignment if its validation plan names due times, then Go adoption with due-time cases, then bindings. Closure requires the public disposition, its immutable revision if wording changes, and Go adoption evidence or recorded non-applicability.
+
+### Public Record Addendum — October 22, 2026
+
+The sections above keep their wording as historical evidence, including the statement that no public record existed and the reference to the DEV-636 task branch, which merged as [PR #64](https://github.com/tv-rain/barometer-go/pull/64) at `861a353b6da47e122ce06a73f8e8eafc56d6a01b`.
+
+- **Public record:** DEV-639 published [Interval Due Times and Catch-Up](https://github.com/tv-rain/barometer-spec/blob/9804ab34f21863723a94caba0541fd4e64870fce/specification-issues/interval-due-times-catch-up.md) through [public PR #26](https://github.com/tv-rain/barometer-spec/pull/26), merged at `9804ab34f21863723a94caba0541fd4e64870fce`. It is open, lists the alternatives above without selecting one, changes no specification text and flags the safety review of the chosen rule as not completed.
+- **Ownership:** at the runtime and execution closeout (DEV-640, for DEV-576), the disposition, its safety review and Go adoption pass to the coordination epic DEV-453.
+- **Go state:** unchanged; the interim rule stays in force. The planned `CC-SCHEDULE-SCHEDULING-MODEL-REPEAT-INTERVAL-FIELDS` family, whose delayed due runs depend on this rule, stays `planned` ([Runtime Case Families](execution-models.md#runtime-case-families)).
+- **Remaining before closure:** the public disposition, its immutable revision if wording changes, and Go adoption evidence. No runtime, platform or field support is claimed.
 
 ## Signed Remote Task Package Adoption
 

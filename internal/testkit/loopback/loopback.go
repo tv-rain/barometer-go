@@ -81,7 +81,7 @@ func (s *Server) serve() {
 		s.mu.Lock()
 		s.conn++
 		s.mu.Unlock()
-		s.track(1)
+		s.track(1) // also signals the accept to WaitAccepted
 		s.wg.Add(1)
 		go func(raw net.Conn) {
 			defer s.wg.Done()
@@ -171,6 +171,25 @@ func (s *Server) WaitOpen(ctx context.Context, n int) error {
 		open, changed := s.open, s.changed
 		s.mu.Unlock()
 		if open == n {
+			return nil
+		}
+		select {
+		case <-changed:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+}
+
+// WaitAccepted blocks until the server has accepted at least n connections or
+// ctx ends. A client's dial can complete before the server accepts, so a test
+// that asserts accept counts or server-side bytes waits for the accepts first.
+func (s *Server) WaitAccepted(ctx context.Context, n int) error {
+	for {
+		s.mu.Lock()
+		accepted, changed := s.conn, s.changed
+		s.mu.Unlock()
+		if accepted >= n {
 			return nil
 		}
 		select {

@@ -71,13 +71,14 @@ type runRunner struct {
 	calls   int
 	hold    chan struct{}
 	fail    map[int]bool
+	refuse  map[int]bool // the call returns the negative outcome connection_refused
 	during  func(call int)
 	started chan struct{}
 	stuck   chan struct{} // when set, a call ignores its context until closed
 }
 
 func newRunRunner() *runRunner {
-	return &runRunner{fail: map[int]bool{}, started: make(chan struct{}, 64)}
+	return &runRunner{fail: map[int]bool{}, refuse: map[int]bool{}, started: make(chan struct{}, 64)}
 }
 
 func (r *runRunner) holdCalls() {
@@ -104,7 +105,7 @@ func (r *runRunner) Calls() int {
 func (r *runRunner) Run(ctx context.Context, in measurement.Input) (measurement.Output, error) {
 	r.mu.Lock()
 	r.calls++
-	n, hold, fail, during, stuck := r.calls, r.hold, r.fail[r.calls], r.during, r.stuck
+	n, hold, fail, refuse, during, stuck := r.calls, r.hold, r.fail[r.calls], r.refuse[r.calls], r.during, r.stuck
 	r.mu.Unlock()
 	r.started <- struct{}{}
 	in.Start()
@@ -126,6 +127,13 @@ func (r *runRunner) Run(ctx context.Context, in measurement.Input) (measurement.
 	}
 	if fail || in.Dialer == nil {
 		return measurement.Output{}, measurement.ErrRunner
+	}
+	if refuse {
+		o, err := observation.DecodeProtocol(observation.Contract, []byte(`{"type":"tcp_connect","status":"failed","duration_ms":0,"failure":"connection_refused","details":{"address_family":"ipv4"}}`), observation.ProtocolLimits{})
+		if err != nil {
+			return measurement.Output{}, err
+		}
+		return measurement.Output{Outcome: "connection_refused", Observations: []observation.Observation{o}, Usage: measurement.Usage{Connections: 1}}, nil
 	}
 	o, err := observation.DecodeProtocol(observation.Contract, []byte(`{"type":"tcp_connect","status":"succeeded","duration_ms":0,"details":{"address_family":"ipv4"}}`), observation.ProtocolLimits{})
 	if err != nil {
