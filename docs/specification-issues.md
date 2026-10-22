@@ -237,7 +237,7 @@ The public record merged through barometer-spec [PR #10](https://github.com/tv-r
 
 ## GO-SPEC-ISSUE-004: Boundary Between `not_run` and `incomplete`
 
-**Current state:** Open, raised October 16, 2026 under [DEV-573](https://app.clickup.com/t/124kk1zc613) from the [DEV-572](https://app.clickup.com/t/124kk1zc5xp) case-plan triage. No public record exists yet. Public maintainers own disposition.
+**Current state:** Open; public disposition accepted October 22, 2026 under [DEV-579](https://app.clickup.com/t/124kk1zcaae) in the public record [Boundary Between `not_run` and `incomplete`](https://github.com/tv-rain/barometer-spec/blob/main/specification-issues/not-run-incomplete-boundary.md); public merge, internal alignment and Go adoption under [DEV-561](https://app.clickup.com/t/124kk1zc4a9) pending. See the [disposition addendum](#disposition-addendum--october-22-2026). The sections before it keep their original wording as historical evidence. Originally raised October 16, 2026 under [DEV-573](https://app.clickup.com/t/124kk1zc613) from the [DEV-572](https://app.clickup.com/t/124kk1zc5xp) case-plan triage.
 
 ### Identity, Baselines and Requirements
 
@@ -269,6 +269,19 @@ The choice matters because it decides whether Network Context must be retained u
 ### Ordering and Closure
 
 A coordination decision is not expected. Prepare a public record first. Once maintainers accept wording, merge it, align internal reviews, then adopt it in Go execution/result code and termination cases. Bindings and hosts follow. Closure requires the public disposition, the merged revision if text changes, and Go adoption evidence.
+
+### Disposition Addendum — October 22, 2026
+
+The public maintainer accepted the resolution recommended in the public record on October 22, 2026, in the DEV-579 task review. The wording changes public text and is merged together with the record; the merged immutable revision is recorded here after merge. Draft `0.1.0` is retained, and no field, state or reason is added.
+
+- **Case 1:** an attempt is `not_run` until the test starts, then `incomplete` if a cross-cutting condition stops it ([REQ-RESULT-0051](https://github.com/tv-rain/barometer-spec/blob/main/data-formats/measurement-result.md#REQ-RESULT-0051), alternative (a)). The test starts at its first test-specific network operation or, when that comes first, its own network-state observation, such as NET-01 collection or the NET-05 stable-network check. Admission, validation, context capture and acquisition, including traffic to a context endpoint, and constraint evaluation do not start it.
+- **Case 2:** once the test records its terminal outcome, the attempt is `completed`; a later interruption or cleanup failure does not change the state, reason or `measurement` ([REQ-RESULT-0052](https://github.com/tv-rain/barometer-spec/blob/main/data-formats/measurement-result.md#REQ-RESULT-0052)).
+- **Case 3:** NET-05 `network_not_validated` and `inconclusive` are retained with `execution.state: completed`; the NET-05 `incomplete` outcome stays with `incomplete`; an unsatisfied task-level `require_validated` constraint before the test starts is `not_run` with `constraints_unsatisfied` ([REQ-NET-05-0061](https://github.com/tv-rain/barometer-spec/blob/main/tests/net-05.md#REQ-NET-05-0061)).
+- **Case 4:** a required network condition that cannot be determined is unsatisfied: `not_run` with `constraints_unsatisfied` ([REQ-EXECUTION-0031](https://github.com/tv-rain/barometer-spec/blob/main/data-formats/task-execution.md#REQ-EXECUTION-0031), replacing REQ-EXECUTION-0015). `network_context_unavailable` stays limited to required Network Context fields.
+- **Network Context:** a `not_run` result must not contain `network_context`, even when a snapshot was captured ([REQ-RESULT-0053](https://github.com/tv-rain/barometer-spec/blob/main/data-formats/measurement-result.md#REQ-RESULT-0053), replacing REQ-RESULT-0024). This reduces retention; no additional privacy review is required.
+- **Go effect:** no Go behavior changes in this task. `internal/result` currently enforces the retired REQ-RESULT-0024: it rejects a `not_run` result without `network_context` when the binding records a captured context. Adoption must make the decoder reject `network_context` in every `not_run` result, select states under REQ-RESULT-0051 and REQ-RESULT-0052 in runner and execution code (DEV-561), fill the expected values in the `M-*-TERMINATION` case plans, and rebaseline the traceability mapping so that current `requirement-ref` comments cite REQ-RESULT-0053 and REQ-EXECUTION-0031 instead of the retired IDs. Until that rebaseline, existing references remain valid for the pinned public baseline.
+- **Internal alignment:** recorded in the internal NET-05 review, whose `inconclusive` wording is aligned with REQ-NET-05-0061.
+- **Remaining before closure:** the merged public revision, the internal alignment merge, and Go adoption evidence. Binding and host adoption follow. No runtime, platform or field support is claimed.
 
 ## GO-SPEC-ISSUE-005: Which Bytes Count Toward Attempt Byte Limits
 
