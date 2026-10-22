@@ -297,3 +297,35 @@ func TestWaitClockAdvancesWithoutTimers(t *testing.T) {
 		t.Fatal("Waits() aliases clock state")
 	}
 }
+
+// AfterFunc timers fire only when Advance reaches them, at or after their
+// time, in time order; a stopped timer never fires.
+func TestClockTimersFireOnAdvance(t *testing.T) {
+	start := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
+	c := testkit.NewWaitClock(start)
+	var fired []string
+	c.AfterFunc(2*time.Second, func() { fired = append(fired, "late") })
+	c.AfterFunc(time.Second, func() { fired = append(fired, "early") })
+	stop := c.AfterFunc(time.Second, func() { fired = append(fired, "stopped") })
+	if !stop() || stop() {
+		t.Fatal("stop did not report prevention once")
+	}
+	if c.Timers() != 2 {
+		t.Fatalf("Timers() = %d", c.Timers())
+	}
+	_ = c.Advance(time.Second - time.Nanosecond)
+	if len(fired) != 0 {
+		t.Fatal("timer fired before its time")
+	}
+	if err := c.Wait(context.Background(), 2*time.Second); err != nil {
+		t.Fatal(err)
+	}
+	if len(fired) != 2 || fired[0] != "early" || fired[1] != "late" || c.Timers() != 0 {
+		t.Fatalf("fired = %v, armed %d", fired, c.Timers())
+	}
+	at := c.AfterFunc(0, func() { fired = append(fired, "now") })
+	_ = c.Advance(0)
+	if len(fired) != 3 || at() {
+		t.Fatal("zero-delay timer did not fire on the next advance")
+	}
+}

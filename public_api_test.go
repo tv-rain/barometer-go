@@ -26,6 +26,7 @@ var implementedAPI = []string{
 	"func (c *Client) AdmitTask(taskJSON string, sourceRef string) (string, error)",
 	"func (c *Client) StartRun(taskHandle string) (string, error)",
 	"func (c *Client) RunState(runHandle string) (string, error)",
+	"func (c *Client) CancelRun(runHandle string) error",
 	"func (c *Client) ClearMeasurementData() error",
 	"func (c *Client) Close() error",
 }

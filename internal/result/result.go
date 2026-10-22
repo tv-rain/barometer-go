@@ -46,7 +46,6 @@ type ProfilePlan struct {
 
 // Binding is a trusted containing-owner input, not a task/admission capability.
 // ContextDecoder/Path bind imported context to local metadata, not wire fields.
-// CapturedContext requires retention even for not_run when capture occurred.
 // Implementation must identify the reviewed released producer, not host input.
 type Binding struct {
 	TaskID                     string
@@ -56,7 +55,6 @@ type Binding struct {
 	ContextDecoder             *observation.ContextDecoder
 	Path                       observation.Path
 	AccessGeneration           uint64
-	CapturedContext            bool
 	Profile                    *ProfilePlan
 }
 type Decoder struct {
@@ -186,7 +184,9 @@ func (d *Decoder) Decode(input []byte) (Value, error) {
 			return Value{}, ErrValue
 		}
 	} else {
-		if len(w.NetworkContext) == 0 && (w.Execution.State != "not_run" || b.CapturedContext) {
+		// A not_run result never carries Network Context, even when a
+		// snapshot was captured; every other result of a remote test does.
+		if (len(w.NetworkContext) == 0) != (w.Execution.State == "not_run") {
 			return Value{}, ErrValue
 		}
 		if len(w.NetworkContext) != 0 {

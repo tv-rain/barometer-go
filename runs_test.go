@@ -73,6 +73,7 @@ type runRunner struct {
 	fail    map[int]bool
 	during  func(call int)
 	started chan struct{}
+	stuck   chan struct{} // when set, a call ignores its context until closed
 }
 
 func newRunRunner() *runRunner {
@@ -103,11 +104,18 @@ func (r *runRunner) Calls() int {
 func (r *runRunner) Run(ctx context.Context, in measurement.Input) (measurement.Output, error) {
 	r.mu.Lock()
 	r.calls++
-	n, hold, fail, during := r.calls, r.hold, r.fail[r.calls], r.during
+	n, hold, fail, during, stuck := r.calls, r.hold, r.fail[r.calls], r.during, r.stuck
 	r.mu.Unlock()
 	r.started <- struct{}{}
+	in.Start()
 	if during != nil {
 		during(n)
+	}
+	if stuck != nil {
+		<-stuck // ignores cancellation, as a runner breaking its contract would
+		if ctx.Err() != nil {
+			return measurement.Output{}, measurement.ErrRunner
+		}
 	}
 	if hold != nil {
 		select {

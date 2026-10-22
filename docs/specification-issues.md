@@ -237,7 +237,7 @@ The public record merged through barometer-spec [PR #10](https://github.com/tv-r
 
 ## GO-SPEC-ISSUE-004: Boundary Between `not_run` and `incomplete`
 
-**Current state:** Open; public disposition accepted October 22, 2026 under [DEV-579](https://app.clickup.com/t/124kk1zcaae) in the public record [Boundary Between `not_run` and `incomplete`](https://github.com/tv-rain/barometer-spec/blob/main/specification-issues/not-run-incomplete-boundary.md); wording merged at public [`84f52f8`](https://github.com/tv-rain/barometer-spec/tree/84f52f8872a5af9e6d97894611e3b2eaba18aba8) and internal alignment merged; Go adoption under [DEV-561](https://app.clickup.com/t/124kk1zc4a9) pending. See the [disposition addendum](#disposition-addendum--october-22-2026) and the [merge addendum](#merge-addendum--october-22-2026). The sections before it keep their original wording as historical evidence. Originally raised October 16, 2026 under [DEV-573](https://app.clickup.com/t/124kk1zc613) from the [DEV-572](https://app.clickup.com/t/124kk1zc5xp) case-plan triage.
+**Current state:** Open; public disposition accepted October 22, 2026 under [DEV-579](https://app.clickup.com/t/124kk1zcaae) in the public record [Boundary Between `not_run` and `incomplete`](https://github.com/tv-rain/barometer-spec/blob/main/specification-issues/not-run-incomplete-boundary.md); wording merged at public [`84f52f8`](https://github.com/tv-rain/barometer-spec/tree/84f52f8872a5af9e6d97894611e3b2eaba18aba8) and internal alignment merged; Go execution and result adoption delivered under [DEV-561](https://app.clickup.com/t/124kk1zc4a9); binding and host adoption pending. See the [disposition addendum](#disposition-addendum--october-22-2026), the [merge addendum](#merge-addendum--october-22-2026) and the [Go adoption addendum](#go-adoption-addendum--october-22-2026). The sections before it keep their original wording as historical evidence. Originally raised October 16, 2026 under [DEV-573](https://app.clickup.com/t/124kk1zc613) from the [DEV-572](https://app.clickup.com/t/124kk1zc5xp) case-plan triage.
 
 ### Identity, Baselines and Requirements
 
@@ -291,6 +291,19 @@ The sections above keep their wording as historical evidence, including their th
 - **Internal alignment:** merged through internal review repository PR #10 at `0414e543db2fea2bb156daaa823e0cc37c759ae0`.
 - **Go state:** unchanged. The traceability mapping stays on public `4743b63`, where the retired IDs are still active, so current references remain valid until the rebaseline to `84f52f8` during adoption.
 - **Remaining before closure:** Go adoption evidence, as listed under the disposition addendum. Binding and host adoption follow. No runtime, platform or field support is claimed.
+
+### Go Adoption Addendum — October 22, 2026
+
+DEV-561 adopts the disposition in Go execution and result code, as described in [State Mapping and GO-SPEC-ISSUE-004](execution-models.md#state-mapping-and-go-spec-issue-004):
+
+- **Case 1 (REQ-RESULT-0051):** the engine records the test start at the first dial through the attempt scope or at the runner's explicit `measurement.Input.Start`. Before it, an outer condition is `not_run`; after it, `incomplete`. Context capture, dialer acquisition, local validation and run cancellation before the first attempt are `not_run`. Evidence: `TestHostCancellation`, `TestAttemptDeadlineBeforeTheTestStarts` and `TestCancellationAtEveryStage`.
+- **Case 2 (REQ-RESULT-0052):** a runner's returned outcome is `completed` even when a cancellation or the deadline arrives while connections close, and results are written with a context the cancellation does not end. Evidence: `TestHostCancellation`, `TestAttemptScopeReleasesSockets` and `TestCancellationRacesWithCompletion`.
+- **Case 3 (REQ-NET-05-0061):** no Go change is possible yet; no NET-05 runner exists (DEV-454). The [termination expectations](measurement-requirements.md#termination-states-after-go-spec-issue-004) record the expected states.
+- **Case 4 (REQ-EXECUTION-0031):** already followed: undeterminable network conditions are unsatisfied at the start gates (DEV-636), which start no attempt and write no result.
+- **Network Context (REQ-RESULT-0053):** `result.Decoder` rejects `network_context` in every `not_run` result and `Binding.CapturedContext` is removed. Evidence: `TestExecutionContextAndAttemptBinding`.
+- **Case plans:** the eight `M-*-TERMINATION` plans in the measurement manifest keep their text at its unchanged baseline; their expected states under the disposition are recorded in [Termination States after GO-SPEC-ISSUE-004](measurement-requirements.md#termination-states-after-go-spec-issue-004) until the measurement manifest is rebaselined.
+- **Traceability:** the cross-cutting manifest is rebaselined to public `84f52f8` together with this adoption, so the `requirement-ref` comments cite REQ-RESULT-0051, REQ-RESULT-0052 and REQ-RESULT-0053 instead of the retired REQ-RESULT-0024.
+- **Remaining before closure:** binding and host adoption (DEV-455) and NET-05 runner evidence (DEV-454). No runtime, platform or field support is claimed.
 
 ## GO-SPEC-ISSUE-005: Which Bytes Count Toward Attempt Byte Limits
 

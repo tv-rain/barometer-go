@@ -2,8 +2,10 @@ package barometer
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/tv-rain/barometer-go/internal/admission"
 	"github.com/tv-rain/barometer-go/internal/execution"
@@ -49,8 +51,22 @@ type pathPlan struct {
 }
 
 // runStatus is shared by the run table and the run's goroutine. A run is
-// active until the engine has returned.
-type runStatus struct{ done atomic.Bool }
+// active until the engine has returned; finished is closed at that moment.
+type runStatus struct {
+	done     atomic.Bool
+	finished chan struct{}
+}
+
+func newRunStatus() *runStatus { return &runStatus{finished: make(chan struct{})} }
+
+func (s *runStatus) finish() {
+	s.done.Store(true)
+	close(s.finished)
+}
+
+// errRunCancelled is the cancellation cause CancelRun records. The engine maps
+// it, like a lifecycle cancellation, to cancelled_by_host.
+var errRunCancelled = errors.New("barometer: run cancelled")
 
 // latestRun is the most recent reservation of one task in this generation.
 type latestRun struct {
@@ -87,6 +103,13 @@ func (c *Client) StartRun(taskHandle string) (string, error) { return c.startRun
 // it has finished, whatever its attempts' outcomes.
 func (c *Client) RunState(runHandle string) (string, error) { return c.runState(runHandle) }
 
+// CancelRun prevents further attempts of the run, cancels its active work and
+// waits for cleanup, for at most the registered cleanup bound. A run that is
+// already terminal is left unchanged. If the run's work has not finished
+// within the bound it returns cleanup_incomplete; the run then stays active,
+// holds its reservation and starts no attempt, and a later call waits again.
+func (c *Client) CancelRun(runHandle string) error { return c.cancelRun(runHandle) }
+
 func (c *Client) startRun(taskHandle string) (handle string, err error) {
 	if c == nil {
 		return "", fail(notInitialized)
@@ -121,9 +144,12 @@ func (c *Client) startRun(taskHandle string) (handle string, err error) {
 	return handle, nil
 }
 
-// reserved is what a launched run releases when its engine returns.
+// reserved is what a launched run releases when its engine returns. ctx is the
+// run's context, a child of the generation context that CancelRun cancels.
 type reserved struct {
 	status    *runStatus
+	ctx       context.Context
+	cancel    context.CancelCauseFunc
 	exclusive bool
 	results   int
 }
@@ -190,9 +216,11 @@ func (rt *runtime) reserveRun(ctx context.Context, taskHandle string, a admissio
 		return "", execution.Plan{}, nil, notDue
 	}
 
-	r := &reserved{status: &runStatus{}, exclusive: exclusive, results: attempts}
-	handle, err := rt.addRun(runRecord{taskHandle: taskHandle, status: r.status})
+	runCtx, cancelRun := context.WithCancelCause(rt.ctx)
+	r := &reserved{status: newRunStatus(), ctx: runCtx, cancel: cancelRun, exclusive: exclusive, results: attempts}
+	handle, err := rt.addRun(runRecord{taskHandle: taskHandle, status: r.status, cancel: cancelRun})
 	if err != nil {
+		cancelRun(nil)
 		return "", execution.Plan{}, nil, err
 	}
 	// Until the run is launched, every exit, including a panic, withdraws
@@ -201,6 +229,7 @@ func (rt *runtime) reserveRun(ctx context.Context, taskHandle string, a admissio
 	defer func() {
 		if !launched {
 			rt.runs.remove(handle)
+			cancelRun(nil)
 		}
 	}()
 	// The run is counted before it can do anything; an uncertain write
@@ -217,6 +246,7 @@ func (rt *runtime) reserveRun(ctx context.Context, taskHandle string, a admissio
 	rt.runSet.results += attempts
 	rt.runSet.exclusive = rt.runSet.exclusive || exclusive
 	plan := execution.Plan{TaskID: c.ID, Test: a.Test(), Parameters: c.Parameters, Schedule: s, Conditions: start,
+		Deadline:       time.Duration(a.AttemptLimits().DurationMS) * time.Millisecond,
 		Implementation: path.Implementation, Result: path.Result, Context: path.Context, Dialers: path.Dialers, Preconditions: gates}
 	return handle, plan, r, nil
 }
@@ -236,8 +266,9 @@ func (rt *runtime) addRun(r runRecord) (string, error) {
 }
 
 // execute runs on its own goroutine and holds the generation reservation, so
-// lifecycle transitions wait for it. It uses the generation context, which a
-// transition cancels; how cancellation is recorded is DEV-561's. A panic below
+// lifecycle transitions wait for it. It uses the run context, which CancelRun
+// and every lifecycle transition cancel; the engine records the cancelled
+// attempt with cancelled_by_host and starts no further attempt. A panic below
 // the engine ends the run without crashing the host.
 func (rt *runtime) execute(plan execution.Plan, r *reserved, release func()) {
 	defer release()
@@ -249,10 +280,62 @@ func (rt *runtime) execute(plan execution.Plan, r *reserved, release func()) {
 			rt.runSet.exclusive = false
 		}
 		rt.runSet.mu.Unlock()
-		r.status.done.Store(true)
+		r.cancel(nil)
+		r.status.finish()
 	}()
 	defer func() { _ = recover() }()
-	_, _ = rt.engine.Run(rt.ctx, plan)
+	_, _ = rt.engine.Run(r.ctx, plan)
+}
+
+// cancelRun reserves the generation, so it serializes with lifecycle
+// transitions, which cancel every run themselves. A panic below the facade
+// returns cleanup_incomplete rather than reporting success.
+// requirement-ref: REQ-LIMIT-0008
+func (c *Client) cancelRun(runHandle string) (err error) {
+	if c == nil {
+		return fail(notInitialized)
+	}
+	rt, err := c.reserve()
+	if err != nil {
+		return err
+	}
+	defer c.release()
+	defer func() {
+		if recover() != nil {
+			err = fail(cleanupIncomplete)
+		}
+	}()
+	r, err := rt.runs.lookup(runHandle)
+	if err != nil {
+		return err
+	}
+	if r.terminal() {
+		return nil
+	}
+	r.cancel(errRunCancelled)
+	if !rt.awaitRun(r.status) {
+		return fail(cleanupIncomplete)
+	}
+	return nil
+}
+
+// awaitRun waits until the run's engine has returned, for at most the
+// registered cleanup bound on the engine clock.
+func (rt *runtime) awaitRun(s *runStatus) bool {
+	select {
+	case <-s.finished:
+		return true
+	default:
+	}
+	expired := make(chan struct{})
+	stop := rt.run.clock.AfterFunc(execution.CleanupBound, func() { close(expired) })
+	defer stop()
+	select {
+	case <-s.finished:
+		return true
+	case <-expired:
+		return false
+	}
 }
 
 func (c *Client) runState(runHandle string) (state string, err error) {

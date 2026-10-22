@@ -22,21 +22,32 @@ import (
 // Payload is the fixed synthetic message the runner sends and expects echoed.
 var Payload = []byte("barometer-loopback")
 
-// Server accepts loopback connections and echoes at most len(Payload) bytes on each.
+// Server accepts loopback connections and echoes at most len(Payload) bytes on
+// each. A holding server reads the payload and then keeps the connection open
+// without echoing until the client closes it, so a runner blocks in its read
+// and only the client side can release the socket.
 type Server struct {
-	ln   net.Listener
-	wg   sync.WaitGroup
-	mu   sync.Mutex
-	conn int
+	ln      net.Listener
+	hold    bool
+	wg      sync.WaitGroup
+	mu      sync.Mutex
+	conn    int
+	open    int
+	changed chan struct{} // closed and replaced whenever open changes
 }
 
 // Listen starts a server on an ephemeral 127.0.0.1 port.
-func Listen() (*Server, error) {
+func Listen() (*Server, error) { return listen(false) }
+
+// ListenHold starts a holding server on an ephemeral 127.0.0.1 port.
+func ListenHold() (*Server, error) { return listen(true) }
+
+func listen(hold bool) (*Server, error) {
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		return nil, err
 	}
-	s := &Server{ln: ln}
+	s := &Server{ln: ln, hold: hold, changed: make(chan struct{})}
 	s.wg.Add(1)
 	go s.serve()
 	return s, nil
@@ -52,14 +63,55 @@ func (s *Server) serve() {
 		s.mu.Lock()
 		s.conn++
 		s.mu.Unlock()
+		s.track(1)
 		s.wg.Add(1)
 		go func() {
 			defer s.wg.Done()
+			defer s.track(-1)
 			defer c.Close()
 			buf := make([]byte, len(Payload))
 			n, _ := io.ReadFull(c, buf)
+			if s.hold {
+				// Returns only when the client closes its side.
+				_, _ = io.Copy(io.Discard, c)
+				return
+			}
 			_, _ = c.Write(buf[:n])
 		}()
+	}
+}
+
+func (s *Server) track(delta int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.open += delta
+	close(s.changed)
+	s.changed = make(chan struct{})
+}
+
+// Open reports how many accepted connections the server still holds.
+func (s *Server) Open() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.open
+}
+
+// WaitOpen blocks until exactly n accepted connections are open or ctx ends.
+// It observes the server side, so a return of nil for n == 0 shows that the
+// client released every socket.
+func (s *Server) WaitOpen(ctx context.Context, n int) error {
+	for {
+		s.mu.Lock()
+		open, changed := s.open, s.changed
+		s.mu.Unlock()
+		if open == n {
+			return nil
+		}
+		select {
+		case <-changed:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
 	}
 }
 

@@ -1,6 +1,7 @@
 package barometer
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"sync"
@@ -26,10 +27,11 @@ const (
 )
 
 // runRecord is the run-table value. A record without a status was never
-// launched and is terminal.
+// launched and is terminal. cancel ends the run's context with a cause.
 type runRecord struct {
 	taskHandle string
 	status     *runStatus
+	cancel     context.CancelCauseFunc
 }
 
 func (r runRecord) terminal() bool { return r.status == nil || r.status.done.Load() }

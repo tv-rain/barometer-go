@@ -18,8 +18,10 @@ import (
 
 // MaxAttempts is the reviewed per-run attempt bound: the registered maximum of
 // attempts per run, including the initial attempt (REQ-LIMIT-0011). A run uses
-// one worker: attempts execute sequentially in the caller's goroutine and the
-// engine starts no goroutines.
+// one worker: attempts execute sequentially in the caller's goroutine. The
+// engine starts no long-lived goroutine; the attempt deadline timer and the
+// attempt scope's cancellation hook each run one short callback when they
+// fire.
 const MaxAttempts = 2
 
 var (
@@ -27,17 +29,23 @@ var (
 	ErrPlan        = errors.New("execution: invalid run plan")
 	ErrNoRunner    = errors.New("execution: no registered runner")
 	ErrNotEligible = errors.New("execution: run not eligible")
-	ErrCancelled   = errors.New("execution: run cancelled")
 	ErrResult      = errors.New("execution: result construction failed")
 	ErrOutput      = errors.New("execution: pending output failed")
 )
 
+// errDeadline is the cancellation cause of an expired attempt deadline. Any
+// other cause, including a host or lifecycle cancellation of the run context,
+// is recorded as cancelled_by_host.
+var errDeadline = errors.New("execution: attempt deadline exceeded")
+
 // Clock is the engine's time source. Now must carry a monotonic reading for
 // result timing. Wait blocks for d on this clock or until ctx is done, and then
-// returns a non-nil error.
+// returns a non-nil error. AfterFunc runs f once d has elapsed on this clock,
+// unless stop prevented it first.
 type Clock interface {
 	Now() time.Time
 	Wait(ctx context.Context, d time.Duration) error
+	AfterFunc(d time.Duration, f func()) (stop func() bool)
 }
 
 // Jitter returns a locally generated delay in [0, max] (REQ-SCHEDULE-0029).
@@ -84,6 +92,9 @@ func (SystemClock) Wait(ctx context.Context, d time.Duration) error {
 		return ctx.Err()
 	}
 }
+func (SystemClock) AfterFunc(d time.Duration, f func()) func() bool {
+	return time.AfterFunc(d, f).Stop
+}
 
 // LocalJitter draws uniformly from crypto/rand so jitter is not predictable
 // from task data. A read failure yields no jitter, never a larger delay.
@@ -119,12 +130,14 @@ func NewEngine(r *registry.Registry, c Clock, j Jitter, o Output) (*Engine, erro
 // Plan is one run of an admitted task. Every field is a trusted local input
 // prepared after admission; none is task-controlled authority. Conditions is
 // the host-directed eligibility snapshot; the engine sets its Now. Result must
-// be bound to the same task ID, test and implementation.
+// be bound to the same task ID, test and implementation. Deadline is the
+// effective max_duration_ms of each attempt.
 type Plan struct {
 	TaskID         string
 	Test           task.TestVersion
 	Parameters     task.Parameters
 	Schedule       task.Schedule
+	Deadline       time.Duration
 	Conditions     validation.StartContext
 	Implementation model.Implementation
 	Result         *result.Decoder
@@ -149,12 +162,21 @@ type Report struct {
 }
 
 // Run executes attempts sequentially. Before any work it fails closed on an
-// invalid plan, a missing runner, an ineligible run or unsatisfied
-// preconditions, which are evaluated again before a retry. Each terminal attempt is
-// built through result construction and written to the output port before the
-// next decision. A retry happens only when the attempt's reason is a retry
-// candidate, the schedule permits it (validation.RetryEligible) both before and
-// after the backoff wait, and the realized delay ends before not_after.
+// invalid plan or a missing runner. A run whose context has already ended
+// records its first attempt as not_run with the cancellation reason and does
+// nothing else. Otherwise it fails closed on an ineligible run or unsatisfied
+// preconditions, which are evaluated again before a retry. Each terminal
+// attempt is built through result construction and written to the output port
+// before the next decision. A retry happens only when the attempt's reason is
+// a retry candidate, the schedule permits it (validation.RetryEligible) both
+// before and after the backoff wait, the realized delay ends before not_after
+// and the run has not been cancelled: cancellation prevents every further
+// attempt.
+//
+// Results are written with a context that the run's cancellation does not
+// end, so an attempt that committed its terminal state, including the
+// cancelled one, is not lost to a racing cancellation. The output port bounds
+// its own writes.
 // requirement-ref: REQ-SCHEDULE-0024
 // requirement-ref: REQ-SCHEDULE-0029
 func (e *Engine) Run(ctx context.Context, p Plan) (Report, error) {
@@ -162,38 +184,58 @@ func (e *Engine) Run(ctx context.Context, p Plan) (Report, error) {
 		return Report{}, ErrEngine
 	}
 	if p.TaskID == "" || p.Parameters == nil || p.Result == nil || p.Context == nil || p.Dialers == nil ||
-		p.Schedule.Retry.MaxAttempts < 1 || p.Schedule.Retry.MaxAttempts > MaxAttempts {
+		p.Schedule.Retry.MaxAttempts < 1 || p.Schedule.Retry.MaxAttempts > MaxAttempts ||
+		p.Deadline <= 0 || p.Deadline > MaxAttemptDuration {
 		return Report{}, ErrPlan
 	}
 	runner, ok := e.registry.Runner(p.Test)
 	if !ok {
 		return Report{}, ErrNoRunner
 	}
+	report := Report{RunID: result.NewRunID()}
+	write := context.WithoutCancel(ctx)
+	if ctx.Err() != nil {
+		a, v, err := e.stopped(p, NewAttempt(), stopReason(ctx), nil, report.RunID, 1, e.clock.Now())
+		if err != nil {
+			return report, err
+		}
+		if e.output.Put(write, v) != nil {
+			return report, ErrOutput
+		}
+		report.Attempts = append(report.Attempts, AttemptReport{Number: 1, Attempt: a})
+		return report, nil
+	}
 	if !validation.RunEligible(p.Schedule, e.conditions(p)) || !p.satisfied(ctx) {
 		return Report{}, ErrNotEligible
 	}
-	report := Report{RunID: result.NewRunID()}
 	for n := 1; n <= p.Schedule.Retry.MaxAttempts; n++ {
-		if ctx.Err() != nil {
-			return report, ErrCancelled
-		}
-		if n > 1 && !p.satisfied(ctx) {
+		if n > 1 && (ctx.Err() != nil || !p.satisfied(ctx)) {
 			break
 		}
 		a, usage, v, err := e.attempt(ctx, p, runner, report.RunID, n)
 		if err != nil {
 			return report, err
 		}
-		if e.output.Put(ctx, v) != nil {
+		if e.output.Put(write, v) != nil {
 			return report, ErrOutput
 		}
 		report.Attempts = append(report.Attempts, AttemptReport{Number: n, Attempt: a, Usage: usage})
 		reason, retry := a.RetryReason()
-		if !retry || !e.retry(ctx, p, n, reason) {
+		if !retry || ctx.Err() != nil || !e.retry(ctx, p, n, reason) {
 			break
 		}
 	}
 	return report, nil
+}
+
+// stopReason maps the cause of an ended context to its execution reason. The
+// first cancellation is the cause, so a deadline that expired before a host
+// cancellation stays attempt_deadline_exceeded, and the reverse.
+func stopReason(ctx context.Context) task.ExecutionReason {
+	if errors.Is(context.Cause(ctx), errDeadline) {
+		return task.AttemptDeadlineExceeded
+	}
+	return task.CancelledByHost
 }
 
 // satisfied re-evaluates the plan's preconditions at attempt start.
@@ -228,14 +270,35 @@ func (e *Engine) retry(ctx context.Context, p Plan, completed int, reason task.E
 	return validation.RetryEligible(p.Schedule, e.conditions(p), completed, reason)
 }
 
-// attempt runs one attempt and returns its terminal state and validated result.
-// The test is treated as started when the runner is invoked; under the current
-// rule an outer condition before that is not_run and after it is incomplete.
-// A not_run result never carries Network Context.
+// attempt runs one attempt under its own deadline and returns its terminal
+// state and validated result. The deadline is the plan's max_duration_ms on
+// the engine clock and covers context capture, the runner and cleanup
+// (REQ-LIMIT-0006). The runner dials through an attempt scope that closes
+// every connection when the attempt ends, by deadline or cancellation, and
+// after the runner returns.
+//
+// The state follows the first termination. Until the test starts
+// (measurement.Input) an outer condition yields not_run, and after it
+// incomplete (REQ-RESULT-0051). A returned outcome yields completed, even when
+// a cancellation or the deadline arrived while connections closed
+// (REQ-RESULT-0052). A not_run result never carries Network Context
+// (REQ-RESULT-0053).
+// requirement-ref: REQ-RESULT-0051
+// requirement-ref: REQ-RESULT-0052
+// requirement-ref: REQ-LIMIT-0006
 func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner, runID string, n int) (Attempt, measurement.Usage, result.Value, error) {
 	pending := NewAttempt()
 	started := e.clock.Now()
-	nc, err := p.Context.Capture(ctx)
+	actx, cancel := context.WithCancelCause(ctx)
+	defer cancel(nil)
+	stopTimer := e.clock.AfterFunc(p.Deadline, func() { cancel(errDeadline) })
+	defer stopTimer()
+
+	nc, err := p.Context.Capture(actx)
+	if actx.Err() != nil {
+		a, v, err := e.stopped(p, pending, stopReason(actx), nil, runID, n, started)
+		return a, measurement.Usage{}, v, err
+	}
 	if err != nil {
 		a, v, err := e.stopped(p, pending, task.NetworkContextUnavailable, nil, runID, n, started)
 		return a, measurement.Usage{}, v, err
@@ -245,16 +308,20 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 		a, v, err := e.stopped(p, pending, task.InternalError, nil, runID, n, started)
 		return a, measurement.Usage{}, v, err
 	}
+	s := newScope(actx, dialer)
+	out, err := runner.Run(actx, measurement.Input{Parameters: p.Parameters, Dialer: s, Start: s.Start})
+	s.close()
 	running, _ := pending.Start()
-	out, err := runner.Run(ctx, measurement.Input{Parameters: p.Parameters, Dialer: dialer})
 	if err != nil {
-		// Host cancellation is the only outer condition this engine observes;
-		// deadline and budget coordination belong to later runtime work.
 		reason := task.InternalError
-		if ctx.Err() != nil {
-			reason = task.CancelledByHost
+		if actx.Err() != nil {
+			reason = stopReason(actx)
 		}
-		a, v, err := e.stopped(p, running, reason, &nc, runID, n, started)
+		at := pending
+		if s.Started() {
+			at = running
+		}
+		a, v, err := e.stopped(p, at, reason, &nc, runID, n, started)
 		return a, out.Usage, v, err
 	}
 	completed, _ := running.Complete()
@@ -274,6 +341,7 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 
 // stopped records an outer condition. Network Context is retained only for an
 // incomplete attempt, never for not_run.
+// requirement-ref: REQ-RESULT-0053
 func (e *Engine) stopped(p Plan, a Attempt, reason task.ExecutionReason, nc *observation.NetworkContext, runID string, n int, started time.Time) (Attempt, result.Value, error) {
 	stopped, err := a.Stop(reason)
 	if err != nil {

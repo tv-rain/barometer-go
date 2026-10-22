@@ -59,6 +59,7 @@ type step struct {
 	err     error
 	advance time.Duration // clock movement while the runner works
 	cancel  bool          // simulate host cancellation during the attempt
+	unbegun bool          // return before the test starts (REQ-RESULT-0051)
 }
 
 // scripted is a synthetic runner; it performs no I/O.
@@ -78,6 +79,9 @@ func (s *scripted) Run(ctx context.Context, in measurement.Input) (measurement.O
 	}
 	st := s.steps[s.calls]
 	s.calls++
+	if !st.unbegun {
+		in.Start()
+	}
 	if st.advance > 0 {
 		_ = s.clock.Advance(st.advance)
 	}
@@ -164,6 +168,9 @@ func failure() step { return step{err: measurement.ErrRunner} }
 
 var now = time.Now().UTC().Truncate(time.Hour).Add(12 * time.Hour)
 
+// attemptDeadline is the registered default max_duration_ms.
+const attemptDeadline = 30 * time.Second
+
 func schedule(maxAttempts int, on ...task.ExecutionReason) task.Schedule {
 	maxRuns := 1
 	expires := task.TimestampFromTime(now.Add(time.Hour))
@@ -199,7 +206,7 @@ func newFixture(t *testing.T, s task.Schedule, steps ...step) *fixture {
 		t.Fatal(err)
 	}
 	f.engine = engine
-	f.plan = execution.Plan{TaskID: "campaign-1", Test: tcp01, Parameters: loopback.Parameters{}, Schedule: s,
+	f.plan = execution.Plan{TaskID: "campaign-1", Test: tcp01, Parameters: loopback.Parameters{}, Schedule: s, Deadline: attemptDeadline,
 		Conditions:     validation.StartContext{DueAt: now, Supported: true, ConstraintsSatisfied: true, SafetySatisfied: true},
 		Implementation: implementation, Result: decoder(t), Context: f.ctx, Dialers: f.dialers}
 	return f
@@ -359,26 +366,63 @@ func TestPreStartFailuresAreNotRun(t *testing.T) {
 	}
 }
 
+// Host cancellation is recorded as cancelled_by_host, prevents every further
+// attempt and is written even though the run context has ended.
+// requirement-ref: REQ-RESULT-0051
+// requirement-ref: REQ-RESULT-0052
 func TestHostCancellation(t *testing.T) {
-	// Cancelled before the run: no attempt, no result, no runner call.
+	// Cancelled before the run: attempt 1 is not_run, no other work.
 	f := newFixture(t, schedule(2, task.InternalError), connected(t))
 	run, cancel := context.WithCancel(context.Background())
 	cancel()
 	rep, err := f.engine.Run(run, f.plan)
-	f.expect(t, rep, err, execution.ErrCancelled, nil, nil)
-	if f.runner.Calls() != 0 || f.store.Calls() != 0 {
+	f.expect(t, rep, err, nil, []want{{"not_run", "cancelled_by_host", ""}}, nil)
+	if f.runner.Calls() != 0 || f.ctx.calls != 0 || len(f.dialers.Issued()) != 0 || len(rep.Attempts) != 1 {
 		t.Fatal("cancelled run did work")
 	}
 
-	// Cancelled during an attempt: incomplete cancelled_by_host, never retried.
-	// The fake store refuses writes on a cancelled context, so the result is
-	// not durable and the run reports the output failure.
+	// Cancelled after the test started: incomplete and never retried.
 	f = newFixture(t, schedule(2, task.InternalError), step{err: measurement.ErrRunner, cancel: true}, connected(t))
 	rep, err = f.engine.Run(f.run, f.plan)
-	f.expect(t, rep, err, execution.ErrOutput, nil, nil)
-	if f.runner.Calls() != 1 || f.store.Calls() != 1 || len(rep.Attempts) != 0 {
-		t.Fatalf("runner calls = %d, store calls = %d, report = %d", f.runner.Calls(), f.store.Calls(), len(rep.Attempts))
+	f.expect(t, rep, err, nil, []want{{"incomplete", "cancelled_by_host", ""}}, nil)
+	if f.runner.Calls() != 1 || len(rep.Attempts) != 1 {
+		t.Fatalf("runner calls = %d, report = %d", f.runner.Calls(), len(rep.Attempts))
 	}
+
+	// Cancelled before the test started: not_run without Network Context.
+	f = newFixture(t, schedule(1), step{err: measurement.ErrRunner, cancel: true, unbegun: true})
+	rep, err = f.engine.Run(f.run, f.plan)
+	f.expect(t, rep, err, nil, []want{{"not_run", "cancelled_by_host", ""}}, nil)
+
+	// Cancelled after the outcome was recorded, while connections close:
+	// the attempt stays completed and no retry follows.
+	done := connected(t)
+	done.cancel = true
+	f = newFixture(t, schedule(2, task.InternalError), done, connected(t))
+	rep, err = f.engine.Run(f.run, f.plan)
+	f.expect(t, rep, err, nil, []want{{"completed", "", "connected"}}, nil)
+
+	// Cancelled during the retry backoff: the first result stays, and the
+	// retry attempt never starts.
+	f = newFixture(t, schedule(2, task.InternalError), failure(), connected(t))
+	run, cancel = context.WithCancel(context.Background())
+	f.engine, _ = execution.NewEngine(newRegistry(t, f.runner), cancelOnWait{f.clock, cancel}, fixedJitter(5*time.Second), f.store)
+	rep, err = f.engine.Run(run, f.plan)
+	f.expect(t, rep, err, nil, []want{{"incomplete", "internal_error", ""}}, nil)
+	if f.runner.Calls() != 1 || f.ctx.calls != 1 {
+		t.Fatalf("retry after cancelled backoff: runner %d, captures %d", f.runner.Calls(), f.ctx.calls)
+	}
+}
+
+// cancelOnWait cancels the run as soon as the engine starts a backoff wait.
+type cancelOnWait struct {
+	*testkit.WaitClock
+	cancel context.CancelFunc
+}
+
+func (c cancelOnWait) Wait(ctx context.Context, d time.Duration) error {
+	c.cancel()
+	return c.WaitClock.Wait(ctx, d)
 }
 
 func TestOutputPortFailuresStopTheRun(t *testing.T) {
@@ -495,7 +539,7 @@ func TestLoopbackRunnerOnRealSockets(t *testing.T) {
 	maxRuns := 1
 	expires := task.TimestampFromTime(start.Add(time.Hour))
 	plan := execution.Plan{TaskID: "campaign-1", Test: tcp01, Parameters: loopback.Parameters{Address: srv.Address()},
-		Schedule:       task.Schedule{NotAfter: &expires, Repeat: task.Repeat{Mode: "none"}, MaxRuns: &maxRuns, Retry: task.Retry{MaxAttempts: 1}},
+		Schedule: task.Schedule{NotAfter: &expires, Repeat: task.Repeat{Mode: "none"}, MaxRuns: &maxRuns, Retry: task.Retry{MaxAttempts: 1}}, Deadline: attemptDeadline,
 		Conditions:     validation.StartContext{DueAt: start, Supported: true, ConstraintsSatisfied: true, SafetySatisfied: true},
 		Implementation: implementation, Result: decoder(t), Context: &contextSource{t: t}, Dialers: dialers}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

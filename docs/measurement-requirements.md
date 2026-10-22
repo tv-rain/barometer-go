@@ -48,6 +48,30 @@ The following links select reusable case families and their public requirement I
 | NET-03 | Shared access/platform and DNS/TCP/TLS/HTTP observation families, including HTTP/validation bounds. [Protocol output cases](#m-net-03-output) retain NET-03's distinct platform/active evidence and redirect prohibition. |
 | NET-05 | Reuse the exact-version [DNS-01 admission](#m-dns-01-admission), [TCP-01 admission](#m-tcp-01-admission), [TLS-01 admission](#m-tls-01-admission), [HTTP-01 admission](#m-http-01-admission), and each primitive's option, execution, normalization and output families below; [context acquisition](cross-cutting-requirements.md#cc-context-acquisition-and-fallback), [composite limits](cross-cutting-requirements.md#cc-limit-net-05-composite-limits), and [partial results](cross-cutting-requirements.md#cc-result-partial-results) remain additional dependencies. [NET-05 execution](#m-net-05-execution) and [output](#m-net-05-output) check caller-specific composition. |
 
+## Termination States after GO-SPEC-ISSUE-004
+
+The `M-*-TERMINATION` plans were written before the [GO-SPEC-ISSUE-004 disposition](specification-issues.md#go-spec-issue-004-boundary-between-not_run-and-incomplete), and several expect `incomplete` at every interruption point. DEV-561 adopts the disposition in Go execution at public [`84f52f8`](https://github.com/tv-rain/barometer-spec/tree/84f52f8872a5af9e6d97894611e3b2eaba18aba8) ([State Mapping](execution-models.md#state-mapping-and-go-spec-issue-004)). Until those plans are rewritten with this manifest's next rebaseline, which also adds REQ-NET-05-0061, read their expected states as follows. The manifest plan text is unchanged, and no family is executed.
+
+| Interruption point | Expected result | Public rule |
+|---|---|---|
+| Before the test starts: input validation, context capture or acquisition, constraint evaluation, and any point before the test's first test-specific network operation or its own network-state observation | `not_run` with the first condition's reason, no `measurement` and no `network_context` | [REQ-RESULT-0051](https://github.com/tv-rain/barometer-spec/blob/84f52f8872a5af9e6d97894611e3b2eaba18aba8/data-formats/measurement-result.md#REQ-RESULT-0051), [REQ-RESULT-0053](https://github.com/tv-rain/barometer-spec/blob/84f52f8872a5af9e6d97894611e3b2eaba18aba8/data-formats/measurement-result.md#REQ-RESULT-0053) |
+| After the test starts and before it records its terminal outcome, including during the test's own network-generation or stability check | `incomplete` with the first condition's reason, as each plan states | REQ-RESULT-0051 and each test's termination rule |
+| After the test records its terminal outcome, while connections close and resources are released | `completed` with the recorded outcome; the interruption changes neither state, reason nor `measurement`, and release stays within the attempt's bounds | [REQ-RESULT-0052](https://github.com/tv-rain/barometer-spec/blob/84f52f8872a5af9e6d97894611e3b2eaba18aba8/data-formats/measurement-result.md#REQ-RESULT-0052) |
+
+Applied to the named points of each plan:
+
+- **`M-NET-01-TERMINATION`:** before step 1 is `not_run`. NET-01 collection starts the test, so steps 1 to 3 are `incomplete`. Release of callbacks and handles in step 4 is `completed` once the outcome is recorded.
+- **`M-NET-03-TERMINATION`:** the NET-01 network-generation stability check starts the test; every later point before the outcome is `incomplete`. "After the first response or failure but before the connection is closed" is `completed` once the outcome is recorded.
+- **`M-NET-05-TERMINATION`:** point (a) follows the stable-network check of Procedure step 3, so it stays `incomplete`. A task-level `require_validated` constraint that is unsatisfied before that check is `not_run` with `constraints_unsatisfied`. Point (d) is `completed` once the composite outcome is recorded. `network_not_validated` and `inconclusive` are `completed` and the NET-05 `incomplete` outcome stays with `execution.state: incomplete` ([REQ-NET-05-0061](https://github.com/tv-rain/barometer-spec/blob/84f52f8872a5af9e6d97894611e3b2eaba18aba8/tests/net-05.md#REQ-NET-05-0061)).
+- **`M-DNS-01-TERMINATION`:** every listed point follows the recorded network generation, so all stay `incomplete`.
+- **`M-DNS-03-TERMINATION`:** after input validation and before bootstrap is `not_run`. After the final `doh` `dns_query` observation is `completed` once the outcome is recorded.
+- **`M-DNS-04-TERMINATION`:** before input validation completes is `not_run`. While closing the session is `completed` once the outcome is recorded.
+- **`M-TCP-01-TERMINATION`:** during address and port validation is `not_run`. The network-generation and address-family check starts the test. After the outcome is recorded and during the close are `completed`.
+- **`M-TLS-01-TERMINATION`:** after input validation (step 1) is `not_run`; step 2 starts the test. After the negotiated properties are recorded and before close is `completed` once the outcome is recorded.
+- **`M-HTTP-01-TERMINATION`:** after input validation and before the test's first network-state observation or DNS query is `not_run`. Every other listed point precedes the terminal outcome and stays `incomplete`.
+
+A required network condition that cannot be determined is unsatisfied, so the attempt is `not_run` with `constraints_unsatisfied` ([REQ-EXECUTION-0031](https://github.com/tv-rain/barometer-spec/blob/84f52f8872a5af9e6d97894611e3b2eaba18aba8/data-formats/task-execution.md#REQ-EXECUTION-0031)). Classifying a test's own generation or stability check as its start follows the "own network-state observation" clause of REQ-RESULT-0051; each runner task confirms its procedure's first such step against the public text.
+
 ## Source Summary
 
 | Test | Allocated units | Planned families |

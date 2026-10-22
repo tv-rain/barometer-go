@@ -35,12 +35,21 @@ type Dialer interface {
 	DialContext(ctx context.Context, network, address string) (Conn, error)
 }
 
-// Input carries the admitted test's normalized parameters and its dialer.
-// Parameters were produced by the registered codec; a runner must reject a
-// value of an unexpected type with ErrRunner rather than guess.
+// Input carries the admitted test's normalized parameters, its dialer and the
+// test-start marker. Parameters were produced by the registered codec; a
+// runner must reject a value of an unexpected type with ErrRunner rather than
+// guess.
+//
+// The test starts at its first test-specific network operation or, when that
+// comes first, its own network-state observation (REQ-RESULT-0051). A dial
+// through Dialer marks the start itself. A runner whose procedure observes
+// network state before dialing calls Start first. Start is idempotent and safe
+// for concurrent use; validation and other local work before it never start
+// the test.
 type Input struct {
 	Parameters task.Parameters
 	Dialer     Dialer
+	Start      func()
 }
 
 // Usage is the runner's account of application bytes and connections. It is
@@ -60,8 +69,11 @@ type Output struct {
 
 // Runner executes exactly one attempt of one registered test version. It must
 // honor ctx, open connections only through Input.Dialer and return ErrRunner,
-// not a raw platform error, when it cannot produce a terminal outcome.
-// Implementations must be safe for concurrent use by independent attempts.
+// not a raw platform error, when it cannot produce a terminal outcome. A
+// returned outcome is terminal: execution records it as completed even when
+// ctx ends while connections close (REQ-RESULT-0052), so a runner interrupted
+// before its outcome must return ErrRunner instead. Implementations must be
+// safe for concurrent use by independent attempts.
 type Runner interface {
 	Run(ctx context.Context, in Input) (Output, error)
 }

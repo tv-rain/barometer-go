@@ -206,8 +206,8 @@ func TestEnvelopePresenceAndBounds(t *testing.T) {
 
 // requirement-ref: REQ-RESULT-0021
 // requirement-ref: REQ-RESULT-0023
-// requirement-ref: REQ-RESULT-0024
 // requirement-ref: REQ-RESULT-0042
+// requirement-ref: REQ-RESULT-0053
 func TestExecutionContextAndAttemptBinding(t *testing.T) {
 	b := binding("TCP-01")
 	b.MaxAttempts = 1
@@ -217,6 +217,12 @@ func TestExecutionContextAndAttemptBinding(t *testing.T) {
 	for _, state := range []string{"incomplete", "not_run"} {
 		for _, reason := range []task.ExecutionReason{task.CancelledByHost, task.AttemptDeadlineExceeded, task.ResourceLimit, task.NetworkChanged, task.PlatformSuspended, task.NetworkContextUnavailable, task.ConstraintsUnsatisfied, task.LocalPolicyRejected, task.ProxyNotConfigured, task.ProxyNotPermitted, task.ProxyPathUnsupported, task.ProxyUnavailable, task.ProxyConnectFailed, task.ProxyReconfigured, task.InternalError} {
 			input := envelopeJSON("TCP-01", state, string(reason), "")
+			if state == "not_run" {
+				// A not_run result never carries Network Context, even when a
+				// snapshot was captured (REQ-RESULT-0053).
+				reject(t, d, input)
+				input = mutate(t, input, func(v map[string]any) { delete(v, "network_context") })
+			}
 			if _, e := d.Decode(input); e != nil {
 				t.Fatal(state, reason, e)
 			}
@@ -227,12 +233,6 @@ func TestExecutionContextAndAttemptBinding(t *testing.T) {
 			}))
 		}
 	}
-	notRun := mutate(t, envelopeJSON("TCP-01", "not_run", "local_policy_rejected", ""), func(v map[string]any) { delete(v, "network_context") })
-	if _, e := d.Decode(notRun); e != nil {
-		t.Fatal(e)
-	}
-	b.CapturedContext = true
-	reject(t, decoder(t, b), notRun)
 	reject(t, d, mutate(t, envelopeJSON("TCP-01", "incomplete", "network_changed", ""), func(v map[string]any) { delete(v, "network_context") }))
 	// Path metadata is supplied locally and cannot be changed by result JSON.
 	reject(t, d, bytes.Replace(good, []byte(`"network_path":"direct"`), []byte(`"network_path":"proxy","connection_code":"vpn"`), 1))
