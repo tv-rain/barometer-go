@@ -102,13 +102,15 @@ Not counted at this layer, as the public text requires: TLS handshake and record
 
 | Seam | Interim implementation | Owner |
 |---|---|---|
-| `Output` (pending results) | Test-only `internal/testkit/output` | Production store: DEV-563 |
+| `Output` (pending results) | Production `pending.Store` over `persistence.Records` since DEV-563; test-only `internal/testkit/output` for engine tests | Platform record backend: DEV-455 |
 | `ContextSource` | Test fakes | Network Context acquisition: DEV-578 |
 | `DialerSource` / `measurement.Dialer` | Test-only `internal/testkit/loopback`; metered by the attempt scope since DEV-562 | Path and proxy: DEV-578; per-protocol accounting: DEV-454 |
 | `Clock` | `SystemClock`; `testkit.WaitClock` in tests | Platform timer and suspension behavior: DEV-455 |
 | `Preconditions` (DEV-636) | `execution.Gates`; scripted fakes in tests | Network conditions: DEV-578 |
 
 Since DEV-636 the engine also evaluates the plan's optional `Preconditions` before every attempt: unsatisfied before the first attempt, `Run` fails closed with `ErrNotEligible` and no result; unsatisfied before a retry, the run ends with the first attempt's result unchanged and no second attempt. The `Output` port gains `Capacity`, which run reservation checks before a run starts.
+
+Since DEV-563 each initialized generation binds the engine to its own `pending.Store` ([Pending Results and Bundles](package-architecture.md#persistence-ports)), which also serves `Client.NextBundle` and `Client.AcknowledgeBundle`. The engine writes through a context without cancellation; the store bounds every call by the lifecycle deadline, so a stalled backend fails the write with an uncertain outcome instead of holding the run. `Capacity` counts results of the registered maximum size (65,536 bytes) that fit in new bundles within the remaining bundle and aggregate-byte limits, ignoring free room in the open bundle, so a bundle returned between the check and the write never reduces the room a reserved run counted on.
 
 ## Run Reservation
 
@@ -165,7 +167,7 @@ Where a plan names a registered test only as the vehicle for a schedule or execu
 
 ### Executed
 
-These 18 families are executed with synthetic evidence:
+These 19 families are executed with synthetic evidence, 18 by DEV-640 and `CC-LIMIT-RESULT-AND-BUNDLE-LIMITS` by DEV-563:
 
 | Family | Test |
 |---|---|
@@ -187,6 +189,7 @@ These 18 families are executed with synthetic evidence:
 | `CC-SCHEDULE-VALIDATION` | `TestCcScheduleValidation` (root) |
 | `CC-SCHEDULE-VALIDATION-ELIGIBILITY-RULES` | `TestCcScheduleValidationEligibilityRules` (root) |
 | `CC-LIMIT-SCHEDULE-AND-RETRY-LIMITS` | `TestCcLimitScheduleAndRetryLimits` (root) |
+| `CC-LIMIT-RESULT-AND-BUNDLE-LIMITS` | `TestCcLimitResultAndBundleLimits` (`internal/bundle`, production pending store over the test-only record store) |
 
 Two rows run below the facade. The embedded one-time exception (REQ-LIMIT-0013) is a trusted release-review input that `Client.AdmitTask` does not take, so through the facade an embedded task without `not_after` fails closed with `task_schema_invalid`; the cases assert that, and assert the exception itself through `validation.ScheduleAt`. Where a rejection class is not fixed by the case plan, the cases assert the class of the [admission design](admission.md): a value above a registered maximum is `task_limit_exceeded`, a value below a minimum or outside a relationship is `task_schema_invalid`, and a future `issued_at` is `task_source_unauthenticated`.
 
@@ -221,8 +224,7 @@ Every other runtime-scope family stays `planned` because a row of its case plan 
 | `CC-EXECUTION-CONSTRAINT-EVALUATION` | Its rows need operating-system and user vetoes. | DEV-455 |
 | `CC-EXECUTION-FIELDS-DEVICE-FIELDS` | Its rows need local device policy stricter than the task; local policy has no device constraints yet. | DEV-455 |
 | `CC-TRUST-LOCAL-POLICY-LIFECYCLE-RUNTIME` | It needs the host policy adapter and Network Context caches. | DEV-455, DEV-578 |
-| `CC-LIMIT-RESULT-AND-BUNDLE-LIMITS` | It needs pending storage and its maxima. | DEV-577 |
-| `CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS` | It needs context endpoints, linkage and pending-bundle retention. | DEV-577, DEV-578 |
+| `CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS` | It needs context endpoints and linkage; its pending-bundle retention rows are covered by the DEV-563 pending-store tests, whose retention start follows the interim rule of [GO-SPEC-ISSUE-012](specification-issues.md#go-spec-issue-012-start-of-unacknowledged-bundle-retention). | DEV-577, DEV-578 |
 | `CC-SCHEDULE-SCHEDULING-MODEL-REPEAT-INTERVAL-FIELDS` | Delayed due runs depend on the open [GO-SPEC-ISSUE-011](specification-issues.md#go-spec-issue-011-due-times-and-catch-up-for-interval-repetition). | DEV-453 |
 | `RV-CC-LIMIT-PURPOSE` | Human review of the per-test accounting mapping, which needs the registered runners. | DEV-454; review is non-gating |
 | `RV-CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS` | Human review of deployment retention documentation. | DEV-456; review is non-gating |

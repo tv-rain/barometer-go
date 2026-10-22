@@ -25,9 +25,9 @@ const (
 //
 // The current implementation provides the lifecycle shell (DEV-600):
 // initialization through reviewed internal adapters, bounded handle tables,
-// close and the lifecycle part of clearing, and task admission (DEV-592). Runs,
-// bundles, proxy changes and persistent-state deletion are added by later
-// tasks.
+// close and the lifecycle part of clearing, and task admission (DEV-592). Runs
+// (DEV-636, DEV-561) and pending bundles (DEV-563) followed; proxy changes and
+// persistent-state deletion are added by later tasks.
 type Client struct {
 	mu         sync.Mutex
 	state      state

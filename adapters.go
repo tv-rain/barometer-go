@@ -6,10 +6,12 @@ import (
 	"time"
 
 	"github.com/tv-rain/barometer-go/internal/admission"
+	"github.com/tv-rain/barometer-go/internal/bundle"
 	"github.com/tv-rain/barometer-go/internal/config"
 	"github.com/tv-rain/barometer-go/internal/execution"
 	"github.com/tv-rain/barometer-go/internal/model/task"
 	"github.com/tv-rain/barometer-go/internal/persistence"
+	"github.com/tv-rain/barometer-go/internal/persistence/pending"
 	"github.com/tv-rain/barometer-go/internal/platform"
 	"github.com/tv-rain/barometer-go/internal/registry"
 )
@@ -44,20 +46,27 @@ type adapters struct {
 	// run holds the inputs of run reservation and execution (DEV-636).
 	run runAdapters
 
+	// pending is the record port that holds pending results and bundles
+	// (DEV-563); each generation opens a pending.Store over it, which is the
+	// engine's output and the source of NextBundle. pendingLimits may lower
+	// the registered pending maxima; zero selects them.
+	pending       persistence.Records
+	pendingLimits pending.Limits
+
 	// deadline overrides defaultLifecycleDeadline when positive.
 	deadline time.Duration
 }
 
 // runAdapters are the trusted inputs of StartRun. The clock, jitter source,
-// pending-output port, run ledger and path seam are required; initialization
-// fails closed without them. Consent, device state and time zone are optional:
-// a task that needs a missing one never runs. Production implementations
-// belong to DEV-563 (output), DEV-577 (ledger), DEV-578 (paths) and DEV-455
-// (consent, device and time zone); tests bind synthetic ones.
+// run ledger and path seam are required; initialization fails closed without
+// them. The pending-output port is the generation's pending.Store. Consent,
+// device state and time zone are optional: a task that needs a missing one
+// never runs. Production implementations belong to DEV-577 (ledger), DEV-578
+// (paths) and DEV-455 (consent, device and time zone); tests bind synthetic
+// ones.
 type runAdapters struct {
 	clock    execution.Clock
 	jitter   execution.Jitter
-	output   execution.Output
 	ledger   persistence.RunLedger
 	paths    pathSource
 	consent  platform.Consent
@@ -68,7 +77,7 @@ type runAdapters struct {
 
 // complete reports whether every required run input is present.
 func (r runAdapters) complete() bool {
-	return !absent(r.clock) && !absent(r.jitter) && !absent(r.output) && !absent(r.ledger) && !absent(r.paths)
+	return !absent(r.clock) && !absent(r.jitter) && !absent(r.ledger) && !absent(r.paths)
 }
 
 func (a *adapters) lifecycleDeadline() time.Duration {
@@ -89,6 +98,7 @@ type runtime struct {
 	runSet     *runSet
 	run        runAdapters
 	engine     *execution.Engine
+	bundles    *pending.Store
 
 	// ctx bounds adapter calls made for this generation. invalidate cancels
 	// it, so a transition does not wait on a stalled trusted adapter.
@@ -116,7 +126,7 @@ func (r *runtime) invalidate() {
 // prepare builds a complete generation or nothing. It decodes only the closed
 // host configuration container and performs no network activity.
 func prepare(a *adapters, configJSON []byte) *runtime {
-	if a == nil || absent(a.clock) || a.registry == nil || a.deliveries == nil || absent(a.replay) || !a.run.complete() {
+	if a == nil || absent(a.clock) || a.registry == nil || a.deliveries == nil || absent(a.replay) || !a.run.complete() || absent(a.pending) {
 		return nil
 	}
 	decoder, err := config.NewDecoder(config.Contract, a.approvals)
@@ -135,17 +145,39 @@ func prepare(a *adapters, configJSON []byte) *runtime {
 	if err != nil {
 		return nil
 	}
-	return successor(a, init, a.policy)
+	rt := successor(a, init, a.policy)
+	if rt == nil {
+		return nil
+	}
+	// Initialization reads and purges pending storage before any use, so
+	// bundles that expired while no client was initialized are deleted now.
+	ctx, cancel := context.WithTimeout(rt.ctx, rt.deadline)
+	defer cancel()
+	if rt.bundles.Open(ctx) != nil {
+		rt.cancel()
+		return nil
+	}
+	return rt
 }
 
 // successor builds the generation that admits under policy, with fresh handle
-// tables and a fresh adapter context, or nothing. It does not activate it.
+// tables and a fresh adapter context, or nothing. It does not activate it and
+// performs no storage I/O: during policy replacement the current generation
+// still owns pending storage, so the successor's store loads it on first use.
 func successor(a *adapters, init *config.Initialization, policy task.LocalPolicy) *runtime {
 	admitter, err := admission.NewAdmitter(a.deliveries, a.clock, a.registry, policy, a.replay)
 	if err != nil {
 		return nil
 	}
-	engine, err := execution.NewEngine(a.registry, a.run.clock, a.run.jitter, a.run.output)
+	builder, err := bundle.New(bundle.Contract, init)
+	if err != nil {
+		return nil
+	}
+	store, err := pending.New(a.pending, builder, a.run.clock, a.pendingLimits, a.lifecycleDeadline())
+	if err != nil {
+		return nil
+	}
+	engine, err := execution.NewEngine(a.registry, a.run.clock, a.run.jitter, store)
 	if err != nil {
 		return nil
 	}
@@ -154,7 +186,7 @@ func successor(a *adapters, init *config.Initialization, policy task.LocalPolicy
 	ctx, cancel := context.WithCancel(context.Background())
 	return &runtime{init: init, admitter: admitter, tasks: newTaskTable(),
 		runs:   newHandleTable[runRecord](runHandlePrefix, runHandleCapacity),
-		runSet: newRunSet(), run: run, engine: engine,
+		runSet: newRunSet(), run: run, engine: engine, bundles: store,
 		ctx: ctx, cancel: cancel, deadline: a.lifecycleDeadline()}
 }
 

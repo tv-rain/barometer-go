@@ -1,10 +1,14 @@
 package barometer
 
 import (
+	"cmp"
 	"context"
+	"crypto/sha256"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -16,6 +20,7 @@ import (
 	model "github.com/tv-rain/barometer-go/internal/model/result"
 	"github.com/tv-rain/barometer-go/internal/model/task"
 	"github.com/tv-rain/barometer-go/internal/persistence"
+	"github.com/tv-rain/barometer-go/internal/persistence/pending"
 	"github.com/tv-rain/barometer-go/internal/platform"
 	"github.com/tv-rain/barometer-go/internal/registry"
 	"github.com/tv-rain/barometer-go/internal/result"
@@ -24,7 +29,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/testkit/capability"
 	"github.com/tv-rain/barometer-go/internal/testkit/ledger"
 	"github.com/tv-rain/barometer-go/internal/testkit/loopback"
-	"github.com/tv-rain/barometer-go/internal/testkit/output"
+	recordstore "github.com/tv-rain/barometer-go/internal/testkit/records"
 )
 
 // Synthetic run fixtures only. The TCP-01 identifier is used so result
@@ -37,7 +42,7 @@ var tcp01 = task.TestVersion{ID: "TCP-01", Version: "0.1.0"}
 // which result timing requires; advance moves both.
 type runFakes struct {
 	clock   *testkit.WaitClock
-	output  *output.Store
+	output  pendingStore // the pending record port
 	ledger  *ledger.Ledger
 	paths   *fakePaths
 	runner  *runRunner
@@ -53,10 +58,63 @@ func (j fixedJitter) Jitter(max time.Duration) time.Duration { return min(time.D
 func (h *harness) bindRunAdapters(t *testing.T) {
 	t.Helper()
 	base := time.Now()
-	h.run = runFakes{clock: testkit.NewWaitClock(base.Add(h.clock.Clock.Now().Sub(base))), output: output.New(), ledger: ledger.New(),
+	h.run = runFakes{clock: testkit.NewWaitClock(base.Add(h.clock.Clock.Now().Sub(base))), output: pendingStore{recordstore.New()}, ledger: ledger.New(),
 		paths: &fakePaths{t: t}, runner: newRunRunner(), consent: capability.NewConsent(platform.ConsentValid), device: capability.NewDevice(platform.DeviceState{})}
-	h.adapters.run = runAdapters{clock: h.run.clock, jitter: fixedJitter(0), output: h.run.output, ledger: h.run.ledger, paths: h.run.paths,
+	h.adapters.run = runAdapters{clock: h.run.clock, jitter: fixedJitter(0), ledger: h.run.ledger, paths: h.run.paths,
 		consent: h.run.consent, device: h.run.device, zone: capability.Zone{Loc: time.UTC}}
+	h.adapters.pending = h.run.output.Store
+}
+
+// pendingStore is the harness view of the synthetic pending record port. The
+// production pending.Store of each generation writes to it.
+type pendingStore struct{ *recordstore.Store }
+
+// Records returns the durable results of every stored bundle, oldest bundle
+// first, decoding the pending store's record format: an 18-byte header whose
+// bytes 2 to 9 hold the sequence number, then the bundle.
+func (p pendingStore) Records() [][]byte {
+	keys, err := p.List(context.Background(), persistence.PendingClass)
+	if err != nil {
+		panic("pending records unavailable")
+	}
+	type stored struct {
+		seq     uint64
+		results []json.RawMessage
+	}
+	var all []stored
+	for _, k := range keys {
+		raw, _ := p.Value(k)
+		var b struct {
+			Results []json.RawMessage `json:"results"`
+		}
+		if len(raw) < 18 || json.Unmarshal(raw[18:], &b) != nil {
+			panic("invalid pending record")
+		}
+		all = append(all, stored{binary.BigEndian.Uint64(raw[2:10]), b.Results})
+	}
+	slices.SortFunc(all, func(a, b stored) int { return cmp.Compare(a.seq, b.seq) })
+	var out [][]byte
+	for _, s := range all {
+		for _, r := range s.results {
+			out = append(out, []byte(r))
+		}
+	}
+	return out
+}
+
+// Calls counts writes to the port; the store writes once per result.
+func (p pendingStore) Calls() int { return p.Puts() }
+
+// seedPending stores a synthetic pending bundle with sequence number seq,
+// created at created, in the pending store's record format.
+func seedPending(h *harness, seq uint64, created time.Time, id string) {
+	b := binary.BigEndian.AppendUint64([]byte("barometer/pending-bundle/v1\x00"), seq)
+	k := persistence.RecordKey{Class: persistence.PendingClass, Name: sha256.Sum256(b)}
+	raw := []byte{1, byte(persistence.PendingClass)}
+	raw = binary.BigEndian.AppendUint64(raw, seq)
+	raw = binary.BigEndian.AppendUint64(raw, uint64(created.UnixNano()))
+	raw = append(raw, `{"schema_version":"0.1.0","bundle_id":"`+id+`","results":[{"seed":true}]}`...)
+	h.run.output.Corrupt(k, raw)
 }
 
 func (h *harness) advance(d time.Duration) {
@@ -286,7 +344,7 @@ type resultRecord struct {
 	} `json:"execution"`
 }
 
-func records(t *testing.T, s *output.Store) []resultRecord {
+func records(t *testing.T, s pendingStore) []resultRecord {
 	t.Helper()
 	var out []resultRecord
 	for _, b := range s.Records() {
@@ -690,29 +748,55 @@ func TestStartRunConcurrency(t *testing.T) {
 func TestStartRunPendingOutputBackpressure(t *testing.T) {
 	retry := `"retry":{"max_attempts":2,"retry_on":["internal_error"],"backoff":{"mode":"fixed","initial_delay_ms":30000,"max_delay_ms":30000}}`
 	h := runningHarness(t)
-	h.run.output.SetLimit(1)
+	// Room for exactly two results of the registered maximum size in one new
+	// bundle, so a stored result leaves room for one more.
+	h.adapters.pendingLimits = pending.Limits{Bytes: len(`{"schema_version":"0.1.0","bundle_id":"","results":[]}`) + 22 + 2*65536 + 1}
 	c := h.initialized(t)
+	rh, err := c.StartRun(h.admit(t, c, runTask("bp-0", "", "", false)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	waitTerminal(t, c, rh)
 	if _, err := c.StartRun(h.admit(t, c, runTask("bp-1", retry, "", false))); codeOf(err) != "run_not_due" {
 		t.Fatal("two possible results into one free slot:", codeOf(err))
 	}
-	h.run.output.SetLimit(2)
+	// Acknowledging the stored bundle frees its capacity.
+	b, err := c.NextBundle()
+	if err != nil || c.AcknowledgeBundle(bundleID(t, b)) != nil {
+		t.Fatal("acknowledgement failed")
+	}
 	h.run.runner.holdCalls()
-	rh, err := c.StartRun(h.admit(t, c, runTask("bp-2", "", "", false)))
-	if err != nil {
+	if rh, err = c.StartRun(h.admit(t, c, runTask("bp-2", "", "", false))); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := c.StartRun(h.admit(t, c, runTask("bp-3", retry, "", false))); codeOf(err) != "run_not_due" {
 		t.Fatal("capacity held by the active run was counted as free:", codeOf(err))
 	}
+	// The active run's write is uncertain, and storage is then unreadable,
+	// so capacity is unavailable.
+	h.run.output.Inject(recordstore.FailAfterPut, true)
 	h.run.runner.releaseCalls()
 	waitTerminal(t, c, rh)
-	h.run.output.FailCapacity()
+	h.run.output.Inject(recordstore.FailAfterPut, false)
+	h.run.output.Inject(recordstore.FailList, true)
 	if _, err := c.StartRun(h.admit(t, c, runTask("bp-4", "", "", false))); codeOf(err) != "run_not_due" {
 		t.Fatal("unavailable capacity:", codeOf(err))
 	}
-	if h.run.runner.Calls() != 1 {
+	if h.run.runner.Calls() != 2 {
 		t.Fatal("a refused start ran")
 	}
+}
+
+// bundleID extracts the identifier of a returned bundle.
+func bundleID(t *testing.T, b string) string {
+	t.Helper()
+	var v struct {
+		ID string `json:"bundle_id"`
+	}
+	if err := json.Unmarshal([]byte(b), &v); err != nil || v.ID == "" {
+		t.Fatal("no bundle returned")
+	}
+	return v.ID
 }
 
 // Run-ledger failures fail closed. An uncertain reservation loses the

@@ -16,6 +16,9 @@ const (
 	capacityExceeded
 	cleanupIncomplete
 	clearingIncomplete
+	// storageUnavailable is a pending-storage failure of NextBundle or
+	// AcknowledgeBundle (DEV-563). A failed deletion is not acknowledgement.
+	storageUnavailable
 	// policyRejected is returned only by the unexported policy-replacement
 	// seam: the replacement was refused and the previous policy is active.
 	policyRejected
@@ -43,6 +46,8 @@ func (c code) String() string {
 		return "cleanup_incomplete"
 	case clearingIncomplete:
 		return "clearing_incomplete"
+	case storageUnavailable:
+		return "storage_unavailable"
 	case policyRejected:
 		return "policy_rejected"
 	}
