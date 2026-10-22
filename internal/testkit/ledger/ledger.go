@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/tv-rain/barometer-go/internal/persistence"
 )
@@ -52,7 +53,7 @@ func (l *Ledger) Inject(f Fault, on bool) {
 	l.faults[f] = on
 }
 
-func (l *Ledger) Lookup(ctx context.Context, key persistence.ReplayKey) (persistence.RunRecord, bool, error) {
+func (l *Ledger) Lookup(ctx context.Context, key persistence.ReplayKey, _ time.Time) (persistence.RunRecord, bool, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	if l.faults[FailLookup] {
@@ -65,7 +66,7 @@ func (l *Ledger) Lookup(ctx context.Context, key persistence.ReplayKey) (persist
 	return r, ok, nil
 }
 
-func (l *Ledger) Put(ctx context.Context, key persistence.ReplayKey, rec persistence.RunRecord) error {
+func (l *Ledger) Put(ctx context.Context, key persistence.ReplayKey, rec persistence.RunRecord, _ time.Time) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.puts++

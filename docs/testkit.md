@@ -17,6 +17,16 @@ The test-only `internal/testkit/replay` subpackage owns a bounded, fault-injecta
 
 It purges overdue records using the trusted time it is given and exposes its stored bytes for leakage checks. It is not a persistence implementation or a mobile fallback, and production code must not import it.
 
+The test-only `internal/testkit/records` subpackage (DEV-641) is a fault-injectable implementation of the `persistence.Records` state record port, used to test the production replay store and run ledger ([Persistence Ports](package-architecture.md#persistence-ports)). It keeps values in memory as its model of durable state and can inject:
+- a failure of `Get` or `List`;
+- a `Put` that fails before writing, crashes during the write (staged, never durable) or becomes durable and reports failure (an uncertain write);
+- a `Delete` that fails before removing or removes and reports failure;
+- a stall that waits for the caller's context to end;
+- corrupt values;
+- a simulated restart that keeps durable values and discards staged writes and faults; stores built on it are then reopened.
+
+It enforces the port's value and class bounds, copies values in and out, and reports durable writes, call counts and stored bytes for leakage checks. It is not a persistence implementation or a mobile fallback, and production code must not import it.
+
 The test-only `internal/testkit/output` subpackage (DEV-635) is a bounded, fault-injectable store implementing the `execution.Output` port. It keeps serialized results in memory as its model of durable state, can fail one selected `Put` before writing or after a durable write (an uncertain commit), refuses writes on a cancelled context and reports call counts and copies of stored bytes. It is not a persistence implementation or a mobile fallback; the production store is DEV-563.
 
 The test-only `internal/testkit/ledger` subpackage (DEV-636) is a bounded, fault-injectable `persistence.RunLedger`. It can fail lookups, fail a write before anything is stored, or store durably and report failure (an uncertain commit), and reports stored records and write counts. A test keeps one ledger across clients to model accounting that survives reinitialization. The `internal/testkit/capability` subpackage (DEV-636) provides scripted consent, device-state and time-zone capabilities that count their queries and carry no identifier. `output.Store` gains a reported capacity limit and an injectable capacity failure. None is a production implementation or a mobile fallback.
