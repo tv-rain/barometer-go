@@ -58,6 +58,8 @@ DEV-641 rebaselines the cross-cutting manifest to Go `7594ab99a89a4d3af1181b1717
 
 DEV-563 rebaselines the cross-cutting manifest to Go `e867c983bd74c04c033b3da9825cdae714940340` at the unchanged public `5d01879cfd1d47396c780befa2567f7e90439948`, preserving the DEV-641 mapping as a [historical manifest](../traceability/historical/cross-cutting-5d01879-7594ab9.json). It adds the production pending-result store, `Client.NextBundle` and `Client.AcknowledgeBundle` ([Persistence Ports](package-architecture.md#persistence-ports)); `CC-LIMIT-RESULT-AND-BUNDLE-LIMITS` is executed, four `UT.*` cases are added for the pending store and bundle delivery, `Store.Put`, `Store.Capacity`, `Store.Open`, `Store.Next`, `Store.Acknowledge`, `MaxBundles` and `Retention` in `internal/persistence/pending/pending.go` and `Client.nextBundle` and `Client.acknowledgeBundle` in `bundles.go` become existing implementation locations of REQ-LIMIT-0021 to REQ-LIMIT-0024, and REQ-LIMIT-0024 becomes `partial` (239 `partial`, 352 `planned`). GO-SPEC-ISSUE-012 is linked as `open` from REQ-LIMIT-0023 and REQ-LIMIT-0024. All cases were executed at the new Go baseline and recorded in a [new evidence report](../traceability/evidence/go-unit-e867c98.md) committed at `433a47430b5a2720318d0db3e5c96ff6f7f01784`. The map holds 591 requirements (239 `partial`, 352 `planned`).
 
+DEV-564 rebaselines the cross-cutting manifest to Go `e3722195bdbeb9a25b9f9612eead36683be6e92b` at the unchanged public `5d01879cfd1d47396c780befa2567f7e90439948`, preserving the DEV-563 mapping as a [historical manifest](../traceability/historical/cross-cutting-5d01879-e867c98.json). It adds persistent measurement-data clearing behind a durable clearing marker ([Persistence Ports](package-architecture.md#persistence-ports)). `CC-LINKAGE-CLEAR-DATA-CONTRACT`, limited to its Go-owned rows, and `CC-TRUST-REPLAY-AFTER-CLEARING` are executed; the host, operating-system and native rows of the clear-data contract, with REQ-LINKAGE-0025 and REQ-LINKAGE-0026, move to the new planned `CC-LINKAGE-CLEAR-DATA-CONTRACT-HOST` case (DEV-455). Three `UT.*` cases are added for clearing, `persistence.Clear`, `State.Forget` and the root `storageClearer` become existing implementation locations of REQ-LINKAGE-0023, REQ-LINKAGE-0024 and REQ-TRUST-0025, and REQ-TRUST-0025 becomes `partial`. All cases were executed at the new Go baseline and recorded in a [new evidence report](../traceability/evidence/go-unit-e372219.md) committed at `0997996c4e358717ae059e63be22ed1e57179929`. The map holds 591 requirements (240 `partial`, 351 `planned`).
+
 The earlier DEV-471 mapping at public baseline `47d75925b3829fccfb6954b545c15f695375b76f` and Go baseline `a9136f34fad00ecc2171cbc29e835c5c50b340df` is preserved byte-for-byte as [historical manifest](../traceability/historical/cross-cutting-47d7592.json) with its unchanged [report](../traceability/reports/cross-cutting.json). It mapped 565 requirements to 185 families. It remains valid metadata only for those original baselines and is not a current claim.
 
 ## Boundaries and Maintenance
@@ -2786,23 +2788,37 @@ Review case `RV-CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE` (`docs/confo
 
 ### CC-LINKAGE-CLEAR-DATA-CONTRACT
 
-Public source: `library/result-linkage.md`, section **Clear-data Contract**. Intended target: `internal/persistence/clear.go`. Planned case location: `internal/persistence/cross_cutting_conformance_test.go`, `symbol:TestCcLinkageClearDataContract`.
+Public source: `library/result-linkage.md`, section **Clear-data Contract**. Intended target: `internal/persistence/clear.go`. Case location: `internal/persistence/cross_cutting_conformance_test.go`, `symbol:TestCcLinkageClearDataContract`.
 
-Case plan: Fault-inject each clearing step with active attempts and pending/acked bundles, caches, replay/linkage/sentinel/key state. Assert bounded cleanup, idempotence, explicit incomplete error, no upload/network/new secret, and host UI/OS reset wiring.
+Case plan: Go-owned rows only. Seed a storage scope with pending bundles, run accounting, replay records and a synthetic linkage key, and fault-inject each clearing step before and after it takes effect. Assert an explicit incomplete error for every failure, a durable clearing marker that persists across a simulated restart while any deletion step may have run, idempotent recovery clearing from every partial state that leaves every record class and the key deleted, and that clearing derives no replacement key and has no transport. Cancellation of active attempts with bounded cleanup is asserted by the root UT cases. Host user-interface and operating-system reset wiring, native keystores, reinstall sentinels and host-owned copies are planned in CC-LINKAGE-CLEAR-DATA-CONTRACT-HOST (DEV-455). Requirements: REQ-LINKAGE-0023, REQ-LINKAGE-0024.
 
-DEV-600 unit-test evidence: the `UT.root.*` cases in the [evidence report](../traceability/evidence/go-unit-73faaf5.md) cover only the lifecycle part of clearing in the root `Client` shell; this family case stays planned.
+DEV-600 unit-test evidence: the `UT.root.*` cases in the [evidence report](../traceability/evidence/go-unit-73faaf5.md) cover only the lifecycle part of clearing in the root `Client` shell. DEV-564 limits this family to its Go-owned rows, moves the host, operating-system and native rows and REQ-LINKAGE-0025 and REQ-LINKAGE-0026 to `CC-LINKAGE-CLEAR-DATA-CONTRACT-HOST`, and executes it against `persistence.Clear` ([evidence](../traceability/evidence/go-unit-e372219.md#CC-LINKAGE-CLEAR-DATA-CONTRACT)).
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. Passed at Go `e372219` over the test-only record store; partial evidence only, with no device-durability, native storage or support claim.
+
+<!-- requirement-ref: REQ-LINKAGE-0023 -->
+<!-- requirement-ref: REQ-LINKAGE-0024 -->
+
+- [REQ-LINKAGE-0023](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0023) → `CC-LINKAGE-CLEAR-DATA-CONTRACT`.
+- [REQ-LINKAGE-0024](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0024) → `CC-LINKAGE-CLEAR-DATA-CONTRACT`.
+
+### CC-LINKAGE-CLEAR-DATA-CONTRACT-HOST
+
+Public source: `library/result-linkage.md`, section **Clear-data Contract**. Intended target: native adapters and host integration (DEV-455). Planned case location: `docs/conformance/native-linkage.md`, `heading:CC-LINKAGE-CLEAR-DATA-CONTRACT-HOST`.
+
+Case plan: With linkage enabled on Android and Apple test builds using a synthetic scope, start an active attempt and hold pending and acknowledged bundles, then trigger every host action that promises to remove Barometer data (clear local data, reset privacy data, delete downloaded or offline data, and logout where the product describes it as removing local user data) and assert each calls clearMeasurementData; separately clear application data through the operating system without calling Barometer. After each, assert the protected key, linkage epoch state, reinstall sentinel, Network Context cache and Barometer-owned files are deleted or invalidated, no host-owned copy remains, no upload or network request occurred, and no replacement secret exists until linkage is next required. Interrupt deletion and assert explicit incomplete clearing and recovery. Requirements: REQ-LINKAGE-0023, REQ-LINKAGE-0024, REQ-LINKAGE-0025, REQ-LINKAGE-0026.
+
+Scope: Native adapter and device release validation; planned outside portable Go runtime. Split from `CC-LINKAGE-CLEAR-DATA-CONTRACT` by DEV-564. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-LINKAGE-0023 -->
 <!-- requirement-ref: REQ-LINKAGE-0024 -->
 <!-- requirement-ref: REQ-LINKAGE-0025 -->
 <!-- requirement-ref: REQ-LINKAGE-0026 -->
 
-- [REQ-LINKAGE-0023](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0023) → `CC-LINKAGE-CLEAR-DATA-CONTRACT`.
-- [REQ-LINKAGE-0024](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0024) → `CC-LINKAGE-CLEAR-DATA-CONTRACT`.
-- [REQ-LINKAGE-0025](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0025) → `CC-LINKAGE-CLEAR-DATA-CONTRACT`.
-- [REQ-LINKAGE-0026](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0026) → `CC-LINKAGE-CLEAR-DATA-CONTRACT`.
+- [REQ-LINKAGE-0023](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0023) → `CC-LINKAGE-CLEAR-DATA-CONTRACT-HOST`.
+- [REQ-LINKAGE-0024](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0024) → `CC-LINKAGE-CLEAR-DATA-CONTRACT-HOST`.
+- [REQ-LINKAGE-0025](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0025) → `CC-LINKAGE-CLEAR-DATA-CONTRACT-HOST`.
+- [REQ-LINKAGE-0026](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0026) → `CC-LINKAGE-CLEAR-DATA-CONTRACT-HOST`.
 
 ### CC-LINKAGE-ANDROID-STORAGE
 
@@ -3050,11 +3066,11 @@ Scope: Synthetic core contract cases. Passed at Go `9283870` and re-executed at 
 
 ### CC-TRUST-REPLAY-AFTER-CLEARING
 
-Public source: `library/task-trust.md`, section **Replay, Duplicate, and Rollback Handling**. Intended target: `internal/admission/state.go` with the clearing capability (DEV-564). Planned case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustReplayAfterClearing`.
+Public source: `library/task-trust.md`, section **Replay, Duplicate, and Rollback Handling**. Intended target: `internal/admission/state.go` with the clearing capability (DEV-564). Case location: `internal/admission/cross_cutting_conformance_test.go`, `symbol:TestCcTrustReplayAfterClearing`.
 
 Case plan: After clearMeasurementData deletes replay state with a deterministic clock and fake persistent storage, redeliver previously accepted exact task bytes: an unexpired task is evaluated as new, receives a fresh replay record with unchanged expiry derived from its not_after and creates no record for the cleared acceptance; an expired task is still rejected as task_expired; a failed or incomplete deletion is reported explicitly and leaves no task admitted without replay state. Requirements: REQ-TRUST-0024, REQ-TRUST-0025.
 
-Scope: Synthetic core contract cases, split from `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING` by DEV-591. No execution evidence or support claim.
+Scope: Synthetic core contract cases, split from `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING` by DEV-591. Passed at Go `e372219` against the production `persistence.State` over the test-only record store ([evidence](../traceability/evidence/go-unit-e372219.md#CC-TRUST-REPLAY-AFTER-CLEARING)); partial evidence only, with no device-durability or support claim.
 
 <!-- requirement-ref: REQ-TRUST-0024 -->
 <!-- requirement-ref: REQ-TRUST-0025 -->

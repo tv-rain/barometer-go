@@ -21,7 +21,9 @@ const (
 var ErrRecordsUnavailable = errors.New("persistence: record storage unavailable")
 
 // RecordClass is the closed set of Barometer-owned state classes stored over
-// the record port. Clearing deletes every class.
+// the record port. Clear deletes every class, so a class added here is
+// cleared without further registration. Stored values carry the class byte:
+// add a class directly before endClass and never renumber one.
 type RecordClass uint8
 
 const (
@@ -31,10 +33,14 @@ const (
 	RunClass
 	// PendingClass holds pending Result Bundles, one per record.
 	PendingClass
+	// ClearingClass holds the single clearing-in-progress marker (DEV-564).
+	ClearingClass
+
+	endClass // not a class; keep last
 )
 
 // Valid reports whether c is a known class.
-func (c RecordClass) Valid() bool { return c >= ReplayClass && c <= PendingClass }
+func (c RecordClass) Valid() bool { return c >= ReplayClass && c < endClass }
 
 // RecordKey names one record. Name is a fixed-size digest chosen by the Go
 // store, so no issuer, task or other value appears in a platform key.

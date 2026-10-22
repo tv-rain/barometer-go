@@ -140,3 +140,22 @@ func (b *stateBackend) Dump() []byte { return b.records.Dump() }
 func (h *harness) newReplay(t testing.TB, capacity int) replayBackend {
 	return newReplayBackend(t, h.kind, capacity, func() time.Time { return h.clock.Clock.Now() })
 }
+
+// clear runs persistence.Clear over the record port and, on success, has
+// the State forget its index, as the root Client's clearing capability does.
+func (b *stateBackend) clear(ctx context.Context) error {
+	if err := persistence.Clear(ctx, b.records); err != nil {
+		return err
+	}
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.state != nil {
+		b.state.Forget()
+	}
+	return nil
+}
+
+func (b *stateBackend) marked() bool {
+	m, err := persistence.Clearing(context.Background(), b.records)
+	return m && err == nil
+}

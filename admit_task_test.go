@@ -323,8 +323,9 @@ func TestAdmitTaskLifecycleStates(t *testing.T) {
 	if err := c.Initialize(`{}`); err != nil {
 		t.Fatal(err)
 	}
+	h.failClearing()
 	if codeOf(c.ClearMeasurementData()) != "clearing_incomplete" {
-		t.Fatal("clearing without the capability must be incomplete")
+		t.Fatal("clearing with a failing deletion must be incomplete")
 	}
 	if _, err := c.AdmitTask(valid, ref); codeOf(err) != "clearing_incomplete" {
 		t.Fatal("admission must stay blocked after incomplete clearing, got", codeOf(err))
