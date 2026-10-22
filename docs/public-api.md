@@ -314,3 +314,19 @@ No adapter is wired in production, so no binding or device test exercised a run.
 | `git diff --check` | Passed. |
 
 No adapter is wired in production, so no binding or device test exercised a run or a cancellation. HTTP response bodies are not exercised: no HTTP runner exists (DEV-454). Platform suspension and native lifecycle cleanup (DEV-455), proxy-change cancellation (DEV-578), byte and connection budgets (DEV-562) and persistent clearing (DEV-564) remain pending.
+
+## DEV-564 Validation Record
+
+**Validation date:** October 22, 2026
+**Scope:** persistent clearing, the clearing marker and `Initialize` blocking on the DEV-564 task branch at Go commit `e3722195`; synthetic tests on the host platform over the test-only record store and a synthetic linkage key store, not runtime, device or deletion conformance.
+
+| Check | Result and scope |
+|---|---|
+| `make check` | Passed with Go 1.26.0 on macOS ARM64, including race tests and pure-Go Android/iOS ARM64 compilation. |
+| Clearing tests (`clear_test.go`, `internal/persistence/clear_test.go`, `internal/persistence/cross_cutting_conformance_test.go`, `TestCcTrustReplayAfterClearing`, `TestForgetAfterClear`) | Passed, and passed 20 repeated runs under the race detector. They cover deletion of every record class and the linkage key with no key derivation; the call order of `persistence.Clear`; a failure at each of its 13 record-port steps, before and after the step takes effect, through `persistence.Clear` and through `ClearMeasurementData`, with every entry point then returning `clearing_incomplete`, a restarted client blocked exactly while the marker is stored and recovery clearing completing; a failed key deletion; an unreadable marker; repeated clearing before initialization and after close; clearing racing admission, `StartRun`, `NextBundle` and `AcknowledgeBundle`; the classification of every adapter field; and redelivery after clearing evaluated as new within expiry. |
+| `TestClearingHasNoNetworkDependency` | Passed: the dependency closures of `internal/persistence` and `internal/persistence/pending` contain no network, TLS, process-execution or plugin package. An import-level check, not observed traffic. |
+| `TestPublicSurfaceMatchesDocumentedSignatures` | Passed; no exported signature changed, so the binding checks were not re-run. |
+| `make traceability` | Before the rebaseline, the manifests and case plans were valid and the requirement-reference check reported five new `requirement-ref` comments as not yet linked. Passed after rebaselining the cross-cutting manifest to Go `e372219`, where `CC-LINKAGE-CLEAR-DATA-CONTRACT` (Go-owned rows) and `CC-TRUST-REPLAY-AFTER-CLEARING` pass and REQ-TRUST-0025 becomes `partial`. |
+| `git diff --check` | Passed. |
+
+No adapter is wired in production, so no binding or device test exercised clearing. Native reset wiring, operating-system data clearing, keystore deletion, reinstall sentinels and host-owned copies (DEV-455), the Network Context cache (DEV-578) and linkage epochs and in-memory linkage material (DEV-454) remain pending.
