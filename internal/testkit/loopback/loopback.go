@@ -7,6 +7,7 @@
 package loopback
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"io"
@@ -25,29 +26,46 @@ var Payload = []byte("barometer-loopback")
 // Server accepts loopback connections and echoes at most len(Payload) bytes on
 // each. A holding server reads the payload and then keeps the connection open
 // without echoing until the client closes it, so a runner blocks in its read
-// and only the client side can release the socket.
+// and only the client side can release the socket. An exchange server answers
+// every request of a fixed size with a reply of a fixed size until the client
+// closes. Every server counts the bytes it reads from and writes to its
+// sockets, so a test compares a client-side meter with the bytes that crossed
+// the socket rather than with the client's own account.
 type Server struct {
-	ln      net.Listener
-	hold    bool
-	wg      sync.WaitGroup
-	mu      sync.Mutex
-	conn    int
-	open    int
-	changed chan struct{} // closed and replaced whenever open changes
+	ln             net.Listener
+	hold           bool
+	request, reply int
+	wg             sync.WaitGroup
+	mu             sync.Mutex
+	conn           int
+	open           int
+	in, out        int
+	changed        chan struct{} // closed and replaced whenever open changes
 }
 
+// MaxExchangeBytes bounds an exchange server's request and reply sizes.
+const MaxExchangeBytes = 1 << 20
+
 // Listen starts a server on an ephemeral 127.0.0.1 port.
-func Listen() (*Server, error) { return listen(false) }
+func Listen() (*Server, error) { return listen(false, 0, 0) }
 
 // ListenHold starts a holding server on an ephemeral 127.0.0.1 port.
-func ListenHold() (*Server, error) { return listen(true) }
+func ListenHold() (*Server, error) { return listen(true, 0, 0) }
 
-func listen(hold bool) (*Server, error) {
+// ListenExchange starts an exchange server on an ephemeral 127.0.0.1 port.
+func ListenExchange(request, reply int) (*Server, error) {
+	if request < 1 || request > MaxExchangeBytes || reply < 0 || reply > MaxExchangeBytes {
+		return nil, errors.New("loopback: invalid exchange sizes")
+	}
+	return listen(false, request, reply)
+}
+
+func listen(hold bool, request, reply int) (*Server, error) {
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		return nil, err
 	}
-	s := &Server{ln: ln, hold: hold, changed: make(chan struct{})}
+	s := &Server{ln: ln, hold: hold, request: request, reply: reply, changed: make(chan struct{})}
 	s.wg.Add(1)
 	go s.serve()
 	return s, nil
@@ -65,10 +83,15 @@ func (s *Server) serve() {
 		s.mu.Unlock()
 		s.track(1)
 		s.wg.Add(1)
-		go func() {
+		go func(raw net.Conn) {
 			defer s.wg.Done()
 			defer s.track(-1)
-			defer c.Close()
+			defer raw.Close()
+			c := counted{raw, s}
+			if s.request > 0 {
+				s.exchange(c)
+				return
+			}
 			buf := make([]byte, len(Payload))
 			n, _ := io.ReadFull(c, buf)
 			if s.hold {
@@ -77,8 +100,51 @@ func (s *Server) serve() {
 				return
 			}
 			_, _ = c.Write(buf[:n])
-		}()
+		}(c)
 	}
+}
+
+// exchange answers each complete request with one reply until the client
+// closes or a request is cut short.
+func (s *Server) exchange(c io.ReadWriter) {
+	req, rep := make([]byte, s.request), make([]byte, s.reply)
+	for {
+		if _, err := io.ReadFull(c, req); err != nil {
+			return
+		}
+		if _, err := c.Write(rep); err != nil {
+			return
+		}
+	}
+}
+
+// counted records every byte the server reads or writes on a socket.
+type counted struct {
+	net.Conn
+	s *Server
+}
+
+func (c counted) Read(p []byte) (int, error) {
+	n, err := c.Conn.Read(p)
+	c.s.mu.Lock()
+	c.s.in += n
+	c.s.mu.Unlock()
+	return n, err
+}
+
+func (c counted) Write(p []byte) (int, error) {
+	n, err := c.Conn.Write(p)
+	c.s.mu.Lock()
+	c.s.out += n
+	c.s.mu.Unlock()
+	return n, err
+}
+
+// Bytes reports how many bytes the server read from and wrote to its sockets.
+func (s *Server) Bytes() (in, out int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.in, s.out
 }
 
 func (s *Server) track(delta int) {
@@ -237,4 +303,80 @@ func tcpConnect(elapsed time.Duration, failure string) (observation.Observation,
 		status, f = "failed", `,"failure":"`+failure+`"`
 	}
 	return observation.DecodeProtocol(observation.Contract, []byte(`{"type":"tcp_connect","status":"`+status+`","duration_ms":`+strconv.Itoa(ms)+f+`,"details":{"address_family":"ipv4"}}`), observation.ProtocolLimits{})
+}
+
+// ExchangeParameters configure Exchange. Connections are opened one after
+// another, and each carries Exchanges request/reply exchanges, so more than one
+// exchange reuses the connection. Each request is one Write of Request bytes;
+// each reply is read with io.ReadFull for Reply bytes, through a bufio.Reader
+// of ReadAhead bytes when ReadAhead is positive.
+type ExchangeParameters struct {
+	Address                                           string
+	Connections, Exchanges, Request, Reply, ReadAhead int
+}
+
+func (ExchangeParameters) TaskParameters() {}
+
+// Exchange is a test-only runner for an exchange server. A failed connect is a
+// terminal socket_error observation; any later failure, including a refused
+// metered operation, is an execution failure. Its Usage is its own account of
+// the bytes it consumed, which a meter must not rely on. Its observation
+// reports a zero duration so that it fits within the attempt timing of a
+// manual engine clock.
+type Exchange struct{}
+
+func (Exchange) Run(ctx context.Context, in measurement.Input) (measurement.Output, error) {
+	p, ok := in.Parameters.(ExchangeParameters)
+	if !ok || in.Dialer == nil || p.Connections < 1 || p.Exchanges < 1 || p.Request < 1 || p.Reply < 0 ||
+		p.Request > MaxExchangeBytes || p.Reply > MaxExchangeBytes || p.ReadAhead < 0 {
+		return measurement.Output{}, measurement.ErrRunner
+	}
+	var usage measurement.Usage
+	for range p.Connections {
+		conn, err := in.Dialer.DialContext(ctx, "tcp", p.Address)
+		usage.Connections++
+		if err != nil {
+			if ctx.Err() != nil {
+				return measurement.Output{Usage: usage}, measurement.ErrRunner
+			}
+			o, err := tcpConnect(0, "socket_error")
+			if err != nil {
+				return measurement.Output{Usage: usage}, measurement.ErrRunner
+			}
+			return measurement.Output{Outcome: "socket_error", Observations: []observation.Observation{o}, Usage: usage}, nil
+		}
+		if err := exchange(ctx, conn, p, &usage); err != nil {
+			return measurement.Output{Usage: usage}, measurement.ErrRunner
+		}
+	}
+	o, err := tcpConnect(0, "")
+	if err != nil {
+		return measurement.Output{Usage: usage}, measurement.ErrRunner
+	}
+	return measurement.Output{Outcome: "connected", Observations: []observation.Observation{o}, Usage: usage}, nil
+}
+
+func exchange(ctx context.Context, conn measurement.Conn, p ExchangeParameters, usage *measurement.Usage) error {
+	defer conn.Close()
+	if deadline, ok := ctx.Deadline(); ok {
+		_ = conn.SetDeadline(deadline)
+	}
+	var r io.Reader = conn
+	if p.ReadAhead > 0 {
+		r = bufio.NewReaderSize(conn, p.ReadAhead)
+	}
+	req, rep := make([]byte, p.Request), make([]byte, p.Reply)
+	for range p.Exchanges {
+		n, err := conn.Write(req)
+		usage.BytesSent += n
+		if err != nil {
+			return err
+		}
+		m, err := io.ReadFull(r, rep)
+		usage.BytesReceived += m
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

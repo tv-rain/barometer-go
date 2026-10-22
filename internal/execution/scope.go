@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/tv-rain/barometer-go/internal/measurement"
+	"github.com/tv-rain/barometer-go/internal/model/task"
 )
 
 // CleanupBound is the registered time within which cleanup after
@@ -20,26 +21,51 @@ const CleanupBound = 2 * time.Second
 // (REQ-LIMIT-0006). A plan with a longer attempt deadline is invalid.
 const MaxAttemptDuration = 60 * time.Second
 
-var errScopeClosed = errors.New("execution: attempt scope closed")
+// Registered maxima of max_bytes_sent, max_bytes_received and max_connections
+// (REQ-LIMIT-0006). A plan with a larger effective limit is invalid.
+const (
+	MaxBytesSent     = 65536
+	MaxBytesReceived = 262144
+	MaxConnections   = 12
+)
+
+var (
+	errScopeClosed = errors.New("execution: attempt scope closed")
+	// errBudget is the error a refused metered operation returns and the
+	// cancellation cause of an attempt whose budget it exhausted.
+	errBudget = errors.New("execution: attempt budget exhausted")
+)
 
 // scope is the attempt-scoped dialer the engine hands to a runner in place of
 // the path's dialer. It records the test start (REQ-RESULT-0051) and owns every
 // connection opened through it: when the attempt context ends it closes them,
 // which interrupts blocked reads and writes, and refuses later dials. close
 // releases whatever the runner left open when it returns.
+//
+// The scope is also the attempt's meter. It counts where the attempt exchanges
+// bytes with the path's stream (REQ-LIMIT-0034), so a runner's own read caps
+// and usage reports never decide what is counted. Every dial counts toward
+// max_connections before it is issued, whether or not it connects. A write
+// larger than the remaining sent budget is not issued, and a read requests no
+// more than the remaining received budget. An operation the remaining budget
+// cannot cover calls exhaust, which ends the attempt with errBudget as its
+// cause and so releases every connection.
 type scope struct {
 	ctx     context.Context
 	inner   measurement.Dialer
+	limits  task.AttemptLimits
+	exhaust func()
 	started atomic.Bool
 	stop    func() bool
 
 	mu     sync.Mutex
 	closed bool
 	conns  map[*scopedConn]struct{}
+	usage  measurement.Usage // includes bytes reserved by operations in flight
 }
 
-func newScope(ctx context.Context, d measurement.Dialer) *scope {
-	s := &scope{ctx: ctx, inner: d, conns: make(map[*scopedConn]struct{})}
+func newScope(ctx context.Context, d measurement.Dialer, limits task.AttemptLimits, exhaust func()) *scope {
+	s := &scope{ctx: ctx, inner: d, limits: limits, exhaust: exhaust, conns: make(map[*scopedConn]struct{})}
 	s.stop = context.AfterFunc(ctx, s.release)
 	return s
 }
@@ -49,13 +75,30 @@ func (s *scope) Start() { s.started.Store(true) }
 
 func (s *scope) Started() bool { return s.started.Load() }
 
-// DialContext starts the test and dials through the path's dialer. The dial
-// ends with the attempt even when the runner passes another context.
+// Usage reports the metered bytes and connections; after close it is final.
+func (s *scope) Usage() measurement.Usage {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.usage
+}
+
+// DialContext starts the test, counts the connection and dials through the
+// path's dialer. The dial ends with the attempt even when the runner passes
+// another context.
+// requirement-ref: REQ-LIMIT-0006
 func (s *scope) DialContext(ctx context.Context, network, address string) (measurement.Conn, error) {
 	if s.isClosed() || s.ctx.Err() != nil {
 		return nil, errScopeClosed
 	}
 	s.Start()
+	s.mu.Lock()
+	if s.usage.Connections >= s.limits.Connections {
+		s.mu.Unlock()
+		s.exhaust()
+		return nil, errBudget
+	}
+	s.usage.Connections++
+	s.mu.Unlock()
 	dctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	unlink := context.AfterFunc(s.ctx, cancel)
@@ -74,6 +117,58 @@ func (s *scope) DialContext(ctx context.Context, network, address string) (measu
 	s.conns[c] = struct{}{}
 	s.mu.Unlock()
 	return c, nil
+}
+
+// reserve takes budget for an operation of n bytes before it is issued: all n
+// bytes for a write, up to n for a read. It returns the reserved count, or
+// false after ending the attempt when the budget cannot cover a non-empty
+// operation, or when the attempt has already ended.
+// requirement-ref: REQ-LIMIT-0034
+// requirement-ref: REQ-LIMIT-0027
+func (s *scope) reserve(n int, sent bool) (int, bool) {
+	s.mu.Lock()
+	if s.closed || s.ctx.Err() != nil {
+		s.mu.Unlock()
+		return 0, false
+	}
+	used, limit := &s.usage.BytesReceived, s.limits.BytesReceived
+	if sent {
+		used, limit = &s.usage.BytesSent, s.limits.BytesSent
+	}
+	k := min(n, limit-*used)
+	if n > 0 && (k <= 0 || sent && k < n) {
+		s.mu.Unlock()
+		s.exhaust()
+		return 0, false
+	}
+	*used += k
+	s.mu.Unlock()
+	return k, true
+}
+
+// settle returns the unused part of a reservation once the operation reports
+// the bytes it transferred.
+func (s *scope) settle(reserved, n int, sent bool) {
+	n = max(n, 0)
+	if n >= reserved {
+		return
+	}
+	s.mu.Lock()
+	if sent {
+		s.usage.BytesSent -= reserved - n
+	} else {
+		s.usage.BytesReceived -= reserved - n
+	}
+	s.mu.Unlock()
+}
+
+// err is the error a refused operation reports: errBudget once the budget
+// ended the attempt, otherwise errScopeClosed.
+func (s *scope) err() error {
+	if errors.Is(context.Cause(s.ctx), errBudget) {
+		return errBudget
+	}
+	return errScopeClosed
 }
 
 func (s *scope) isClosed() bool {
@@ -103,12 +198,37 @@ func (s *scope) close() {
 	s.release()
 }
 
-// scopedConn removes itself from its scope when closed. Close is idempotent.
+// scopedConn meters its reads and writes through its scope and removes itself
+// from the scope when closed. Close is idempotent.
 type scopedConn struct {
 	measurement.Conn
 	scope *scope
 	once  sync.Once
 	err   error
+}
+
+// Write issues p only when the remaining sent budget covers all of it. A
+// partial write counts only the bytes the stream accepted.
+func (c *scopedConn) Write(p []byte) (int, error) {
+	k, ok := c.scope.reserve(len(p), true)
+	if !ok {
+		return 0, c.scope.err()
+	}
+	n, err := c.Conn.Write(p)
+	c.scope.settle(k, n, true)
+	return n, err
+}
+
+// Read requests no more than the remaining received budget, so bytes a caller
+// reads ahead into a buffer count when they are read.
+func (c *scopedConn) Read(p []byte) (int, error) {
+	k, ok := c.scope.reserve(len(p), false)
+	if !ok {
+		return 0, c.scope.err()
+	}
+	n, err := c.Conn.Read(p[:k])
+	c.scope.settle(k, n, false)
+	return n, err
 }
 
 func (c *scopedConn) Close() error {

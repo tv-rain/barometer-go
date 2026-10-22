@@ -131,13 +131,16 @@ func NewEngine(r *registry.Registry, c Clock, j Jitter, o Output) (*Engine, erro
 // prepared after admission; none is task-controlled authority. Conditions is
 // the host-directed eligibility snapshot; the engine sets its Now. Result must
 // be bound to the same task ID, test and implementation. Deadline is the
-// effective max_duration_ms of each attempt.
+// effective max_duration_ms of each attempt. Limits are the effective attempt
+// limits after admission; the engine meters their byte and connection fields
+// and ignores DurationMS, which Deadline carries.
 type Plan struct {
 	TaskID         string
 	Test           task.TestVersion
 	Parameters     task.Parameters
 	Schedule       task.Schedule
 	Deadline       time.Duration
+	Limits         task.AttemptLimits
 	Conditions     validation.StartContext
 	Implementation model.Implementation
 	Result         *result.Decoder
@@ -147,7 +150,8 @@ type Plan struct {
 }
 
 // AttemptReport is the execution record of one terminal attempt. Usage is the
-// runner's report for budget owners; it is not a result field.
+// attempt scope's metered count, not the runner's report; it is not a result
+// field.
 type AttemptReport struct {
 	Number  int
 	Attempt Attempt
@@ -185,7 +189,7 @@ func (e *Engine) Run(ctx context.Context, p Plan) (Report, error) {
 	}
 	if p.TaskID == "" || p.Parameters == nil || p.Result == nil || p.Context == nil || p.Dialers == nil ||
 		p.Schedule.Retry.MaxAttempts < 1 || p.Schedule.Retry.MaxAttempts > MaxAttempts ||
-		p.Deadline <= 0 || p.Deadline > MaxAttemptDuration {
+		p.Deadline <= 0 || p.Deadline > MaxAttemptDuration || !metered(p.Limits) {
 		return Report{}, ErrPlan
 	}
 	runner, ok := e.registry.Runner(p.Test)
@@ -232,8 +236,11 @@ func (e *Engine) Run(ctx context.Context, p Plan) (Report, error) {
 // first cancellation is the cause, so a deadline that expired before a host
 // cancellation stays attempt_deadline_exceeded, and the reverse.
 func stopReason(ctx context.Context) task.ExecutionReason {
-	if errors.Is(context.Cause(ctx), errDeadline) {
+	switch cause := context.Cause(ctx); {
+	case errors.Is(cause, errDeadline):
 		return task.AttemptDeadlineExceeded
+	case errors.Is(cause, errBudget):
+		return task.ResourceLimit
 	}
 	return task.CancelledByHost
 }
@@ -308,9 +315,10 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 		a, v, err := e.stopped(p, pending, task.InternalError, nil, runID, n, started)
 		return a, measurement.Usage{}, v, err
 	}
-	s := newScope(actx, dialer)
+	s := newScope(actx, dialer, p.Limits, func() { cancel(errBudget) })
 	out, err := runner.Run(actx, measurement.Input{Parameters: p.Parameters, Dialer: s, Start: s.Start})
 	s.close()
+	usage := s.Usage()
 	running, _ := pending.Start()
 	if err != nil {
 		reason := task.InternalError
@@ -322,7 +330,13 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 			at = running
 		}
 		a, v, err := e.stopped(p, at, reason, &nc, runID, n, started)
-		return a, out.Usage, v, err
+		return a, usage, v, err
+	}
+	// An exhausted budget stopped the active operation before the runner
+	// produced this outcome, so the attempt is incomplete (REQ-LIMIT-0027).
+	if errors.Is(context.Cause(actx), errBudget) {
+		a, v, err := e.stopped(p, running, task.ResourceLimit, &nc, runID, n, started)
+		return a, usage, v, err
 	}
 	completed, _ := running.Complete()
 	r, err := e.envelope(p, completed, runID, n, started)
@@ -332,11 +346,21 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 	r.NetworkContext = &nc
 	r.Measurement = &model.Measurement{Outcome: out.Outcome, Observations: out.Observations}
 	if v, err := p.Result.Build(r); err == nil {
-		return completed, out.Usage, v, nil
+		return completed, usage, v, nil
 	}
 	// Output the test contract rejects is not retained as a measurement.
 	a, v, err := e.stopped(p, running, task.InternalError, &nc, runID, n, started)
-	return a, out.Usage, v, err
+	return a, usage, v, err
+}
+
+// metered reports whether the byte and connection limits are within their
+// registered ranges. The engine rejects a plan beyond them rather than clamp
+// it. Zero is valid and permits no traffic (REQ-LIMIT-0007).
+// requirement-ref: REQ-LIMIT-0006
+func metered(l task.AttemptLimits) bool {
+	return l.BytesSent >= 0 && l.BytesSent <= MaxBytesSent &&
+		l.BytesReceived >= 0 && l.BytesReceived <= MaxBytesReceived &&
+		l.Connections >= 0 && l.Connections <= MaxConnections
 }
 
 // stopped records an outer condition. Network Context is retained only for an
