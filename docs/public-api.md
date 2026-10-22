@@ -285,7 +285,7 @@ No adapter is wired in production, so no binding, native or device test exercise
 | `TestPublicSurfaceMatchesDocumentedSignatures` | Passed with `StartRun` and `RunState` added to the implemented list. |
 | `python3 scripts/check-public-api.py android` and `apple` | Passed: the documented signature fixture binds for Android ARM64 (JDK 17.0.18, NDK 29.0.14206865) and iOS ARM64. |
 | `make mobile-smoke-android` and `make mobile-smoke-apple` | Passed: the production root package, including `Client.StartRun` and `Client.RunState`, binds with gomobile for both targets. |
-| `make traceability` | Manifests and case plans valid; the requirement-reference check reports the nine new `requirement-ref` comments as not yet linked, pending the cross-cutting rebaseline that maps them at the committed Go revision. |
+| `make traceability` | Before the rebaseline, the manifests and case plans were valid and the requirement-reference check reported the new `requirement-ref` comments as not yet linked. Passed after rebaselining the cross-cutting manifest to Go `daeb718`, where 13 `UT.*` cases make REQ-SCHEDULE-0007, REQ-SCHEDULE-0009, REQ-SCHEDULE-0020, REQ-SCHEDULE-0021, REQ-SCHEDULE-0030, REQ-SCHEDULE-0034, REQ-EXECUTION-0027, REQ-EXECUTION-0028 and REQ-SAFETY-0020 `partial` and GO-SPEC-ISSUE-011 is linked as open. |
 | `git diff --check` | Passed. |
 
 No adapter is wired in production, so no binding or device test exercised a run. The production pending store (DEV-563), run ledger, its retention and clearing (DEV-577, DEV-564), path selection and network conditions (DEV-578), native consent, device and time-zone capabilities (DEV-455), cancellation semantics and deadlines (DEV-561) and budgets (DEV-562) remain pending.
