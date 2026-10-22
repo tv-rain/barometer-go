@@ -237,7 +237,7 @@ The public record merged through barometer-spec [PR #10](https://github.com/tv-r
 
 ## GO-SPEC-ISSUE-004: Boundary Between `not_run` and `incomplete`
 
-**Current state:** Open; public disposition accepted October 22, 2026 under [DEV-579](https://app.clickup.com/t/124kk1zcaae) in the public record [Boundary Between `not_run` and `incomplete`](https://github.com/tv-rain/barometer-spec/blob/main/specification-issues/not-run-incomplete-boundary.md); public merge, internal alignment and Go adoption under [DEV-561](https://app.clickup.com/t/124kk1zc4a9) pending. See the [disposition addendum](#disposition-addendum--october-22-2026). The sections before it keep their original wording as historical evidence. Originally raised October 16, 2026 under [DEV-573](https://app.clickup.com/t/124kk1zc613) from the [DEV-572](https://app.clickup.com/t/124kk1zc5xp) case-plan triage.
+**Current state:** Open; public disposition accepted October 22, 2026 under [DEV-579](https://app.clickup.com/t/124kk1zcaae) in the public record [Boundary Between `not_run` and `incomplete`](https://github.com/tv-rain/barometer-spec/blob/main/specification-issues/not-run-incomplete-boundary.md); wording merged at public [`84f52f8`](https://github.com/tv-rain/barometer-spec/tree/84f52f8872a5af9e6d97894611e3b2eaba18aba8) and internal alignment merged; Go adoption under [DEV-561](https://app.clickup.com/t/124kk1zc4a9) pending. See the [disposition addendum](#disposition-addendum--october-22-2026) and the [merge addendum](#merge-addendum--october-22-2026). The sections before it keep their original wording as historical evidence. Originally raised October 16, 2026 under [DEV-573](https://app.clickup.com/t/124kk1zc613) from the [DEV-572](https://app.clickup.com/t/124kk1zc5xp) case-plan triage.
 
 ### Identity, Baselines and Requirements
 
@@ -282,6 +282,15 @@ The public maintainer accepted the resolution recommended in the public record o
 - **Go effect:** no Go behavior changes in this task. `internal/result` currently enforces the retired REQ-RESULT-0024: it rejects a `not_run` result without `network_context` when the binding records a captured context. Adoption must make the decoder reject `network_context` in every `not_run` result, select states under REQ-RESULT-0051 and REQ-RESULT-0052 in runner and execution code (DEV-561), fill the expected values in the `M-*-TERMINATION` case plans, and rebaseline the traceability mapping so that current `requirement-ref` comments cite REQ-RESULT-0053 and REQ-EXECUTION-0031 instead of the retired IDs. Until that rebaseline, existing references remain valid for the pinned public baseline.
 - **Internal alignment:** recorded in the internal NET-05 review, whose `inconclusive` wording is aligned with REQ-NET-05-0061.
 - **Remaining before closure:** the merged public revision, the internal alignment merge, and Go adoption evidence. Binding and host adoption follow. No runtime, platform or field support is claimed.
+
+### Merge Addendum — October 22, 2026
+
+The sections above keep their wording as historical evidence, including their then-pending statements and links to public `main`.
+
+- **Merged public revision:** [public PR #22](https://github.com/tv-rain/barometer-spec/pull/22) merged the accepted wording and catalog changes at [`84f52f8872a5af9e6d97894611e3b2eaba18aba8`](https://github.com/tv-rain/barometer-spec/tree/84f52f8872a5af9e6d97894611e3b2eaba18aba8). This is the immutable baseline for adoption: [REQ-RESULT-0051](https://github.com/tv-rain/barometer-spec/blob/84f52f8872a5af9e6d97894611e3b2eaba18aba8/data-formats/measurement-result.md#REQ-RESULT-0051), [REQ-RESULT-0052](https://github.com/tv-rain/barometer-spec/blob/84f52f8872a5af9e6d97894611e3b2eaba18aba8/data-formats/measurement-result.md#REQ-RESULT-0052), [REQ-RESULT-0053](https://github.com/tv-rain/barometer-spec/blob/84f52f8872a5af9e6d97894611e3b2eaba18aba8/data-formats/measurement-result.md#REQ-RESULT-0053), [REQ-EXECUTION-0031](https://github.com/tv-rain/barometer-spec/blob/84f52f8872a5af9e6d97894611e3b2eaba18aba8/data-formats/task-execution.md#REQ-EXECUTION-0031) and [REQ-NET-05-0061](https://github.com/tv-rain/barometer-spec/blob/84f52f8872a5af9e6d97894611e3b2eaba18aba8/tests/net-05.md#REQ-NET-05-0061); REQ-RESULT-0024 and REQ-EXECUTION-0015 are retired there. Draft `0.1.0` is retained.
+- **Internal alignment:** merged through internal review repository PR #10 at `0414e543db2fea2bb156daaa823e0cc37c759ae0`.
+- **Go state:** unchanged. The traceability mapping stays on public `4743b63`, where the retired IDs are still active, so current references remain valid until the rebaseline to `84f52f8` during adoption.
+- **Remaining before closure:** Go adoption evidence, as listed under the disposition addendum. Binding and host adoption follow. No runtime, platform or field support is claimed.
 
 ## GO-SPEC-ISSUE-005: Which Bytes Count Toward Attempt Byte Limits
 
