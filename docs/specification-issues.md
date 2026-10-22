@@ -294,7 +294,7 @@ The sections above keep their wording as historical evidence, including their th
 
 ## GO-SPEC-ISSUE-005: Which Bytes Count Toward Attempt Byte Limits
 
-**Current state:** Open, raised October 16, 2026 under [DEV-573](https://app.clickup.com/t/124kk1zc613) from the DEV-572 triage. No public record exists yet.
+**Current state:** Open; public disposition accepted October 22, 2026 under [DEV-580](https://app.clickup.com/t/124kk1zcaaf) in the public record [Bytes Counted Toward Attempt Byte Limits](https://github.com/tv-rain/barometer-spec/blob/main/specification-issues/attempt-byte-accounting.md); public merge, internal alignment merge and Go adoption under [DEV-562](https://app.clickup.com/t/124kk1zc4ab) and DEV-454 pending. See the [disposition addendum](#disposition-addendum--october-22-2026-1). The sections before it keep their original wording as historical evidence. Originally raised October 16, 2026 under [DEV-573](https://app.clickup.com/t/124kk1zc613) from the DEV-572 triage.
 
 ### Identity, Baselines and Requirements
 
@@ -323,6 +323,18 @@ Two conforming implementations could therefore stop the same task at different p
 ### Ordering and Closure
 
 Public record and disposition first, then internal alignment, then Go accounting with scripted-transport cases, then bindings. Closure requires the public disposition and Go adoption evidence.
+
+### Disposition Addendum — October 22, 2026
+
+The public maintainer accepted alternative (a), as recommended in the public record, on October 22, 2026, in the DEV-580 task review. The wording changes public text and is merged together with the record; the merged immutable revision is recorded here after merge. Draft `0.1.0` is retained, and no registered number, field, state or reason changes.
+
+- **Counted:** every byte Barometer writes to or reads from a TCP stream, the plaintext side of a TLS session or a UDP datagram payload for the test, including HTTP request lines, headers, bodies and HTTP/2 framing, response status lines and headers, DNS messages and retransmissions Barometer sends, DNS-over-TCP and DoT length prefixes, the complete DoH exchange, followed redirects, and every NET-05 primitive step toward the aggregate limits ([REQ-LIMIT-0034](https://github.com/tv-rain/barometer-spec/blob/main/library/registered-limits.md#REQ-LIMIT-0034)). Bytes read ahead into a buffer count when read; each read requests no more than the remaining budget, and a write that would exceed the remaining sent budget is not issued.
+- **Not counted:** TLS handshake and records, TCP/IP and UDP/IP headers, operating-system retransmissions, proxy transport framing, the `CONNECT` request and response with the loopback proxy endpoint, resolution through a platform resolver API that does not expose its messages, and Network Context acquisition ([REQ-LIMIT-0033](https://github.com/tv-rain/barometer-spec/blob/main/library/registered-limits.md#REQ-LIMIT-0033), [REQ-EXECUTION-0032](https://github.com/tv-rain/barometer-spec/blob/main/data-formats/task-execution.md#REQ-EXECUTION-0032)).
+- **Narrower bounds:** header, body, prefix and DNS message bytes also count toward the attempt limits.
+- **Requirement IDs:** REQ-LIMIT-0003 is retired with successors REQ-LIMIT-0033 and REQ-LIMIT-0034, and REQ-EXECUTION-0014 with successor REQ-EXECUTION-0032. REQ-LIMIT-0006 and REQ-EXECUTION-0012 keep their IDs with editorial pointers.
+- **Go effect:** no Go behavior changes in this task. Adoption must implement byte-budget accounting at the counted boundary for HTTP-01, NET-03, DNS-01, DNS-03, DNS-04 and the NET-05 aggregate ([DEV-562](https://app.clickup.com/t/124kk1zc4ab) and the per-protocol work under DEV-454), fill the expected boundary values in the `CC-LIMIT-PURPOSE` case plan and its `RV-CC-LIMIT-PURPOSE` review case, add scripted-transport cases, and rebaseline the traceability mapping so that current `requirement-ref` comments cite REQ-LIMIT-0033, REQ-LIMIT-0034 and REQ-EXECUTION-0032 instead of the retired IDs. The mapping stays on public `4743b63`, where the retired IDs are still active, so existing references remain valid until that rebaseline.
+- **Internal alignment:** recorded in the internal registered-limits review and NET-05 review, aligned with the counted boundary.
+- **Remaining before closure:** the merged public revision, the internal alignment merge, and Go adoption evidence. Binding and host adoption follow. No runtime, platform or field support is claimed.
 
 ## GO-SPEC-ISSUE-006: NET-03 Over-Bound Response Classification
 
