@@ -294,7 +294,7 @@ The sections above keep their wording as historical evidence, including their th
 
 ## GO-SPEC-ISSUE-005: Which Bytes Count Toward Attempt Byte Limits
 
-**Current state:** Open; public disposition accepted October 22, 2026 under [DEV-580](https://app.clickup.com/t/124kk1zcaaf) in the public record [Bytes Counted Toward Attempt Byte Limits](https://github.com/tv-rain/barometer-spec/blob/main/specification-issues/attempt-byte-accounting.md); public merge, internal alignment merge and Go adoption under [DEV-562](https://app.clickup.com/t/124kk1zc4ab) and DEV-454 pending. See the [disposition addendum](#disposition-addendum--october-22-2026-1). The sections before it keep their original wording as historical evidence. Originally raised October 16, 2026 under [DEV-573](https://app.clickup.com/t/124kk1zc613) from the DEV-572 triage.
+**Current state:** Open; public disposition accepted October 22, 2026 under [DEV-580](https://app.clickup.com/t/124kk1zcaaf) in the public record [Bytes Counted Toward Attempt Byte Limits](https://github.com/tv-rain/barometer-spec/blob/main/specification-issues/attempt-byte-accounting.md); wording merged at public [`5d01879`](https://github.com/tv-rain/barometer-spec/tree/5d01879cfd1d47396c780befa2567f7e90439948) and internal alignment merged; Go adoption under [DEV-562](https://app.clickup.com/t/124kk1zc4ab) and DEV-454 pending. See the [disposition addendum](#disposition-addendum--october-22-2026-1) and the [merge addendum](#merge-addendum--october-22-2026-1). The sections before it keep their original wording as historical evidence. Originally raised October 16, 2026 under [DEV-573](https://app.clickup.com/t/124kk1zc613) from the DEV-572 triage.
 
 ### Identity, Baselines and Requirements
 
@@ -335,6 +335,15 @@ The public maintainer accepted alternative (a), as recommended in the public rec
 - **Go effect:** no Go behavior changes in this task. Adoption must implement byte-budget accounting at the counted boundary for HTTP-01, NET-03, DNS-01, DNS-03, DNS-04 and the NET-05 aggregate ([DEV-562](https://app.clickup.com/t/124kk1zc4ab) and the per-protocol work under DEV-454), fill the expected boundary values in the `CC-LIMIT-PURPOSE` case plan and its `RV-CC-LIMIT-PURPOSE` review case, add scripted-transport cases, and rebaseline the traceability mapping so that current `requirement-ref` comments cite REQ-LIMIT-0033, REQ-LIMIT-0034 and REQ-EXECUTION-0032 instead of the retired IDs. The mapping stays on public `4743b63`, where the retired IDs are still active, so existing references remain valid until that rebaseline.
 - **Internal alignment:** recorded in the internal registered-limits review and NET-05 review, aligned with the counted boundary.
 - **Remaining before closure:** the merged public revision, the internal alignment merge, and Go adoption evidence. Binding and host adoption follow. No runtime, platform or field support is claimed.
+
+### Merge Addendum — October 22, 2026
+
+The sections above keep their wording as historical evidence, including their then-pending statements and links to public `main`.
+
+- **Merged public revision:** [public PR #24](https://github.com/tv-rain/barometer-spec/pull/24) merged the accepted wording and catalog changes at [`5d01879cfd1d47396c780befa2567f7e90439948`](https://github.com/tv-rain/barometer-spec/tree/5d01879cfd1d47396c780befa2567f7e90439948). This is the immutable baseline for adoption: [REQ-LIMIT-0033](https://github.com/tv-rain/barometer-spec/blob/5d01879cfd1d47396c780befa2567f7e90439948/library/registered-limits.md#REQ-LIMIT-0033), [REQ-LIMIT-0034](https://github.com/tv-rain/barometer-spec/blob/5d01879cfd1d47396c780befa2567f7e90439948/library/registered-limits.md#REQ-LIMIT-0034) and [REQ-EXECUTION-0032](https://github.com/tv-rain/barometer-spec/blob/5d01879cfd1d47396c780befa2567f7e90439948/data-formats/task-execution.md#REQ-EXECUTION-0032); REQ-LIMIT-0003 and REQ-EXECUTION-0014 are retired there. Draft `0.1.0` is retained.
+- **Internal alignment:** merged through internal review repository PR #11 at `dc421a80b3fb19bd07b17a0a4181390ad6e50d2b`.
+- **Go state:** unchanged. The traceability mapping stays on public `4743b63`, where the retired IDs are still active, so current references remain valid until the rebaseline to `5d01879` during adoption.
+- **Remaining before closure:** Go adoption evidence, as listed under the disposition addendum. Binding and host adoption follow. No runtime, platform or field support is claimed.
 
 ## GO-SPEC-ISSUE-006: NET-03 Over-Bound Response Classification
 
