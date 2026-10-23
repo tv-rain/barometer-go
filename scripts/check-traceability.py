@@ -18,7 +18,7 @@ TOOLING_REVISION = "5d01879cfd1d47396c780befa2567f7e90439948"
 INVENTORY_REVISION = "c06ce6b7b73b8520f35ce10982315fcb4d05615b"
 BASELINES = {
     "cross-cutting.json": ("5d01879cfd1d47396c780befa2567f7e90439948",
-                           "cdbd16043d991d4b11544420b5ba8531fb8c95f1"),
+                           "d788a80754e9f3f55852601bf8df16db4b1a1808"),
     "measurements.json": ("59d49364d85e48cc8e69c762d130a7a86dc1fe65",
                           "c5f4e92e06936cb677c7a03e9769ff75b1f51874"),
 }
