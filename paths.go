@@ -25,14 +25,17 @@ var (
 // reservation it reads the access context once, through the platform network
 // capability, and binds the run's result decoder to that snapshot's path:
 // direct, or the generation's proxy snapshot. Each attempt then captures its
-// own snapshot, evaluates the task's network conditions against it, attaches
-// it to the result with egress unavailable, and dials through a fresh dialer
-// of the selected path inside the metered attempt scope. A proxy task never
-// receives a direct dialer. Implementation is the trusted producer identity
+// own snapshot, evaluates the task's network conditions against it, acquires
+// its egress context through a dialer of the same path when the host
+// configured egress classification (DEV-647), attaches it to the result, and
+// dials through a fresh dialer of the selected path inside the metered
+// attempt scope. A proxy task never receives a direct dialer, for its lookup
+// or its measurement. Implementation is the trusted producer identity
 // of the integration, never host or task input.
 type networkPaths struct {
 	network        platform.Network
 	direct         *networkcontext.Source
+	directDialers  execution.DialerSource
 	implementation model.Implementation
 }
 
@@ -46,12 +49,16 @@ func newNetworkPaths(r runAdapters) (*networkPaths, error) {
 	if err != nil {
 		return nil, errPathUnavailable
 	}
-	return &networkPaths{network: r.network, direct: d, implementation: r.implementation}, nil
+	var dialers execution.DialerSource = execution.DirectDialers{}
+	if !absent(r.directDialers) {
+		dialers = r.directDialers
+	}
+	return &networkPaths{network: r.network, direct: d, directDialers: dialers, implementation: r.implementation}, nil
 }
 
 func (p *networkPaths) plan(ctx context.Context, r pathRequest) (pathPlan, error) {
 	if r.NetworkPath != "proxy" {
-		return p.bind(ctx, r, p.direct, execution.DirectDialers{})
+		return p.bind(ctx, r, p.direct, p.directDialers)
 	}
 	if !r.Proxy.configured() {
 		return p.unconfigured(ctx, r)
@@ -68,6 +75,10 @@ func (p *networkPaths) plan(ctx context.Context, r pathRequest) (pathPlan, error
 }
 
 func (p *networkPaths) bind(ctx context.Context, r pathRequest, src *networkcontext.Source, dialers execution.DialerSource) (pathPlan, error) {
+	src, err := src.WithLookup(r.Egress)
+	if err != nil {
+		return pathPlan{}, errPathUnavailable
+	}
 	snap, err := src.Capture(ctx)
 	if err != nil {
 		return pathPlan{}, errPathUnavailable

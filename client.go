@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/tv-rain/barometer-go/internal/model/task"
+	"github.com/tv-rain/barometer-go/internal/networkcontext"
 	"github.com/tv-rain/barometer-go/internal/persistence"
 )
 
@@ -111,6 +112,9 @@ func (c *Client) bind(a adapters) error {
 	defer c.mu.Unlock()
 	if err := c.refusal(); err != nil {
 		return err
+	}
+	if a.run.contextCache == nil {
+		a.run.contextCache = networkcontext.NewCache()
 	}
 	if a.clearStorage == nil {
 		a.clearStorage = storageClearer(&a)

@@ -374,30 +374,34 @@ func TestClearRacesEntryPoints(t *testing.T) {
 // state-holding adapter cannot be forgotten by clearing.
 func TestClearingCoversEveryAdapter(t *testing.T) {
 	covered := map[string]string{
-		"clock":         "exempt: trusted time source",
-		"registry":      "exempt: reviewed static registrations",
-		"policy":        "exempt: installed local policy; the activated generation floor survives clearing in memory",
-		"deliveries":    "lifecycle: delivery references are invalidated before deletion",
-		"replay":        "cleared: ReplayClass records; Forgetter drops the State index",
-		"approvals":     "exempt: reviewed configuration approvals",
-		"linkageKeys":   "cleared: eraser deletes the protected key",
-		"clearStorage":  "the clearing capability itself",
-		"run":           "see runAdapters",
-		"records":       "cleared: every record class",
-		"pendingLimits": "exempt: limits",
-		"deadline":      "exempt: lifecycle deadline",
+		"clock":            "exempt: trusted time source",
+		"registry":         "exempt: reviewed static registrations",
+		"policy":           "exempt: installed local policy; the activated generation floor survives clearing in memory",
+		"deliveries":       "lifecycle: delivery references are invalidated before deletion",
+		"replay":           "cleared: ReplayClass records; Forgetter drops the State index",
+		"approvals":        "exempt: reviewed configuration approvals",
+		"contextApprovals": "exempt: reviewed egress classification approvals",
+		"contextRoots":     "exempt: context endpoint trust anchors",
+		"linkageKeys":      "cleared: eraser deletes the protected key",
+		"clearStorage":     "the clearing capability itself",
+		"run":              "see runAdapters",
+		"records":          "cleared: every record class",
+		"pendingLimits":    "exempt: limits",
+		"deadline":         "exempt: lifecycle deadline",
 	}
 	runCovered := map[string]string{
 		"clock":          "exempt: engine clock",
 		"jitter":         "exempt: jitter source",
 		"ledger":         "cleared: RunClass records; Forgetter drops the State index",
-		"paths":          "exempt: path seam holds no stored state; networkPaths caches no context",
+		"paths":          "exempt: path seam holds no stored state; egress contexts are cached only in contextCache",
 		"network":        "exempt: host-reported capability",
 		"implementation": "exempt: producer identity",
 		"consent":        "exempt: host-reported capability",
 		"device":         "exempt: host-reported capability",
 		"zone":           "exempt: host-reported capability",
 		"registry":       "exempt: copy of the adapters' registry",
+		"contextCache":   "cleared: eraser drops the in-memory egress cache",
+		"directDialers":  "exempt: test seam for direct dialers; holds no state",
 	}
 	for typ, want := range map[reflect.Type]map[string]string{reflect.TypeOf(adapters{}): covered, reflect.TypeOf(runAdapters{}): runCovered} {
 		if typ.NumField() != len(want) {

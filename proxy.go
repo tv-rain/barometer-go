@@ -180,6 +180,11 @@ func (c *Client) changeProxy(input string, clear bool) (err error) {
 		return fail(cleanupIncomplete)
 	}
 	nextGeneration = rt.proxies.install(rt.ctx, endpoint, !clear)
+	// The drained generation's egress contexts are invalid (REQ-PROXY-0016);
+	// the new generation's key differs from them in any case.
+	if a.run.contextCache != nil {
+		a.run.contextCache.ForgetProxy()
+	}
 	finished = true
 	return nil
 }

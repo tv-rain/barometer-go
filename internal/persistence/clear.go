@@ -12,8 +12,8 @@ import (
 var ErrClearIncomplete = errors.New("persistence: clearing incomplete")
 
 // Eraser deletes one piece of Barometer-owned state that is not stored over
-// the record port, such as the linkage key or, later, the Network Context
-// cache (DEV-578). Erasing absent state succeeds. It must not create a
+// the record port, such as the linkage key or the in-memory Network Context
+// cache. Erasing absent state succeeds. It must not create a
 // replacement secret or send a network request.
 type Eraser func(context.Context) error
 

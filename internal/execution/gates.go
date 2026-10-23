@@ -38,16 +38,48 @@ func (g Gates) Satisfied(ctx context.Context) bool {
 	return ctx.Err() == nil && NetworkSatisfiable(g.Execution) && g.device(ctx) && g.consent(ctx)
 }
 
-// NetworkSatisfiable reports whether the task states no network condition
-// this build cannot evaluate. Until egress lookup (DEV-647) exists, Network
-// Context requirements are unsatisfied, so such a task never runs. Either
-// network path is accepted: a proxy task whose path cannot be used records
-// that in its attempt through the path's pre-attempt check (PathCheck), never
-// by being held back here. Transport, VPN and validation conditions depend on
-// the access context and are evaluated against it by NetworkConditions.
+// NetworkSatisfiable reports whether the task selects a network path this
+// build can use. Either path is accepted: a proxy task whose path cannot be
+// used records that in its attempt through the path's pre-attempt check
+// (PathCheck), never by being held back here. Transport, VPN and validation
+// conditions depend on the access context and are evaluated against it by
+// NetworkConditions; Network Context requirements depend on the attempt's
+// egress context and are evaluated by ContextConditions.
 func NetworkSatisfiable(e task.Execution) bool {
-	n := e.Network
-	return (e.NetworkPath == "direct" || e.NetworkPath == "proxy") && len(n.Context.RequiredFields) == 0 && len(n.Context.AllowedCountryCodes) == 0
+	return e.NetworkPath == "direct" || e.NetworkPath == "proxy"
+}
+
+// ContextConditions evaluates the task's Network Context requirements against
+// the egress context acquired on the attempt's own path (REQ-EXECUTION-0022).
+// A required field that is missing, which includes every field of an
+// unavailable context, is network_context_unavailable; an allowlist implicitly
+// requires country_code. A known country outside the allowlist is
+// constraints_unsatisfied; an unknown country never matches
+// (REQ-EXECUTION-0023). No value is guessed. Without requirements, an
+// unavailable context does not block the attempt (REQ-EXECUTION-0024).
+// requirement-ref: REQ-EXECUTION-0021
+// requirement-ref: REQ-EXECUTION-0022
+// requirement-ref: REQ-EXECUTION-0023
+// requirement-ref: REQ-EXECUTION-0024
+// requirement-ref: REQ-CONTEXT-0026
+// requirement-ref: REQ-CONTEXT-0027
+// requirement-ref: REQ-CONTEXT-0028
+func ContextConditions(r task.ContextRequirements, e observation.Egress) task.ExecutionReason {
+	for _, f := range r.RequiredFields {
+		if f == "country_code" && e.CountryCode == "" || f == "region_code" && e.RegionCode == "" || f == "asn" && e.ASN == nil ||
+			f != "country_code" && f != "region_code" && f != "asn" {
+			return task.NetworkContextUnavailable
+		}
+	}
+	if len(r.AllowedCountryCodes) > 0 {
+		if e.CountryCode == "" {
+			return task.NetworkContextUnavailable
+		}
+		if !slices.Contains(r.AllowedCountryCodes, e.CountryCode) {
+			return task.ConstraintsUnsatisfied
+		}
+	}
+	return ""
 }
 
 // AccessRequired reports whether the task states a condition on the access
