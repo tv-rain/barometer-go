@@ -43,8 +43,11 @@ func pathFailure(err error) (task.ExecutionReason, bool) {
 }
 
 var (
-	errProxyUnavailable = pathError{task.ProxyUnavailable}
-	errProxyConnect     = pathError{task.ProxyConnectFailed}
+	// ErrProxyReconfigured is the code-only cause used by the lifecycle owner
+	// to cancel a proxy generation. It contains no endpoint or generation value.
+	ErrProxyReconfigured = pathError{task.ProxyReconfigured}
+	errProxyUnavailable  = pathError{task.ProxyUnavailable}
+	errProxyConnect      = pathError{task.ProxyConnectFailed}
 	// errProxyNetwork refuses a dial HTTP CONNECT cannot carry. Admission
 	// admits only proxy-compatible tasks, so it is an implementation failure.
 	errProxyNetwork = pathError{task.InternalError}

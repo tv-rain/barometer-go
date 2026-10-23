@@ -28,7 +28,7 @@ const (
 // initialization through reviewed internal adapters, bounded handle tables,
 // close and the lifecycle part of clearing, and task admission (DEV-592). Runs
 // (DEV-636, DEV-561), pending bundles (DEV-563) and persistent clearing
-// (DEV-564) followed; proxy changes are added by a later task.
+// (DEV-564) and independent proxy-generation changes (DEV-646) followed.
 type Client struct {
 	mu         sync.Mutex
 	state      state
@@ -37,6 +37,9 @@ type Client struct {
 	bound      *adapters
 	rt         *runtime
 	generation uint64
+	// proxyGeneration prevents reuse across reinitializations of this instance.
+	// It is an in-memory counter only, never an identifier or persisted value.
+	proxyGeneration uint64
 	// policyFloor is the highest valid policy generation this instance has
 	// activated. Initialization below it is a rollback and fails closed.
 	policyFloor uint64
@@ -165,6 +168,8 @@ func (c *Client) initialize(configJSON string) (err error) {
 		}
 		c.generation++
 		rt.generation = c.generation
+		c.proxyGeneration++
+		rt.proxies.generation = c.proxyGeneration // rt is not published yet
 		c.rt, c.state = rt, initialized
 		if a.policy.Valid() {
 			c.policyFloor = max(c.policyFloor, a.policy.Generation())

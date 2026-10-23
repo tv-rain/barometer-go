@@ -141,6 +141,7 @@ type runtime struct {
 	run        runAdapters
 	engine     *execution.Engine
 	bundles    *pending.Store
+	proxies    *proxyState
 
 	// ctx bounds adapter calls made for this generation. invalidate cancels
 	// it, so a transition does not wait on a stalled trusted adapter.
@@ -226,10 +227,12 @@ func successor(a *adapters, init *config.Initialization, policy task.LocalPolicy
 	run := a.run
 	run.registry = a.registry
 	ctx, cancel := context.WithCancel(context.Background())
+	proxy, configured := init.Configuration().Proxy()
 	return &runtime{init: init, admitter: admitter, tasks: newTaskTable(),
 		runs:   newHandleTable[runRecord](runHandlePrefix, runHandleCapacity),
 		runSet: newRunSet(), run: run, engine: engine, bundles: store,
-		ctx: ctx, cancel: cancel, deadline: a.lifecycleDeadline()}
+		proxies: newProxyState(ctx, proxy, configured, 1),
+		ctx:     ctx, cancel: cancel, deadline: a.lifecycleDeadline()}
 }
 
 // absent also treats typed nil values in an interface as missing.

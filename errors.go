@@ -22,6 +22,8 @@ const (
 	// policyRejected is returned only by the unexported policy-replacement
 	// seam: the replacement was refused and the previous policy is active.
 	policyRejected
+	// proxyRejected leaves the previous proxy configuration and work unchanged.
+	proxyRejected
 )
 
 func (c code) String() string {
@@ -50,6 +52,8 @@ func (c code) String() string {
 		return "storage_unavailable"
 	case policyRejected:
 		return "policy_rejected"
+	case proxyRejected:
+		return "proxy_rejected"
 	}
 	return "operation_failed"
 }

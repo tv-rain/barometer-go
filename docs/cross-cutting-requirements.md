@@ -2252,11 +2252,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-PROXY-HOST-INTEGRATION
 
-Public source: `library/proxy.md`, section **Host Integration**. Intended target: `internal/execution/proxy.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcProxyHostIntegration`.
+Public source: `library/proxy.md`, section **Host Integration**. Intended target: `proxy.go`. Case location: `proxy_lifecycle_test.go`, `symbol:TestProxyHostConfigurationStaysSeparate`.
 
 Case plan: Exercise the Go binding-facing initialization, replacement and clearing entry points using only ordinary serializable values: initialize with a proxy object {host "127.0.0.1", port 54321, connection_code "outline_mobileproxy"}, replace it with {host "127.0.0.1", port 55001, connection_code "outline_mobileproxy"}, then clear it. Assert after each call that the active configuration equals exactly the supplied object (or no proxy after clearing) and that a recording fake proxy listener receives new proxy-task tunnels only on the port of the current configuration. Run a concurrent reader during replacement and assert it observes either the complete previous or the complete new object, never a mixed host/port/connection_code combination, so replacement is atomic. Assert the exported initialization, setProxy-equivalent and clearProxy-equivalent signatures take only strings, integers and maps/JSON bytes, with no callback, interface, socket or object parameter. Initialize with both a proxy object and a separate top-level network_context object {primary_endpoint, fallback_endpoint} and assert both are configured independently; a proxy object carrying primary_endpoint or fallback_endpoint is rejected, and replacing or clearing the proxy leaves the configured egress endpoints unchanged. Requirements: REQ-PROXY-0002, REQ-PROXY-0003, REQ-PROXY-0004.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Planned as a whole. `TestProxyHostConfigurationStaysSeparate` covers the serializable Go configuration row and separation of egress endpoints; `TestPublicSurfaceMatchesDocumentedSignatures` checks the Go signatures. Android, Apple and Flutter method mapping and independent binding review remain DEV-455. Mixed-family evidence is not promoted from the Go subset. No binding or support claim.
 
 Review case `RV-CC-PROXY-HOST-INTEGRATION` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-PROXY-HOST-INTEGRATION`): Human review case; not automated coverage. Reviewer role: Mobile binding reviewer (independent of the binding implementer). Reviewed artifact: Android, Apple and Flutter binding source and integration documentation for proxy initialization, replacement and clearing at the reviewed revision. Checklist: (1) Do the Android, Apple and Flutter bindings accept the proxy only as ordinary serializable values (host, port, connection_code)? (2) Is the host free of any requirement to supply native callbacks, interfaces, sockets or complex objects to configure, replace or clear the proxy? (3) Does each binding's method naming map to initialization, atomic replacement and clearing with semantics equivalent to the Go core contract? (4) Do the bindings and documentation configure the egress-classification endpoints separately at initialization rather than as properties of the proxy object? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
@@ -2286,11 +2286,11 @@ Scope: Synthetic core contract cases. Runs in `TestCcProxyProxyConfiguration` wi
 
 ### CC-PROXY-CONFIGURATION-VALIDATION
 
-Public source: `library/proxy.md`, section **Configuration Validation**. Intended target: `internal/execution/proxy.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcProxyConfigurationValidation`.
+Public source: `library/proxy.md`, section **Configuration Validation**. Intended target: `proxy.go`. Case location: `proxy_lifecycle_test.go`, `symbol:TestCcProxyConfigurationValidation`.
 
 Case plan: Attempt malformed replacement while an old proxy is active; preserve old state. Test category stability/privacy and internally derived compatibility.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. The standalone replacement cases run with synthetic adapters and the production strict configuration decoder in `TestCcProxyConfigurationValidation`: invalid input leaves both the endpoint and the active run unchanged, approved coarse categories survive endpoint renewal, and task capabilities cannot be supplied by proxy configuration. Registry-derived compatibility is also covered by `internal/admission/proxy_test.go`. No native, runtime-support or field claim; milestone manifest evidence remains unchanged.
 
 <!-- requirement-ref: REQ-PROXY-0008 -->
 <!-- requirement-ref: REQ-PROXY-0009 -->
@@ -2302,11 +2302,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-PROXY-LIFECYCLE-AND-RENEWAL
 
-Public source: `library/proxy.md`, section **Lifecycle and Renewal**. Intended target: `internal/execution/proxy.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcProxyLifecycleAndRenewal`.
+Public source: `library/proxy.md`, section **Lifecycle and Renewal**. Intended target: `proxy.go`. Case location: `proxy_lifecycle_test.go`, `symbol:TestProxyChangesOnlyCancelProxyRuns`.
 
 Case plan: Race set/clear with attempts and all NET-05 steps; block old-generation admission, cancel/close and bound cleanup before returning, invalidate caches and never mix generations or use direct fallback.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Planned as a whole. `TestProxyChangesOnlyCancelProxyRuns`, `TestProxyLifecycleSerialization`, `TestProxyCleanupIncomplete`, `TestProxyStartRace`, `TestProxyAgainstLifecycleRace` and `TestProxyChangeDrainsPathReservation` cover the Go cancellation, serialization and cleanup rows; `TestProxyLoopbackRenewal` supplies the two-endpoint socket scenario and `TestProxyLoopbackClosesEstablishedTunnel` covers a tunnel blocked on application I/O; both require successful loopback execution. Whole-profile NET-05 steps remain DEV-454; egress cache invalidation remains DEV-647. Mixed-family evidence is not promoted from the Go subset. No support claim.
 
 <!-- requirement-ref: REQ-PROXY-0011 -->
 <!-- requirement-ref: REQ-PROXY-0012 -->
@@ -2390,11 +2390,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-PROXY-EXECUTION-STATES
 
-Public source: `library/proxy.md`, section **Execution States**. Intended target: `internal/execution/proxy.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcProxyExecutionStates`.
+Public source: `library/proxy.md`, section **Execution States**. Intended target: `internal/execution/proxy.go`. Case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcProxyExecutionStates`.
 
 Case plan: Trigger each path failure and assert normalized state, no censorship attribution, no direct retry, and any new generation needs a separately scheduled attempt.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases have executable tests for all pre-attempt, CONNECT failure and reconfiguration states, no direct fallback, and a separate run on a new endpoint in `TestCcProxyExecutionStates`. Root integration is exercised by `TestProxyChangesOnlyCancelProxyRuns` and `TestProxyLoopbackRenewal`. Loopback execution is required before this family is recorded as executed (DEV-646 validation). No native or support claim.
 
 <!-- requirement-ref: REQ-PROXY-0028 -->
 <!-- requirement-ref: REQ-PROXY-0029 -->
@@ -2424,11 +2424,11 @@ Scope: Synthetic core contract cases. Runs in `TestCcProxyResultMetadata` with s
 
 ### CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION
 
-Public source: `library/proxy.md`, section **Privacy, Safety, and Interpretation**. Intended target: `internal/execution/proxy.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcProxyPrivacySafetyAndInterpretation`.
+Public source: `library/proxy.md`, section **Privacy, Safety, and Interpretation**. Intended target: `internal/execution/proxy.go`. Case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcProxyPrivacySafetyAndInterpretation`.
 
 Case plan: Submit synthetic tasks that attempt to choose or alter the proxy endpoint through execution, input, options, labels or unknown fields (proxy, host, port, endpoint, connection_code) and assert each is rejected at admission with a bounded admission error before any network activity, while the host-configured proxy remains unchanged. Configure a valid proxy with trusted local policy that disallows proxy use and assert a network_path "proxy" task ends not_run with reason proxy_not_permitted and opens no connection. Drive proxy_unavailable, proxy_connect_failed and proxy_reconfigured with a scripted proxy and a recording direct transport and assert zero direct dials to the target and no automatic retry through the direct path. Iterate loopback, private, link-local and other targets prohibited by target validation on both direct and proxy paths and assert identical rejection; assert connection_code in results is copied byte-for-byte from host configuration, never extended with session, installation or endpoint material, and cannot be set by a task. Produce a direct failure followed by a proxied success for the same synthetic target and assert the library emits two independent results with no derived comparison, censorship or path-verdict field. Requirements: REQ-PROXY-0034, REQ-PROXY-0035, REQ-PROXY-0036, REQ-PROXY-0037, REQ-PROXY-0038, REQ-PROXY-0039, REQ-PROXY-0040, REQ-PROXY-0041.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Planned as a whole. `TestProxyTaskCannotReplaceHostConfiguration` covers task-controlled endpoint fields and preservation of the host proxy; `TestProxyChangesOnlyCancelProxyRuns` covers reconfiguration result minimization. `TestCcProxyResultMetadata` and `TestCcProxyExecutionStates` cover minimized loopback results and no fallback. Production target-validation rows require the registered codecs and rules (DEV-454); independent interpretation review remains open. Mixed-family evidence is not promoted from these Go rows. No support claim.
 
 Review case `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`): Human review case; not automated coverage. Reviewer role: Measurement interpretation reviewer (analyst role independent of the implementer). Reviewed artifact: Go result documentation and host/analyst guidance for direct versus proxied path comparison at the reviewed implementation revision. Checklist: (1) Does the guidance state that a successful proxied result does not prove the direct path is censored? (2) Does the guidance list outages, DNS-path differences, endpoint changes, proxy behavior and transient network conditions as alternative explanations for a direct failure followed by proxied success? (3) Does the guidance require repeated observations, stable network context, equivalent test inputs and independent supporting signals before any stronger interpretation? (4) Does the guidance note that hostname-based CONNECT moves destination resolution behind the proxy, so proxied HTTP results are not pure transport-only comparisons? (5) Does host integration guidance require connection_code values coarse enough not to identify a user, account, server, session or installation? (6) Does the guidance avoid describing local-policy proxy rejections or proxy execution states as evidence of censorship? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 

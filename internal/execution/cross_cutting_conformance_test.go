@@ -727,6 +727,51 @@ func TestCcProxyTaskSelection(t *testing.T) {
 	deniedPreconditions(t)
 }
 
+// CC-PROXY-EXECUTION-STATES: all pre-attempt, connection and reconfiguration
+// reasons are path observations, with no direct fallback. A new endpoint is
+// used only by a separate run; the cancelled run does not retry on it.
+// requirement-ref: REQ-PROXY-0028
+// requirement-ref: REQ-PROXY-0029
+// requirement-ref: REQ-PROXY-0030
+// requirement-ref: REQ-PROXY-0042
+func TestCcProxyExecutionStates(t *testing.T) {
+	t.Run("preconditions", TestPathCheckMakesNoContact)
+	t.Run("connection failures", TestProxyFailuresAreExecutionStates)
+	t.Run("late CONNECT", TestLateConnect)
+	t.Run("same-generation retry", TestProxyRetryNeverFallsBackToDirect)
+	t.Run("proxy reconfigured", func(t *testing.T) {
+		srv := echoServer(t)
+		old := scriptedProxy(t, loopback.ProxyConfig{Mode: loopback.ProxyHold})
+		next := scriptedProxy(t, loopback.ProxyConfig{})
+		f := newFixture(t, schedule(2, task.ProxyUnavailable, task.InternalError))
+		f.onProxy(t, old.Port())
+		f.plan.Parameters = echoOnce(srv)
+		run, cancel := context.WithCancelCause(context.Background())
+		defer cancel(nil)
+		done := f.start(t, run, loopback.Exchange{})
+		ctx, stop := context.WithTimeout(context.Background(), 5*time.Second)
+		defer stop()
+		if err := old.WaitRequests(ctx, 1); err != nil {
+			t.Fatal(err)
+		}
+		cancel(execution.ErrProxyReconfigured)
+		o := <-done
+		f.expect(t, o.rep, o.err, nil, []want{{"incomplete", "proxy_reconfigured", ""}}, nil)
+		idle(t, old)
+		if srv.Accepted() != 0 || next.Counts().Accepted != 0 {
+			t.Fatal("cancelled run switched path")
+		}
+		fresh := newFixture(t, schedule(1))
+		fresh.onProxy(t, next.Port())
+		fresh.plan.Parameters = echoOnce(srv)
+		freshRun := <-fresh.start(t, fresh.run, loopback.Exchange{})
+		fresh.expect(t, freshRun.rep, freshRun.err, nil, []want{completedConnected}, nil)
+		if next.Counts().Accepted != 1 || srv.Accepted() != 1 || old.Counts().Accepted != 1 {
+			t.Fatal("new run did not use only its selected generation")
+		}
+	})
+}
+
 // CC-PROXY-RESULT-METADATA: direct results record network_path direct
 // without connection_code; proxied results, successful or failed and with
 // egress unavailable, record network_path proxy and the configured
