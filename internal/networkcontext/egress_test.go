@@ -342,9 +342,9 @@ func TestCcContextEndpointContract(t *testing.T) {
 		if e := w.acquire(0); e.Status != want {
 			t.Fatalf("answer after %v: %s", d, e.Status)
 		}
-	}
-	if w.clock.Timers() != 0 {
-		t.Fatal("an operation timer was left armed")
+		if w.clock.Timers() != 0 {
+			t.Fatalf("answer after %v: an operation timer was left armed", d)
+		}
 	}
 }
 

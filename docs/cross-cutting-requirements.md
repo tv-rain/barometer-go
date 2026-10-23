@@ -702,7 +702,7 @@ Public source: `data-formats/network-context.md`, section **Use in Execution**. 
 
 Case plan: Use normalized required fields and country eligibility only; reject region/ASN/provider/operator task allowlists.
 
-Scope: Synthetic core contract cases. Executed by DEV-647: normalized required fields and a country allowlist are decoded and evaluated, and region, ASN, provider and operator allowlists are rejected by the task schema, also at admission in `TestGateAdmitsEgressContextRequirements`. Passed at Go `d788a80` ([evidence](../traceability/evidence/go-unit-d788a80.md#CC-CONTEXT-FORMAT-USE-IN-EXECUTION)); partial evidence only. No native, field or support claim.
+Scope: Synthetic core contract cases. Executed by DEV-647: normalized required fields and a country allowlist are decoded and evaluated, and region, ASN, provider and operator allowlists are rejected by the task schema in `TestCcExecutionFieldsNetworkFieldsNetworkContextRequirements`; the same rejections at admission are the separate unit-test case `UT.internal.admission.TestGateAdmitsEgressContextRequirements`. Passed at Go `d788a80` ([evidence](../traceability/evidence/go-unit-d788a80.md#CC-CONTEXT-FORMAT-USE-IN-EXECUTION)); partial evidence only. No native, field or support claim.
 
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0013 -->
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0014 -->
