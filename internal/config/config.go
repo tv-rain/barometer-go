@@ -58,7 +58,7 @@ type Decoder struct {
 }
 
 // WithProxy returns a complete replacement snapshot only after validation. On
-// failure it returns the unchanged snapshot and a fixed error. A future runtime
+// failure it returns the unchanged snapshot and a fixed error. The runtime owner
 // must still quiesce old-generation work before publishing a successful change.
 func (d *Decoder) WithProxy(current Snapshot, input []byte) (Snapshot, error) {
 	if d == nil || !d.ready || !current.valid || current.owner != d {

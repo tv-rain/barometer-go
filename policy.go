@@ -72,6 +72,7 @@ func (c *Client) replacePolicy(p task.LocalPolicy) (err error) {
 		case finished:
 			c.generation++
 			next.generation = c.generation
+			c.proxyGeneration = next.proxies.generation
 			bound := *a
 			bound.policy = p
 			c.bound, c.rt, c.state = &bound, next, initialized
@@ -138,5 +139,12 @@ func validSuccessor(a *adapters, current *runtime, p task.LocalPolicy, active ui
 	if err != nil || highest > p.Generation() {
 		return nil
 	}
-	return successor(a, current.init, p)
+	next := successor(a, current.init, p)
+	if next != nil {
+		// Dynamic proxy changes must survive policy replacement; the
+		// initialization object intentionally stays immutable for bundle linkage.
+		next.proxies.group.cancel(nil)
+		next.proxies = current.proxies.successor(next.ctx)
+	}
+	return next
 }

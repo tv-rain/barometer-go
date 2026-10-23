@@ -111,29 +111,23 @@ func (noProxy) Capture(context.Context) (networkcontext.Snapshot, error) {
 }
 func (noProxy) Dialer(int) (measurement.Dialer, error) { return nil, errNoProxy }
 
-// proxySnapshot is the generation's proxy configuration. The proxy comes only
-// from Initialize, so it is fixed for the generation and the runtime
-// generation serves as its non-zero proxy generation; replacement and
-// clearing, which assign a new proxy generation of their own, belong to
-// DEV-646. The endpoint is trusted host configuration and never reaches a
-// result (REQ-PROXY-0033).
+// proxySnapshot is the immutable path of a leased proxy generation. The
+// endpoint and generation are internal and never reach a result.
 type proxySnapshot struct {
 	endpoint   config.Proxy
 	generation uint64 // zero when no proxy is configured
 }
 
 func (p proxySnapshot) configured() bool { return p.generation != 0 }
+func (p proxySnapshot) String() string   { return "barometer.proxySnapshot" }
+func (p proxySnapshot) GoString() string { return "barometer.proxySnapshot" }
 
 // proxy returns the generation's proxy snapshot.
 func (rt *runtime) proxy() proxySnapshot {
-	if rt.init == nil || rt.generation == 0 {
+	if rt.proxies == nil {
 		return proxySnapshot{}
 	}
-	p, ok := rt.init.Configuration().Proxy()
-	if !ok {
-		return proxySnapshot{}
-	}
-	return proxySnapshot{endpoint: p, generation: rt.generation}
+	return rt.proxies.snapshot()
 }
 
 // proxyCheck is the pre-attempt check of a proxy run (REQ-EXECUTION-0008),

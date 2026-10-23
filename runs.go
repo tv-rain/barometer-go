@@ -142,19 +142,39 @@ func (c *Client) startRun(taskHandle string) (handle string, err error) {
 	if err != nil {
 		return "", err
 	}
-	ctx, cancel := context.WithTimeout(rt.ctx, rt.deadline)
+	parent := rt.ctx
+	var proxy proxySnapshot
+	var group *proxyGroup
+	if admitted.Candidate().Execution.NetworkPath == "proxy" {
+		proxy, group, err = rt.proxies.acquire()
+		if err != nil {
+			return "", err
+		}
+		parent = group.ctx
+		defer func() {
+			if !launched {
+				rt.proxies.release(group)
+			}
+		}()
+	}
+	ctx, cancel := context.WithTimeout(parent, rt.deadline)
 	defer cancel()
-	handle, plan, reserved, err := rt.reserveRun(ctx, taskHandle, admitted)
+	handle, plan, reserved, err := rt.reserveRun(ctx, parent, proxy, taskHandle, admitted)
 	if err != nil || reserved == nil {
 		return handle, err
 	}
 	launched = true
-	go rt.execute(plan, reserved, c.release)
+	go rt.execute(plan, reserved, func() {
+		if group != nil {
+			rt.proxies.release(group)
+		}
+		c.release()
+	})
 	return handle, nil
 }
 
 // reserved is what a launched run releases when its engine returns. ctx is the
-// run's context, a child of the generation context that CancelRun cancels.
+// run's context, a child of its path generation that CancelRun cancels.
 type reserved struct {
 	status    *runStatus
 	ctx       context.Context
@@ -168,7 +188,7 @@ type reserved struct {
 // reservation with the earlier handle for a repeated start.
 // requirement-ref: REQ-SCHEDULE-0034
 // requirement-ref: REQ-EXECUTION-0027
-func (rt *runtime) reserveRun(ctx context.Context, taskHandle string, a admission.Admitted) (string, execution.Plan, *reserved, error) {
+func (rt *runtime) reserveRun(ctx, parent context.Context, proxy proxySnapshot, taskHandle string, a admission.Admitted) (string, execution.Plan, *reserved, error) {
 	notDue := fail(runNotDue)
 	c, key, run := a.Candidate(), a.Key(), rt.run
 	s := c.Schedule
@@ -221,7 +241,7 @@ func (rt *runtime) reserveRun(ctx context.Context, taskHandle string, a admissio
 		return "", execution.Plan{}, nil, notDue
 	}
 	path, err := run.paths.plan(ctx, pathRequest{TaskID: c.ID, Test: a.Test(), MaxAttempts: attempts, MaxDurationMS: a.AttemptLimits().DurationMS,
-		NetworkPath: c.Execution.NetworkPath, Proxy: rt.proxy()})
+		NetworkPath: c.Execution.NetworkPath, Proxy: proxy})
 	if err != nil || path.Result == nil || path.Context == nil || path.Dialers == nil {
 		return "", execution.Plan{}, nil, notDue
 	}
@@ -230,13 +250,13 @@ func (rt *runtime) reserveRun(ctx context.Context, taskHandle string, a admissio
 	var check execution.PathCheck
 	if c.Execution.NetworkPath == "proxy" {
 		entry, _ := run.registry.Lookup(a.Test())
-		check = proxyCheck{configured: rt.proxy().configured(), permitted: a.Paths().Proxy, rule: entry.Proxy, parameters: c.Parameters}
+		check = proxyCheck{configured: proxy.configured(), permitted: a.Paths().Proxy, rule: entry.Proxy, parameters: c.Parameters}
 	}
 	if !execution.NetworkConditions(c.Execution.Network, path.Access) {
 		return "", execution.Plan{}, nil, notDue
 	}
 
-	runCtx, cancelRun := context.WithCancelCause(rt.ctx)
+	runCtx, cancelRun := context.WithCancelCause(parent)
 	r := &reserved{status: newRunStatus(), ctx: runCtx, cancel: cancelRun, exclusive: exclusive, results: attempts}
 	handle, err := rt.addRun(runRecord{taskHandle: taskHandle, status: r.status, cancel: cancelRun})
 	if err != nil {
@@ -288,8 +308,8 @@ func (rt *runtime) addRun(r runRecord) (string, error) {
 
 // execute runs on its own goroutine and holds the generation reservation, so
 // lifecycle transitions wait for it. It uses the run context, which CancelRun
-// and every lifecycle transition cancel; the engine records the cancelled
-// attempt with cancelled_by_host and starts no further attempt. A panic below
+// and full lifecycle transitions cancel; proxy changes cancel only proxy runs.
+// The engine records the cancellation cause and starts no further attempt. A panic below
 // the engine ends the run without crashing the host.
 func (rt *runtime) execute(plan execution.Plan, r *reserved, release func()) {
 	defer release()
