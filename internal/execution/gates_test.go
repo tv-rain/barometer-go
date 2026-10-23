@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/tv-rain/barometer-go/internal/execution"
+	"github.com/tv-rain/barometer-go/internal/model/observation"
 	"github.com/tv-rain/barometer-go/internal/model/task"
 	"github.com/tv-rain/barometer-go/internal/platform"
 	"github.com/tv-rain/barometer-go/internal/testkit/capability"
@@ -14,7 +15,10 @@ func direct() task.Execution {
 	return task.Execution{NetworkPath: "direct", Network: task.NetworkRequirements{VPNPolicy: "any"}}
 }
 
-// Network conditions this build cannot determine are unsatisfied.
+// Network conditions this build cannot evaluate are unsatisfied: the proxy
+// path and Network Context requirements (DEV-645, DEV-647). Transport, VPN
+// and validation conditions pass the static gate and are evaluated against
+// the access context.
 func TestNetworkConditionsFailClosed(t *testing.T) {
 	if !execution.NetworkSatisfiable(direct()) {
 		t.Fatal("direct path without conditions")
@@ -22,10 +26,6 @@ func TestNetworkConditionsFailClosed(t *testing.T) {
 	for name, edit := range map[string]func(*task.Execution){
 		"proxy path":        func(e *task.Execution) { e.NetworkPath = "proxy" },
 		"unset path":        func(e *task.Execution) { e.NetworkPath = "" },
-		"transports":        func(e *task.Execution) { e.Network.AllowedTransports = []string{"wifi"} },
-		"vpn exclude":       func(e *task.Execution) { e.Network.VPNPolicy = "exclude" },
-		"vpn unset":         func(e *task.Execution) { e.Network.VPNPolicy = "" },
-		"require validated": func(e *task.Execution) { e.Network.RequireValidated = true },
 		"context fields":    func(e *task.Execution) { e.Network.Context.RequiredFields = []string{"country_code"} },
 		"country allowlist": func(e *task.Execution) { e.Network.Context.AllowedCountryCodes = []string{"NL"} },
 	} {
@@ -33,6 +33,26 @@ func TestNetworkConditionsFailClosed(t *testing.T) {
 		edit(&e)
 		if execution.NetworkSatisfiable(e) || (execution.Gates{Execution: e}).Satisfied(context.Background()) {
 			t.Fatal(name)
+		}
+	}
+	for name, edit := range map[string]func(*task.Execution){
+		"transports":        func(e *task.Execution) { e.Network.AllowedTransports = []string{"wifi"} },
+		"vpn exclude":       func(e *task.Execution) { e.Network.VPNPolicy = "exclude" },
+		"require validated": func(e *task.Execution) { e.Network.RequireValidated = true },
+	} {
+		e := direct()
+		edit(&e)
+		if !execution.NetworkSatisfiable(e) || !execution.AccessRequired(e.Network) {
+			t.Fatal(name)
+		}
+	}
+	if execution.AccessRequired(direct().Network) {
+		t.Fatal("access required without a condition")
+	}
+	// An unset or unregistered vpn_policy never satisfies a condition.
+	for _, policy := range []string{"", "prefer", "ANY"} {
+		if execution.NetworkConditions(task.NetworkRequirements{VPNPolicy: policy}, observation.Access{VPNState: "not_detected"}) {
+			t.Fatal(policy)
 		}
 	}
 }

@@ -23,12 +23,10 @@ import (
 	"github.com/tv-rain/barometer-go/internal/persistence/pending"
 	"github.com/tv-rain/barometer-go/internal/platform"
 	"github.com/tv-rain/barometer-go/internal/registry"
-	"github.com/tv-rain/barometer-go/internal/result"
 	"github.com/tv-rain/barometer-go/internal/taskdecode"
 	"github.com/tv-rain/barometer-go/internal/testkit"
 	"github.com/tv-rain/barometer-go/internal/testkit/capability"
 	"github.com/tv-rain/barometer-go/internal/testkit/ledger"
-	"github.com/tv-rain/barometer-go/internal/testkit/loopback"
 	recordstore "github.com/tv-rain/barometer-go/internal/testkit/records"
 )
 
@@ -45,10 +43,15 @@ type runFakes struct {
 	output  pendingStore // the pending record port
 	ledger  *ledger.Ledger
 	paths   *fakePaths
+	network *capability.Network
 	runner  *runRunner
 	consent *capability.Consent
 	device  *capability.Device
 }
+
+// defaultAccess is the harness platform's reading unless a test changes it:
+// wifi, VPN state unknown, IPv4 yes, IPv6 and validation unknown, generation 1.
+var defaultAccess = platform.AccessState{Generation: 1, Type: platform.NetworkWiFi, IPv4: platform.AvailabilityYes}
 
 // fixedJitter always draws the same offset, capped at the maximum.
 type fixedJitter time.Duration
@@ -58,9 +61,14 @@ func (j fixedJitter) Jitter(max time.Duration) time.Duration { return min(time.D
 func (h *harness) bindRunAdapters(t *testing.T) {
 	t.Helper()
 	base := time.Now()
+	network := capability.NewNetwork(defaultAccess)
+	inner, err := newDirectPath(runAdapters{network: network, implementation: implementation})
+	if err != nil {
+		t.Fatal("synthetic direct path rejected")
+	}
 	h.run = runFakes{clock: testkit.NewWaitClock(base.Add(h.clock.Clock.Now().Sub(base))), output: pendingStore{recordstore.New()}, ledger: ledger.New(),
-		paths: &fakePaths{t: t}, runner: newRunRunner(), consent: capability.NewConsent(platform.ConsentValid), device: capability.NewDevice(platform.DeviceState{})}
-	h.adapters.run = runAdapters{clock: h.run.clock, jitter: fixedJitter(0), ledger: h.run.ledger, paths: h.run.paths,
+		paths: &fakePaths{inner: inner}, network: network, runner: newRunRunner(), consent: capability.NewConsent(platform.ConsentValid), device: capability.NewDevice(platform.DeviceState{})}
+	h.adapters.run = runAdapters{clock: h.run.clock, jitter: fixedJitter(0), ledger: h.run.ledger, paths: h.run.paths, network: network, implementation: implementation,
 		consent: h.run.consent, device: h.run.device, zone: capability.Zone{Loc: time.UTC}}
 	h.adapters.records = h.run.output.Store
 }
@@ -200,9 +208,10 @@ func (r *runRunner) Run(ctx context.Context, in measurement.Input) (measurement.
 	return measurement.Output{Outcome: "connected", Observations: []observation.Observation{o}, Usage: measurement.Usage{Connections: 1}}, nil
 }
 
-// fakePaths binds a direct path with a fixed synthetic Network Context.
+// fakePaths wraps the production direct path over the harness's fake
+// platform network, counts reservations and can fail or panic.
 type fakePaths struct {
-	t     *testing.T
+	inner *directPath
 	mu    sync.Mutex
 	calls int
 	fail  bool
@@ -217,7 +226,7 @@ func (p *fakePaths) Calls() int {
 	return p.calls
 }
 
-func (p *fakePaths) direct(_ context.Context, r pathRequest) (pathPlan, error) {
+func (p *fakePaths) direct(ctx context.Context, r pathRequest) (pathPlan, error) {
 	p.mu.Lock()
 	p.calls++
 	fail, panics := p.fail, p.panic
@@ -228,29 +237,7 @@ func (p *fakePaths) direct(_ context.Context, r pathRequest) (pathPlan, error) {
 	if fail {
 		return pathPlan{}, errors.New("synthetic path failure")
 	}
-	cd, err := observation.NewContextDecoder(observation.Contract, observation.ContextApprovals{})
-	if err != nil {
-		return pathPlan{}, err
-	}
-	path, err := observation.NewPath(1, 0, "direct", "")
-	if err != nil {
-		return pathPlan{}, err
-	}
-	d, err := result.New(result.Binding{TaskID: r.TaskID, Output: result.Output{Test: model.Test{ID: r.Test.ID, Version: r.Test.Version, ResultVersion: result.Contract}},
-		MaxAttempts: r.MaxAttempts, MaxDurationMS: r.MaxDurationMS, Implementation: implementation, ContextDecoder: cd, Path: path, AccessGeneration: 1})
-	if err != nil {
-		return pathPlan{}, err
-	}
-	return pathPlan{Implementation: implementation, Result: d, Context: contextSource{cd: cd, path: path}, Dialers: &loopback.Dialers{}}, nil
-}
-
-type contextSource struct {
-	cd   *observation.ContextDecoder
-	path observation.Path
-}
-
-func (c contextSource) Capture(context.Context) (observation.NetworkContext, error) {
-	return c.cd.Decode([]byte(`{"access":{"network_type":"wifi","vpn_state":"unknown","ipv4_available":"yes","ipv6_available":"unknown","validated":"unknown","network_changed":false},"egress":{"status":"unavailable","lookup_source":"none","network_path":"direct"}}`), c.path)
+	return p.inner.direct(ctx, r)
 }
 
 // tcpCodec is the SYN-01 codec under the TCP-01 identifier.
@@ -672,11 +659,15 @@ func TestStartRunDeviceConstraints(t *testing.T) {
 	}
 }
 
-// Network conditions this build cannot determine are unsatisfied, so such a
-// task never runs and never reaches the path seam.
+// StartRun evaluates transport, VPN and validation conditions against the
+// access context read at reservation (DEV-644). An unsatisfied or
+// undeterminable condition returns run_not_due before the run exists: the
+// path reads the access context once, and no runner call or result follows.
+// When the platform reports the required values, the same task runs.
 func TestStartRunNetworkConstraintsAreUnsatisfied(t *testing.T) {
+	ready := platform.AccessState{Generation: 1, Type: platform.NetworkCellular, VPN: platform.VPNDetected, IPv4: platform.AvailabilityYes, Validated: platform.AvailabilityYes}
 	for name, execution := range map[string]string{
-		"allowed transports": `"network":{"allowed_transports":["wifi"]}`,
+		"allowed transports": `"network":{"allowed_transports":["cellular"]}`,
 		"vpn exclude":        `"network":{"vpn_policy":"exclude"}`,
 		"vpn require":        `"network":{"vpn_policy":"require"}`,
 		"require validated":  `"network":{"require_validated":true}`,
@@ -684,11 +675,25 @@ func TestStartRunNetworkConstraintsAreUnsatisfied(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			h := runningHarness(t)
 			c := h.initialized(t)
-			if _, err := c.StartRun(h.admit(t, c, runTask("net-1", "", execution, false))); codeOf(err) != "run_not_due" {
+			th := h.admit(t, c, runTask("net-1", "", execution, false))
+			if _, err := c.StartRun(th); codeOf(err) != "run_not_due" {
 				t.Fatal(codeOf(err))
 			}
-			if h.run.paths.Calls() != 0 || h.run.runner.Calls() != 0 {
-				t.Fatal("unsatisfied network condition reached the path or runner")
+			if h.run.paths.Calls() != 1 || h.run.runner.Calls() != 0 || h.run.output.Calls() != 0 {
+				t.Fatal("unsatisfied network condition reached the runner or wrote a result")
+			}
+			s := ready
+			if name == "vpn exclude" {
+				s.VPN = platform.VPNNotDetected
+			}
+			h.run.network.Set(s)
+			rh, err := c.StartRun(th)
+			if err != nil {
+				t.Fatalf("satisfied condition: %s", codeOf(err))
+			}
+			waitTerminal(t, c, rh)
+			if h.run.runner.Calls() != 1 {
+				t.Fatal("satisfied network condition did not run")
 			}
 		})
 	}

@@ -194,6 +194,23 @@ var importRules = []importRule{
 			return !standardLibrary(imp) || directIO(imp)
 		},
 	},
+	{
+		// DEV-644: the direct-path dialer is the one production socket owner.
+		// Protocol primitives are listed for their planned owner; none exists.
+		name:      "only the direct path opens sockets",
+		applies:   func(pkg string) bool { return !underAny(pkg, "execution", "protocol", "testkit") },
+		forbidden: func(_, imp string) bool { return networkIO(imp) },
+	},
+	{
+		name:    "network context imports only models and platform capability contracts",
+		applies: func(pkg string) bool { return underAny(pkg, "networkcontext") },
+		forbidden: func(_, imp string) bool {
+			if moduleImport(imp) {
+				return !underAny(imp, "model", "jsondecode") && imp != internalPath("platform")
+			}
+			return !standardLibrary(imp)
+		},
+	},
 }
 
 func checkImports(files []importFile) []string {
@@ -338,6 +355,12 @@ func TestDependencyRulesRejectForbiddenImports(t *testing.T) {
 		{"runner contract imports a runner", file("measurement", false, internalPath("measurement/tcp01")), importRules[14].name},
 		{"runner contract imports execution", file("measurement", false, internalPath("execution")), importRules[14].name},
 		{"runner contract opens sockets", file("measurement", false, "net"), importRules[14].name},
+		{"network context opens sockets", file("networkcontext", false, "net"), importRules[15].name},
+		{"runner opens sockets", file("measurement/tcp01", false, "net"), importRules[15].name},
+		{"root facade opens sockets", importFile{path: "synthetic.go", pkg: modulePath, imports: []string{"net/http"}}, importRules[15].name},
+		{"network context imports execution", file("networkcontext", false, internalPath("execution")), importRules[16].name},
+		{"network context imports results", file("networkcontext", false, internalPath("result")), importRules[16].name},
+		{"network context imports a platform adapter", file("networkcontext", false, internalPath("platform/android")), importRules[16].name},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -373,6 +396,8 @@ func TestDependencyRulesRejectForbiddenImports(t *testing.T) {
 		file("bundle", false, internalPath("config"), internalPath("result"), internalPath("model/result")),
 		file("platform", false, "context", "time"),
 		file("platform/android", false, internalPath("platform")),
+		file("execution", false, "net", internalPath("networkcontext")),
+		file("networkcontext", false, internalPath("platform"), internalPath("model/observation"), "encoding/json"),
 		{path: "synthetic.go", pkg: modulePath, imports: []string{internalPath("execution")}},
 	}
 	if v := checkImports(allowed); len(v) != 0 {
@@ -381,10 +406,17 @@ func TestDependencyRulesRejectForbiddenImports(t *testing.T) {
 }
 
 // The admission path cannot reach the network: the complete transitive
-// dependency closure of the root package and of internal/admission, as built
-// for the host platform, contains no network, TLS, process-execution or
-// plugin package. Rejected input therefore produces no network activity
-// through code linked into the facade. Activity through a future trusted
+// dependency closure of internal/admission, as built for the host platform,
+// contains no network, TLS, process-execution or plugin package. Since
+// DEV-644 the root package links the direct-path dialer of
+// internal/execution, so its closure contains package net; the check then
+// requires that internal/execution is the only module package in that closure
+// importing a network package, and that the closure contains no TLS,
+// process-execution, plugin or testkit package. The import rule "only the
+// direct path opens sockets" keeps the root package and admission from
+// importing network packages themselves. Rejected input therefore produces no
+// network activity through code linked into the facade unless it reaches the
+// engine, which admission precedes. Activity through a future trusted
 // adapter seam, and builds for other platforms, are not covered.
 func TestAdmissionHasNoNetworkDependency(t *testing.T) {
 	// Prefer the toolchain running this test, which go test exports as GOROOT.
@@ -395,19 +427,43 @@ func TestAdmissionHasNoNetworkDependency(t *testing.T) {
 		}
 	}
 	for _, pkg := range []string{".", "./internal/admission"} {
-		out, err := exec.Command(gocmd, "list", "-deps", pkg).Output()
+		out, err := exec.Command(gocmd, "list", "-deps", "-f", `{{.ImportPath}} {{join .Imports " "}}`, pkg).Output()
 		if err != nil {
 			t.Fatalf("go list %s: %v", pkg, err)
 		}
-		deps := strings.Fields(string(out))
+		var deps []string
+		importers := map[string][]string{} // network package -> module packages importing it
+		for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+			fields := strings.Fields(line)
+			if len(fields) == 0 {
+				continue
+			}
+			deps = append(deps, fields[0])
+			for _, imp := range fields[1:] {
+				if moduleImport(fields[0]) && networkIO(imp) {
+					importers[imp] = append(importers[imp], fields[0])
+				}
+			}
+		}
 		// Guard against a vacuous pass on an empty or truncated listing.
 		if len(deps) < 10 || !slices.Contains(deps, internalPath("admission")) || !slices.Contains(deps, internalPath("jsondecode")) {
 			t.Fatalf("go list %s returned an implausible closure", pkg)
 		}
+		root := pkg == "."
 		for _, dep := range deps {
-			if networkIO(dep) || under(dep, "crypto/tls") || under(dep, "os/exec") || dep == "plugin" || under(dep, internalPath("testkit")) {
+			if networkIO(dep) && !root || under(dep, "crypto/tls") || under(dep, "os/exec") || dep == "plugin" || under(dep, internalPath("testkit")) {
 				t.Errorf("%s transitively depends on %s", pkg, dep)
 			}
+		}
+		for imp, by := range importers {
+			for _, p := range by {
+				if p != internalPath("execution") {
+					t.Errorf("%s: %s imports %s", pkg, p, imp)
+				}
+			}
+		}
+		if root && !slices.Contains(importers["net"], internalPath("execution")) {
+			t.Fatalf("go list %s: the direct-path dialer is missing from the closure", pkg)
 		}
 	}
 }

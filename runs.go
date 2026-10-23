@@ -9,6 +9,7 @@ import (
 
 	"github.com/tv-rain/barometer-go/internal/admission"
 	"github.com/tv-rain/barometer-go/internal/execution"
+	"github.com/tv-rain/barometer-go/internal/model/observation"
 	model "github.com/tv-rain/barometer-go/internal/model/result"
 	"github.com/tv-rain/barometer-go/internal/model/task"
 	"github.com/tv-rain/barometer-go/internal/persistence"
@@ -28,11 +29,12 @@ const (
 	runTerminal = "terminal"
 )
 
-// pathSource is the interim seam for the direct path of one run, defined from
-// this consumer. It supplies the run's Network Context source, attempt-scoped
-// dialers and the result decoder bound to the task. Path selection, proxy
-// handling and Network Context acquisition belong to Network paths and context
-// (DEV-578); a task that needs any of them never reaches this seam.
+// pathSource is the seam for the direct path of one run, defined from this
+// consumer. It reads the run's access context at reservation and supplies the
+// run's context source, attempt-scoped dialers and the result decoder bound to
+// the task. directPath is the production source (DEV-644); tests may bind a
+// scripted one. The proxy path (DEV-645) and egress lookup (DEV-647) are not
+// implemented; a task that needs either never reaches this seam.
 type pathSource interface {
 	direct(ctx context.Context, r pathRequest) (pathPlan, error)
 }
@@ -43,8 +45,11 @@ type pathRequest struct {
 	MaxAttempts, MaxDurationMS int
 }
 
+// pathPlan carries Access, the access values read at reservation, against
+// which StartRun evaluates the task's network conditions.
 type pathPlan struct {
 	Implementation model.Implementation
+	Access         observation.Access
 	Result         *result.Decoder
 	Context        execution.ContextSource
 	Dialers        execution.DialerSource
@@ -215,6 +220,9 @@ func (rt *runtime) reserveRun(ctx context.Context, taskHandle string, a admissio
 	if err != nil || path.Result == nil || path.Context == nil || path.Dialers == nil {
 		return "", execution.Plan{}, nil, notDue
 	}
+	if !execution.NetworkConditions(c.Execution.Network, path.Access) {
+		return "", execution.Plan{}, nil, notDue
+	}
 
 	runCtx, cancelRun := context.WithCancelCause(rt.ctx)
 	r := &reserved{status: newRunStatus(), ctx: runCtx, cancel: cancelRun, exclusive: exclusive, results: attempts}
@@ -245,7 +253,7 @@ func (rt *runtime) reserveRun(ctx context.Context, taskHandle string, a admissio
 	rt.runSet.active++
 	rt.runSet.results += attempts
 	rt.runSet.exclusive = rt.runSet.exclusive || exclusive
-	plan := execution.Plan{TaskID: c.ID, Test: a.Test(), Parameters: c.Parameters, Schedule: s, Conditions: start,
+	plan := execution.Plan{TaskID: c.ID, Test: a.Test(), Parameters: c.Parameters, Schedule: s, Network: c.Execution.Network, Conditions: start,
 		Deadline:       time.Duration(a.AttemptLimits().DurationMS) * time.Millisecond,
 		Limits:         a.AttemptLimits(),
 		Implementation: path.Implementation, Result: path.Result, Context: path.Context, Dialers: path.Dialers, Preconditions: gates}

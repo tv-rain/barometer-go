@@ -11,6 +11,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/model/observation"
 	model "github.com/tv-rain/barometer-go/internal/model/result"
 	"github.com/tv-rain/barometer-go/internal/model/task"
+	"github.com/tv-rain/barometer-go/internal/networkcontext"
 	"github.com/tv-rain/barometer-go/internal/registry"
 	"github.com/tv-rain/barometer-go/internal/result"
 	"github.com/tv-rain/barometer-go/internal/validation"
@@ -37,6 +38,14 @@ var (
 // other cause, including a host or lifecycle cancellation of the run context,
 // is recorded as cancelled_by_host.
 var errDeadline = errors.New("execution: attempt deadline exceeded")
+
+// errNetworkChanged is the cancellation cause of an access-network generation
+// change during an attempt.
+var errNetworkChanged = errors.New("execution: access network changed")
+
+// errSkipped reports a retry that did not start because its network
+// conditions were unsatisfied; it produces no result.
+var errSkipped = errors.New("execution: retry conditions unsatisfied")
 
 // Clock is the engine's time source. Now must carry a monotonic reading for
 // result timing. Wait blocks for d on this clock or until ctx is done, and then
@@ -66,11 +75,13 @@ type Output interface {
 	Capacity(ctx context.Context) (int, error)
 }
 
-// ContextSource supplies the attempt's Network Context for the run's path. It
-// is an interim seam: acquisition, caching and path consistency belong to the
-// Network paths and context work.
+// ContextSource captures the attempt's access snapshot for the run's path:
+// the access values that network conditions are evaluated against, the
+// Network Context attached to the result and the watch for an
+// access-network generation change. networkcontext.Direct is the direct-path
+// source; egress lookup and the proxy path belong to DEV-647 and DEV-645.
 type ContextSource interface {
-	Capture(ctx context.Context) (observation.NetworkContext, error)
+	Capture(ctx context.Context) (networkcontext.Snapshot, error)
 }
 
 // DialerSource supplies a fresh attempt-scoped dialer for each attempt number.
@@ -133,12 +144,14 @@ func NewEngine(r *registry.Registry, c Clock, j Jitter, o Output) (*Engine, erro
 // be bound to the same task ID, test and implementation. Deadline is the
 // effective max_duration_ms of each attempt. Limits are the effective attempt
 // limits after admission; the engine meters their byte and connection fields
-// and ignores DurationMS, which Deadline carries.
+// and ignores DurationMS, which Deadline carries. Network holds the task's
+// network conditions, evaluated against each attempt's access snapshot.
 type Plan struct {
 	TaskID         string
 	Test           task.TestVersion
 	Parameters     task.Parameters
 	Schedule       task.Schedule
+	Network        task.NetworkRequirements
 	Deadline       time.Duration
 	Limits         task.AttemptLimits
 	Conditions     validation.StartContext
@@ -169,7 +182,10 @@ type Report struct {
 // invalid plan or a missing runner. A run whose context has already ended
 // records its first attempt as not_run with the cancellation reason and does
 // nothing else. Otherwise it fails closed on an ineligible run or unsatisfied
-// preconditions, which are evaluated again before a retry. Each terminal
+// preconditions, which are evaluated again before a retry. Network conditions
+// are evaluated in each attempt against its own access snapshot: unsatisfied
+// in the first attempt, it is not_run with constraints_unsatisfied; unsatisfied
+// in a retry, the run ends with no further attempt or result. Each terminal
 // attempt is built through result construction and written to the output port
 // before the next decision. A retry happens only when the attempt's reason is
 // a retry candidate, the schedule permits it (validation.RetryEligible) both
@@ -217,6 +233,9 @@ func (e *Engine) Run(ctx context.Context, p Plan) (Report, error) {
 			break
 		}
 		a, usage, v, err := e.attempt(ctx, p, runner, report.RunID, n)
+		if errors.Is(err, errSkipped) {
+			break
+		}
 		if err != nil {
 			return report, err
 		}
@@ -241,6 +260,8 @@ func stopReason(ctx context.Context) task.ExecutionReason {
 		return task.AttemptDeadlineExceeded
 	case errors.Is(cause, errBudget):
 		return task.ResourceLimit
+	case errors.Is(cause, errNetworkChanged):
+		return task.NetworkChanged
 	}
 	return task.CancelledByHost
 }
@@ -301,13 +322,45 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 	stopTimer := e.clock.AfterFunc(p.Deadline, func() { cancel(errDeadline) })
 	defer stopTimer()
 
-	nc, err := p.Context.Capture(actx)
+	snap, err := p.Context.Capture(actx)
 	if actx.Err() != nil {
 		a, v, err := e.stopped(p, pending, stopReason(actx), nil, runID, n, started)
 		return a, measurement.Usage{}, v, err
 	}
+	// An access condition that cannot be determined or is not met is
+	// constraints_unsatisfied; a retry it prevents is not attempted
+	// (REQ-EXECUTION-0031). Without such a condition, a failed capture
+	// leaves the attempt without the context its result requires.
+	if err == nil && !NetworkConditions(p.Network, snap.Access()) || err != nil && AccessRequired(p.Network) {
+		if n > 1 {
+			return Attempt{}, measurement.Usage{}, result.Value{}, errSkipped
+		}
+		a, v, err := e.stopped(p, pending, task.ConstraintsUnsatisfied, nil, runID, n, started)
+		return a, measurement.Usage{}, v, err
+	}
+	var stable, changed observation.NetworkContext
+	if err == nil {
+		stable, err = snap.Context(false)
+	}
+	if err == nil {
+		changed, err = snap.Context(true)
+	}
 	if err != nil {
-		a, v, err := e.stopped(p, pending, task.NetworkContextUnavailable, nil, runID, n, started)
+		a, v, err := e.stopped(p, pending, task.InternalError, nil, runID, n, started)
+		return a, measurement.Usage{}, v, err
+	}
+	// A generation change from the capture on ends the attempt
+	// (REQ-CONTEXT-0025); its context then records network_changed.
+	stopWatch := snap.Watch(func() { cancel(errNetworkChanged) })
+	defer stopWatch()
+	contextFor := func(reason task.ExecutionReason) *observation.NetworkContext {
+		if reason == task.NetworkChanged {
+			return &changed
+		}
+		return &stable
+	}
+	if actx.Err() != nil {
+		a, v, err := e.stopped(p, pending, stopReason(actx), nil, runID, n, started)
 		return a, measurement.Usage{}, v, err
 	}
 	dialer, err := p.Dialers.Dialer(n)
@@ -329,13 +382,13 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 		if s.Started() {
 			at = running
 		}
-		a, v, err := e.stopped(p, at, reason, &nc, runID, n, started)
+		a, v, err := e.stopped(p, at, reason, contextFor(reason), runID, n, started)
 		return a, usage, v, err
 	}
 	// An exhausted budget stopped the active operation before the runner
 	// produced this outcome, so the attempt is incomplete (REQ-LIMIT-0027).
 	if errors.Is(context.Cause(actx), errBudget) {
-		a, v, err := e.stopped(p, running, task.ResourceLimit, &nc, runID, n, started)
+		a, v, err := e.stopped(p, running, task.ResourceLimit, &stable, runID, n, started)
 		return a, usage, v, err
 	}
 	completed, _ := running.Complete()
@@ -343,13 +396,13 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 	if err != nil {
 		return Attempt{}, measurement.Usage{}, result.Value{}, err
 	}
-	r.NetworkContext = &nc
+	r.NetworkContext = &stable
 	r.Measurement = &model.Measurement{Outcome: out.Outcome, Observations: out.Observations}
 	if v, err := p.Result.Build(r); err == nil {
 		return completed, usage, v, nil
 	}
 	// Output the test contract rejects is not retained as a measurement.
-	a, v, err := e.stopped(p, running, task.InternalError, &nc, runID, n, started)
+	a, v, err := e.stopped(p, running, task.InternalError, &stable, runID, n, started)
 	return a, usage, v, err
 }
 
