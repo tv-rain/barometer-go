@@ -410,9 +410,10 @@ func TestDependencyRulesRejectForbiddenImports(t *testing.T) {
 // dependency closure of internal/admission, as built for the host platform,
 // contains no network, TLS, process-execution or plugin package. Since
 // DEV-644 the root package links the direct-path dialer of
-// internal/execution, so its closure contains package net; the check then
+// internal/execution, so its closure contains package net, and since DEV-647
+// crypto/tls for the Network Context endpoint request; the check then
 // requires that internal/execution is the only module package in that closure
-// importing a network package, and that the closure contains no TLS,
+// importing a network or TLS package, and that the closure contains no
 // process-execution, plugin or testkit package. The import rule "only the
 // direct path opens sockets" keeps the root package and admission from
 // importing network packages themselves. Rejected input therefore produces no
@@ -433,7 +434,8 @@ func TestAdmissionHasNoNetworkDependency(t *testing.T) {
 			t.Fatalf("go list %s: %v", pkg, err)
 		}
 		var deps []string
-		importers := map[string][]string{} // network package -> module packages importing it
+		importers := map[string][]string{}    // network package -> module packages importing it
+		tlsImporters := map[string][]string{} // TLS package -> module packages importing it
 		for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
 			fields := strings.Fields(line)
 			if len(fields) == 0 {
@@ -444,6 +446,9 @@ func TestAdmissionHasNoNetworkDependency(t *testing.T) {
 				if moduleImport(fields[0]) && networkIO(imp) {
 					importers[imp] = append(importers[imp], fields[0])
 				}
+				if moduleImport(fields[0]) && under(imp, "crypto/tls") {
+					tlsImporters[imp] = append(tlsImporters[imp], fields[0])
+				}
 			}
 		}
 		// Guard against a vacuous pass on an empty or truncated listing.
@@ -452,8 +457,15 @@ func TestAdmissionHasNoNetworkDependency(t *testing.T) {
 		}
 		root := pkg == "."
 		for _, dep := range deps {
-			if networkIO(dep) && !root || under(dep, "crypto/tls") || under(dep, "os/exec") || dep == "plugin" || under(dep, internalPath("testkit")) {
+			if (networkIO(dep) || under(dep, "crypto/tls")) && !root || under(dep, "os/exec") || dep == "plugin" || under(dep, internalPath("testkit")) {
 				t.Errorf("%s transitively depends on %s", pkg, dep)
+			}
+		}
+		for imp, by := range tlsImporters {
+			for _, p := range by {
+				if p != internalPath("execution") {
+					t.Errorf("%s: %s imports %s", pkg, p, imp)
+				}
 			}
 		}
 		for imp, by := range importers {

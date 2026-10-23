@@ -223,8 +223,8 @@ func TestCcResultExecutionObject(t *testing.T) {
 // Network-condition family cases (DEV-644). Each run uses the production
 // direct-path context source over the fake platform network and a recording
 // loopback dialer source, so a run that does not start shows no dialer issued
-// and no runner call. Egress Network Context requirements are not exercised:
-// admission rejects them until egress lookup exists (DEV-647).
+// and no runner call. Egress Network Context requirements run in
+// egress_test.go against synthetic context endpoints.
 
 // networkTask decodes a TCP-01 task whose execution carries the given members
 // after limits, so defaults (vpn_policy any) are the decoder's.
@@ -286,9 +286,9 @@ var ready = platform.AccessState{Generation: 1, Type: platform.NetworkWiFi, VPN:
 // CC-EXECUTION-FIELDS-NETWORK: a required network condition the platform
 // cannot determine is unsatisfied and the attempt is not_run with
 // constraints_unsatisfied, with no network operation; unknown never satisfies
-// a condition. The same task runs once the platform reports the values. The
-// required egress context row stays blocked on DEV-647: until then the static
-// gate refuses it, which this case also asserts.
+// a condition. The same task runs once the platform reports the values. A
+// required egress context field that no lookup can supply is
+// network_context_unavailable (DEV-647), with no request and no test run.
 // requirement-ref: REQ-EXECUTION-0031
 func TestCcExecutionFieldsNetwork(t *testing.T) {
 	cases := []struct {
@@ -327,9 +327,13 @@ func TestCcExecutionFieldsNetwork(t *testing.T) {
 		})
 	}
 	t.Run("required egress context field", func(t *testing.T) {
-		e := task.Execution{NetworkPath: "direct", Network: task.NetworkRequirements{VPNPolicy: "any", Context: task.ContextRequirements{RequiredFields: []string{"country_code"}}}}
-		if execution.NetworkSatisfiable(e) {
-			t.Fatal("egress requirement satisfiable without egress lookup")
+		n, err := networkTask(t, `"network":{"context":{"required_fields":["country_code"]}}`)
+		if err != nil {
+			t.Fatal(err)
+		}
+		f, r := runUnder(t, n, ready, false)
+		if r.Execution.State != "not_run" || r.Execution.Reason != "network_context_unavailable" || f.runner.Calls() != 0 || len(f.dialers.Issued()) != 0 {
+			t.Fatalf("unexpected attempt: %+v", r.Execution)
 		}
 	})
 }
@@ -339,7 +343,8 @@ func TestCcExecutionFieldsNetwork(t *testing.T) {
 // vpn_policy follows the public table; require_validated runs only on the
 // platform's validated yes. The library internal check of REQ-EXECUTION-0016
 // is not implemented (GO-SPEC-ISSUE-013), so the row that would use it is
-// not executed; Network Context rows stay blocked on DEV-647.
+// not executed; the Network Context rows run in
+// TestCcExecutionFieldsNetworkFieldsNetworkContextRequirements.
 // requirement-ref: REQ-EXECUTION-0016
 // requirement-ref: REQ-EXECUTION-0017
 func TestCcExecutionFieldsNetworkFields(t *testing.T) {
@@ -774,7 +779,7 @@ func TestCcProxyExecutionStates(t *testing.T) {
 
 // CC-PROXY-RESULT-METADATA: direct results record network_path direct
 // without connection_code; proxied results, successful or failed and with
-// egress unavailable, record network_path proxy and the configured
+// egress unavailable (no context endpoint configured), record network_path proxy and the configured
 // connection_code. No result carries the proxy host, port or generation, a
 // CONNECT request or authority echo, the proxy's response headers or body, or
 // a CONNECT status class.

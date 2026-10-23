@@ -662,11 +662,11 @@ Scope: Synthetic core contract cases. Passed at Go `cdbd160` ([evidence](../trac
 
 ### CC-CONTEXT-FORMAT-EGRESS-OBJECT
 
-Public source: `data-formats/network-context.md`, section **Egress Object**. Intended target: `internal/networkcontext/model.go`. Planned case location: `internal/networkcontext/cross_cutting_conformance_test.go`, `symbol:TestCcContextFormatEgressObject`.
+Public source: `data-formats/network-context.md`, section **Egress Object**. Intended target: `internal/networkcontext/model.go`. Case location: `internal/networkcontext/egress_test.go`, `symbol:TestCcContextFormatEgressObject`.
 
 Case plan: Test all status/source/path/connection-code/classification combinations, missing optional classification, and no guessed values.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. Executed by DEV-647 with a scripted fetch: unavailable, fresh primary, fresh fallback and cached egress on the direct and proxy paths, `connection_code` only on the proxy path, and missing classifications absent rather than guessed. No native, field or support claim; milestone manifest evidence remains unchanged.
 
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0006 -->
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0007 -->
@@ -698,11 +698,11 @@ Review case `RV-CC-CONTEXT-FORMAT-PROVIDER-AND-OPERATOR` (`docs/conformance/cros
 
 ### CC-CONTEXT-FORMAT-USE-IN-EXECUTION
 
-Public source: `data-formats/network-context.md`, section **Use in Execution**. Intended target: `internal/networkcontext/model.go`. Planned case location: `internal/networkcontext/cross_cutting_conformance_test.go`, `symbol:TestCcContextFormatUseInExecution`.
+Public source: `data-formats/network-context.md`, section **Use in Execution**. Intended target: `internal/networkcontext/model.go`. Case location: `internal/execution/egress_test.go`, `symbol:TestCcExecutionFieldsNetworkFieldsNetworkContextRequirements`.
 
 Case plan: Use normalized required fields and country eligibility only; reject region/ASN/provider/operator task allowlists.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. Executed by DEV-647: normalized required fields and a country allowlist are decoded and evaluated, and region, ASN, provider and operator allowlists are rejected by the task schema, also at admission in `TestGateAdmitsEgressContextRequirements`. No native, field or support claim; milestone manifest evidence remains unchanged.
 
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0013 -->
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0014 -->
@@ -712,11 +712,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-CONTEXT-FORMAT-USE-IN-RESULTS
 
-Public source: `data-formats/network-context.md`, section **Use in Results**. Intended target: `internal/networkcontext/model.go`. Planned case location: `internal/networkcontext/cross_cutting_conformance_test.go`, `symbol:TestCcContextFormatUseInResults`.
+Public source: `data-formats/network-context.md`, section **Use in Results**. Intended target: `internal/networkcontext/model.go`. Case location: `internal/execution/egress_test.go`, `symbol:TestCcContextContextLayersEgressContext`.
 
 Case plan: Test schema-permitted context carriage/deduplication and reject persistent cross-batch identity or listed private details.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. Executed by DEV-647: each result carries its own context with no deduplication or cross-batch identifier, and no result contains an endpoint name or URL, the observed or local address, the proxy endpoint or a generation. No native, field or support claim; milestone manifest evidence remains unchanged.
 
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0015 -->
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0016 -->
@@ -1016,13 +1016,13 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-EXECUTION-FIELDS-NETWORK
 
-Public source: `data-formats/task-execution.md`, section **Fields / Network**. Intended target: `internal/execution/attempt.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcExecutionFieldsNetwork`.
+Public source: `data-formats/task-execution.md`, section **Fields / Network**. Intended target: `internal/execution/attempt.go`. Case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcExecutionFieldsNetwork`.
 
 Case plan: Configure the fake platform so required network information is unavailable: network_type unknown with allowed_transports [wifi, cellular], vpn_state unknown under vpn_policy exclude and require, and context required_fields [country_code] with the egress classification unavailable. Assert for each case that no network operation is issued on the recording transport and the attempt does not run (not_run with constraints_unsatisfied for each undeterminable network condition, network_context_unavailable only for the missing required context field), and that unknown is never treated as satisfying a constraint. Assert the same task runs when the fake platform reports the required values. Requirements: REQ-EXECUTION-0031.
 
-DEV-644: `TestCcExecutionFieldsNetwork` runs the network-type, VPN-state and validation rows with the test-only fake platform network and asserts that the static gate refuses a required egress context field; the family stays planned until egress lookup produces `network_context_unavailable` for that row (DEV-647).
+DEV-644 and DEV-647: `TestCcExecutionFieldsNetwork` runs the network-type, VPN-state and validation rows with the test-only fake platform network, and a required egress field that no lookup can supply records `network_context_unavailable` with no request or test run.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. Executed with the fake platform network. No native, field or support claim; milestone manifest evidence remains unchanged.
 
 <!-- requirement-ref: REQ-EXECUTION-0031 -->
 
@@ -1034,7 +1034,7 @@ Public source: `data-formats/task-execution.md`, section **Fields / Network / Fi
 
 Case plan: Iterate allowed_transports [wifi], [cellular] and [wifi, cellular] against fake-platform network_type wifi, cellular, ethernet, other and unknown, and assert the task runs only when the reported type is in the list. Reject a task whose allowed_transports contains a value outside the initial list (wifi, cellular). Iterate vpn_policy any, exclude and require (and the omitted default any) against vpn_state detected, not_detected and unknown and assert run or do-not-run exactly per the public VPN eligibility table. Exercise require_validated true with validated yes, no and unknown, using the fake system method when available and the fake library internal check otherwise, and assert execution only on confirmed validation. Exercise context required_fields and allowed_country_codes with present, missing and non-matching values. Assert every do-not-run case issues no network operation. Requirements: REQ-EXECUTION-0016, REQ-EXECUTION-0017.
 
-DEV-644: `TestCcExecutionFieldsNetworkFields` runs the allowed-transport, VPN-policy and system-validation rows with the test-only fake platform network; the family stays planned because its Network Context rows need egress lookup (DEV-647) and its library-internal-check row is not executable while [GO-SPEC-ISSUE-013](specification-issues.md#go-spec-issue-013-library-internal-check-for-require_validated) is open.
+DEV-644: `TestCcExecutionFieldsNetworkFields` runs the allowed-transport, VPN-policy and system-validation rows with the test-only fake platform network; its Network Context rows run in `TestCcExecutionFieldsNetworkFieldsNetworkContextRequirements` since DEV-647; the family stays planned because its library-internal-check row is not executable while [GO-SPEC-ISSUE-013](specification-issues.md#go-spec-issue-013-library-internal-check-for-require_validated) is open.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -1062,11 +1062,11 @@ Scope: Synthetic core contract cases. Passed at Go `cdbd160` on the engine with 
 
 ### CC-EXECUTION-FIELDS-NETWORK-FIELDS-NETWORK-CONTEXT-REQUIREMENTS
 
-Public source: `data-formats/task-execution.md`, section **Fields / Network / Fields / Network Context Requirements**. Intended target: `internal/execution/attempt.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcExecutionFieldsNetworkFieldsNetworkContextRequirements`.
+Public source: `data-formats/task-execution.md`, section **Fields / Network / Fields / Network Context Requirements**. Intended target: `internal/execution/attempt.go`. Case location: `internal/execution/egress_test.go`, `symbol:TestCcExecutionFieldsNetworkFieldsNetworkContextRequirements`.
 
 Case plan: Exercise required_fields/allowlists, missing/invalid/unknown context, optional context failure and stricter policy. Count requests to prove no endpoint/path override by tasks.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Planned as a whole. `TestCcExecutionFieldsNetworkFieldsNetworkContextRequirements` and `TestCcContextExecutionIntegration` cover required fields and allowlists, missing, unknown and unavailable context, optional context failure and request counts showing that tasks cannot override endpoints or paths. The stricter-local-policy row needs local-policy context eligibility, which the local policy model does not define (DEV-455). Mixed-family evidence is not promoted. No support claim.
 
 <!-- requirement-ref: REQ-EXECUTION-0021 -->
 <!-- requirement-ref: REQ-EXECUTION-0022 -->
@@ -2036,11 +2036,11 @@ Scope: Host, collector or specification review; no runtime enforcement claim. No
 
 ### CC-CONTEXT-OVERVIEW
 
-Public source: `library/network-context.md`, section **Overview**. Intended target: `internal/networkcontext/acquire.go`. Planned case location: `internal/networkcontext/cross_cutting_conformance_test.go`, `symbol:TestCcContextOverview`.
+Public source: `library/network-context.md`, section **Overview**. Intended target: `internal/networkcontext/acquire.go`. Case location: `internal/execution/egress_test.go`, `symbol:TestCcContextOverview`.
 
 Case plan: Run multiple tests on one generation/path; acquire shared bounded context rather than independently repeating per test.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. Executed by DEV-647: three runs on one access-network generation and path share one endpoint request through the shared egress cache, against synthetic HTTPS endpoints. No native, field or support claim; milestone manifest evidence remains unchanged.
 
 <!-- requirement-ref: REQ-CONTEXT-0001 -->
 
@@ -2052,7 +2052,7 @@ Public source: `library/network-context.md`, section **Context Layers / Access C
 
 Case plan: Feed the Go core access context through a fake platform that also offers canary values for every forbidden item: interface name, local IPv4 and IPv6 addresses, DNS server address, SSID, BSSID, cell identifier, SIM information, subscriber identifier, carrier account information and physical location. Iterate `network_type` over `wifi`, `cellular`, `ethernet`, `other` and `unknown`, `vpn_state` over `detected`, `not_detected` and `unknown`, `ipv4_available`, `ipv6_available` and `validated` over `yes`, `no` and `unknown`, and `network_changed` over `true` and `false`. Assert the serialized access object contains exactly these six fields with the supplied normalized values. Assert serialized output of the access object, the Measurement Result, logs, cache entries and egress-endpoint requests contains none of the canary values. Reject an access input carrying any additional field. Requirements: REQ-CONTEXT-0002, REQ-CONTEXT-0003.
 
-Scope: Synthetic core contract cases. Passed at Go `cdbd160` with the test-only fake platform network ([evidence](../traceability/evidence/go-unit-cdbd160.md#CC-CONTEXT-CONTEXT-LAYERS-ACCESS-CONTEXT)); the core writes no log, and cache entries and egress-endpoint requests do not exist until DEV-647, which must re-run this case. Partial evidence only, with no native capability or support claim.
+Scope: Synthetic core contract cases. Passed at Go `cdbd160` with the test-only fake platform network ([evidence](../traceability/evidence/go-unit-cdbd160.md#CC-CONTEXT-CONTEXT-LAYERS-ACCESS-CONTEXT)); the core writes no log; since DEV-647 the egress cache holds classifications keyed only by generations and the path name, and the endpoint request carries only the request line, `Host` and `Accept` (`TestCcContextEndpointContract` in `internal/execution`), so no access value reaches either. Partial evidence only, with no native capability or support claim.
 
 <!-- requirement-ref: REQ-CONTEXT-0002 -->
 <!-- requirement-ref: REQ-CONTEXT-0003 -->
@@ -2062,11 +2062,11 @@ Scope: Synthetic core contract cases. Passed at Go `cdbd160` with the test-only 
 
 ### CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT
 
-Public source: `library/network-context.md`, section **Context Layers / Egress Context**. Intended target: `internal/networkcontext/acquire.go`. Planned case location: `internal/networkcontext/cross_cutting_conformance_test.go`, `symbol:TestCcContextContextLayersEgressContext`.
+Public source: `library/network-context.md`, section **Context Layers / Egress Context**. Intended target: `internal/networkcontext/acquire.go`. Case location: `internal/execution/egress_test.go`, `symbol:TestCcContextContextLayersEgressContext`.
 
 Case plan: Run synthetic attempts against a local synthetic classification endpoint that records the observed source address and returns `{"country_code": "NL", "region_code": "NL-NH", "asn": 64500, "classification_version": "0.1.0"}`. For a `direct` attempt, assert the egress object contains `status`, `lookup_source`, `network_path: direct`, the classification fields and `classification_version`, and no `connection_code`. For a `proxy` attempt through a scripted loopback CONNECT proxy with `connection_code` `outline_mobileproxy`, assert the lookup goes through the proxy and the egress object includes that `connection_code`. Configure the endpoint to additionally return a field carrying the observed source address and assert the response is rejected and egress reports `status: unavailable`. Assert the recorded source address never appears in serialized results, cache keys, logs or status output. Requirements: REQ-CONTEXT-0004, REQ-CONTEXT-0005, REQ-CONTEXT-0006.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. Executed by DEV-647 against a synthetic HTTPS endpoint that records the observed source address, on the direct path and through the scripted loopback CONNECT proxy: the classification and `connection_code` rows, rejection of a response returning an address, and absence of the observed address from results. The core writes no log, and cache keys hold only generations and the path name. The review case stays open and non-gating. No native, field or support claim; milestone manifest evidence remains unchanged.
 
 Review case `RV-CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT`): Human review case; not automated coverage. Reviewer role: Privacy reviewer and measurement interpretation reviewer (independent of the implementer and endpoint operator). Reviewed artifact: Egress-classification endpoint operating documentation and Go result documentation and analyst guidance for egress context at the reviewed revision. Checklist: (1) Does the endpoint operator documentation state that the source IP is classified without being returned and that its retention is minimized or avoided? (2) Is the endpoint logging configuration consistent with that minimization statement? (3) Does result and analyst guidance describe country and region as IP classification, not the user's physical location? (4) Does guidance state that ASN describes the observed egress network and may not identify the access operator, especially with VPN, proxy, carrier-grade NAT or circumvention paths? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
@@ -2080,11 +2080,11 @@ Review case `RV-CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT` (`docs/conformance/cro
 
 ### CC-CONTEXT-HOST-INITIALIZATION
 
-Public source: `library/network-context.md`, section **Host Initialization**. Intended target: `internal/networkcontext/acquire.go`. Planned case location: `internal/networkcontext/cross_cutting_conformance_test.go`, `symbol:TestCcContextHostInitialization`.
+Public source: `library/network-context.md`, section **Host Initialization**. Intended target: `internal/networkcontext/acquire.go`. Case location: `network_context_test.go`, `symbol:TestCcContextHostInitialization`.
 
 Case plan: Validate endpoint URLs/fields/independent approvals, absence fallback to access-only, immutable configuration and rejection of redirects/discovery/credentials/per-user URLs.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. Executed by DEV-647 through the root facade with synthetic adapters: approved endpoints, access-only context and no endpoint contact without configuration, rejected unapproved, non-HTTPS, credential, fragment, loopback and unknown-field configurations, no public method to change the endpoints, and a redirect that is not followed. Endpoint syntax and approval are also covered by `internal/config` tests. No native, field or support claim; milestone manifest evidence remains unchanged.
 
 <!-- requirement-ref: REQ-CONTEXT-0007 -->
 <!-- requirement-ref: REQ-CONTEXT-0008 -->
@@ -2098,11 +2098,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-CONTEXT-ENDPOINT-CONTRACT
 
-Public source: `library/network-context.md`, section **Endpoint Contract**. Intended target: `internal/networkcontext/acquire.go`. Planned case location: `internal/networkcontext/cross_cutting_conformance_test.go`, `symbol:TestCcContextEndpointContract`.
+Public source: `library/network-context.md`, section **Endpoint Contract**. Intended target: `internal/networkcontext/acquire.go`. Case location: `internal/execution/egress_test.go`, `symbol:TestCcContextEndpointContract`.
 
 Case plan: Capture one fixed HTTPS GET without identifier/target/category/cookie/auth data. Validate exact response schema, 4096-byte/5000ms limits, forbidden fields and successful unknown classifications.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. Executed by DEV-647: the request side (one `GET` with only `Host` and `Accept`, asserted on the decrypted bytes) in `internal/execution`, and the response side (strict schema, forbidden fields, a version-only response, 4,096 and 4,097 bytes, 4,999 and 5,001 ms on the engine clock) in `TestCcContextEndpointContract` of `internal/networkcontext/egress_test.go`; HTTP, TLS and size failures run in `TestContextEndpointResponses`. No native, field or support claim; milestone manifest evidence remains unchanged.
 
 <!-- requirement-ref: REQ-CONTEXT-0011 -->
 <!-- requirement-ref: REQ-CONTEXT-0012 -->
@@ -2120,11 +2120,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-CONTEXT-PATH-CONSISTENCY
 
-Public source: `library/network-context.md`, section **Path Consistency**. Intended target: `internal/networkcontext/acquire.go`. Planned case location: `internal/networkcontext/cross_cutting_conformance_test.go`, `symbol:TestCcContextPathConsistency`.
+Public source: `library/network-context.md`, section **Path Consistency**. Intended target: `internal/networkcontext/acquire.go`. Case location: `internal/execution/egress_test.go`, `symbol:TestCcProxyNetworkContext`.
 
 Case plan: Run direct/proxy/NET-05 with generation changes; assert one matching snapshot and no direct request or cache substitution during proxy-only execution.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Planned as a whole. `TestCcProxyNetworkContext` covers direct and proxy lookups on their own paths, separate direct and proxy cache entries, a proxy generation per key and no direct request during proxy-only execution; `TestCcContextExecutionIntegration` covers a generation change during acquisition. The row requiring all NET-05 steps to share one context and path snapshot needs the NET-05 runner (DEV-454). Mixed-family evidence is not promoted. No support claim.
 
 <!-- requirement-ref: REQ-CONTEXT-0017 -->
 <!-- requirement-ref: REQ-CONTEXT-0018 -->
@@ -2136,11 +2136,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-CONTEXT-ACQUISITION-AND-FALLBACK
 
-Public source: `library/network-context.md`, section **Acquisition and Fallback**. Intended target: `internal/networkcontext/acquire.go`. Planned case location: `internal/networkcontext/cross_cutting_conformance_test.go`, `symbol:TestCcContextAcquisitionAndFallback`.
+Public source: `library/network-context.md`, section **Acquisition and Fallback**. Intended target: `internal/networkcontext/acquire.go`. Case location: `internal/networkcontext/egress_test.go`, `symbol:TestCcContextAcquisitionAndFallback`.
 
 Case plan: Count primary/fallback calls, test valid-but-empty primary, malformed/TLS/HTTP/timeout/size failures, exact cache-key hits/misses, freshness and every invalidation event. Verify no persistent cache.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. Executed by DEV-647: request counts, a valid primary without classifications, malformed, unapproved, oversized and failing responses, exact cache-key hits and misses, reuse at 300 and not at 301 seconds and every invalidation event with a scripted fetch and the injected clock; TLS, HTTP and timeout failures against synthetic HTTPS endpoints in `TestContextEndpointResponses`; shutdown, reinitialization, policy replacement, clearing and proxy changes through the facade in `TestEgressCacheLifecycle` and `TestEgressCacheProxyChange`. The cache is in memory only, with no persistence port. No native, field or support claim; milestone manifest evidence remains unchanged.
 
 <!-- requirement-ref: REQ-CONTEXT-0020 -->
 <!-- requirement-ref: REQ-CONTEXT-0021 -->
@@ -2156,11 +2156,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-CONTEXT-EXECUTION-INTEGRATION
 
-Public source: `library/network-context.md`, section **Execution Integration**. Intended target: `internal/networkcontext/acquire.go`. Planned case location: `internal/networkcontext/cross_cutting_conformance_test.go`, `symbol:TestCcContextExecutionIntegration`.
+Public source: `library/network-context.md`, section **Execution Integration**. Intended target: `internal/networkcontext/acquire.go`. Case location: `internal/execution/egress_test.go`, `symbol:TestCcContextExecutionIntegration`.
 
 Case plan: Inject cancellation/deadline/suspension/network changes during acquisition; distinguish missing required context, allowlist mismatch and optional egress failure. Admission rejection row, while this build provides no egress acquisition (DEV-578): submit otherwise valid tasks that require country_code, region_code or asn individually, or a country allowlist, and assert each is rejected at admission as task_unsupported with zero transport calls, while tasks with an absent or empty context are admitted; this row is removed when acquisition is provided. Requirements: REQ-CONTEXT-0025, REQ-CONTEXT-0026, REQ-CONTEXT-0027, REQ-CONTEXT-0028, REQ-TRUST-0036.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Planned as a whole. `TestCcContextExecutionIntegration` covers host cancellation, the attempt deadline and a network change during acquisition, a missing required field, an allowlist mismatch, an unknown country, optional egress failure and retries; the admission rejection row is removed because acquisition exists. The suspension-during-acquisition row needs a platform suspension signal (DEV-455). Mixed-family evidence is not promoted. No support claim.
 
 <!-- requirement-ref: REQ-CONTEXT-0025 -->
 <!-- requirement-ref: REQ-CONTEXT-0026 -->
@@ -2306,7 +2306,7 @@ Public source: `library/proxy.md`, section **Lifecycle and Renewal**. Intended t
 
 Case plan: Race set/clear with attempts and all NET-05 steps; block old-generation admission, cancel/close and bound cleanup before returning, invalidate caches and never mix generations or use direct fallback.
 
-Scope: Planned as a whole. `TestProxyChangesOnlyCancelProxyRuns`, `TestProxyLifecycleSerialization`, `TestProxyCleanupIncomplete`, `TestProxyStartRace`, `TestProxyAgainstLifecycleRace` and `TestProxyChangeDrainsPathReservation` cover the Go cancellation, serialization and cleanup rows; `TestProxyLoopbackRenewal` supplies the two-endpoint socket scenario and `TestProxyLoopbackClosesEstablishedTunnel` covers a tunnel blocked on application I/O; both require successful loopback execution. Whole-profile NET-05 steps remain DEV-454; egress cache invalidation remains DEV-647. Mixed-family evidence is not promoted from the Go subset. No support claim.
+Scope: Planned as a whole. `TestProxyChangesOnlyCancelProxyRuns`, `TestProxyLifecycleSerialization`, `TestProxyCleanupIncomplete`, `TestProxyStartRace`, `TestProxyAgainstLifecycleRace` and `TestProxyChangeDrainsPathReservation` cover the Go cancellation, serialization and cleanup rows; `TestProxyLoopbackRenewal` supplies the two-endpoint socket scenario and `TestProxyLoopbackClosesEstablishedTunnel` covers a tunnel blocked on application I/O; both require successful loopback execution. Whole-profile NET-05 steps remain DEV-454; egress cache invalidation on set and clear is covered by `TestEgressCacheProxyChange` (DEV-647). Mixed-family evidence is not promoted from the Go subset. No support claim.
 
 <!-- requirement-ref: REQ-PROXY-0011 -->
 <!-- requirement-ref: REQ-PROXY-0012 -->
@@ -2356,11 +2356,11 @@ Scope: Synthetic core contract cases. Runs in `TestCcProxyTaskSelection` with sy
 
 ### CC-PROXY-NETWORK-CONTEXT
 
-Public source: `library/proxy.md`, section **Network Context**. Intended target: `internal/execution/proxy.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcProxyNetworkContext`.
+Public source: `library/proxy.md`, section **Network Context**. Intended target: `internal/execution/proxy.go`. Case location: `internal/execution/egress_test.go`, `symbol:TestCcProxyNetworkContext`.
 
 Case plan: Fail primary context endpoint and verify same-generation proxied fallback, exact cache keys and required-context gating with zero direct requests.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. Executed by DEV-647 against synthetic HTTPS endpoints through the scripted loopback CONNECT proxy: a failing primary and a same-generation proxied fallback, exact cache keys per proxy generation, required-context gating when the proxy refuses the lookup, and zero direct requests; `TestEgressCacheProxyChange` covers proxy replacement through the facade. No native, field or support claim; milestone manifest evidence remains unchanged.
 
 <!-- requirement-ref: REQ-PROXY-0023 -->
 <!-- requirement-ref: REQ-PROXY-0024 -->
@@ -2584,7 +2584,7 @@ Public source: `library/registered-limits.md`, section **Context, Linkage, and R
 
 Case plan: Use a deterministic clock, fake Network Context endpoints, fake private-state storage and a recording uploader. Network Context endpoint response: 4,096 bytes accepted, 4,097 bytes not accepted as context (fallback or unavailable egress per network-context.md). Endpoint operation: response at 4,999 ms accepted, at 5,001 ms the operation is stopped. In-memory context freshness: with the default 300 seconds, cached context reused at 300 seconds and not reused at 301 seconds; where freshness is configurable, 900 seconds accepted and 901 rejected. Linkage rotation period: 86,399 rejected, 86,400 and 604,800 accepted, 604,801 rejected, and absent configuration yields no linkage. Unacknowledged bundle retention: with 86,400 seconds, a pending bundle is uploadable before expiry and, once older than 86,400 seconds, is deleted and the recording uploader sees no upload attempt; a configured retention of 86,401 is rejected. Accepted-task replay state: for a task with validity V, the replay record exists until V plus 86,400 seconds and is gone afterwards, and never exists beyond 691,200 seconds. Durable acknowledgement: after acknowledgement processing returns, assert the acknowledged bundle is absent from storage and that no canary result bytes remain in any library-owned storage. Requirements: REQ-LIMIT-0023, REQ-LIMIT-0024, REQ-LIMIT-0025.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Planned as a whole. The context-endpoint rows run since DEV-647: 4,096 and 4,097 bytes and 4,999 and 5,001 ms in `TestCcContextEndpointContract` (`internal/networkcontext/egress_test.go`) and `TestContextEndpointResponses` (`internal/execution/egress_test.go`), and reuse at 300 and not at 301 seconds in `TestCcContextAcquisitionAndFallback`; the configurable-freshness row does not apply because this build's freshness is fixed at the default. The pending-bundle retention rows are covered by the DEV-563 pending-store tests. The linkage rows remain open (DEV-454). Mixed-family evidence is not promoted. No support claim.
 
 Review case `RV-CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`): Human review case; not automated coverage. Reviewer role: Deployment privacy reviewer (independent of the deployment operator). Reviewed artifact: Deployment retention documentation for collector, host analytics, crash reporting and research storage at the reviewed revision. Checklist: (1) Does each of collector, host analytics, crash reporting and research storage have an explicit documented retention period? (2) Does any documented period rely on the 86,400-second local bundle retention or the 691,200-second replay-state cap as permission to retain data for that duration or longer? (3) Is each documented period justified independently of the library's local maxima? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
@@ -3065,7 +3065,7 @@ Scope: Synthetic core contract cases. Passed at Go `954b7d7` and re-executed at 
 
 ### CC-TRUST-LOCAL-POLICY-LIFECYCLE-RUNTIME
 
-Public source: `library/task-trust.md`, section **Local Policy Lifecycle**. Intended target: the root `Client` with the host policy adapter (DEV-455), run reservation (DEV-561) and Network Context caching (DEV-578). Planned case location: `policy_test.go`, `symbol:TestCcTrustLocalPolicyLifecycleRuntime`.
+Public source: `library/task-trust.md`, section **Local Policy Lifecycle**. Intended target: the root `Client` with the host policy adapter (DEV-455), run reservation (DEV-561) and Network Context caching (DEV-647). Planned case location: `policy_test.go`, `symbol:TestCcTrustLocalPolicyLifecycleRuntime`.
 
 Case plan: With the reviewed host policy adapter (DEV-455), run reservation (DEV-561) and Network Context caching (DEV-578) in place, reject a policy update whose authentication or integrity check fails before the replacement seam is called and assert the generation-2 policy stays active. On a generation-3 replacement that removes a registration, assert a queued and a running run of the affected task are cancelled before any generation-3 attempt starts and that no attempt continues under the removed registration. Populate access and egress Network Context snapshots under generation 2 and assert none is used by a generation-3 attempt. Return policy-shaped content from collector reply, target response, proxy and context endpoint fakes and assert the active generation, issuers and registrations are unchanged. Requirements: REQ-TRUST-0029, REQ-TRUST-0030, REQ-TRUST-0031, REQ-TRUST-0032.
 

@@ -1,9 +1,10 @@
 // Package networkcontext owns runtime Network Context acquisition. It
 // captures coarse access context from the platform.Network capability and
 // binds it to the attempt's network path, direct or the host-configured
-// proxy, with egress unavailable. Egress lookup and its cache belong to later
-// Network paths and context work (DEV-647). Context values are observations
-// about the device network, never evidence of censorship.
+// proxy. When the host configures egress classification, an attempt acquires
+// egress context through its own path dialer, using an in-memory cache
+// (Lookup, Cache). Context values and endpoint failures are observations
+// about the device network, never evidence of censorship (REQ-CONTEXT-0042).
 package networkcontext
 
 import (
@@ -21,15 +22,16 @@ var (
 )
 
 // Source captures access context for the attempts of one network path. It
-// holds no context between captures, so nothing it acquires is cached or
-// retained. A proxy source carries the proxy generation and connection_code
+// holds no context between captures; egress classifications are cached only
+// in its lookup's Cache, never in the source. A proxy source carries the proxy generation and connection_code
 // of the snapshot it was built for; neither is task input, and only
 // connection_code reaches a result (REQ-PROXY-0031, REQ-PROXY-0033).
 type Source struct {
 	network platform.Network
 	decoder *observation.ContextDecoder
-	proxy   uint64 // proxy generation; zero on the direct path
-	code    string // connection_code; empty on the direct path
+	lookup  *Lookup // nil when the host configured no egress classification
+	proxy   uint64  // proxy generation; zero on the direct path
+	code    string  // connection_code; empty on the direct path
 }
 
 // NewDirect binds the platform network capability to the direct path. A
@@ -53,18 +55,39 @@ func newSource(n platform.Network, generation uint64, code string) (*Source, err
 	if n == nil {
 		return nil, ErrCapability
 	}
-	var approvals observation.ContextApprovals
-	if code != "" {
-		approvals.ConnectionCodes = []string{code}
-	}
-	d, err := observation.NewContextDecoder(observation.Contract, approvals)
-	if err != nil {
-		return nil, ErrCapability
-	}
 	if _, err := observation.NewPath(1, generation, pathName(code), code); err != nil {
 		return nil, ErrCapability
 	}
-	return &Source{network: n, decoder: d, proxy: generation, code: code}, nil
+	s := &Source{network: n, proxy: generation, code: code}
+	return s, s.bindDecoder()
+}
+
+// WithLookup returns a copy of the source whose attempts acquire egress
+// context through l; a nil l leaves egress unavailable. Its decoder also
+// accepts the classifications l's reviewed approvals permit.
+func (d *Source) WithLookup(l *Lookup) (*Source, error) {
+	if d == nil {
+		return nil, ErrCapability
+	}
+	s := *d
+	s.lookup = l
+	return &s, s.bindDecoder()
+}
+
+func (d *Source) bindDecoder() error {
+	var approvals observation.ContextApprovals
+	if d.lookup != nil {
+		approvals = d.lookup.approvals
+	}
+	if d.code != "" {
+		approvals.ConnectionCodes = []string{d.code}
+	}
+	dec, err := observation.NewContextDecoder(observation.Contract, approvals)
+	if err != nil {
+		return ErrCapability
+	}
+	d.decoder = dec
+	return nil
 }
 
 func pathName(code string) string {
@@ -97,18 +120,9 @@ func (d *Source) Capture(ctx context.Context) (Snapshot, error) {
 	if err != nil {
 		return Snapshot{}, ErrUnavailable
 	}
-	a := Normalize(s)
-	snap := Snapshot{valid: true, network: d.network, access: a, path: path, generation: s.Generation}
-	egress := egressWire{Status: "unavailable", LookupSource: "none", NetworkPath: pathName(d.code), ConnectionCode: d.code}
-	for i, changed := range []bool{false, true} {
-		a.NetworkChanged = changed
-		raw, err := json.Marshal(contextWire{Access: accessWire(a), Egress: egress})
-		if err != nil {
-			return Snapshot{}, ErrUnavailable
-		}
-		if snap.contexts[i], err = d.decoder.Decode(raw, path); err != nil {
-			return Snapshot{}, ErrUnavailable
-		}
+	snap := Snapshot{valid: true, network: d.network, source: d, access: Normalize(s), path: path, generation: s.Generation}
+	if snap.bind(egressWire{Status: "unavailable", LookupSource: "none"}) != nil {
+		return Snapshot{}, ErrUnavailable
 	}
 	return snap, nil
 }
@@ -143,6 +157,7 @@ func pick(i int, names ...string) string {
 type Snapshot struct {
 	valid      bool
 	network    platform.Network
+	source     *Source
 	access     observation.Access
 	path       observation.Path
 	generation uint64
@@ -158,10 +173,85 @@ func (s Snapshot) Path() observation.Path { return s.path }
 // Generation is the access-network generation the snapshot was read in.
 func (s Snapshot) Generation() uint64 { return s.generation }
 
+// bind builds the stable and changed contexts of the snapshot with egress e on
+// the snapshot's path, with its connection_code on the proxy path.
+func (s *Snapshot) bind(e egressWire) error {
+	e.NetworkPath, e.ConnectionCode = pathName(s.source.code), s.source.code
+	a := s.access
+	for i, changed := range []bool{false, true} {
+		a.NetworkChanged = changed
+		raw, err := json.Marshal(contextWire{Access: accessWire(a), Egress: e})
+		if err != nil {
+			return ErrUnavailable
+		}
+		if s.contexts[i], err = s.source.decoder.Decode(raw, s.path); err != nil {
+			return ErrUnavailable
+		}
+	}
+	return nil
+}
+
+// Acquire returns the snapshot with its egress context acquired through
+// fetch, which must be bound to a dialer of the snapshot's own path and generation: the
+// direct path, or the proxy generation's CONNECT dialer, never the other
+// (REQ-CONTEXT-0017, REQ-PROXY-0023). The cache is keyed by the snapshot's
+// access-network generation, path and proxy generation (REQ-CONTEXT-0020,
+// REQ-PROXY-0024). Without a lookup, or when no endpoint produces a valid,
+// approved classification, egress is unavailable and that is not an error
+// (REQ-CONTEXT-0027). A cached classification is status cached from the
+// cache; a new one is fresh from the primary or fallback
+// (REQ-CONTEXT-FORMAT-0008). Acquisition ends with ctx, so it stays inside
+// the attempt deadline and cancellation (REQ-CONTEXT-0025).
+// requirement-ref: REQ-CONTEXT-0017
+// requirement-ref: REQ-CONTEXT-0019
+// requirement-ref: REQ-CONTEXT-0025
+// requirement-ref: REQ-CONTEXT-FORMAT-0007
+// requirement-ref: REQ-CONTEXT-FORMAT-0008
+// requirement-ref: REQ-CONTEXT-FORMAT-0009
+// requirement-ref: REQ-PROXY-0023
+func (s Snapshot) Acquire(ctx context.Context, fetch Fetch) (Snapshot, error) {
+	if !s.valid {
+		return Snapshot{}, ErrUnavailable
+	}
+	if s.source.lookup == nil || fetch == nil {
+		return s, nil
+	}
+	key := cacheKey{network: s.generation, proxy: s.source.proxy, path: pathName(s.source.code)}
+	// A classification the reviewed approvals reject is an invalid response,
+	// so the fallback is tried; nothing unapproved reaches a result.
+	valid := func(c classification) bool {
+		probe := s
+		return probe.bind(classified(c, "fresh", "primary")) == nil
+	}
+	c, source, ok := s.source.lookup.acquire(ctx, key, fetch, valid)
+	if !ok {
+		return s, nil
+	}
+	status := "fresh"
+	if source == "cache" {
+		status = "cached"
+	}
+	out := s
+	if out.bind(classified(c, status, source)) != nil {
+		return s, nil
+	}
+	return out, nil
+}
+
+func classified(c classification, status, source string) egressWire {
+	return egressWire{Status: status, LookupSource: source, CountryCode: c.country, RegionCode: c.region, ASN: c.asn, ClassificationVersion: c.version}
+}
+
+// Acquires reports whether the snapshot's source has a lookup, so Acquire
+// may contact an endpoint; without one Acquire needs no fetch.
+func (s Snapshot) Acquires() bool { return s.valid && s.source.lookup != nil }
+
+// Egress returns the egress values the snapshot's contexts carry.
+func (s Snapshot) Egress() observation.Egress { return s.contexts[0].Egress() }
+
 // Context returns the Network Context to attach to a result: the snapshot's
-// access values, network_changed as given, and egress unavailable on the
-// snapshot's path, with its connection_code on the proxy path, until egress
-// lookup exists (DEV-647).
+// access values, network_changed as given, and its egress on the snapshot's
+// path, with its connection_code on the proxy path.
 func (s Snapshot) Context(changed bool) (observation.NetworkContext, error) {
 	if !s.valid {
 		return observation.NetworkContext{}, ErrUnavailable
@@ -205,8 +295,12 @@ type accessWire struct {
 }
 
 type egressWire struct {
-	Status         string `json:"status"`
-	LookupSource   string `json:"lookup_source"`
-	NetworkPath    string `json:"network_path"`
-	ConnectionCode string `json:"connection_code,omitempty"`
+	Status                string  `json:"status"`
+	LookupSource          string  `json:"lookup_source"`
+	NetworkPath           string  `json:"network_path"`
+	ConnectionCode        string  `json:"connection_code,omitempty"`
+	CountryCode           string  `json:"country_code,omitempty"`
+	RegionCode            string  `json:"region_code,omitempty"`
+	ASN                   *uint32 `json:"asn,omitempty"`
+	ClassificationVersion string  `json:"classification_version,omitempty"`
 }

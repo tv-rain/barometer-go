@@ -15,11 +15,11 @@ func direct() task.Execution {
 	return task.Execution{NetworkPath: "direct", Network: task.NetworkRequirements{VPNPolicy: "any"}}
 }
 
-// Network conditions this build cannot evaluate are unsatisfied: Network
-// Context requirements (DEV-647) and an unregistered path. Either registered
-// path passes; a proxy path that cannot be used is recorded by its attempt's
-// path check. Transport, VPN and validation conditions pass the static gate
-// and are evaluated against the access context.
+// An unregistered path is unsatisfied. Either registered path passes; a proxy
+// path that cannot be used is recorded by its attempt's path check.
+// Transport, VPN and validation conditions and Network Context requirements
+// pass the static gate and are evaluated against the attempt's own access
+// and egress context.
 func TestNetworkConditionsFailClosed(t *testing.T) {
 	proxy := direct()
 	proxy.NetworkPath = "proxy"
@@ -29,8 +29,6 @@ func TestNetworkConditionsFailClosed(t *testing.T) {
 	for name, edit := range map[string]func(*task.Execution){
 		"unregistered path": func(e *task.Execution) { e.NetworkPath = "socks" },
 		"unset path":        func(e *task.Execution) { e.NetworkPath = "" },
-		"context fields":    func(e *task.Execution) { e.Network.Context.RequiredFields = []string{"country_code"} },
-		"country allowlist": func(e *task.Execution) { e.Network.Context.AllowedCountryCodes = []string{"NL"} },
 	} {
 		e := direct()
 		edit(&e)
@@ -46,6 +44,16 @@ func TestNetworkConditionsFailClosed(t *testing.T) {
 		e := direct()
 		edit(&e)
 		if !execution.NetworkSatisfiable(e) || !execution.AccessRequired(e.Network) {
+			t.Fatal(name)
+		}
+	}
+	for name, edit := range map[string]func(*task.Execution){
+		"context fields":    func(e *task.Execution) { e.Network.Context.RequiredFields = []string{"country_code"} },
+		"country allowlist": func(e *task.Execution) { e.Network.Context.AllowedCountryCodes = []string{"NL"} },
+	} {
+		e := direct()
+		edit(&e)
+		if !execution.NetworkSatisfiable(e) || execution.AccessRequired(e.Network) {
 			t.Fatal(name)
 		}
 	}

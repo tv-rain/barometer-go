@@ -71,7 +71,7 @@ func TestGateProxyCompatibility(t *testing.T) {
 			in.Issuers[0].Permissions.RegistrationIDs = nil
 		}, proxyTask("no-proxy", nil), task.IssuerNotAuthorized, false},
 		{"policy rollback before compatibility", func(in *task.PolicyInput) { in.Generation = 3 }, proxyTask("no-proxy", nil), task.PolicyRollback, false},
-		{"egress capability (step 6) before compatibility", nil, proxyTask("no-proxy", map[string]any{requiredFields: []any{"asn"}}), task.Unsupported, false},
+		{"egress requirement does not bypass compatibility", nil, proxyTask("no-proxy", map[string]any{requiredFields: []any{"asn"}}), task.SchemaInvalid, true},
 	} {
 		h := newHarness(t)
 		var calls atomic.Int32

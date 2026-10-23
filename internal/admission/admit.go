@@ -178,11 +178,6 @@ func (a *Admitter) Gate(ctx context.Context, sourceRef string, presented []byte)
 	if err != nil {
 		return Gated{}, admissionError(fieldClass(err))
 	}
-	// A valid execution.context requirement needs egress Network Context,
-	// which this build does not provide.
-	if requiresEgressContext(candidate) {
-		return Gated{}, admissionError(task.Unsupported)
-	}
 	// Step 7: active policy generation, issuer authority and the intersected
 	// test, composite, numeric and label bounds.
 	authority, class := resolve(a.policy, source, entry.Test, candidate, base)

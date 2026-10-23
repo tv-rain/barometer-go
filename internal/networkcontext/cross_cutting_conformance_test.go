@@ -20,10 +20,10 @@ import (
 
 // Access-context family cases (DEV-644). The fake platform network holds
 // synthetic canaries for every forbidden item beside the access state it
-// reports. Logs, cache entries and egress-endpoint requests named by the case
-// plan do not exist in this build: the core writes no log, and the context
-// cache and egress lookup belong to DEV-647, so those surfaces are not
-// exercised. These are synthetic core contract cases, not platform evidence.
+// reports. The core writes no log. The egress cache holds classifications
+// keyed by generations and path name only, and the endpoint request carries
+// no access value, which internal/execution's TestCcContextEndpointContract
+// asserts. These are synthetic core contract cases, not platform evidence.
 
 var (
 	networkTypes = map[platform.NetworkType]string{platform.NetworkWiFi: "wifi", platform.NetworkCellular: "cellular", platform.NetworkEthernet: "ethernet", platform.NetworkOther: "other", platform.NetworkUnknown: "unknown"}

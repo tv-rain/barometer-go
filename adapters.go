@@ -2,6 +2,7 @@ package barometer
 
 import (
 	"context"
+	"crypto/x509"
 	"reflect"
 	"time"
 
@@ -9,8 +10,10 @@ import (
 	"github.com/tv-rain/barometer-go/internal/bundle"
 	"github.com/tv-rain/barometer-go/internal/config"
 	"github.com/tv-rain/barometer-go/internal/execution"
+	"github.com/tv-rain/barometer-go/internal/model/observation"
 	model "github.com/tv-rain/barometer-go/internal/model/result"
 	"github.com/tv-rain/barometer-go/internal/model/task"
+	"github.com/tv-rain/barometer-go/internal/networkcontext"
 	"github.com/tv-rain/barometer-go/internal/persistence"
 	"github.com/tv-rain/barometer-go/internal/persistence/pending"
 	"github.com/tv-rain/barometer-go/internal/platform"
@@ -38,6 +41,15 @@ type adapters struct {
 	replay      persistence.ReplayStore
 	approvals   config.Approvals
 	linkageKeys platform.LinkageKeyStore // optional; absence disables linkage only
+
+	// contextApprovals are the reviewed egress classification versions,
+	// country codes and region codes a context endpoint may return
+	// (DEV-647); connection codes come from approvals. Without them every
+	// endpoint response is invalid and egress context stays unavailable.
+	// contextRoots are the trust anchors of context endpoints; nil selects
+	// the system roots, and tests supply a synthetic CA.
+	contextApprovals observation.ContextApprovals
+	contextRoots     *x509.CertPool
 
 	// clearStorage deletes Barometer-owned persistent state for the storage
 	// scope (DEV-564). bind derives it from the record port with
@@ -81,6 +93,15 @@ type runAdapters struct {
 	device         platform.Device
 	zone           platform.TimeZone
 	registry       *registry.Registry // the adapters' registry, set by successor
+
+	// contextCache is the client's in-memory egress cache (DEV-647). bind
+	// creates it; each generation's lookup uses its own epoch of it, and
+	// clearing erases it.
+	contextCache *networkcontext.Cache
+	// directDialers overrides the direct path's dialers for tests, which
+	// map synthetic endpoint names to loopback servers. Production leaves
+	// it nil, which selects execution.DirectDialers.
+	directDialers execution.DialerSource
 }
 
 // complete reports whether every required run input is present.
@@ -104,6 +125,10 @@ func storageClearer(a *adapters) func(context.Context) error {
 	if !absent(a.linkageKeys) {
 		// Deleting the key creates no replacement (REQ-LINKAGE-0023 item 8).
 		erasers = append(erasers, a.linkageKeys.Delete)
+	}
+	if a.run.contextCache != nil {
+		// The egress cache is in memory only; erasing it sends nothing.
+		erasers = append(erasers, a.run.contextCache.Erase)
 	}
 	var forget []persistence.Forgetter
 	for _, v := range []any{a.replay, a.run.ledger} {
@@ -142,6 +167,7 @@ type runtime struct {
 	engine     *execution.Engine
 	bundles    *pending.Store
 	proxies    *proxyState
+	egress     *networkcontext.Lookup // nil without network_context
 
 	// ctx bounds adapter calls made for this generation. invalidate cancels
 	// it, so a transition does not wait on a stalled trusted adapter.
@@ -160,6 +186,7 @@ func (a *adapters) GoString() string { return "barometer.adapters" }
 
 func (r *runtime) invalidate() {
 	if r != nil {
+		r.egress.Close()
 		r.cancel()
 		r.tasks.invalidate()
 		r.runs.invalidate()
@@ -224,6 +251,23 @@ func successor(a *adapters, init *config.Initialization, policy task.LocalPolicy
 	if err != nil {
 		return nil
 	}
+	// A new generation never reads the cache entries of an earlier one,
+	// including across reinitialization and policy replacement
+	// (REQ-CONTEXT-0009, REQ-CONTEXT-0023).
+	var egress *networkcontext.Lookup
+	if e, ok := init.Configuration().NetworkContext(); ok {
+		if a.run.contextCache == nil {
+			return nil
+		}
+		a.run.contextCache.Clear()
+		egress, err = networkcontext.NewLookup(networkcontext.Endpoints{Primary: e.PrimaryEndpoint, Fallback: e.FallbackEndpoint},
+			a.contextApprovals, a.contextRoots, a.run.clock, a.run.contextCache)
+		if err != nil {
+			return nil
+		}
+	} else if a.run.contextCache != nil {
+		a.run.contextCache.Clear()
+	}
 	run := a.run
 	run.registry = a.registry
 	ctx, cancel := context.WithCancel(context.Background())
@@ -231,8 +275,8 @@ func successor(a *adapters, init *config.Initialization, policy task.LocalPolicy
 	return &runtime{init: init, admitter: admitter, tasks: newTaskTable(),
 		runs:   newHandleTable[runRecord](runHandlePrefix, runHandleCapacity),
 		runSet: newRunSet(), run: run, engine: engine, bundles: store,
-		proxies: newProxyState(ctx, proxy, configured, 1),
-		ctx:     ctx, cancel: cancel, deadline: a.lifecycleDeadline()}
+		proxies: newProxyState(ctx, proxy, configured, 1), egress: egress,
+		ctx: ctx, cancel: cancel, deadline: a.lifecycleDeadline()}
 }
 
 // absent also treats typed nil values in an interface as missing.

@@ -12,6 +12,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/model/observation"
 	model "github.com/tv-rain/barometer-go/internal/model/result"
 	"github.com/tv-rain/barometer-go/internal/model/task"
+	"github.com/tv-rain/barometer-go/internal/networkcontext"
 	"github.com/tv-rain/barometer-go/internal/persistence"
 	"github.com/tv-rain/barometer-go/internal/result"
 	"github.com/tv-rain/barometer-go/internal/validation"
@@ -33,8 +34,8 @@ const (
 // consumer. It reads the run's access context at reservation and supplies the
 // run's context source, attempt-scoped dialers of the selected path and the
 // result decoder bound to the task. networkPaths is the production source
-// (DEV-644, DEV-645); tests may bind a scripted one. Egress lookup (DEV-647)
-// is not implemented; a task that needs it never reaches this seam.
+// (DEV-644, DEV-645); tests may bind a scripted one. The context source it
+// returns acquires egress through the request's lookup (DEV-647).
 type pathSource interface {
 	plan(ctx context.Context, r pathRequest) (pathPlan, error)
 }
@@ -47,6 +48,7 @@ type pathRequest struct {
 	MaxAttempts, MaxDurationMS int
 	NetworkPath                string
 	Proxy                      proxySnapshot
+	Egress                     *networkcontext.Lookup // nil without network_context
 }
 
 // pathPlan carries Access, the access values read at reservation, against
@@ -241,7 +243,7 @@ func (rt *runtime) reserveRun(ctx, parent context.Context, proxy proxySnapshot, 
 		return "", execution.Plan{}, nil, notDue
 	}
 	path, err := run.paths.plan(ctx, pathRequest{TaskID: c.ID, Test: a.Test(), MaxAttempts: attempts, MaxDurationMS: a.AttemptLimits().DurationMS,
-		NetworkPath: c.Execution.NetworkPath, Proxy: proxy})
+		NetworkPath: c.Execution.NetworkPath, Proxy: proxy, Egress: rt.egress})
 	if err != nil || path.Result == nil || path.Context == nil || path.Dialers == nil {
 		return "", execution.Plan{}, nil, notDue
 	}

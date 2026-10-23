@@ -79,7 +79,8 @@ type Output interface {
 // the access values that network conditions are evaluated against, the
 // Network Context attached to the result and the watch for an
 // access-network generation change. networkcontext.Source is the production
-// source of either path; egress lookup belongs to DEV-647.
+// source of either path; the engine acquires the snapshot's egress context
+// through the path's dialer with Snapshot.Acquire.
 type ContextSource interface {
 	Capture(ctx context.Context) (networkcontext.Snapshot, error)
 }
@@ -374,6 +375,28 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 		a, v, err := e.stopped(p, pending, task.ConstraintsUnsatisfied, nil, runID, n, started)
 		return a, measurement.Usage{}, v, err
 	}
+	if err != nil {
+		a, v, err := e.stopped(p, pending, task.InternalError, nil, runID, n, started)
+		return a, measurement.Usage{}, v, err
+	}
+	// A generation change from the capture on ends the attempt
+	// (REQ-CONTEXT-0025); its context then records network_changed.
+	stopWatch := snap.Watch(func() { cancel(errNetworkChanged) })
+	defer stopWatch()
+	// Egress context is acquired through a dialer of the attempt's own path
+	// inside the attempt's deadline, cancellation and network-change watch
+	// (REQ-CONTEXT-0025). The lookup dialer is not the metered attempt
+	// scope, so its bytes do not count toward the attempt budgets and it
+	// does not start the test.
+	if actx.Err() == nil && snap.Acquires() {
+		if d, derr := p.Dialers.Dialer(n); derr == nil && d != nil {
+			snap, err = snap.Acquire(actx, ContextFetch(d))
+		}
+	}
+	if actx.Err() != nil {
+		a, v, err := e.stopped(p, pending, stopReason(actx), nil, runID, n, started)
+		return a, measurement.Usage{}, v, err
+	}
 	var stable, changed observation.NetworkContext
 	if err == nil {
 		stable, err = snap.Context(false)
@@ -385,19 +408,22 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 		a, v, err := e.stopped(p, pending, task.InternalError, nil, runID, n, started)
 		return a, measurement.Usage{}, v, err
 	}
-	// A generation change from the capture on ends the attempt
-	// (REQ-CONTEXT-0025); its context then records network_changed.
-	stopWatch := snap.Watch(func() { cancel(errNetworkChanged) })
-	defer stopWatch()
+	// A required egress field still missing after the bounded lookup is
+	// network_context_unavailable; an allowlist mismatch is
+	// constraints_unsatisfied, which, like an access condition, prevents a
+	// retry rather than recording it (REQ-CONTEXT-0026, REQ-CONTEXT-0028).
+	if reason := ContextConditions(p.Network.Context, snap.Egress()); reason != "" {
+		if reason == task.ConstraintsUnsatisfied && n > 1 {
+			return Attempt{}, measurement.Usage{}, result.Value{}, errSkipped
+		}
+		a, v, err := e.stopped(p, pending, reason, nil, runID, n, started)
+		return a, measurement.Usage{}, v, err
+	}
 	contextFor := func(reason task.ExecutionReason) *observation.NetworkContext {
 		if reason == task.NetworkChanged {
 			return &changed
 		}
 		return &stable
-	}
-	if actx.Err() != nil {
-		a, v, err := e.stopped(p, pending, stopReason(actx), nil, runID, n, started)
-		return a, measurement.Usage{}, v, err
 	}
 	dialer, err := p.Dialers.Dialer(n)
 	if err != nil || dialer == nil {
