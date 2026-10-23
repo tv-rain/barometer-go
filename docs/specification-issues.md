@@ -373,7 +373,7 @@ DEV-562 adopts the disposition for the generic stream layer, as described in [At
 
 DEV-645 adds the proxy path ([Proxy Path](execution-models.md#proxy-path)) at public `5d01879`. `execution.ProxyDialers` performs the `CONNECT` exchange on the loopback connection before it returns the tunnel, and the attempt scope wraps the proxy dialer, so the exchange lies below the metered stream ([REQ-LIMIT-0033](https://github.com/tv-rain/barometer-spec/blob/5d01879cfd1d47396c780befa2567f7e90439948/library/registered-limits.md#REQ-LIMIT-0033)) while each tunnel counts toward `max_connections` before it is opened.
 
-- **Evidence:** `TestProxyAttemptRunsThroughTunnel` compares the metered counts with the bytes the loopback target and the scripted proxy relayed, and the proxy's own count of the `CONNECT` exchange; `TestConnectExchangeIsNotMetered` completes an attempt whose byte limits equal the tunnel bytes, smaller than the `CONNECT` request, and opens no tunnel under a zero connection limit. Synthetic runners and the test-only scripted proxy; no evidence report is recorded until the next manifest update.
+- **Evidence:** `TestProxyAttemptRunsThroughTunnel` compares the metered counts with the bytes the loopback target and the scripted proxy relayed, and the proxy's own count of the `CONNECT` exchange; `TestConnectExchangeIsNotMetered` completes an attempt whose byte limits equal the tunnel bytes, smaller than the `CONNECT` request, and opens no tunnel under a zero connection limit. Synthetic runners and the test-only scripted proxy; both passed at the DEV-648 milestone ([evidence at d788a80](../traceability/evidence/go-unit-d788a80.md#UT.internal.execution.TestProxyAttemptRunsThroughTunnel)).
 - **Remaining before closure:** per-protocol evidence with the `CC-LIMIT-PURPOSE` protocol rows (DEV-454), and binding and host adoption. No runtime, platform or field support is claimed.
 
 ## GO-SPEC-ISSUE-006: NET-03 Over-Bound Response Classification
@@ -571,6 +571,12 @@ Recorded under DEV-624 against public `4743b636f29feb1f0f8d042866d04ccda3532938`
 - **Remaining scope:** `CC-TRUST-ADMISSION-PROCEDURE` and `CC-TRUST-ADMISSION-ERRORS`, which stay planned because they need transport, DNS and Network Context fakes, a build variant that provides egress acquisition (DEV-578) and result-sink fakes; the safety review of the mapping, which the human maintainer is to confirm during the DEV-575 assessment and which is not recorded as completed here; that review's decision on whether the unit-test evidence covers every table row and precedence; and binding and host adoption, unassessed until those components exist (DEV-455).
 
 The closure criteria are not met. The finding stays open.
+
+### Egress Acquisition Addendum — October 23, 2026
+
+DEV-647 adds egress Network Context acquisition and removes the admission egress check: a valid task with `required_fields` or `allowed_country_codes` is admitted, and its requirements are evaluated before each attempt ([Egress Network Context](execution-models.md#egress-network-context)). `UT.internal.admission.TestGateAdmitsEgressContextRequirements` and `UT.internal.admission.TestGateEgressContextKeepsOtherSteps` passed at the DEV-648 milestone ([evidence at d788a80](../traceability/evidence/go-unit-d788a80.md#UT.internal.admission.TestGateAdmitsEgressContextRequirements)). The other `task_unsupported` rows are unchanged.
+
+- **Remaining scope:** `CC-TRUST-ADMISSION-PROCEDURE`, which needs transport and DNS fakes and production proxy-compatibility rules (DEV-454); `CC-TRUST-ADMISSION-ERRORS`, which needs result-sink and bundle fakes and captured log output; the safety review of the mapping, not recorded as completed; and binding and host adoption (DEV-455). The finding stays open.
 
 ## GO-SPEC-ISSUE-009: Admission Class for Proxy-Incompatible Task Parameters
 
@@ -776,6 +782,14 @@ REQ-EXECUTION-0016 says the library runs its own connectivity check when the pla
 ### Ordering and Closure
 
 Public record and disposition first, then internal alignment of the execution validation plan, then Go adoption with the row's case, then bindings. Closure requires the public disposition, its immutable revision if wording changes, and Go adoption evidence or recorded non-applicability.
+
+### Public Record Addendum — October 23, 2026
+
+The sections above keep their wording as historical evidence, including the statement that no public record existed and the reference to the DEV-644 task branch, which merged as [PR #70](https://github.com/tv-rain/barometer-go/pull/70) at `c4b3761085c8bc9703db32baf7c3327d9697d18b`.
+
+- **Public record:** DEV-649 published [Library Internal Check for `require_validated`](https://github.com/tv-rain/barometer-spec/blob/32062c4bafcc29f5050ca6b78423f2acaefdde56/specification-issues/require-validated-internal-check.md) through [public PR #27](https://github.com/tv-rain/barometer-spec/pull/27), merged at `32062c4bafcc29f5050ca6b78423f2acaefdde56`. It is open, lists the alternatives above without selecting one and changes no specification text.
+- **Ownership:** at the network paths and context closeout (DEV-648, for DEV-578), the disposition, the safety and privacy review that any library check needs, and Go adoption pass to the coordination epic DEV-453.
+- **Go state:** unchanged; the interim rule stays in force. The planned `CC-EXECUTION-FIELDS-NETWORK-FIELDS` family, whose library-internal-check row depends on this finding, stays `planned` ([Runtime Case Families](execution-models.md#runtime-case-families)).
 
 ## Signed Remote Task Package Adoption
 
