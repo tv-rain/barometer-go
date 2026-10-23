@@ -752,7 +752,7 @@ Public record and disposition first, then internal alignment if a retention vali
 
 ## GO-SPEC-ISSUE-013: Library Internal Check for `require_validated`
 
-**Current state:** Open, raised October 23, 2026 under DEV-644 while implementing network-condition evaluation. No public record exists yet; public maintainers own the disposition. Go implements the conservative interim rule below, which the task owner approved with the DEV-644 plan.
+**Current state:** Open, raised October 23, 2026 under DEV-644 while implementing network-condition evaluation. The public record [Library Internal Check for `require_validated`](https://github.com/tv-rain/barometer-spec/blob/32062c4bafcc29f5050ca6b78423f2acaefdde56/specification-issues/require-validated-internal-check.md) is open with no disposition; public maintainers own the disposition, and the coordination epic DEV-453 owns its follow-up. Go implements the conservative interim rule below, which the task owner approved with the DEV-644 plan. See the [public record addendum](#public-record-addendum--october-23-2026).
 
 ### Identity, Baselines and Requirements
 

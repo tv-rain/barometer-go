@@ -9,6 +9,7 @@ DEV-648 records the milestone evidence for the Network paths and context sub-epi
 - Environment: go1.26.0 darwin/arm64 (`GOTOOLCHAIN=local`, `GOFLAGS` empty, `CGO_ENABLED=1`), default test timeout, no race detector.
 - Command, from the export root: `go test -count=1 -json ./...`
 - Outcome: exit status 0; all 423 top-level tests passed, none failed or skipped. Each case below names one or two passing top-level tests; a top-level pass includes all of its subtests. Fuzz targets ran their seed corpora only; the finite fuzzing campaigns are recorded in the [admission design](../../docs/admission.md#fuzz-validation-record) and the [configuration models](../../docs/configuration-models.md#synthetic-evidence).
+- Wording correction, October 23, 2026 (DEV-648 review): five aspect statements for REQ-EXECUTION-0002, REQ-CONTEXT-0015 (twice), REQ-CONTEXT-0024 and REQ-CONTEXT-FORMAT-0015 were narrowed to what the tests assert at this commit. The run and its results are unchanged.
 - Executed on October 23, 2026. Inputs are the synthetic, in-repository fixtures at the implementation commit, as listed in the [cdbd160 report](go-unit-cdbd160.md#execution-record), plus the test-only scripted HTTP/1.1 CONNECT proxy and loopback TLS target of `internal/testkit/loopback` and the synthetic HTTPS Network Context endpoints of `internal/testkit/contextendpoint`, whose certificates come from a synthetic test certificate authority generated for each run. Endpoint names such as `context.example` resolve only through test-only routes or the scripted proxy to `127.0.0.1`. No deployment key, endpoint, proxy, participant, measurement or private data is involved, and no host other than the loopback address is contacted.
 
 ## Carried-Forward Cases
@@ -524,7 +525,7 @@ Every case is partial evidence. A passing case shows only the stated aspects of 
 - Requirement aspects exercised:
 
   - REQ-EXECUTION-0001: Asserts on the engine that the preconditions and the proxy path check are each evaluated immediately before every attempt: twice for a run whose first attempt ends `proxy_unavailable` and is retried after its 35-second backoff.
-  - REQ-EXECUTION-0002: Asserts that the same synthetic runner against the same loopback target records an identical `measurement` object and identical metered usage on the direct path and through the scripted loopback CONNECT proxy, and that only the egress `network_path` and `connection_code` differ.
+  - REQ-EXECUTION-0002: Asserts that the same synthetic runner against the same loopback target records an identical `measurement` object and identical metered usage on the direct path and through the scripted loopback CONNECT proxy, and that the direct result records `network_path: direct` and the proxied one `network_path: proxy` with its `connection_code`. Other result fields are not compared.
 
 <a id="CC-PROXY-HTTP-CONNECT-BEHAVIOR"></a>
 
@@ -703,7 +704,7 @@ Every case is partial evidence. A passing case shows only the stated aspects of 
   - REQ-CONTEXT-0012: Asserts that the request has no query and no `User-Agent`, `Accept-Encoding`, `Cookie` or `Authorization` header, and carries no task ID, test ID, `connection_code`, loopback address, or run or attempt marker.
   - REQ-CONTEXT-0013: Asserts in `internal/networkcontext` that ASN 0, above 32 bits or as a string, an empty or three-letter country, a region inconsistent with the country, an empty version, a non-object and an empty body make the response invalid and egress unavailable, and that a response with only `classification_version` is valid.
   - REQ-CONTEXT-0014: Asserts in `internal/networkcontext` that responses carrying `ip`, `latitude`, `city`, `postal_code`, `isp` or `request_id` members, or a duplicate member, are invalid.
-  - REQ-CONTEXT-0015: Asserts in `internal/networkcontext` that a 4,096-byte response is accepted and a 4,097-byte response rejected, and that on the engine clock an answer after 4,999 ms is accepted while one after 5,001 ms is rejected because the operation is stopped at 5,000 ms, with no timer left armed.
+  - REQ-CONTEXT-0015: Asserts in `internal/networkcontext` that a 4,096-byte response is accepted and a 4,097-byte response rejected, and that on the engine clock an answer after 4,999 ms is accepted while one after 5,001 ms is rejected because the operation is stopped at 5,000 ms.
   - REQ-CONTEXT-0016: Asserts in `internal/networkcontext` that a version-only response yields fresh primary egress with no classification values. That such a response does not trigger the fallback is asserted by `CC-CONTEXT-ACQUISITION-AND-FALLBACK`.
 
 <a id="CC-CONTEXT-ACQUISITION-AND-FALLBACK"></a>
@@ -721,7 +722,7 @@ Every case is partial evidence. A passing case shows only the stated aspects of 
   - REQ-CONTEXT-0021: Asserts that a valid primary with no classification values is fresh primary egress without contacting the fallback, that no endpoint receives a second request within one acquisition, and that a failed acquisition is not cached, so the next acquisition asks again.
   - REQ-CONTEXT-0022: Asserts on the injected clock that an entry is reused at exactly 300 seconds and not one second later. Configurable freshness up to 900 seconds does not apply: this build's freshness is fixed at the default.
   - REQ-CONTEXT-0023: Asserts that each proxy generation and the direct path are separate keys; that `ForgetProxy` drops proxy entries and keeps the direct entry; that a new access-network generation is a new key and drops the older generation's entries; that `Clear` drops every entry and stops a lookup created before it from writing; and that closing the lookup drops its entries.
-  - REQ-CONTEXT-0024: Asserts that the cache is an in-memory value keyed only by access-network generation, path and proxy generation, with no address or identifier in the key and no persistence port. Shutdown, reinitialization, policy replacement and clearing through the facade are asserted by `UT.root.TestEgressCacheLifecycle`.
+  - REQ-CONTEXT-0024: Asserts that entries are separate per access-network generation, path and proxy generation and are dropped by `Clear`, `ForgetProxy`, a newer access-network generation and closing the lookup. That the cache is in memory only, with no persistence port and no address or identifier in its key, follows from the `networkcontext.Cache` and `cacheKey` types and is not asserted by this case. Shutdown, reinitialization, policy replacement and clearing through the facade are asserted by `UT.root.TestEgressCacheLifecycle`.
 
 <a id="CC-CONTEXT-FORMAT-EGRESS-OBJECT"></a>
 
@@ -750,7 +751,7 @@ Every case is partial evidence. A passing case shows only the stated aspects of 
 - Scope: Synthetic core contract cases; Test schema-permitted context carriage/deduplication and reject persistent cross-batch identity or listed private details.
 - Requirement aspects exercised:
 
-  - REQ-CONTEXT-FORMAT-0015: Asserts that each Measurement Result written by a direct and by a proxied attempt carries its own `network_context`; results are not deduplicated and carry no cross-batch identifier.
+  - REQ-CONTEXT-FORMAT-0015: Asserts that each Measurement Result written by a direct and by a proxied attempt carries its own `network_context` egress object. Deduplication and cross-batch identifiers are not asserted; the results are written by separate runs.
   - REQ-CONTEXT-FORMAT-0016: Asserts that no result contains the endpoint names, the endpoint path, `127.0.0.1`, the observed source address or port, the proxy port, the proxy generation or the word `generation`. Geolocation and provider names cannot reach a result because the endpoint decoder rejects them (`CC-CONTEXT-ENDPOINT-CONTRACT`).
 
 <a id="CC-PROXY-NETWORK-CONTEXT"></a>
@@ -3338,7 +3339,7 @@ Every case is partial evidence. A passing case shows only the stated aspects of 
 
   - REQ-CONTEXT-0013: Asserts that ASN 0, above 32 bits or as a string, an empty or three-letter country, a region inconsistent with the country, an empty version, a non-object and an empty body make the response invalid and egress unavailable, and that a response with only `classification_version` is valid.
   - REQ-CONTEXT-0014: Asserts that responses carrying `ip`, `latitude`, `city`, `postal_code`, `isp` or `request_id` members, or a duplicate member, are invalid.
-  - REQ-CONTEXT-0015: Asserts that 4,096 bytes are accepted and 4,097 rejected, and that on the engine clock an answer after 4,999 ms is accepted while one after 5,001 ms is rejected, with no timer left armed.
+  - REQ-CONTEXT-0015: Asserts that 4,096 bytes are accepted and 4,097 rejected, and that on the engine clock an answer after 4,999 ms is accepted while one after 5,001 ms is rejected.
   - REQ-CONTEXT-0016: Asserts that a version-only response yields fresh primary egress with no classification values.
 
 <a id="UT.internal.execution.TestProxyAttemptRunsThroughTunnel"></a>

@@ -241,7 +241,7 @@ These 24 families are executed with synthetic evidence, 18 by DEV-640, `CC-LIMIT
 | `CC-EXECUTION-ENVELOPE` | `TestCcExecutionEnvelope` (`internal/execution`, scripted loopback proxy) |
 | `CC-PROXY-EXECUTION-STATES` | `TestCcProxyExecutionStates` (`internal/execution`, scripted loopback proxies) |
 | `CC-EXECUTION-FIELDS-NETWORK` | `TestCcExecutionFieldsNetwork` (`internal/execution`, fake platform network) |
-| `CC-CONTEXT-FORMAT-USE-IN-EXECUTION` | `TestCcExecutionFieldsNetworkFieldsNetworkContextRequirements` (`internal/execution`, synthetic context endpoints) and `TestGateAdmitsEgressContextRequirements` (`internal/admission`) |
+| `CC-CONTEXT-FORMAT-USE-IN-EXECUTION` | `TestCcExecutionFieldsNetworkFieldsNetworkContextRequirements` (`internal/execution`, synthetic context endpoints); admission of the same requirements is the separate unit-test case `TestGateAdmitsEgressContextRequirements` (`internal/admission`) |
 | `CC-LIMIT-SCHEDULE-AND-RETRY-LIMITS` | `TestCcLimitScheduleAndRetryLimits` (root) |
 | `CC-LIMIT-RESULT-AND-BUNDLE-LIMITS` | `TestCcLimitResultAndBundleLimits` (`internal/bundle`, production pending store over the test-only record store) |
 
@@ -264,7 +264,7 @@ Every other runtime-scope family stays `planned` because a row of its case plan 
 | `CC-LIMIT-NET-05-COMPOSITE-LIMITS` | It needs the NET-05 codec and composite budgets. | DEV-454 |
 | `CC-LIMIT-LIMIT-HANDLING` | Its rows need an HTTP-01 body bound, a NET-05 profile and production codecs. | DEV-454 |
 | `CC-EXECUTION-FIELDS-NETWORK-PATH` | Its selection, precondition and path-failure rows run in `TestCcExecutionFieldsNetworkPath`; its NET-05 row, one path snapshot across every profile step, needs the NET-05 runner. | DEV-454 |
-| `CC-EXECUTION-FIELDS-NETWORK-FIELDS` | Its transport, VPN and system-validation rows run in `TestCcExecutionFieldsNetworkFields` since DEV-644 and its Network Context rows in `TestCcExecutionFieldsNetworkFieldsNetworkContextRequirements` since DEV-647; its library-internal-check row is not executable while [GO-SPEC-ISSUE-013](specification-issues.md#go-spec-issue-013-library-internal-check-for-require_validated) is open. | Public disposition of GO-SPEC-ISSUE-013 |
+| `CC-EXECUTION-FIELDS-NETWORK-FIELDS` | Its transport, VPN and system-validation rows run in `TestCcExecutionFieldsNetworkFields` since DEV-644 and its Network Context rows in `TestCcExecutionFieldsNetworkFieldsNetworkContextRequirements` since DEV-647; its library-internal-check row is not executable while [GO-SPEC-ISSUE-013](specification-issues.md#go-spec-issue-013-library-internal-check-for-require_validated) is open. | DEV-453, after the public disposition of GO-SPEC-ISSUE-013 |
 | `CC-EXECUTION-FIELDS-NETWORK-FIELDS-NETWORK-CONTEXT-REQUIREMENTS` | Its requirement, unavailable-context and request-count rows run in `TestCcExecutionFieldsNetworkFieldsNetworkContextRequirements` and `TestCcContextExecutionIntegration` since DEV-647; its stricter-local-policy row needs local-policy context eligibility, which the local policy model does not define. | DEV-455 |
 | `CC-CONTEXT-EXECUTION-INTEGRATION` | Its cancellation, deadline, network-change and requirement rows run in `TestCcContextExecutionIntegration` since DEV-647, and its admission rejection row is removed because acquisition exists; its suspension-during-acquisition row needs a platform suspension signal. | DEV-455 |
 | `CC-SCHEDULE-ENVELOPE` | It needs a platform suspension signal. | DEV-455 |
