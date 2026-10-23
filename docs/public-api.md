@@ -330,3 +330,19 @@ No adapter is wired in production, so no binding or device test exercised a run 
 | `git diff --check` | Passed. |
 
 No adapter is wired in production, so no binding or device test exercised clearing. Native reset wiring, operating-system data clearing, keystore deletion, reinstall sentinels and host-owned copies (DEV-455), the Network Context cache (DEV-578) and linkage epochs and in-memory linkage material (DEV-454) remain pending.
+
+## DEV-644 Validation Record
+
+**Validation date:** October 23, 2026
+**Scope:** network-condition evaluation, access context and the production direct path on the DEV-644 task branch at Go commit `cdbd1604`; synthetic tests on the host platform with the test-only fake platform network and loopback sockets, not runtime, device or platform conformance.
+
+| Check | Result and scope |
+|---|---|
+| `make check` | Passed with Go 1.26.0 on macOS ARM64, including race tests and pure-Go Android/iOS ARM64 compilation. One earlier full run failed `TestCcScheduleSchedulingModel` under the race detector when admission exceeded the harness's 200 ms lifecycle deadline; it passed 10 isolated race runs, three full root race runs and the next complete `make check`, and is treated as a timing flake of the test harness. |
+| Network tests (`network_test.go`, `internal/execution/network_test.go`, `internal/execution/gates_test.go`, `internal/networkcontext`, the three executed families and `TestCcExecutionFieldsNetwork` and `TestCcExecutionFieldsNetworkFields`) | Passed, and passed 20 repeated runs under the race detector together with the StartRun, gate and precondition tests. They cover the VPN table, transports and validation on the engine with no dialer or runner for a run that does not start; `run_not_due` at `StartRun`; `not_run` `constraints_unsatisfied` on the first attempt and no retry; generation changes before and after the test start and after the outcome; fail-closed capture; canary absence from access objects and results; and a real loopback socket through the production direct dialer. |
+| `TestAdmissionHasNoNetworkDependency` and `TestDependencyRules` | Passed: the `internal/admission` closure has no network package, `internal/execution` is the only module package in the root closure importing one, and only `internal/execution`, `internal/protocol` and `internal/testkit` may import network packages. |
+| `TestPublicSurfaceMatchesDocumentedSignatures` | Passed; no exported signature changed, so the binding checks were not re-run. |
+| `make traceability` | Before the rebaseline, the manifests and case plans were valid and the requirement-reference check reported thirteen new `requirement-ref` comments as not yet linked. Passed after rebaselining the cross-cutting manifest to Go `cdbd160`, where three families pass and nine requirements become `partial`. |
+| `git diff --check` | Passed. |
+
+No adapter is wired in production, so no binding or device test exercised access context or a direct run. Native network capabilities and change signals (DEV-455), the proxy path (DEV-645), proxy lifecycle (DEV-646), egress lookup and the context cache (DEV-647) remain pending.

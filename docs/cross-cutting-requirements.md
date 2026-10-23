@@ -60,6 +60,8 @@ DEV-563 rebaselines the cross-cutting manifest to Go `e867c983bd74c04c033b3da982
 
 DEV-564 rebaselines the cross-cutting manifest to Go `e3722195bdbeb9a25b9f9612eead36683be6e92b` at the unchanged public `5d01879cfd1d47396c780befa2567f7e90439948`, preserving the DEV-563 mapping as a [historical manifest](../traceability/historical/cross-cutting-5d01879-e867c98.json). It adds persistent measurement-data clearing behind a durable clearing marker ([Persistence Ports](package-architecture.md#persistence-ports)). `CC-LINKAGE-CLEAR-DATA-CONTRACT`, limited to its Go-owned rows, and `CC-TRUST-REPLAY-AFTER-CLEARING` are executed; the host, operating-system and native rows of the clear-data contract, with REQ-LINKAGE-0025 and REQ-LINKAGE-0026, move to the new planned `CC-LINKAGE-CLEAR-DATA-CONTRACT-HOST` case (DEV-455). Three `UT.*` cases are added for clearing, `persistence.Clear`, `State.Forget` and the root `storageClearer` become existing implementation locations of REQ-LINKAGE-0023, REQ-LINKAGE-0024 and REQ-TRUST-0025, and REQ-TRUST-0025 becomes `partial`. All cases were executed at the new Go baseline and recorded in a [new evidence report](../traceability/evidence/go-unit-e372219.md) committed at `0997996c4e358717ae059e63be22ed1e57179929`. The map holds 591 requirements (240 `partial`, 351 `planned`).
 
+DEV-644 rebaselines the cross-cutting manifest to Go `cdbd16043d991d4b11544420b5ba8531fb8c95f1` at the unchanged public `5d01879cfd1d47396c780befa2567f7e90439948`, preserving the DEV-564 mapping as a [historical manifest](../traceability/historical/cross-cutting-5d01879-e372219.json). It adds network-condition evaluation and access context on the direct path ([Network Conditions and Access Context](execution-models.md#network-conditions-and-access-context)); `CC-EXECUTION-FIELDS-NETWORK-FIELDS-VPN-POLICY`, `CC-CONTEXT-CONTEXT-LAYERS-ACCESS-CONTEXT` and `CC-CONTEXT-FORMAT-ACCESS-OBJECT` are executed, and two `UT.*` cases are added for network changes during an attempt and network conditions before each attempt. `NetworkConditions` in `internal/execution/gates.go`, `Engine.attempt` in `internal/execution/run.go`, `AccessState` in `internal/platform/network.go` and `Direct.Capture` and `Normalize` in `internal/networkcontext/networkcontext.go` become existing implementation locations of REQ-EXECUTION-0016 to REQ-EXECUTION-0020, REQ-EXECUTION-0031, REQ-CONTEXT-0002, REQ-CONTEXT-0003, REQ-CONTEXT-0025 and REQ-CONTEXT-FORMAT-0004, and all of them except REQ-CONTEXT-FORMAT-0004, which was already `partial`, become `partial`. `CC-EXECUTION-FIELDS-NETWORK` and `CC-EXECUTION-FIELDS-NETWORK-FIELDS` run their access rows but stay planned, because their egress Network Context rows need egress lookup (DEV-647) and the library-internal-check row of the latter waits on GO-SPEC-ISSUE-013, which is linked as `open` from REQ-EXECUTION-0016. All cases were executed at the new Go baseline and recorded in a [new evidence report](../traceability/evidence/go-unit-cdbd160.md) committed at `729ec662c9c36992f2cf70a5a29ec061720cebe3`. The map holds 591 requirements (249 `partial`, 342 `planned`).
+
 The earlier DEV-471 mapping at public baseline `47d75925b3829fccfb6954b545c15f695375b76f` and Go baseline `a9136f34fad00ecc2171cbc29e835c5c50b340df` is preserved byte-for-byte as [historical manifest](../traceability/historical/cross-cutting-47d7592.json) with its unchanged [report](../traceability/reports/cross-cutting.json). It mapped 565 requirements to 185 families. It remains valid metadata only for those original baselines and is not a current claim.
 
 ## Boundaries and Maintenance
@@ -702,11 +704,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-CONTEXT-FORMAT-ACCESS-OBJECT
 
-Public source: `data-formats/network-context.md`, section **Access Object**. Intended target: `internal/networkcontext/model.go`. Planned case location: `internal/networkcontext/cross_cutting_conformance_test.go`, `symbol:TestCcContextFormatAccessObject`.
+Public source: `data-formats/network-context.md`, section **Access Object**. Intended target: `internal/networkcontext/model.go`. Case location: `internal/networkcontext/cross_cutting_conformance_test.go`, `symbol:TestCcContextFormatAccessObject`.
 
 Case plan: Iterate every registered access value and accept each: network_type wifi, cellular, ethernet, other, unknown; vpn_state detected, not_detected, unknown; ipv4_available, ipv6_available and validated yes, no, unknown; network_changed true and false. Reject case variants (WIFI, Yes), unregistered strings, network_changed as the string false or as null, and objects missing each required field in turn. Configure the fake platform to expose canaries for interface names, addresses, Wi-Fi identifiers, DNS server addresses, cell information, SIM information, carrier names, subscriber identifiers and location, and assert none appears in the encoded access object or result; reject decoding of an access object carrying any extra field for those items. Requirements: REQ-CONTEXT-FORMAT-0004, REQ-CONTEXT-FORMAT-0005.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. Passed at Go `cdbd160` ([evidence](../traceability/evidence/go-unit-cdbd160.md#CC-CONTEXT-FORMAT-ACCESS-OBJECT)); partial evidence only, with no native capability or support claim.
 
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0004 -->
 <!-- requirement-ref: REQ-CONTEXT-FORMAT-0005 -->
@@ -1072,6 +1074,8 @@ Public source: `data-formats/task-execution.md`, section **Fields / Network**. I
 
 Case plan: Configure the fake platform so required network information is unavailable: network_type unknown with allowed_transports [wifi, cellular], vpn_state unknown under vpn_policy exclude and require, and context required_fields [country_code] with the egress classification unavailable. Assert for each case that no network operation is issued on the recording transport and the attempt does not run (not_run with constraints_unsatisfied for each undeterminable network condition, network_context_unavailable only for the missing required context field), and that unknown is never treated as satisfying a constraint. Assert the same task runs when the fake platform reports the required values. Requirements: REQ-EXECUTION-0031.
 
+DEV-644: `TestCcExecutionFieldsNetwork` runs the network-type, VPN-state and validation rows with the test-only fake platform network and asserts that the static gate refuses a required egress context field; the family stays planned until egress lookup produces `network_context_unavailable` for that row (DEV-647).
+
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-EXECUTION-0031 -->
@@ -1084,6 +1088,8 @@ Public source: `data-formats/task-execution.md`, section **Fields / Network / Fi
 
 Case plan: Iterate allowed_transports [wifi], [cellular] and [wifi, cellular] against fake-platform network_type wifi, cellular, ethernet, other and unknown, and assert the task runs only when the reported type is in the list. Reject a task whose allowed_transports contains a value outside the initial list (wifi, cellular). Iterate vpn_policy any, exclude and require (and the omitted default any) against vpn_state detected, not_detected and unknown and assert run or do-not-run exactly per the public VPN eligibility table. Exercise require_validated true with validated yes, no and unknown, using the fake system method when available and the fake library internal check otherwise, and assert execution only on confirmed validation. Exercise context required_fields and allowed_country_codes with present, missing and non-matching values. Assert every do-not-run case issues no network operation. Requirements: REQ-EXECUTION-0016, REQ-EXECUTION-0017.
 
+DEV-644: `TestCcExecutionFieldsNetworkFields` runs the allowed-transport, VPN-policy and system-validation rows with the test-only fake platform network; the family stays planned because its Network Context rows need egress lookup (DEV-647) and its library-internal-check row is not executable while [GO-SPEC-ISSUE-013](specification-issues.md#go-spec-issue-013-library-internal-check-for-require_validated) is open.
+
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-EXECUTION-0016 -->
@@ -1094,11 +1100,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-EXECUTION-FIELDS-NETWORK-FIELDS-VPN-POLICY
 
-Public source: `data-formats/task-execution.md`, section **Fields / Network / Fields / VPN Policy**. Intended target: `internal/execution/attempt.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcExecutionFieldsNetworkFieldsVpnPolicy`.
+Public source: `data-formats/task-execution.md`, section **Fields / Network / Fields / VPN Policy**. Intended target: `internal/execution/attempt.go`. Case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcExecutionFieldsNetworkFieldsVpnPolicy`.
 
 Case plan: Use a fake platform that reports VPN state as detected, not_detected or unknown and evaluate each vpn_policy value (any, exclude, require) for all nine combinations. Expected: any runs for detected, not_detected and unknown; exclude runs only for not_detected and does not run for detected or unknown; require runs only for detected and does not run for not_detected or unknown. Assert omitted vpn_policy behaves as any. Assert the unknown state is carried through evaluation as unknown and is never mapped to not_detected, so exclude with unknown does not run. Reject an unregistered vpn_policy value (for example prefer) at validation. Requirements: REQ-EXECUTION-0018, REQ-EXECUTION-0019, REQ-EXECUTION-0020.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. Passed at Go `cdbd160` on the engine with the test-only fake platform network ([evidence](../traceability/evidence/go-unit-cdbd160.md#CC-EXECUTION-FIELDS-NETWORK-FIELDS-VPN-POLICY)); partial evidence only, with no native capability or support claim.
 
 <!-- requirement-ref: REQ-EXECUTION-0018 -->
 <!-- requirement-ref: REQ-EXECUTION-0019 -->
@@ -2096,11 +2102,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-CONTEXT-CONTEXT-LAYERS-ACCESS-CONTEXT
 
-Public source: `library/network-context.md`, section **Context Layers / Access Context**. Intended target: `internal/networkcontext/acquire.go`. Planned case location: `internal/networkcontext/cross_cutting_conformance_test.go`, `symbol:TestCcContextContextLayersAccessContext`.
+Public source: `library/network-context.md`, section **Context Layers / Access Context**. Intended target: `internal/networkcontext/acquire.go`. Case location: `internal/networkcontext/cross_cutting_conformance_test.go`, `symbol:TestCcContextContextLayersAccessContext`.
 
 Case plan: Feed the Go core access context through a fake platform that also offers canary values for every forbidden item: interface name, local IPv4 and IPv6 addresses, DNS server address, SSID, BSSID, cell identifier, SIM information, subscriber identifier, carrier account information and physical location. Iterate `network_type` over `wifi`, `cellular`, `ethernet`, `other` and `unknown`, `vpn_state` over `detected`, `not_detected` and `unknown`, `ipv4_available`, `ipv6_available` and `validated` over `yes`, `no` and `unknown`, and `network_changed` over `true` and `false`. Assert the serialized access object contains exactly these six fields with the supplied normalized values. Assert serialized output of the access object, the Measurement Result, logs, cache entries and egress-endpoint requests contains none of the canary values. Reject an access input carrying any additional field. Requirements: REQ-CONTEXT-0002, REQ-CONTEXT-0003.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. Passed at Go `cdbd160` with the test-only fake platform network ([evidence](../traceability/evidence/go-unit-cdbd160.md#CC-CONTEXT-CONTEXT-LAYERS-ACCESS-CONTEXT)); the core writes no log, and cache entries and egress-endpoint requests do not exist until DEV-647, which must re-run this case. Partial evidence only, with no native capability or support claim.
 
 <!-- requirement-ref: REQ-CONTEXT-0002 -->
 <!-- requirement-ref: REQ-CONTEXT-0003 -->
