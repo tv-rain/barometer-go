@@ -16,7 +16,7 @@ The 16 format/library sources plus shared JSON decoding are in scope. Registered
 
 Portable Go owns its package targets. Native storage and binding obligations map to planned native validation contracts in this repository, consumed by future Android/Apple adapter work; these documents cannot implement platform behavior. Host, collector and public authoring obligations map to planned integration/review records. Mixed core/integration case families must retain both scopes; Go tests alone cannot close them. Synthetic requests and canary values are local fixtures, not measurements or participant data.
 
-Unresolved contract findings use [Specification Issues](specification-issues.md). `GO-SPEC-ISSUE-001` remains open for downstream evidence despite the accepted JSON clarification. `GO-SPEC-ISSUE-007` is adopted in Go decoding and validation and remains open for an admission-level case, the planned family cases and binding and host evidence. `GO-SPEC-ISSUE-008` is adopted in the admission design, case plans, `task.AdmissionError` and the admission steps and remains open for the planned admission families, the safety review of the mapping and binding and host evidence. `GO-SPEC-ISSUE-009` is adopted in admission step 8 and the case plans, and remains open for production compatibility rules, the execution-time check and the safety review of the mapping. `GO-SPEC-ISSUE-010` records that the class of a step-8 input or options failure is unmapped and awaits public disposition. `GO-SPEC-ISSUE-011` records that interval due times and catch-up are unspecified; Go implements an approved conservative interim rule pending public disposition. Mapping a planned test never resolves it. A newly discovered ambiguity must block only the affected claim and enter that workflow before implementation selects behavior.
+Unresolved contract findings use [Specification Issues](specification-issues.md). `GO-SPEC-ISSUE-001` remains open for downstream evidence despite the accepted JSON clarification. `GO-SPEC-ISSUE-007` is adopted in Go decoding and validation and remains open for an admission-level case, the planned family cases and binding and host evidence. `GO-SPEC-ISSUE-008` is adopted in the admission design, case plans, `task.AdmissionError` and the admission steps and remains open for the planned admission families, the safety review of the mapping and binding and host evidence. `GO-SPEC-ISSUE-009` is adopted in admission step 8, the case plans and the execution-time pre-attempt check, and remains open for production compatibility rules and the safety review of the mapping. `GO-SPEC-ISSUE-010` records that the class of a step-8 input or options failure is unmapped and awaits public disposition. `GO-SPEC-ISSUE-011` records that interval due times and catch-up are unspecified; Go implements an approved conservative interim rule pending public disposition. Mapping a planned test never resolves it. A newly discovered ambiguity must block only the affected claim and enter that workflow before implementation selects behavior.
 
 Public prerequisite ordering is satisfied: PR #6 merged the approved allocation head `9dbd72af37205a08484435cb561a168ac7b1876b` as merge commit `47d75925b3829fccfb6954b545c15f695375b76f`, and PR #8 merged approved head `5869bc314c877e2ccd3426b82aadcd9c92414f02` as `a944ed6c389fec9f0d089f0044ead6fe845328b1`. Between those baselines, the shared catalog changes only by the REQ-OBS retirements and additions above. Any later public change requires a renewed source/catalog review, an explicit baseline update, and regenerated traceability report. Preserve previously committed historical manifests/reports rather than presenting old evidence as current. Keep partial coverage while wider source, test-specific or semantic inventory gaps remain.
 
@@ -926,11 +926,11 @@ Review case `RV-CC-BUNDLE-INTERPRETATION` (`docs/conformance/cross-cutting-revie
 
 ### CC-EXECUTION-ENVELOPE
 
-Public source: `data-formats/task-execution.md`, section **Envelope**. Intended target: `internal/execution/attempt.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcExecutionEnvelope`.
+Public source: `data-formats/task-execution.md`, section **Envelope**. Intended target: `internal/execution/attempt.go`. Case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcExecutionEnvelope`.
 
 Case plan: Recheck constraints immediately before attempts and preserve selected registered protocol semantics through direct/proxy transport.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. Runs in `TestCcExecutionEnvelope` with synthetic runners, the production CONNECT dialer and the scripted loopback proxy of `internal/testkit/loopback`; its evidence is recorded at the next manifest update. No native capability, production runner or support claim.
 
 <!-- requirement-ref: REQ-EXECUTION-0001 -->
 <!-- requirement-ref: REQ-EXECUTION-0002 -->
@@ -969,6 +969,8 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 Public source: `data-formats/task-execution.md`, section **Fields / Network Path**. Intended target: `internal/execution/attempt.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcExecutionFieldsNetworkPath`.
 
 Case plan: Test direct default and proxy selection; deny each proxy precondition, snapshot one generation across NET-05, and inject each path failure while asserting zero direct fallback.
+
+Its selection, precondition and path-failure rows run in `TestCcExecutionFieldsNetworkPath` with the production CONNECT dialer against the scripted loopback proxy; its NET-05 row, one path snapshot across every profile step, needs the NET-05 runner (DEV-454), so the family stays planned.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -2240,6 +2242,8 @@ Public source: `library/proxy.md`, section **Overview**. Intended target: `inter
 
 Case plan: Configure a scripted local proxy listener on `127.0.0.1` and accept the configuration `{"host": "127.0.0.1", "port": 54321, "connection_code": "outline_mobileproxy"}` with no test identifiers or test capability declaration. Run a TCP-01 proxy attempt and assert the library opens one TCP connection to the loopback endpoint and sends an HTTP/1.1 `CONNECT` request line for the target authority, and nothing else is used as proxy transport. Reject configurations adding a transport selector such as `"type": "socks5"`, a declared supported-tests list, or a non-loopback `host` such as `192.0.2.1`, leaving the previous configuration unchanged. Script the listener to reply with a SOCKS handshake reply or a non-HTTP/1.1 status line and assert the attempt fails per the public outcome table without direct fallback. Reject a DNS-01 task with `network_path: proxy` using UDP transport, which needs a non-stream capability. Requirements: REQ-PROXY-0001.
 
+Its configuration, CONNECT and reply rows run in `TestCcProxyOverview` with the production CONNECT dialer against the scripted loopback proxy; its DNS-01-over-UDP row needs the DNS-01 codec and proxy rule (DEV-454), so the family stays planned. The CONNECT dialer refuses a non-stream dial without contact (`TestConnectAuthority`).
+
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-PROXY-0001 -->
@@ -2266,11 +2270,11 @@ Review case `RV-CC-PROXY-HOST-INTEGRATION` (`docs/conformance/cross-cutting-revi
 
 ### CC-PROXY-PROXY-CONFIGURATION
 
-Public source: `library/proxy.md`, section **Proxy Configuration**. Intended target: `internal/execution/proxy.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcProxyProxyConfiguration`.
+Public source: `library/proxy.md`, section **Proxy Configuration**. Intended target: `internal/execution/proxy.go`. Case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcProxyProxyConfiguration`.
 
 Case plan: Exercise loopback/localhost, port and connection_code boundaries and forbidden fields/transports; reject non-loopback endpoints.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. Runs in `TestCcProxyProxyConfiguration` with synthetic runners, the production CONNECT dialer and the scripted loopback proxy of `internal/testkit/loopback`; its evidence is recorded at the next manifest update. No native capability, production runner or support claim.
 
 <!-- requirement-ref: REQ-PROXY-0005 -->
 <!-- requirement-ref: REQ-PROXY-0006 -->
@@ -2320,11 +2324,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-PROXY-HTTP-CONNECT-BEHAVIOR
 
-Public source: `library/proxy.md`, section **HTTP CONNECT Behavior**. Intended target: `internal/execution/proxy.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcProxyHttpConnectBehavior`.
+Public source: `library/proxy.md`, section **HTTP CONNECT Behavior**. Intended target: `internal/execution/proxy.go`. Case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcProxyHttpConnectBehavior`.
 
 Case plan: Capture synthetic CONNECT exchanges for explicit IP and hostname cases, 2xx/non-2xx/malformed/timeouts, redirects and cancellation. Assert exact authority, no credentials/cleartext target GET, fresh tunnels and unchanged TLS semantics.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. Runs in `TestCcProxyHttpConnectBehavior` with synthetic runners, the production CONNECT dialer and the scripted loopback proxy of `internal/testkit/loopback`; its evidence is recorded at the next manifest update. No native capability, production runner or support claim.
 
 <!-- requirement-ref: REQ-PROXY-0017 -->
 <!-- requirement-ref: REQ-PROXY-0018 -->
@@ -2338,11 +2342,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-PROXY-TASK-SELECTION
 
-Public source: `library/proxy.md`, section **Task Selection**. Intended target: `internal/execution/proxy.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcProxyTaskSelection`.
+Public source: `library/proxy.md`, section **Task Selection**. Intended target: `internal/execution/proxy.go`. Case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcProxyTaskSelection`.
 
 Case plan: Exercise direct default and proxy preconditions; task cannot carry endpoint, category or proxy identity.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. Runs in `TestCcProxyTaskSelection` with synthetic runners, the production CONNECT dialer and the scripted loopback proxy of `internal/testkit/loopback`; its evidence is recorded at the next manifest update. No native capability, production runner or support claim.
 
 <!-- requirement-ref: REQ-PROXY-0021 -->
 <!-- requirement-ref: REQ-PROXY-0022 -->
@@ -2404,11 +2408,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-PROXY-RESULT-METADATA
 
-Public source: `library/proxy.md`, section **Result Metadata**. Intended target: `internal/execution/proxy.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcProxyResultMetadata`.
+Public source: `library/proxy.md`, section **Result Metadata**. Intended target: `internal/execution/proxy.go`. Case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcProxyResultMetadata`.
 
 Case plan: Use a scripted transport and a fake local HTTP CONNECT proxy configured with synthetic canary values (host "127.0.0.1", a distinctive canary port, connection_code "outline_mobileproxy") to produce four attempts: direct success, direct failure, proxied success after a scripted 2xx CONNECT response, and proxied failures recorded as proxy_connect_failed (scripted non-2xx CONNECT response carrying canary response headers and a canary body) and proxy_unavailable (closed listener port). Assert every proxied result records network_context.egress.network_path "proxy" and connection_code "outline_mobileproxy", including when no network_context endpoints are configured and egress status is unavailable, and every direct result records network_path "direct" with connection_code absent. Assert the serialized results and bundle contain no proxy host or port field or value, no proxy generation value, no CONNECT request line or authority echo, none of the canary proxy response headers or body, and no Outline transport configuration canary passed to the host fake; assert no CONNECT status class field is present unless the pinned result schema defines one. Requirements: REQ-PROXY-0031, REQ-PROXY-0032, REQ-PROXY-0033.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. Runs in `TestCcProxyResultMetadata` with synthetic runners, the production CONNECT dialer and the scripted loopback proxy of `internal/testkit/loopback`; its evidence is recorded at the next manifest update. No native capability, production runner or support claim.
 
 <!-- requirement-ref: REQ-PROXY-0031 -->
 <!-- requirement-ref: REQ-PROXY-0032 -->

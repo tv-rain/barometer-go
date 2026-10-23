@@ -84,7 +84,7 @@ func TestStartRunOnTheDirectPath(t *testing.T) {
 	h, r, srv := directHarness(t)
 	h.run.network.Set(platform.AccessState{Generation: 7, Type: platform.NetworkCellular, VPN: platform.VPNNotDetected, IPv4: platform.AvailabilityYes, IPv6: platform.AvailabilityNo, Validated: platform.AvailabilityYes})
 	c := h.initialized(t)
-	if _, ok := c.bound.run.paths.(*directPath); !ok {
+	if _, ok := c.bound.run.paths.(*networkPaths); !ok {
 		t.Fatal("bind did not derive the direct path")
 	}
 	rh, err := c.StartRun(h.admit(t, c, runTask("direct-1", "", `"network":{"allowed_transports":["cellular"],"vpn_policy":"exclude","require_validated":true}`, false)))

@@ -78,8 +78,8 @@ type Output interface {
 // ContextSource captures the attempt's access snapshot for the run's path:
 // the access values that network conditions are evaluated against, the
 // Network Context attached to the result and the watch for an
-// access-network generation change. networkcontext.Direct is the direct-path
-// source; egress lookup and the proxy path belong to DEV-647 and DEV-645.
+// access-network generation change. networkcontext.Source is the production
+// source of either path; egress lookup belongs to DEV-647.
 type ContextSource interface {
 	Capture(ctx context.Context) (networkcontext.Snapshot, error)
 }
@@ -159,7 +159,18 @@ type Plan struct {
 	Result         *result.Decoder
 	Context        ContextSource
 	Dialers        DialerSource
+	Path           PathCheck     // the proxy path's pre-attempt check; nil on the direct path
 	Preconditions  Preconditions // optional attempt-start check
+}
+
+// PathCheck is the pre-attempt check of a proxy path (REQ-EXECUTION-0008): a
+// valid host proxy is configured, local policy permits the task to use it and
+// the test with its concrete input and options is compatible with HTTP
+// CONNECT. Check returns the empty reason when the attempt may use the path,
+// otherwise proxy_not_configured, proxy_not_permitted or
+// proxy_path_unsupported, in that order. It makes no contact.
+type PathCheck interface {
+	Check() task.ExecutionReason
 }
 
 // AttemptReport is the execution record of one terminal attempt. Usage is the
@@ -263,7 +274,23 @@ func stopReason(ctx context.Context) task.ExecutionReason {
 	case errors.Is(cause, errNetworkChanged):
 		return task.NetworkChanged
 	}
+	if reason, ok := pathFailure(context.Cause(ctx)); ok {
+		return reason
+	}
 	return task.CancelledByHost
+}
+
+// cutShort reports a termination that stopped the attempt's active operation
+// before the runner produced its outcome: an exhausted budget
+// (REQ-LIMIT-0027) or a path failure, such as a CONNECT the proxy refused,
+// which is an execution observation and never the test's (REQ-PROXY-0029).
+// The outcome the runner built from the stopped operation is not retained.
+func cutShort(ctx context.Context) (task.ExecutionReason, bool) {
+	cause := context.Cause(ctx)
+	if errors.Is(cause, errBudget) {
+		return task.ResourceLimit, true
+	}
+	return pathFailure(cause)
 }
 
 // satisfied re-evaluates the plan's preconditions at attempt start.
@@ -322,6 +349,15 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 	stopTimer := e.clock.AfterFunc(p.Deadline, func() { cancel(errDeadline) })
 	defer stopTimer()
 
+	// A proxy attempt that cannot use the path records why and makes no
+	// contact, not even the access-context capture; it never falls back to
+	// the direct path (REQ-EXECUTION-0008, REQ-EXECUTION-0010).
+	if p.Path != nil {
+		if reason := p.Path.Check(); reason != "" {
+			a, v, err := e.stopped(p, pending, reason, nil, runID, n, started)
+			return a, measurement.Usage{}, v, err
+		}
+	}
 	snap, err := p.Context.Capture(actx)
 	if actx.Err() != nil {
 		a, v, err := e.stopped(p, pending, stopReason(actx), nil, runID, n, started)
@@ -368,7 +404,7 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 		a, v, err := e.stopped(p, pending, task.InternalError, nil, runID, n, started)
 		return a, measurement.Usage{}, v, err
 	}
-	s := newScope(actx, dialer, p.Limits, func() { cancel(errBudget) })
+	s := newScope(actx, dialer, p.Limits, cancel)
 	out, err := runner.Run(actx, measurement.Input{Parameters: p.Parameters, Dialer: s, Start: s.Start})
 	s.close()
 	usage := s.Usage()
@@ -378,6 +414,12 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 		if actx.Err() != nil {
 			reason = stopReason(actx)
 		}
+		// A CONNECT exchange the attempt deadline cut short did not complete
+		// within the deadline (REQ-PROXY-0028). A host cancellation or a
+		// network change during the exchange keeps its own reason.
+		if reason == task.AttemptDeadlineExceeded && s.interrupted() == task.ProxyConnectFailed {
+			reason = task.ProxyConnectFailed
+		}
 		at := pending
 		if s.Started() {
 			at = running
@@ -385,10 +427,10 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 		a, v, err := e.stopped(p, at, reason, contextFor(reason), runID, n, started)
 		return a, usage, v, err
 	}
-	// An exhausted budget stopped the active operation before the runner
-	// produced this outcome, so the attempt is incomplete (REQ-LIMIT-0027).
-	if errors.Is(context.Cause(actx), errBudget) {
-		a, v, err := e.stopped(p, running, task.ResourceLimit, &stable, runID, n, started)
+	// An exhausted budget or a path failure stopped the active operation
+	// before the runner produced this outcome, so the attempt is incomplete.
+	if reason, ok := cutShort(actx); ok {
+		a, v, err := e.stopped(p, running, reason, &stable, runID, n, started)
 		return a, usage, v, err
 	}
 	completed, _ := running.Complete()

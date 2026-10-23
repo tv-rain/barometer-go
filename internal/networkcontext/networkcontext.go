@@ -1,9 +1,9 @@
-// Package networkcontext owns runtime Network Context acquisition. Since
-// DEV-644 it captures coarse access context from the platform.Network
-// capability and binds it to the direct path with egress unavailable. Egress
-// lookup, its cache and the proxy path belong to later Network paths and
-// context work (DEV-645, DEV-647). Context values are observations about the
-// device network, never evidence of censorship.
+// Package networkcontext owns runtime Network Context acquisition. It
+// captures coarse access context from the platform.Network capability and
+// binds it to the attempt's network path, direct or the host-configured
+// proxy, with egress unavailable. Egress lookup and its cache belong to later
+// Network paths and context work (DEV-647). Context values are observations
+// about the device network, never evidence of censorship.
 package networkcontext
 
 import (
@@ -20,38 +20,72 @@ var (
 	ErrUnavailable = errors.New("networkcontext: access context unavailable")
 )
 
-// Direct captures access context for direct-path attempts. It holds no
-// context between captures, so nothing it acquires is cached or retained.
-type Direct struct {
+// Source captures access context for the attempts of one network path. It
+// holds no context between captures, so nothing it acquires is cached or
+// retained. A proxy source carries the proxy generation and connection_code
+// of the snapshot it was built for; neither is task input, and only
+// connection_code reaches a result (REQ-PROXY-0031, REQ-PROXY-0033).
+type Source struct {
 	network platform.Network
 	decoder *observation.ContextDecoder
+	proxy   uint64 // proxy generation; zero on the direct path
+	code    string // connection_code; empty on the direct path
 }
 
-// NewDirect binds the platform network capability. A direct context carries
-// no classification, so its decoder needs no approvals.
-func NewDirect(n platform.Network) (*Direct, error) {
+// NewDirect binds the platform network capability to the direct path. A
+// direct context carries no classification or category, so its decoder needs
+// no approvals.
+func NewDirect(n platform.Network) (*Source, error) {
+	return newSource(n, 0, "")
+}
+
+// NewProxy binds the platform network capability to one proxy snapshot: its
+// non-zero generation and the host-configured connection_code, which the
+// host configuration has already validated against its reviewed approvals.
+func NewProxy(n platform.Network, generation uint64, connectionCode string) (*Source, error) {
+	if generation == 0 || connectionCode == "" {
+		return nil, ErrCapability
+	}
+	return newSource(n, generation, connectionCode)
+}
+
+func newSource(n platform.Network, generation uint64, code string) (*Source, error) {
 	if n == nil {
 		return nil, ErrCapability
 	}
-	d, err := observation.NewContextDecoder(observation.Contract, observation.ContextApprovals{})
+	var approvals observation.ContextApprovals
+	if code != "" {
+		approvals.ConnectionCodes = []string{code}
+	}
+	d, err := observation.NewContextDecoder(observation.Contract, approvals)
 	if err != nil {
 		return nil, ErrCapability
 	}
-	return &Direct{network: n, decoder: d}, nil
+	if _, err := observation.NewPath(1, generation, pathName(code), code); err != nil {
+		return nil, ErrCapability
+	}
+	return &Source{network: n, decoder: d, proxy: generation, code: code}, nil
+}
+
+func pathName(code string) string {
+	if code == "" {
+		return "direct"
+	}
+	return "proxy"
 }
 
 // Decoder is the context decoder that results built from this source's
 // snapshots bind to.
-func (d *Direct) Decoder() *observation.ContextDecoder { return d.decoder }
+func (d *Source) Decoder() *observation.ContextDecoder { return d.decoder }
 
-// Capture reads the access context once and binds it to the direct path of
+// Capture reads the access context once and binds it to the source's path in
 // its access-network generation. It sends no traffic (REQ-CONTEXT-0018). A
 // capability error, a zero generation or an ended context is ErrUnavailable;
 // nothing is guessed. Values the platform reports as unknown, and values this
 // build does not recognize, stay unknown (REQ-CONTEXT-0034).
 // requirement-ref: REQ-CONTEXT-0002
 // requirement-ref: REQ-CONTEXT-0003
-func (d *Direct) Capture(ctx context.Context) (Snapshot, error) {
+func (d *Source) Capture(ctx context.Context) (Snapshot, error) {
 	if d == nil || ctx.Err() != nil {
 		return Snapshot{}, ErrUnavailable
 	}
@@ -59,15 +93,16 @@ func (d *Direct) Capture(ctx context.Context) (Snapshot, error) {
 	if err != nil || s.Generation == 0 || ctx.Err() != nil {
 		return Snapshot{}, ErrUnavailable
 	}
-	path, err := observation.NewPath(s.Generation, 0, "direct", "")
+	path, err := observation.NewPath(s.Generation, d.proxy, pathName(d.code), d.code)
 	if err != nil {
 		return Snapshot{}, ErrUnavailable
 	}
 	a := Normalize(s)
 	snap := Snapshot{valid: true, network: d.network, access: a, path: path, generation: s.Generation}
+	egress := egressWire{Status: "unavailable", LookupSource: "none", NetworkPath: pathName(d.code), ConnectionCode: d.code}
 	for i, changed := range []bool{false, true} {
 		a.NetworkChanged = changed
-		raw, err := json.Marshal(directWire{Access: accessWire(a), Egress: unavailableDirect})
+		raw, err := json.Marshal(contextWire{Access: accessWire(a), Egress: egress})
 		if err != nil {
 			return Snapshot{}, ErrUnavailable
 		}
@@ -103,7 +138,7 @@ func pick(i int, names ...string) string {
 	return names[i]
 }
 
-// Snapshot is one access reading bound to the direct path of its generation.
+// Snapshot is one access reading bound to its source's path in its generation.
 // Its generation is local metadata and never serialized (REQ-CONTEXT-FORMAT-0016).
 type Snapshot struct {
 	valid      bool
@@ -125,7 +160,8 @@ func (s Snapshot) Generation() uint64 { return s.generation }
 
 // Context returns the Network Context to attach to a result: the snapshot's
 // access values, network_changed as given, and egress unavailable on the
-// direct path until egress lookup exists (DEV-647).
+// snapshot's path, with its connection_code on the proxy path, until egress
+// lookup exists (DEV-647).
 func (s Snapshot) Context(changed bool) (observation.NetworkContext, error) {
 	if !s.valid {
 		return observation.NetworkContext{}, ErrUnavailable
@@ -154,7 +190,7 @@ func (s Snapshot) Watch(changed func()) (stop func()) {
 	return stop
 }
 
-type directWire struct {
+type contextWire struct {
 	Access accessWire `json:"access"`
 	Egress egressWire `json:"egress"`
 }
@@ -169,9 +205,8 @@ type accessWire struct {
 }
 
 type egressWire struct {
-	Status       string `json:"status"`
-	LookupSource string `json:"lookup_source"`
-	NetworkPath  string `json:"network_path"`
+	Status         string `json:"status"`
+	LookupSource   string `json:"lookup_source"`
+	NetworkPath    string `json:"network_path"`
+	ConnectionCode string `json:"connection_code,omitempty"`
 }
-
-var unavailableDirect = egressWire{Status: "unavailable", LookupSource: "none", NetworkPath: "direct"}

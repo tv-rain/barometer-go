@@ -66,6 +66,11 @@ func (a Admitted) Candidate() task.Candidate { return a.gated.candidate }
 // AttemptLimits are the effective attempt limits after intersection.
 func (a Admitted) AttemptLimits() task.AttemptLimits { return a.gated.authority.limits.Attempt }
 
+// Paths is the admitted path authority: the intersection of issuer and local
+// policy paths, narrowed at step 8 to the task's single network path. The
+// proxy path's pre-attempt check reads whether it permits the proxy.
+func (a Admitted) Paths() task.Paths { return a.gated.authority.paths }
+
 // ConsentRequired reports the recorded consent requirement. Whether valid
 // consent covers an attempt is decided by execution at attempt start.
 func (a Admitted) ConsentRequired() bool { return a.gated.authority.requireConsent }
