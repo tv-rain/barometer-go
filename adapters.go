@@ -9,6 +9,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/bundle"
 	"github.com/tv-rain/barometer-go/internal/config"
 	"github.com/tv-rain/barometer-go/internal/execution"
+	model "github.com/tv-rain/barometer-go/internal/model/result"
 	"github.com/tv-rain/barometer-go/internal/model/task"
 	"github.com/tv-rain/barometer-go/internal/persistence"
 	"github.com/tv-rain/barometer-go/internal/persistence/pending"
@@ -62,20 +63,24 @@ type adapters struct {
 
 // runAdapters are the trusted inputs of StartRun. The clock, jitter source,
 // run ledger and path seam are required; initialization fails closed without
-// them. The pending-output port is the generation's pending.Store. Consent,
-// device state and time zone are optional: a task that needs a missing one
-// never runs. Production implementations belong to DEV-577 (ledger), DEV-578
-// (paths) and DEV-455 (consent, device and time zone); tests bind synthetic
-// ones.
+// them. The pending-output port is the generation's pending.Store. bind
+// derives the path seam from the network capability and the producer
+// implementation with newDirectPath when it is unset (DEV-644); tests may
+// substitute it. Consent, device state and time zone are optional: a task that
+// needs a missing one never runs. The ledger is persistence.State.Runs
+// (DEV-641); native network, consent, device and time-zone capabilities and
+// the implementation identity belong to DEV-455; tests bind synthetic ones.
 type runAdapters struct {
-	clock    execution.Clock
-	jitter   execution.Jitter
-	ledger   persistence.RunLedger
-	paths    pathSource
-	consent  platform.Consent
-	device   platform.Device
-	zone     platform.TimeZone
-	registry *registry.Registry // the adapters' registry, set by successor
+	clock          execution.Clock
+	jitter         execution.Jitter
+	ledger         persistence.RunLedger
+	paths          pathSource
+	network        platform.Network
+	implementation model.Implementation
+	consent        platform.Consent
+	device         platform.Device
+	zone           platform.TimeZone
+	registry       *registry.Registry // the adapters' registry, set by successor
 }
 
 // complete reports whether every required run input is present.

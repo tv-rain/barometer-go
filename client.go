@@ -112,6 +112,11 @@ func (c *Client) bind(a adapters) error {
 	if a.clearStorage == nil {
 		a.clearStorage = storageClearer(&a)
 	}
+	if absent(a.run.paths) {
+		if p, err := newDirectPath(a.run); err == nil {
+			a.run.paths = p
+		}
+	}
 	c.bound = &a
 	return nil
 }

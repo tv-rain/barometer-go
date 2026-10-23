@@ -2,7 +2,9 @@ package execution
 
 import (
 	"context"
+	"slices"
 
+	"github.com/tv-rain/barometer-go/internal/model/observation"
 	"github.com/tv-rain/barometer-go/internal/model/task"
 	"github.com/tv-rain/barometer-go/internal/platform"
 )
@@ -18,7 +20,10 @@ type Preconditions interface {
 // Gates is the attempt-start check of one admitted task: its execution
 // constraints and, when admission recorded the requirement, consent. Every
 // missing capability, error or undetermined value is unsatisfied; nothing is
-// guessed. Concurrency is the caller's, because it spans runs.
+// guessed. Concurrency is the caller's, because it spans runs. Conditions on
+// the access context are not part of Gates: they need the attempt's own
+// access snapshot, so run reservation and the engine evaluate them with
+// NetworkConditions.
 type Gates struct {
 	Execution       task.Execution
 	ConsentRequired bool
@@ -34,14 +39,53 @@ func (g Gates) Satisfied(ctx context.Context) bool {
 }
 
 // NetworkSatisfiable reports whether the task states no network condition
-// this build cannot determine. Until Network paths and context (DEV-578)
-// evaluates them, a proxy path, an allowed-transport list, a vpn_policy other
-// than any, require_validated and Network Context requirements are
-// unsatisfied, so such a task never runs.
+// this build cannot evaluate. Until the proxy path (DEV-645) and egress
+// lookup (DEV-647) exist, a proxy path and Network Context requirements are
+// unsatisfied, so such a task never runs. Transport, VPN and validation
+// conditions depend on the access context and are evaluated against it by
+// NetworkConditions.
 func NetworkSatisfiable(e task.Execution) bool {
 	n := e.Network
-	return e.NetworkPath == "direct" && len(n.AllowedTransports) == 0 && n.VPNPolicy == "any" && !n.RequireValidated &&
-		len(n.Context.RequiredFields) == 0 && len(n.Context.AllowedCountryCodes) == 0
+	return e.NetworkPath == "direct" && len(n.Context.RequiredFields) == 0 && len(n.Context.AllowedCountryCodes) == 0
+}
+
+// AccessRequired reports whether the task states a condition on the access
+// context: an allowed-transport list, a vpn_policy other than any, or
+// require_validated.
+func AccessRequired(n task.NetworkRequirements) bool {
+	return len(n.AllowedTransports) > 0 || n.VPNPolicy != "any" || n.RequireValidated
+}
+
+// NetworkConditions evaluates the access-context conditions against one
+// normalized access reading. A value that is unknown, or outside the
+// registered vocabulary, never satisfies a condition (REQ-EXECUTION-0031):
+// unknown is not not_detected (REQ-EXECUTION-0019), and only the platform's
+// own validated yes satisfies require_validated, with no connectivity check
+// of the library's own (GO-SPEC-ISSUE-013).
+// requirement-ref: REQ-EXECUTION-0016
+// requirement-ref: REQ-EXECUTION-0017
+// requirement-ref: REQ-EXECUTION-0018
+// requirement-ref: REQ-EXECUTION-0019
+// requirement-ref: REQ-EXECUTION-0020
+// requirement-ref: REQ-EXECUTION-0031
+func NetworkConditions(n task.NetworkRequirements, a observation.Access) bool {
+	if len(n.AllowedTransports) > 0 && (a.NetworkType != "wifi" && a.NetworkType != "cellular" || !slices.Contains(n.AllowedTransports, a.NetworkType)) {
+		return false
+	}
+	switch n.VPNPolicy {
+	case "any":
+	case "exclude":
+		if a.VPNState != "not_detected" {
+			return false
+		}
+	case "require":
+		if a.VPNState != "detected" {
+			return false
+		}
+	default:
+		return false
+	}
+	return !n.RequireValidated || a.Validated == "yes"
 }
 
 func (g Gates) device(ctx context.Context) bool {

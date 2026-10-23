@@ -8,7 +8,7 @@ import (
 
 	"github.com/tv-rain/barometer-go/internal/execution"
 	"github.com/tv-rain/barometer-go/internal/measurement"
-	"github.com/tv-rain/barometer-go/internal/model/observation"
+	"github.com/tv-rain/barometer-go/internal/networkcontext"
 	"github.com/tv-rain/barometer-go/internal/testkit/loopback"
 )
 
@@ -41,10 +41,10 @@ func (g *gated) Run(ctx context.Context, in measurement.Input) (measurement.Outp
 // blockingCapture waits in context capture until its context ends.
 type blockingCapture struct{ entered chan struct{} }
 
-func (b blockingCapture) Capture(ctx context.Context) (observation.NetworkContext, error) {
+func (b blockingCapture) Capture(ctx context.Context) (networkcontext.Snapshot, error) {
 	b.entered <- struct{}{}
 	<-ctx.Done()
-	return observation.NetworkContext{}, ctx.Err()
+	return networkcontext.Snapshot{}, ctx.Err()
 }
 
 // blockingDialer waits in its dial until the dial context ends.

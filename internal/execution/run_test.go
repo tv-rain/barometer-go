@@ -15,10 +15,13 @@ import (
 	"github.com/tv-rain/barometer-go/internal/model/observation"
 	model "github.com/tv-rain/barometer-go/internal/model/result"
 	"github.com/tv-rain/barometer-go/internal/model/task"
+	"github.com/tv-rain/barometer-go/internal/networkcontext"
+	"github.com/tv-rain/barometer-go/internal/platform"
 	"github.com/tv-rain/barometer-go/internal/registry"
 	"github.com/tv-rain/barometer-go/internal/result"
 	"github.com/tv-rain/barometer-go/internal/taskdecode"
 	"github.com/tv-rain/barometer-go/internal/testkit"
+	"github.com/tv-rain/barometer-go/internal/testkit/capability"
 	"github.com/tv-rain/barometer-go/internal/testkit/loopback"
 	"github.com/tv-rain/barometer-go/internal/testkit/output"
 	"github.com/tv-rain/barometer-go/internal/validation"
@@ -60,6 +63,7 @@ type step struct {
 	advance time.Duration // clock movement while the runner works
 	cancel  bool          // simulate host cancellation during the attempt
 	unbegun bool          // return before the test starts (REQ-RESULT-0051)
+	during  func()        // runs after the test start, before the response
 }
 
 // scripted is a synthetic runner; it performs no I/O.
@@ -82,6 +86,9 @@ func (s *scripted) Run(ctx context.Context, in measurement.Input) (measurement.O
 	if !st.unbegun {
 		in.Start()
 	}
+	if st.during != nil {
+		st.during()
+	}
 	if st.advance > 0 {
 		_ = s.clock.Advance(st.advance)
 	}
@@ -97,22 +104,35 @@ func (s *scripted) Calls() int {
 	return s.calls
 }
 
+// defaultAccess is the fake platform's reading unless a test changes it:
+// wifi, VPN state unknown, IPv4 yes, IPv6 and validation unknown, generation 1.
+var defaultAccess = platform.AccessState{Generation: 1, Type: platform.NetworkWiFi, IPv4: platform.AvailabilityYes}
+
+// contextSource captures through the production direct-path source over a
+// fake platform network, failing the captures listed in fail.
 type contextSource struct {
-	t     *testing.T
-	fail  map[int]bool
-	calls int
+	t      *testing.T
+	fail   map[int]bool
+	calls  int
+	direct *networkcontext.Direct
+	net    *capability.Network
 }
 
-func (c *contextSource) Capture(context.Context) (observation.NetworkContext, error) {
+func newContextSource(t *testing.T) *contextSource {
+	n := capability.NewNetwork(defaultAccess)
+	d, err := networkcontext.NewDirect(n)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return &contextSource{t: t, direct: d, net: n}
+}
+
+func (c *contextSource) Capture(ctx context.Context) (networkcontext.Snapshot, error) {
 	c.calls++
 	if c.fail[c.calls] {
-		return observation.NetworkContext{}, errors.New("synthetic capture failure")
+		return networkcontext.Snapshot{}, errors.New("synthetic capture failure")
 	}
-	n, err := contextDecoder(c.t).Decode([]byte(`{"access":{"network_type":"wifi","vpn_state":"unknown","ipv4_available":"yes","ipv6_available":"unknown","validated":"unknown","network_changed":false},"egress":{"status":"unavailable","lookup_source":"none","network_path":"direct"}}`), path(c.t))
-	if err != nil {
-		c.t.Fatal(err)
-	}
-	return n, nil
+	return c.direct.Capture(ctx)
 }
 
 type fixedJitter time.Duration
@@ -171,6 +191,10 @@ var now = time.Now().UTC().Truncate(time.Hour).Add(12 * time.Hour)
 // attemptDeadline is the registered default max_duration_ms.
 const attemptDeadline = 30 * time.Second
 
+// anyNetwork states no network condition, as a decoded task without a
+// network object does.
+var anyNetwork = task.NetworkRequirements{VPNPolicy: "any"}
+
 // defaultLimits are the registered default attempt limits.
 var defaultLimits = task.AttemptLimits{DurationMS: 30000, BytesSent: 32768, BytesReceived: 131072, Connections: 8}
 
@@ -203,13 +227,13 @@ func newFixture(t *testing.T, s task.Schedule, steps ...step) *fixture {
 	_ = clock.Advance(now.Sub(clock.Now()))
 	run, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
-	f := &fixture{runner: &scripted{steps: steps, clock: clock, cancel: cancel}, clock: clock, store: output.New(), ctx: &contextSource{t: t}, dialers: &loopback.Dialers{}, run: run}
+	f := &fixture{runner: &scripted{steps: steps, clock: clock, cancel: cancel}, clock: clock, store: output.New(), ctx: newContextSource(t), dialers: &loopback.Dialers{}, run: run}
 	engine, err := execution.NewEngine(newRegistry(t, f.runner), clock, fixedJitter(5*time.Second), f.store)
 	if err != nil {
 		t.Fatal(err)
 	}
 	f.engine = engine
-	f.plan = execution.Plan{TaskID: "campaign-1", Test: tcp01, Parameters: loopback.Parameters{}, Schedule: s, Deadline: attemptDeadline, Limits: defaultLimits,
+	f.plan = execution.Plan{TaskID: "campaign-1", Test: tcp01, Parameters: loopback.Parameters{}, Schedule: s, Network: anyNetwork, Deadline: attemptDeadline, Limits: defaultLimits,
 		Conditions:     validation.StartContext{DueAt: now, Supported: true, ConstraintsSatisfied: true, SafetySatisfied: true},
 		Implementation: implementation, Result: decoder(t), Context: f.ctx, Dialers: f.dialers}
 	return f
@@ -350,11 +374,13 @@ func TestRetryRechecksEligibilityAfterWait(t *testing.T) {
 }
 
 func TestPreStartFailuresAreNotRun(t *testing.T) {
-	// Capture failure: not_run, retryable as network_context_unavailable.
-	f := newFixture(t, schedule(2, task.NetworkContextUnavailable), connected(t))
+	// Capture failure without a network condition: not_run internal_error,
+	// retryable. network_context_unavailable is kept for required Network
+	// Context fields (REQ-EXECUTION-0031).
+	f := newFixture(t, schedule(2, task.InternalError), connected(t))
 	f.ctx.fail = map[int]bool{1: true}
 	rep, err := f.engine.Run(f.run, f.plan)
-	f.expect(t, rep, err, nil, []want{{"not_run", "network_context_unavailable", ""}, {"completed", "", "connected"}}, []time.Duration{35 * time.Second})
+	f.expect(t, rep, err, nil, []want{{"not_run", "internal_error", ""}, {"completed", "", "connected"}}, []time.Duration{35 * time.Second})
 	if f.runner.Calls() != 1 {
 		t.Fatalf("runner invoked for a not_run attempt: %d", f.runner.Calls())
 	}
@@ -542,9 +568,9 @@ func TestLoopbackRunnerOnRealSockets(t *testing.T) {
 	maxRuns := 1
 	expires := task.TimestampFromTime(start.Add(time.Hour))
 	plan := execution.Plan{TaskID: "campaign-1", Test: tcp01, Parameters: loopback.Parameters{Address: srv.Address()},
-		Schedule: task.Schedule{NotAfter: &expires, Repeat: task.Repeat{Mode: "none"}, MaxRuns: &maxRuns, Retry: task.Retry{MaxAttempts: 1}}, Deadline: attemptDeadline, Limits: defaultLimits,
+		Schedule: task.Schedule{NotAfter: &expires, Repeat: task.Repeat{Mode: "none"}, MaxRuns: &maxRuns, Retry: task.Retry{MaxAttempts: 1}}, Network: anyNetwork, Deadline: attemptDeadline, Limits: defaultLimits,
 		Conditions:     validation.StartContext{DueAt: start, Supported: true, ConstraintsSatisfied: true, SafetySatisfied: true},
-		Implementation: implementation, Result: decoder(t), Context: &contextSource{t: t}, Dialers: dialers}
+		Implementation: implementation, Result: decoder(t), Context: newContextSource(t), Dialers: dialers}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	rep, err := engine.Run(ctx, plan)

@@ -2,12 +2,20 @@ package execution_test
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"slices"
 	"testing"
 	"time"
 
+	"github.com/tv-rain/barometer-go/internal/execution"
 	"github.com/tv-rain/barometer-go/internal/measurement"
 	"github.com/tv-rain/barometer-go/internal/model/task"
+	"github.com/tv-rain/barometer-go/internal/networkcontext"
+	"github.com/tv-rain/barometer-go/internal/platform"
+	"github.com/tv-rain/barometer-go/internal/taskdecode"
 	"github.com/tv-rain/barometer-go/internal/testkit/loopback"
+	"github.com/tv-rain/barometer-go/internal/validation"
 )
 
 // Runtime conformance family cases on the engine (DEV-640). They use the
@@ -203,4 +211,228 @@ func TestCcResultExecutionObject(t *testing.T) {
 			t.Fatal("a refused plan produced a result or an attempt")
 		}
 	})
+}
+
+// Network-condition family cases (DEV-644). Each run uses the production
+// direct-path context source over the fake platform network and a recording
+// loopback dialer source, so a run that does not start shows no dialer issued
+// and no runner call. Egress Network Context requirements are not exercised:
+// admission rejects them until egress lookup exists (DEV-647).
+
+// networkTask decodes a TCP-01 task whose execution carries the given members
+// after limits, so defaults (vpn_policy any) are the decoder's.
+func networkTask(t *testing.T, execution string) (task.NetworkRequirements, error) {
+	t.Helper()
+	d, err := taskdecode.New([]taskdecode.TestCodec{fixtureCodec{}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if execution != "" {
+		execution = "," + execution
+	}
+	in := fmt.Sprintf(`{"schema_version":"0.1.0","task_id":"campaign-1","test_id":"TCP-01","test_version":"0.1.0","input":{},"options":{},"schedule":{"not_after":%q},"execution":{"limits":{}%s},"safety":{"risk_level":"low","requires_user_consent":false}}`,
+		now.Add(time.Hour).Format(time.RFC3339), execution)
+	c, err := d.Decode([]byte(in), validation.TimingContext{Origin: "embedded", AcceptedAt: now})
+	if err != nil {
+		return task.NetworkRequirements{}, err
+	}
+	return c.Execution.Network, nil
+}
+
+// runUnder runs one single-attempt plan with network conditions n while the
+// fake platform reports s, and returns the single result. failCapture makes
+// the capture fail instead.
+func runUnder(t *testing.T, n task.NetworkRequirements, s platform.AccessState, failCapture bool) (*fixture, record) {
+	t.Helper()
+	f := newFixture(t, schedule(1), connected(t))
+	f.plan.Network = n
+	f.ctx.net.Set(s)
+	if failCapture {
+		f.ctx.net.Fail()
+	}
+	rep, err := f.engine.Run(f.run, f.plan)
+	recs := f.records(t)
+	if err != nil || len(recs) != 1 || recs[0].RunID != rep.RunID {
+		t.Fatalf("run: err %v, %d results", err, len(recs))
+	}
+	return f, recs[0]
+}
+
+// ran reports whether the attempt ran; a run that did not start must have
+// recorded not_run with constraints_unsatisfied and issued no network
+// operation.
+func ran(t *testing.T, f *fixture, r record) bool {
+	t.Helper()
+	switch {
+	case r.Execution.State == "completed" && f.runner.Calls() == 1 && len(f.dialers.Issued()) == 1:
+		return true
+	case r.Execution.State == "not_run" && r.Execution.Reason == "constraints_unsatisfied" && f.runner.Calls() == 0 && len(f.dialers.Issued()) == 0:
+		return false
+	}
+	t.Fatalf("unexpected attempt: %+v, runner calls %d, dialers %d", r.Execution, f.runner.Calls(), len(f.dialers.Issued()))
+	return false
+}
+
+// ready is a platform reading that satisfies every access condition.
+var ready = platform.AccessState{Generation: 1, Type: platform.NetworkWiFi, VPN: platform.VPNNotDetected, IPv4: platform.AvailabilityYes, IPv6: platform.AvailabilityNo, Validated: platform.AvailabilityYes}
+
+// CC-EXECUTION-FIELDS-NETWORK: a required network condition the platform
+// cannot determine is unsatisfied and the attempt is not_run with
+// constraints_unsatisfied, with no network operation; unknown never satisfies
+// a condition. The same task runs once the platform reports the values. The
+// required egress context row stays blocked on DEV-647: until then the static
+// gate refuses it, which this case also asserts.
+// requirement-ref: REQ-EXECUTION-0031
+func TestCcExecutionFieldsNetwork(t *testing.T) {
+	cases := []struct {
+		name    string
+		network string
+		unknown func(*platform.AccessState)
+	}{
+		{"network_type unknown", `"network":{"allowed_transports":["wifi","cellular"]}`, func(s *platform.AccessState) { s.Type = platform.NetworkUnknown }},
+		{"vpn_state unknown, exclude", `"network":{"vpn_policy":"exclude"}`, func(s *platform.AccessState) { s.VPN = platform.VPNUnknown }},
+		{"vpn_state unknown, require", `"network":{"vpn_policy":"require"}`, func(s *platform.AccessState) { s.VPN = platform.VPNUnknown }},
+		{"validated unknown", `"network":{"require_validated":true}`, func(s *platform.AccessState) { s.Validated = platform.AvailabilityUnknown }},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			n, err := networkTask(t, tc.network)
+			if err != nil {
+				t.Fatal(err)
+			}
+			s := ready
+			tc.unknown(&s)
+			if runs(t, n, s, false) {
+				t.Fatal("ran on an undeterminable condition")
+			}
+			// A failed capability is as undeterminable as an unknown value.
+			if runs(t, n, ready, true) {
+				t.Fatal("ran without access context")
+			}
+			if s := ready; tc.name == "vpn_state unknown, require" {
+				s.VPN = platform.VPNDetected
+				if !runs(t, n, s, false) {
+					t.Fatal("did not run once the platform reported the values")
+				}
+			} else if !runs(t, n, ready, false) {
+				t.Fatal("did not run once the platform reported the values")
+			}
+		})
+	}
+	t.Run("required egress context field", func(t *testing.T) {
+		e := task.Execution{NetworkPath: "direct", Network: task.NetworkRequirements{VPNPolicy: "any", Context: task.ContextRequirements{RequiredFields: []string{"country_code"}}}}
+		if execution.NetworkSatisfiable(e) {
+			t.Fatal("egress requirement satisfiable without egress lookup")
+		}
+	})
+}
+
+// CC-EXECUTION-FIELDS-NETWORK-FIELDS: allowed_transports runs only on a
+// listed type; values outside the initial list are rejected at validation;
+// vpn_policy follows the public table; require_validated runs only on the
+// platform's validated yes. The library internal check of REQ-EXECUTION-0016
+// is not implemented (GO-SPEC-ISSUE-013), so the row that would use it is
+// not executed; Network Context rows stay blocked on DEV-647.
+// requirement-ref: REQ-EXECUTION-0016
+// requirement-ref: REQ-EXECUTION-0017
+func TestCcExecutionFieldsNetworkFields(t *testing.T) {
+	types := map[platform.NetworkType]string{platform.NetworkWiFi: "wifi", platform.NetworkCellular: "cellular", platform.NetworkEthernet: "ethernet", platform.NetworkOther: "other", platform.NetworkUnknown: "unknown"}
+	for _, list := range [][]string{{"wifi"}, {"cellular"}, {"wifi", "cellular"}} {
+		raw, _ := json.Marshal(list)
+		n, err := networkTask(t, `"network":{"allowed_transports":`+string(raw)+`}`)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for typ, name := range types {
+			s := ready
+			s.Type = typ
+			if got, want := runs(t, n, s, false), slices.Contains(list, name); got != want {
+				t.Fatalf("allowed_transports %v on %s: ran %v", list, name, got)
+			}
+		}
+	}
+	for _, bad := range []string{`["ethernet"]`, `["other"]`, `["unknown"]`, `["WIFI"]`, `["wifi","bluetooth"]`} {
+		if _, err := networkTask(t, `"network":{"allowed_transports":`+bad+`}`); err == nil {
+			t.Fatalf("allowed_transports %s accepted", bad)
+		}
+	}
+	for _, policy := range []string{"", `"vpn_policy":"any",`, `"vpn_policy":"exclude",`, `"vpn_policy":"require",`} {
+		n, err := networkTask(t, `"network":{`+policy+`"require_validated":false}`)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for vpn, want := range vpnTable(n.VPNPolicy) {
+			s := ready
+			s.VPN = vpn
+			if runs(t, n, s, false) != want {
+				t.Fatalf("vpn_policy %q with %v", n.VPNPolicy, vpn)
+			}
+		}
+	}
+	n, err := networkTask(t, `"network":{"require_validated":true}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for v, want := range map[platform.Availability]bool{platform.AvailabilityYes: true, platform.AvailabilityNo: false, platform.AvailabilityUnknown: false} {
+		s := ready
+		s.Validated = v
+		if runs(t, n, s, false) != want {
+			t.Fatalf("require_validated with %v", v)
+		}
+	}
+}
+
+// vpnTable is the public VPN eligibility table (REQ-EXECUTION-0020).
+func vpnTable(policy string) map[platform.VPNState]bool {
+	return map[string]map[platform.VPNState]bool{
+		"any":     {platform.VPNDetected: true, platform.VPNNotDetected: true, platform.VPNUnknown: true},
+		"exclude": {platform.VPNDetected: false, platform.VPNNotDetected: true, platform.VPNUnknown: false},
+		"require": {platform.VPNDetected: true, platform.VPNNotDetected: false, platform.VPNUnknown: false},
+	}[policy]
+}
+
+// CC-EXECUTION-FIELDS-NETWORK-FIELDS-VPN-POLICY: all nine policy and state
+// combinations on the engine, omitted vpn_policy as any, unknown carried as
+// unknown through normalization and evaluation, and an unregistered policy
+// rejected at validation.
+// requirement-ref: REQ-EXECUTION-0018
+// requirement-ref: REQ-EXECUTION-0019
+// requirement-ref: REQ-EXECUTION-0020
+func TestCcExecutionFieldsNetworkFieldsVpnPolicy(t *testing.T) {
+	for _, policy := range []string{"any", "exclude", "require"} {
+		n, err := networkTask(t, `"network":{"vpn_policy":"`+policy+`"}`)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for vpn, want := range vpnTable(policy) {
+			s := ready
+			s.VPN = vpn
+			if runs(t, n, s, false) != want {
+				t.Fatalf("%s with %v", policy, vpn)
+			}
+		}
+	}
+	for _, network := range []string{"", `"network":{}`} {
+		n, err := networkTask(t, network)
+		if err != nil || n.VPNPolicy != "any" {
+			t.Fatalf("omitted vpn_policy decoded as %q", n.VPNPolicy)
+		}
+	}
+	if a := networkcontext.Normalize(platform.AccessState{VPN: platform.VPNUnknown}); a.VPNState != "unknown" ||
+		execution.NetworkConditions(task.NetworkRequirements{VPNPolicy: "exclude"}, a) {
+		t.Fatal("unknown VPN state mapped to not_detected")
+	}
+	for _, bad := range []string{"prefer", "ANY", "", "none"} {
+		if _, err := networkTask(t, `"network":{"vpn_policy":"`+bad+`"}`); err == nil {
+			t.Fatalf("vpn_policy %q accepted", bad)
+		}
+	}
+}
+
+// runs runs one plan under the platform reading and reports whether its
+// attempt ran.
+func runs(t *testing.T, n task.NetworkRequirements, s platform.AccessState, failCapture bool) bool {
+	t.Helper()
+	f, r := runUnder(t, n, s, failCapture)
+	return ran(t, f, r)
 }

@@ -7,7 +7,7 @@
   },
   "implementation": {
     "repository": "https://github.com/tv-rain/barometer-go",
-    "revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b"
+    "revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1"
   },
   "coverage": {
     "mode": "partial",
@@ -2570,14 +2570,15 @@
         "UT.internal.execution.TestAttemptDeadlineBoundaries",
         "UT.internal.execution.TestAttemptDeadlineBeforeTheTestStarts",
         "UT.internal.execution.TestCancellationAtEveryStage",
-        "UT.root.TestCancelRunStopsTheRun"
+        "UT.root.TestCancelRunStopsTheRun",
+        "UT.internal.execution.TestNetworkChangeDuringAttempt"
       ],
       "issue_ids": [
         "GO-SPEC-ISSUE-004"
       ],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-561): `Engine.attempt` in internal/execution/run.go, `scope.DialContext` in internal/execution/scope.go implement part of this obligation at Go 8156c1a; linked cases UT.internal.execution.TestHostCancellation, UT.internal.execution.TestAttemptDeadlineBoundaries, UT.internal.execution.TestAttemptDeadlineBeforeTheTestStarts, UT.internal.execution.TestCancellationAtEveryStage, UT.root.TestCancelRunStopsTheRun passed, covering only the aspects recorded in traceability/evidence/go-unit-8156c1a.md. Remaining: CC-RESULT-EXECUTION-OBJECT stays planned; no registered runner exists, so a test's own network-state observation through Input.Start is unexercised (DEV-454). The cases use synthetic and loopback test runners. No implemented, runtime, platform or field claim. Earlier: Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. DEV-640: CC-RESULT-EXECUTION-OBJECT was executed and passed at Go 8507f3d, covering only the aspects recorded in traceability/evidence/go-unit-8507f3d.md; earlier statements that it stays planned are superseded. Synthetic adapters and runners; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-561): `Engine.attempt` in internal/execution/run.go, `scope.DialContext` in internal/execution/scope.go implement part of this obligation at Go 8156c1a; linked cases UT.internal.execution.TestHostCancellation, UT.internal.execution.TestAttemptDeadlineBoundaries, UT.internal.execution.TestAttemptDeadlineBeforeTheTestStarts, UT.internal.execution.TestCancellationAtEveryStage, UT.root.TestCancelRunStopsTheRun passed, covering only the aspects recorded in traceability/evidence/go-unit-8156c1a.md. Remaining: CC-RESULT-EXECUTION-OBJECT stays planned; no registered runner exists, so a test's own network-state observation through Input.Start is unexercised (DEV-454). The cases use synthetic and loopback test runners. No implemented, runtime, platform or field claim. Earlier: Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. DEV-640: CC-RESULT-EXECUTION-OBJECT was executed and passed at Go 8507f3d, covering only the aspects recorded in traceability/evidence/go-unit-8507f3d.md; earlier statements that it stays planned are superseded. Synthetic adapters and runners; no implemented, runtime, platform or field claim. DEV-644: UT.internal.execution.TestNetworkChangeDuringAttempt passed at Go cdbd160, covering only the aspects recorded in traceability/evidence/go-unit-cdbd160.md: a network change before the test starts is not_run, after it incomplete, and after the outcome leaves it completed. Network change is now produced through the fake platform network; suspension remains DEV-455."
     },
     {
       "id": "REQ-RESULT-0052",
@@ -2597,14 +2598,15 @@
       "case_ids": [
         "CC-RESULT-EXECUTION-OBJECT",
         "UT.internal.execution.TestHostCancellation",
-        "UT.internal.execution.TestCancellationRacesWithCompletion"
+        "UT.internal.execution.TestCancellationRacesWithCompletion",
+        "UT.internal.execution.TestNetworkChangeDuringAttempt"
       ],
       "issue_ids": [
         "GO-SPEC-ISSUE-004"
       ],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-561): `Engine.attempt` in internal/execution/run.go, `Engine.Run` in internal/execution/run.go implement part of this obligation at Go 8156c1a; linked cases UT.internal.execution.TestHostCancellation, UT.internal.execution.TestCancellationRacesWithCompletion passed, covering only the aspects recorded in traceability/evidence/go-unit-8156c1a.md. Remaining: CC-RESULT-EXECUTION-OBJECT stays planned; network change, suspension, proxy change and resource limits after the outcome are not yet produced (DEV-578, DEV-455, DEV-562). No implemented, runtime, platform or field claim. Earlier: Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. DEV-640: CC-RESULT-EXECUTION-OBJECT was executed and passed at Go 8507f3d, covering only the aspects recorded in traceability/evidence/go-unit-8507f3d.md; earlier statements that it stays planned are superseded. Synthetic adapters and runners; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-561): `Engine.attempt` in internal/execution/run.go, `Engine.Run` in internal/execution/run.go implement part of this obligation at Go 8156c1a; linked cases UT.internal.execution.TestHostCancellation, UT.internal.execution.TestCancellationRacesWithCompletion passed, covering only the aspects recorded in traceability/evidence/go-unit-8156c1a.md. Remaining: CC-RESULT-EXECUTION-OBJECT stays planned; network change, suspension, proxy change and resource limits after the outcome are not yet produced (DEV-578, DEV-455, DEV-562). No implemented, runtime, platform or field claim. Earlier: Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. DEV-640: CC-RESULT-EXECUTION-OBJECT was executed and passed at Go 8507f3d, covering only the aspects recorded in traceability/evidence/go-unit-8507f3d.md; earlier statements that it stays planned are superseded. Synthetic adapters and runners; no implemented, runtime, platform or field claim. DEV-644: UT.internal.execution.TestNetworkChangeDuringAttempt passed at Go cdbd160, covering only the aspects recorded in traceability/evidence/go-unit-cdbd160.md: a network change before the test starts is not_run, after it incomplete, and after the outcome leaves it completed. Network change is now produced through the fake platform network; suspension remains DEV-455."
     },
     {
       "id": "REQ-RESULT-0053",
@@ -2732,6 +2734,11 @@
           "path": "internal/model/observation/context.go",
           "selector": "symbol:accessSchema",
           "state": "existing"
+        },
+        {
+          "path": "internal/networkcontext/networkcontext.go",
+          "selector": "symbol:Normalize",
+          "state": "existing"
         }
       ],
       "case_ids": [
@@ -2742,7 +2749,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 9283870 (re-executed by DEV-597); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-9283870.md. Remaining: Accepted values other than \"unknown\" (wifi, cellular, detected, yes, no, etc.) and rejection of invalid values for vpn_state, ipv4/ipv6_available and validated are not individually tested; no platform producer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 9283870 (re-executed by DEV-597); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-9283870.md. Remaining: Accepted values other than \"unknown\" (wifi, cellular, detected, yes, no, etc.) and rejection of invalid values for vpn_state, ipv4/ipv6_available and validated are not individually tested; no platform producer exists. Planned family cases are not executed; no implemented, runtime, platform or field claim. DEV-644: CC-CONTEXT-FORMAT-ACCESS-OBJECT passed at Go cdbd160, covering only the aspects recorded in traceability/evidence/go-unit-cdbd160.md; `Normalize` in internal/networkcontext/networkcontext.go maps platform values to the registered vocabulary, with unrecognized values unknown. Earlier statements that the planned family case is not executed are superseded. The planned internal/networkcontext/model.go location remains unclaimed. Synthetic adapters and the test-only fake platform network; no native capability exists (DEV-455). No implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-CONTEXT-FORMAT-0005",
@@ -2772,7 +2779,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 9283870 (re-executed by DEV-597); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-9283870.md. Remaining: Evidence is closed-schema rejection of a sample of field names; there is no test for cell, SIM, interface-name or location fields specifically and no platform producer showing such data is never collected. Planned family cases are not executed; no implemented, runtime, platform or field claim."
+      "notes": "Partial (DEV-569): existing locations implement part of this obligation at Go 9283870 (re-executed by DEV-597); linked UT cases passed, covering only the aspects recorded in traceability/evidence/go-unit-9283870.md. Remaining: Evidence is closed-schema rejection of a sample of field names; there is no test for cell, SIM, interface-name or location fields specifically and no platform producer showing such data is never collected. Planned family cases are not executed; no implemented, runtime, platform or field claim. DEV-644: CC-CONTEXT-FORMAT-ACCESS-OBJECT passed at Go cdbd160, covering only the aspects recorded in traceability/evidence/go-unit-cdbd160.md; Earlier statements that the planned family case is not executed are superseded. The planned internal/networkcontext/model.go location remains unclaimed. Synthetic adapters and the test-only fake platform network; no native capability exists (DEV-455). No implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-CONTEXT-FORMAT-0006",
@@ -4372,30 +4379,32 @@
     },
     {
       "id": "REQ-EXECUTION-0016",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
-          "path": "internal/execution/attempt.go",
-          "selector": "file",
-          "state": "planned"
+          "path": "internal/execution/gates.go",
+          "selector": "symbol:NetworkConditions",
+          "state": "existing"
         }
       ],
       "case_ids": [
         "CC-EXECUTION-FIELDS-NETWORK-FIELDS"
       ],
-      "issue_ids": [],
+      "issue_ids": [
+        "GO-SPEC-ISSUE-013"
+      ],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. DEV-644: `NetworkConditions` in internal/execution/gates.go evaluates allowed_transports against the reported network type and require_validated against the platform validation state only, at Go cdbd160. CC-EXECUTION-FIELDS-NETWORK-FIELDS stays planned: its transport, VPN and system-validation rows run in TestCcExecutionFieldsNetworkFields, but its Network Context rows need egress lookup (DEV-647) and its library-internal-check row is not executable while GO-SPEC-ISSUE-013 is open. Synthetic adapters and the test-only fake platform network; no native capability exists (DEV-455). No implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-EXECUTION-0017",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
-          "path": "internal/execution/attempt.go",
-          "selector": "file",
-          "state": "planned"
+          "path": "internal/execution/gates.go",
+          "selector": "symbol:NetworkConditions",
+          "state": "existing"
         }
       ],
       "case_ids": [
@@ -4404,16 +4413,16 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. DEV-644: `NetworkConditions` in internal/execution/gates.go evaluates allowed_transports against the reported network type and require_validated against the platform validation state only, at Go cdbd160. CC-EXECUTION-FIELDS-NETWORK-FIELDS stays planned: its transport, VPN and system-validation rows run in TestCcExecutionFieldsNetworkFields, but its Network Context rows need egress lookup (DEV-647) and its library-internal-check row is not executable while GO-SPEC-ISSUE-013 is open. Synthetic adapters and the test-only fake platform network; no native capability exists (DEV-455). No implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-EXECUTION-0018",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
-          "path": "internal/execution/attempt.go",
-          "selector": "file",
-          "state": "planned"
+          "path": "internal/execution/gates.go",
+          "selector": "symbol:NetworkConditions",
+          "state": "existing"
         }
       ],
       "case_ids": [
@@ -4422,16 +4431,16 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. DEV-644: `NetworkConditions` in internal/execution/gates.go implements the VPN policy evaluation at Go cdbd160; CC-EXECUTION-FIELDS-NETWORK-FIELDS-VPN-POLICY passed, covering only the aspects recorded in traceability/evidence/go-unit-cdbd160.md. Synthetic adapters and the test-only fake platform network; no native capability exists (DEV-455). No implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-EXECUTION-0019",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
-          "path": "internal/execution/attempt.go",
-          "selector": "file",
-          "state": "planned"
+          "path": "internal/execution/gates.go",
+          "selector": "symbol:NetworkConditions",
+          "state": "existing"
         }
       ],
       "case_ids": [
@@ -4440,16 +4449,16 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. DEV-644: `NetworkConditions` in internal/execution/gates.go implements the VPN policy evaluation at Go cdbd160; CC-EXECUTION-FIELDS-NETWORK-FIELDS-VPN-POLICY passed, covering only the aspects recorded in traceability/evidence/go-unit-cdbd160.md. Synthetic adapters and the test-only fake platform network; no native capability exists (DEV-455). No implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-EXECUTION-0020",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
-          "path": "internal/execution/attempt.go",
-          "selector": "file",
-          "state": "planned"
+          "path": "internal/execution/gates.go",
+          "selector": "symbol:NetworkConditions",
+          "state": "existing"
         }
       ],
       "case_ids": [
@@ -4458,7 +4467,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. DEV-644: `NetworkConditions` in internal/execution/gates.go implements the VPN policy evaluation at Go cdbd160; CC-EXECUTION-FIELDS-NETWORK-FIELDS-VPN-POLICY passed, covering only the aspects recorded in traceability/evidence/go-unit-cdbd160.md. Synthetic adapters and the test-only fake platform network; no native capability exists (DEV-455). No implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-EXECUTION-0021",
@@ -4656,23 +4665,29 @@
     },
     {
       "id": "REQ-EXECUTION-0031",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
-          "path": "internal/execution/attempt.go",
-          "selector": "file",
-          "state": "planned"
+          "path": "internal/execution/gates.go",
+          "selector": "symbol:NetworkConditions",
+          "state": "existing"
+        },
+        {
+          "path": "internal/execution/run.go",
+          "selector": "symbol:Engine.attempt",
+          "state": "existing"
         }
       ],
       "case_ids": [
-        "CC-EXECUTION-FIELDS-NETWORK"
+        "CC-EXECUTION-FIELDS-NETWORK",
+        "UT.internal.execution.TestNetworkConditionsBeforeEachAttempt"
       ],
       "issue_ids": [
         "GO-SPEC-ISSUE-004"
       ],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Successor of the retired REQ-EXECUTION-0015 (GO-SPEC-ISSUE-004). Start gates already treat every undetermined network condition as unsatisfied (DEV-636), so no attempt runs; network-condition evaluation and the CC-EXECUTION-FIELDS-NETWORK case belong to DEV-578. Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+      "notes": "Successor of the retired REQ-EXECUTION-0015 (GO-SPEC-ISSUE-004). Start gates already treat every undetermined network condition as unsatisfied (DEV-636), so no attempt runs; network-condition evaluation and the CC-EXECUTION-FIELDS-NETWORK case belong to DEV-578. Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. DEV-644: `NetworkConditions` in internal/execution/gates.go and `Engine.attempt` in internal/execution/run.go treat an unknown, missing or failed access value as unsatisfied at Go cdbd160: StartRun returns run_not_due, and a reserved first attempt records not_run with constraints_unsatisfied; UT.internal.execution.TestNetworkConditionsBeforeEachAttempt passed, covering only the aspects recorded in traceability/evidence/go-unit-cdbd160.md. Earlier statements that network-condition evaluation belongs to DEV-578 are superseded. CC-EXECUTION-FIELDS-NETWORK stays planned: its access rows run in TestCcExecutionFieldsNetwork, but its required egress context row needs egress lookup (DEV-647). Synthetic adapters and the test-only fake platform network; no native capability exists (DEV-455). No implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-EXECUTION-0032",
@@ -8394,12 +8409,17 @@
     },
     {
       "id": "REQ-CONTEXT-0002",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
-          "path": "internal/networkcontext/acquire.go",
-          "selector": "file",
-          "state": "planned"
+          "path": "internal/platform/network.go",
+          "selector": "symbol:AccessState",
+          "state": "existing"
+        },
+        {
+          "path": "internal/networkcontext/networkcontext.go",
+          "selector": "symbol:Direct.Capture",
+          "state": "existing"
         }
       ],
       "case_ids": [
@@ -8408,16 +8428,21 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. DEV-644: `AccessState` in internal/platform/network.go carries only the coarse access values and a generation, and `Direct.Capture` in internal/networkcontext/networkcontext.go captures and normalizes them at Go cdbd160; CC-CONTEXT-CONTEXT-LAYERS-ACCESS-CONTEXT passed, covering only the aspects recorded in traceability/evidence/go-unit-cdbd160.md. Logs, cache entries and egress-endpoint requests do not exist yet; DEV-647 must re-run the case when it adds them. Synthetic adapters and the test-only fake platform network; no native capability exists (DEV-455). No implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-CONTEXT-0003",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
-          "path": "internal/networkcontext/acquire.go",
-          "selector": "file",
-          "state": "planned"
+          "path": "internal/platform/network.go",
+          "selector": "symbol:AccessState",
+          "state": "existing"
+        },
+        {
+          "path": "internal/networkcontext/networkcontext.go",
+          "selector": "symbol:Direct.Capture",
+          "state": "existing"
         }
       ],
       "case_ids": [
@@ -8426,7 +8451,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. DEV-644: `AccessState` in internal/platform/network.go carries only the coarse access values and a generation, and `Direct.Capture` in internal/networkcontext/networkcontext.go captures and normalizes them at Go cdbd160; CC-CONTEXT-CONTEXT-LAYERS-ACCESS-CONTEXT passed, covering only the aspects recorded in traceability/evidence/go-unit-cdbd160.md. Logs, cache entries and egress-endpoint requests do not exist yet; DEV-647 must re-run the case when it adds them. Synthetic adapters and the test-only fake platform network; no native capability exists (DEV-455). No implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-CONTEXT-0004",
@@ -8827,21 +8852,27 @@
     },
     {
       "id": "REQ-CONTEXT-0025",
-      "implementation_status": "planned",
+      "implementation_status": "partial",
       "implementation_locations": [
         {
           "path": "internal/networkcontext/acquire.go",
           "selector": "file",
           "state": "planned"
+        },
+        {
+          "path": "internal/execution/run.go",
+          "selector": "symbol:Engine.attempt",
+          "state": "existing"
         }
       ],
       "case_ids": [
-        "CC-CONTEXT-EXECUTION-INTEGRATION"
+        "CC-CONTEXT-EXECUTION-INTEGRATION",
+        "UT.internal.execution.TestNetworkChangeDuringAttempt"
       ],
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. DEV-644: `Engine.attempt` in internal/execution/run.go captures access context inside the attempt deadline and cancellation and ends the attempt with network_changed on an access-network generation change at Go cdbd160; UT.internal.execution.TestNetworkChangeDuringAttempt passed, covering only the aspects recorded in traceability/evidence/go-unit-cdbd160.md. Egress acquisition, background and local safety policy belong to DEV-647 and DEV-455; CC-CONTEXT-EXECUTION-INTEGRATION stays planned. Synthetic adapters and the test-only fake platform network; no native capability exists (DEV-455). No implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-CONTEXT-0026",
@@ -13847,11 +13878,13 @@
       "location": {
         "path": "internal/networkcontext/cross_cutting_conformance_test.go",
         "selector": "symbol:TestCcContextFormatAccessObject",
-        "state": "planned"
+        "state": "existing"
       },
       "scope": "Synthetic core contract cases; Iterate every registered access value and accept each: network_type wifi, cellular, ethernet, other, unknown; vpn_state detected, not_detected, unknown; ipv4_available, ipv6_available and validated yes, no, unknown; network_changed true and false. Reject case variants (WIFI, Yes), unregistered strings, network_changed as the string false or as null, and objects missing each required field in turn. Configure the fake platform to expose canaries for interface names, addresses, Wi-Fi identifiers, DNS server addresses, cell information, SIM information, carrier names, subscriber identifiers and location, and assert none appears in the encoded access object or result; reject decoding of an access object carrying any extra field for those items. Requirements: REQ-CONTEXT-FORMAT-0004, REQ-CONTEXT-FORMAT-0005.",
-      "status": "planned",
-      "evidence_ids": []
+      "status": "passed",
+      "evidence_ids": [
+        "EV.CC-CONTEXT-FORMAT-ACCESS-OBJECT"
+      ]
     },
     {
       "id": "CC-CONTEXT-FORMAT-EGRESS-OBJECT",
@@ -14148,11 +14181,13 @@
       "location": {
         "path": "internal/execution/cross_cutting_conformance_test.go",
         "selector": "symbol:TestCcExecutionFieldsNetworkFieldsVpnPolicy",
-        "state": "planned"
+        "state": "existing"
       },
       "scope": "Synthetic core contract cases; Use a fake platform that reports VPN state as detected, not_detected or unknown and evaluate each vpn_policy value (any, exclude, require) for all nine combinations. Expected: any runs for detected, not_detected and unknown; exclude runs only for not_detected and does not run for detected or unknown; require runs only for detected and does not run for not_detected or unknown. Assert omitted vpn_policy behaves as any. Assert the unknown state is carried through evaluation as unknown and is never mapped to not_detected, so exclude with unknown does not run. Reject an unregistered vpn_policy value (for example prefer) at validation. Requirements: REQ-EXECUTION-0018, REQ-EXECUTION-0019, REQ-EXECUTION-0020.",
-      "status": "planned",
-      "evidence_ids": []
+      "status": "passed",
+      "evidence_ids": [
+        "EV.CC-EXECUTION-FIELDS-NETWORK-FIELDS-VPN-POLICY"
+      ]
     },
     {
       "id": "CC-EXECUTION-FIELDS-NETWORK-FIELDS-NETWORK-CONTEXT-REQUIREMENTS",
@@ -14869,11 +14904,13 @@
       "location": {
         "path": "internal/networkcontext/cross_cutting_conformance_test.go",
         "selector": "symbol:TestCcContextContextLayersAccessContext",
-        "state": "planned"
+        "state": "existing"
       },
       "scope": "Synthetic core contract cases; Feed the Go core access context through a fake platform that also offers canary values for every forbidden item: interface name, local IPv4 and IPv6 addresses, DNS server address, SSID, BSSID, cell identifier, SIM information, subscriber identifier, carrier account information and physical location. Iterate `network_type` over `wifi`, `cellular`, `ethernet`, `other` and `unknown`, `vpn_state` over `detected`, `not_detected` and `unknown`, `ipv4_available`, `ipv6_available` and `validated` over `yes`, `no` and `unknown`, and `network_changed` over `true` and `false`. Assert the serialized access object contains exactly these six fields with the supplied normalized values. Assert serialized output of the access object, the Measurement Result, logs, cache entries and egress-endpoint requests contains none of the canary values. Reject an access input carrying any additional field. Requirements: REQ-CONTEXT-0002, REQ-CONTEXT-0003.",
-      "status": "planned",
-      "evidence_ids": []
+      "status": "passed",
+      "evidence_ids": [
+        "EV.CC-CONTEXT-CONTEXT-LAYERS-ACCESS-CONTEXT"
+      ]
     },
     {
       "id": "CC-CONTEXT-CONTEXT-LAYERS-EGRESS-CONTEXT",
@@ -15952,6 +15989,32 @@
       "status": "passed",
       "evidence_ids": [
         "EV.UT.internal.execution.TestAllTerminationReasons"
+      ]
+    },
+    {
+      "id": "UT.internal.execution.TestNetworkChangeDuringAttempt",
+      "location": {
+        "path": "internal/execution/network_test.go",
+        "selector": "symbol:TestNetworkChangeDuringAttempt",
+        "state": "existing"
+      },
+      "scope": "Existing synthetic Go unit test TestNetworkChangeDuringAttempt in package internal/execution, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "status": "passed",
+      "evidence_ids": [
+        "EV.UT.internal.execution.TestNetworkChangeDuringAttempt"
+      ]
+    },
+    {
+      "id": "UT.internal.execution.TestNetworkConditionsBeforeEachAttempt",
+      "location": {
+        "path": "internal/execution/network_test.go",
+        "selector": "symbol:TestNetworkConditionsBeforeEachAttempt",
+        "state": "existing"
+      },
+      "scope": "Existing synthetic Go unit test TestNetworkConditionsBeforeEachAttempt in package internal/execution, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "status": "passed",
+      "evidence_ids": [
+        "EV.UT.internal.execution.TestNetworkConditionsBeforeEachAttempt"
       ]
     },
     {
@@ -18230,6 +18293,18 @@
       },
       "resolution_references": [],
       "notes": "Raised by DEV-563: the public text does not define when the 86,400-second unacknowledged bundle retention starts, or any retention for results not yet in a bundle. Go implements an approved conservative interim rule (every result is persisted inside a bundle; retention runs from the persisting of the bundle's first result); no public record exists yet and the disposition awaits public maintainers."
+    },
+    {
+      "id": "GO-SPEC-ISSUE-013",
+      "disposition": "open",
+      "finding": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
+        "path": "docs/specification-issues.md",
+        "selector": "heading:GO-SPEC-ISSUE-013: Library Internal Check for `require_validated`"
+      },
+      "resolution_references": [],
+      "notes": "Raised by DEV-644: REQ-EXECUTION-0016 says a library internal check is called when no system validation method is available, while REQ-EXECUTION-0031 makes undeterminable validation unsatisfied, and no such check is specified. Go implements the approved conservative interim rule: only the platform's own validated yes satisfies require_validated and no connectivity check is made. No public record exists yet; the disposition awaits public maintainers."
     }
   ],
   "evidence": [
@@ -18238,12 +18313,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.bundle.TestBundleValidationPrecedence"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-BUNDLE-0002",
         "REQ-BUNDLE-0022",
@@ -18262,12 +18337,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.bundle.TestContractMembershipAndIdentity"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-BUNDLE-0001",
         "REQ-BUNDLE-0002",
@@ -18292,12 +18367,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.bundle.TestExactEncodedBoundaries"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-BUNDLE-0004",
         "REQ-BUNDLE-0021",
@@ -18317,12 +18392,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.bundle.TestImmutableRetryBytesAndViews"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-BUNDLE-0007",
         "REQ-BUNDLE-0013",
@@ -18341,12 +18416,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.bundle.TestMixedResultMembershipIsPreserved"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-BUNDLE-0002",
         "REQ-BUNDLE-0013",
@@ -18365,12 +18440,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.bundle.TestTrustedOptionalLinkage"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-BUNDLE-0003",
         "REQ-BUNDLE-0004",
@@ -18396,12 +18471,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.config.TestAtomicRejectionCorpus"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-JSON-0004",
         "REQ-JSON-0005",
@@ -18421,12 +18496,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.config.TestClosedSchemasAndTrustSeparation"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-JSON-0004"
       ],
@@ -18443,12 +18518,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.config.TestConfigurationValidationPrecedence"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-JSON-0010",
         "REQ-JSON-0011"
@@ -18466,12 +18541,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.config.TestVersionsApprovalsAndBounds"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-JSON-0008",
         "REQ-JSON-0009"
@@ -18489,12 +18564,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestAllTerminationReasons"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-RESULT-0020",
         "REQ-RESULT-0021",
@@ -18514,12 +18589,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestProtocolOutcomesAndInvalidReasons"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-RESULT-0001",
         "REQ-RESULT-0020",
@@ -18539,12 +18614,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestRunSequencesAttemptsAndRetries"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SCHEDULE-0022",
         "REQ-SCHEDULE-0023",
@@ -18566,12 +18641,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestRetryDelayIsCappedAndBoundedByExpiry"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SCHEDULE-0028",
         "REQ-SCHEDULE-0029",
@@ -18590,12 +18665,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestRetryRechecksEligibilityAfterWait"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SCHEDULE-0022"
       ],
@@ -18612,12 +18687,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestRunFailsClosedBeforeAnyWork"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SCHEDULE-0023",
         "REQ-LIMIT-0011"
@@ -18635,12 +18710,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestHostCancellation"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-RESULT-0051",
         "REQ-RESULT-0052",
@@ -18659,12 +18734,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.jsondecode.TestBounds"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-JSON-0009",
         "REQ-JSON-0010"
@@ -18682,12 +18757,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.jsondecode.TestConfigurationAndNoFallback"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-JSON-0008"
       ],
@@ -18704,12 +18779,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.jsondecode.TestErrorsAndDeterminism"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-JSON-0011"
       ],
@@ -18726,12 +18801,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.jsondecode.TestPositiveAndPresence"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-JSON-0001",
         "REQ-JSON-0002",
@@ -18752,12 +18827,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.jsondecode.TestRejectionCorpus"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LABEL-0010",
         "REQ-JSON-0001",
@@ -18782,12 +18857,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.jsondecode.TestValueContainers"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-JSON-0002"
       ],
@@ -18804,12 +18879,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.model.observation.TestAcceptedProducerMappings"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-OBS-0044",
         "REQ-OBS-0045",
@@ -18832,12 +18907,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.model.observation.TestAccessOnlySnapshot"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-OBS-0006",
         "REQ-CONTEXT-FORMAT-0004",
@@ -18856,12 +18931,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.model.observation.TestContextNormalizationStaysWithinASCIICodes"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-CONTEXT-FORMAT-0006",
         "REQ-CONTEXT-FORMAT-0018",
@@ -18881,12 +18956,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.model.observation.TestContextPathGenerationAndPrivacy"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-CONTEXT-FORMAT-0001",
         "REQ-CONTEXT-FORMAT-0005",
@@ -18907,12 +18982,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.model.observation.TestContextRejectionAndNormalization"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-CONTEXT-FORMAT-0004",
         "REQ-CONTEXT-FORMAT-0006",
@@ -18938,12 +19013,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.model.observation.TestContextUnknownAndFreshnessStates"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-CONTEXT-FORMAT-0006",
         "REQ-CONTEXT-FORMAT-0007",
@@ -18963,12 +19038,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.model.observation.TestDNSBoundsAndPrivacy"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-OBS-0009",
         "REQ-OBS-0042",
@@ -18992,12 +19067,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.model.observation.TestDNSCollectionAndAnswerBoundaries"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-OBS-0009",
         "REQ-OBS-0042",
@@ -19017,12 +19092,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.model.observation.TestHTTPBoundsAndConsistency"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-OBS-0025",
         "REQ-OBS-0028",
@@ -19043,12 +19118,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.model.observation.TestIncompleteFailureAbsentForEveryType"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-OBS-0051"
       ],
@@ -19065,12 +19140,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.model.observation.TestProtocolPresenceAndVocabulary"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-OBS-0003",
         "REQ-OBS-0044",
@@ -19091,12 +19166,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.model.observation.TestProtocolPrivacyAndImmutableViews"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-OBS-0004",
         "REQ-OBS-0018",
@@ -19116,12 +19191,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.model.observation.TestProtocolValidationPrecedenceAndStableEncoding"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-OBS-0004",
         "REQ-OBS-0044",
@@ -19141,12 +19216,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.model.observation.TestTLSVocabularyAndConsistency"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-OBS-0043",
         "REQ-OBS-0045",
@@ -19167,12 +19242,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.model.task.TestAdmissionErrorVocabulary"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0034",
         "REQ-TRUST-0035",
@@ -19191,12 +19266,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.model.task.TestMalformedSourceRejectedAtomically"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0043",
         "REQ-TRUST-0044"
@@ -19214,12 +19289,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.model.task.TestPolicyCarriesBoundedTrustedKeys"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0032",
         "REQ-TRUST-0051"
@@ -19237,12 +19312,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.model.task.TestPolicyRejectsMalformedOrAmbiguousKeys"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0032",
         "REQ-TRUST-0051"
@@ -19260,12 +19335,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.model.task.TestTrustedKeyCoversInclusiveValidity"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0052"
       ],
@@ -19282,12 +19357,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.model.task.TestSmallOrderPointsDecodeAndAreRejected"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0051"
       ],
@@ -19304,12 +19379,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.model.task.TestNonCanonicalAndOffCurveKeysRejected"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0051"
       ],
@@ -19326,12 +19401,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.model.task.TestGeneratedKeysAccepted"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0051"
       ],
@@ -19348,12 +19423,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.result.TestBindingBoundsAndProducerContext"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-RESULT-0011",
         "REQ-RESULT-0038"
@@ -19371,12 +19446,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.result.TestCompositeCompletionAndPartialBoundaries"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-RESULT-0021",
         "REQ-RESULT-0027",
@@ -19395,12 +19470,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.result.TestCompositeVersionPrecisionAndMarkerPresence"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-JSON-0007"
       ],
@@ -19417,12 +19492,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.result.TestEncodedAndObservationBoundaries"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-RESULT-0004",
         "REQ-RESULT-0026",
@@ -19442,12 +19517,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.result.TestEnvelopePresenceAndBounds"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-RESULT-0002",
         "REQ-RESULT-0016",
@@ -19471,12 +19546,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.result.TestExecutionContextAndAttemptBinding"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-RESULT-0019",
         "REQ-RESULT-0020",
@@ -19500,12 +19575,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.result.TestImmutableViewsAndProducerBuild"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-RESULT-0004"
       ],
@@ -19522,12 +19597,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.result.TestIndependentVersionsAndNegativeCompletion"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-RESULT-0001",
         "REQ-RESULT-0011",
@@ -19547,12 +19622,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.result.TestInitialPayloadSchemasAndEvidence"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-RESULT-0026",
         "REQ-RESULT-0027",
@@ -19574,12 +19649,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.result.TestProducerTimingAndRandomIdentity"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-RESULT-0006",
         "REQ-RESULT-0016",
@@ -19599,12 +19674,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.result.TestResultValidationPrecedence"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-RESULT-0032",
         "REQ-JSON-0008",
@@ -19623,12 +19698,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.result.TestUninitializedDecoderRejectsBeforeInput"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-JSON-0010"
       ],
@@ -19645,12 +19720,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.result.TestUnknownPrivateAndMalformedFields"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-RESULT-0003",
         "REQ-RESULT-0005",
@@ -19675,12 +19750,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.taskdecode.TestByteAndLabelBounds"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LABEL-0005",
         "REQ-JSON-0009"
@@ -19698,12 +19773,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.taskdecode.TestDefaultsAndDeterminism"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-EXECUTION-0013",
         "REQ-LABEL-0004"
@@ -19721,12 +19796,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.taskdecode.TestExactSchemaSelection"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-JSON-0008"
       ],
@@ -19743,12 +19818,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.taskdecode.TestHostConfigurationCannotComeFromTask"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LABEL-0001",
         "REQ-TASK-0001",
@@ -19767,12 +19842,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.taskdecode.TestModelValidationPrecedenceAndExactCodec"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-JSON-0008",
         "REQ-JSON-0010",
@@ -19791,12 +19866,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.taskdecode.TestRegisteredNumericalBoundaries"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-EXECUTION-0013",
         "REQ-LABEL-0005"
@@ -19814,12 +19889,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.taskdecode.TestRejectionCorpus"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-EXECUTION-0013",
         "REQ-LABEL-0014",
@@ -19838,12 +19913,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.taskdecode.TestRepresentationAndSanitizedErrors"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-JSON-0003",
         "REQ-JSON-0006",
@@ -19862,12 +19937,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.taskdecode.TestSerializedInputCannotSupplyTrustOrPolicy"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LABEL-0001",
         "REQ-TASK-0001",
@@ -19886,12 +19961,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.validation.TestCommonLabelInvariants"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LABEL-0004",
         "REQ-LABEL-0005",
@@ -19911,12 +19986,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.validation.TestCommonNormalizationIsIdempotentAndConservative"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-EXECUTION-0013",
         "REQ-LABEL-0001",
@@ -19935,12 +20010,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.validation.TestCommonRiskFactorAndTimezoneDomains"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SAFETY-0012",
         "REQ-SAFETY-0013",
@@ -19962,12 +20037,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.taskdecode.TestRiskFactorAndTimezoneDomains"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SAFETY-0012",
         "REQ-SAFETY-0013",
@@ -19989,12 +20064,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.testkit.conformance.TestConformanceFixtures"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SAFETY-0012",
         "REQ-SAFETY-0013",
@@ -20016,12 +20091,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateAcceptsReviewedOrigins"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0040",
         "REQ-TRUST-0041",
@@ -20040,12 +20115,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateStepClasses"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0004",
         "REQ-LIMIT-0005",
@@ -20070,12 +20145,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateTaskIdentifierRules"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0004",
         "REQ-TRUST-0019"
@@ -20093,12 +20168,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGatePrecedence"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0047"
       ],
@@ -20115,12 +20190,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateNoTaskControlledAuthorityOrInterpolation"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0040",
         "REQ-TRUST-0026",
@@ -20139,12 +20214,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateErrorsCarryNoData"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0033",
         "REQ-TRUST-0035"
@@ -20162,12 +20237,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateAdmissionLimitHandling"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0026",
         "REQ-LIMIT-0030"
@@ -20185,12 +20260,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateAuthorityPrecedence"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0047"
       ],
@@ -20207,12 +20282,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateIssuerAndLocalCeilings"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0030",
         "REQ-TRUST-0010",
@@ -20232,12 +20307,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateIssuerAuthorization"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0010",
         "REQ-TRUST-0011",
@@ -20256,12 +20331,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateIssuerLocalConflicts"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0010"
       ],
@@ -20278,12 +20353,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGatePolicyAndIssuerResolution"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0010",
         "REQ-TRUST-0047"
@@ -20301,12 +20376,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateTargetRegistrationExactMatch"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0013",
         "REQ-TRUST-0014"
@@ -20324,12 +20399,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateTargetRegistrationSingleComponentMutations"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0014",
         "REQ-TRUST-0015"
@@ -20347,12 +20422,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateTargetRegistrationNormalization"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0015"
       ],
@@ -20369,12 +20444,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateTargetRegistrationExpiry"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0013",
         "REQ-TRUST-0014"
@@ -20392,12 +20467,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateTargetRegistrationAuthority"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0011",
         "REQ-TRUST-0013",
@@ -20416,12 +20491,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateTargetRegistrationRequiresCompleteTuples"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0013",
         "REQ-TRUST-0014"
@@ -20439,12 +20514,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateTargetRegistrationPrecedence"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0047"
       ],
@@ -20461,12 +20536,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestTargetRegistrationRejectsCredentialsAndInterpolation"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0015"
       ],
@@ -20483,12 +20558,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateConsentRequirement"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SAFETY-0021",
         "REQ-SAFETY-0022",
@@ -20507,12 +20582,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateEffectiveRisk"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SAFETY-0004",
         "REQ-SAFETY-0005",
@@ -20534,12 +20609,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateLocallyDeterminedRiskBounds"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SAFETY-0010",
         "REQ-SAFETY-0023",
@@ -20559,12 +20634,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateTaskCannotLowerBaseline"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SAFETY-0010",
         "REQ-SAFETY-0024",
@@ -20583,12 +20658,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateUnreliableSafetyInputsFailClosed"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SAFETY-0017",
         "REQ-SAFETY-0019",
@@ -20608,12 +20683,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestRestrictiveFailsClosed"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SAFETY-0029"
       ],
@@ -20630,12 +20705,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateEgressContextPrecedence"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0036",
         "REQ-TRUST-0047"
@@ -20653,12 +20728,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateRejectsCompositeProfiles"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0018",
         "REQ-TRUST-0036",
@@ -20677,12 +20752,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateRejectsEgressContextRequirements"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0018",
         "REQ-TRUST-0036",
@@ -20701,12 +20776,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestDecodePackageAndMessage"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0048",
         "REQ-TRUST-0049"
@@ -20724,12 +20799,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateCompositeBeforeProxyCompatibility"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0018",
         "REQ-TRUST-0036",
@@ -20748,12 +20823,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestGateProxyCompatibility"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-PROXY-0026",
         "REQ-PROXY-0027",
@@ -20775,12 +20850,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestPackageMemberFormats"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0048"
       ],
@@ -20797,12 +20872,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestSignatureStrictnessEdgeVectors"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0050"
       ],
@@ -20819,12 +20894,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestRemoteRecordsAreSingleUse"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0053"
       ],
@@ -20841,12 +20916,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.admission.TestResolveChecksBindingBeforeTrustedTime"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0047",
         "REQ-TRUST-0053"
@@ -20864,12 +20939,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.validation.TestTaskIDRulesAndLimitClass"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0004",
         "REQ-TRUST-0019"
@@ -20887,12 +20962,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.validation.TestRefiningClasses"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0002",
         "REQ-SAFETY-0017"
@@ -20910,12 +20985,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.taskdecode.TestStagedDecoding"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-JSON-0008"
       ],
@@ -20932,12 +21007,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0023",
         "REQ-TRUST-0021",
@@ -20959,12 +21034,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-TRUST-LOCAL-POLICY-LIFECYCLE"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0029",
         "REQ-TRUST-0030",
@@ -20984,12 +21059,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-TRUST-ACCEPTED-TASK-ORIGINS"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0043",
         "REQ-TRUST-0041",
@@ -21009,12 +21084,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-TRUST-SIGNED-REMOTE-PACKAGES"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0032",
         "REQ-TRUST-0043",
@@ -21038,12 +21113,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-TRUST-SIGNED-PACKAGE-DISCLOSURE"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0035",
         "REQ-TRUST-0052"
@@ -21061,12 +21136,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-TRUST-SIGNED-PACKAGE-RETENTION"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0053"
       ],
@@ -21083,12 +21158,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-TRUST-KEY-ROTATION"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0030",
         "REQ-TRUST-0051",
@@ -21108,12 +21183,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.persistence.TestReplayRecordRetention"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0023",
         "REQ-TRUST-0021"
@@ -21131,12 +21206,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.persistence.TestStateReplayCommitsConditionallyWithinCapacity"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0021",
         "REQ-TRUST-0022"
@@ -21154,12 +21229,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.persistence.TestStateRetentionBoundaries"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0023"
       ],
@@ -21176,12 +21251,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.persistence.TestStateStoresOnlyRecordFields"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0023"
       ],
@@ -21198,12 +21273,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.root.TestAdmissionHasNoNetworkDependency"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0018"
       ],
@@ -21220,12 +21295,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.root.TestAdmitTaskAcceptsReviewedOrigins"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0046"
       ],
@@ -21242,12 +21317,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.root.TestAdmitTaskErrorsCarryNoInput"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0035"
       ],
@@ -21264,12 +21339,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.root.TestAdmitTaskExactRedeliveryReturnsTheSameHandle"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0024"
       ],
@@ -21286,12 +21361,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.root.TestAdmitTaskHostileSources"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0042",
         "REQ-TRUST-0043",
@@ -21311,12 +21386,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.root.TestAdmitTaskRejectionsAreAtomic"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0047",
         "REQ-TRUST-0038"
@@ -21334,12 +21409,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.root.TestAdmitTaskSignedPackageStrictJSON"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-JSON-0001",
         "REQ-JSON-0002",
@@ -21364,12 +21439,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.root.TestAdmitTaskStrictJSON"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-JSON-0001",
         "REQ-JSON-0002",
@@ -21394,12 +21469,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.root.TestClearInvalidatesHandlesAndDeliveryReferences"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LINKAGE-0023"
       ],
@@ -21416,12 +21491,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.root.TestInitializeStrictJSON"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-JSON-0001",
         "REQ-JSON-0002",
@@ -21446,12 +21521,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.root.TestLifecycleTransitionTable"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LINKAGE-0023",
         "REQ-LINKAGE-0024"
@@ -21469,12 +21544,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.root.TestPanicsAreRecoveredToFixedCodes"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LINKAGE-0023"
       ],
@@ -21491,12 +21566,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.root.TestRootPackageImportsNoNetworkPackages"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LINKAGE-0024"
       ],
@@ -21513,12 +21588,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestAccountingAnchor"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SCHEDULE-0007",
         "REQ-SCHEDULE-0009"
@@ -21536,12 +21611,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestIntervalDueTimes"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SCHEDULE-0020",
         "REQ-SCHEDULE-0021"
@@ -21559,12 +21634,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestMissedOccurrencesAreSkipped"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SCHEDULE-0020",
         "REQ-SCHEDULE-0021"
@@ -21582,12 +21657,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestRunBudget"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SCHEDULE-0030"
       ],
@@ -21604,12 +21679,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestNetworkConditionsFailClosed"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-EXECUTION-0028"
       ],
@@ -21626,12 +21701,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestDeviceGate"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-EXECUTION-0028"
       ],
@@ -21648,12 +21723,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestPreconditionsAreRecheckedBeforeEachAttempt"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-EXECUTION-0028"
       ],
@@ -21670,12 +21745,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestConsentGate"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SAFETY-0020"
       ],
@@ -21692,12 +21767,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.root.TestConsentIsRecheckedBeforeARetry"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SAFETY-0020"
       ],
@@ -21714,12 +21789,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.root.TestStartRunScheduleBoundaries"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SCHEDULE-0007",
         "REQ-SCHEDULE-0034"
@@ -21737,12 +21812,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.root.TestStartRunBudget"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SCHEDULE-0030"
       ],
@@ -21759,12 +21834,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.root.TestStartRunDuplicatesShareOneRun"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SCHEDULE-0030"
       ],
@@ -21781,12 +21856,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.root.TestStartRunConcurrency"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-EXECUTION-0027"
       ],
@@ -21803,12 +21878,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestAttemptDeadlineBoundaries"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0006",
         "REQ-RESULT-0051"
@@ -21826,12 +21901,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestAttemptDeadlineBeforeTheTestStarts"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0006",
         "REQ-RESULT-0051",
@@ -21850,12 +21925,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestFirstTerminationIsKept"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-RESULT-0021"
       ],
@@ -21872,12 +21947,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestCancellationAtEveryStage"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-RESULT-0051"
       ],
@@ -21894,12 +21969,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestAttemptScopeReleasesSockets"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0008"
       ],
@@ -21916,12 +21991,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestCancellationRacesWithCompletion"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-RESULT-0052"
       ],
@@ -21938,12 +22013,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.root.TestCancelRunStopsTheRun"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-RESULT-0020",
         "REQ-RESULT-0051"
@@ -21961,12 +22036,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.root.TestCancelRunCleanupIncomplete"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0008"
       ],
@@ -21983,12 +22058,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.root.TestStartRunEnforcesTheAttemptDeadline"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0006"
       ],
@@ -22005,12 +22080,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.root.TestLifecycleTransitionsCancelRuns"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LINKAGE-0023"
       ],
@@ -22027,12 +22102,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestSentBudgetBoundaries"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-EXECUTION-0032",
         "REQ-LIMIT-0006",
@@ -22052,12 +22127,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestReceivedBudgetBoundaries"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-EXECUTION-0032",
         "REQ-LIMIT-0006",
@@ -22077,12 +22152,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestConnectionBudgetBoundaries"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0006",
         "REQ-LIMIT-0027"
@@ -22100,12 +22175,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestBudgetAcrossConnectionReuse"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0034"
       ],
@@ -22122,12 +22197,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestFailedConnectCountsTowardConnections"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0006"
       ],
@@ -22144,12 +22219,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestZeroLimitsPermitNoTraffic"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0007"
       ],
@@ -22166,12 +22241,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestReadAheadIsCountedAndCapped"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-EXECUTION-0032",
         "REQ-LIMIT-0034"
@@ -22189,12 +22264,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestEachAttemptHasItsOwnBudget"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0006"
       ],
@@ -22211,12 +22286,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestExhaustedBudgetDispatchesNoFurtherIO"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0027",
         "REQ-LIMIT-0028"
@@ -22234,12 +22309,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestExhaustionReleasesBlockedSockets"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0008",
         "REQ-LIMIT-0028"
@@ -22257,12 +22332,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestPartialTransfersAreCountedExactly"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0034"
       ],
@@ -22279,12 +22354,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.execution.TestPlanLimitsAreBounded"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0006"
       ],
@@ -22301,12 +22376,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-RESULT-EXECUTION-OBJECT"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-RESULT-0019",
         "REQ-RESULT-0020",
@@ -22328,12 +22403,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-EXECUTION-FIELDS"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-EXECUTION-0005"
       ],
@@ -22350,12 +22425,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-EXECUTION-FIELDS-LIMITS"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-EXECUTION-0011"
       ],
@@ -22372,12 +22447,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-EXECUTION-FIELDS-CONCURRENCY"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-EXECUTION-0027"
       ],
@@ -22394,12 +22469,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-SAFETY-USER-CONSENT"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SAFETY-0020",
         "REQ-SAFETY-0021",
@@ -22418,12 +22493,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-SCHEDULE-FIELDS"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SCHEDULE-0002"
       ],
@@ -22440,12 +22515,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-SCHEDULE-SCHEDULING-MODEL"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SCHEDULE-0003",
         "REQ-SCHEDULE-0004",
@@ -22465,12 +22540,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-SCHEDULE-SCHEDULING-MODEL-START-TIME"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SCHEDULE-0007",
         "REQ-SCHEDULE-0008",
@@ -22489,12 +22564,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-SCHEDULE-SCHEDULING-MODEL-TIME-LIMIT"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SCHEDULE-0010",
         "REQ-SCHEDULE-0011"
@@ -22512,12 +22587,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SCHEDULE-0012"
       ],
@@ -22534,12 +22609,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-FIELDS"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SCHEDULE-0013",
         "REQ-SCHEDULE-0014",
@@ -22558,12 +22633,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-RANGE-FIELDS"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SCHEDULE-0015",
         "REQ-SCHEDULE-0016",
@@ -22582,12 +22657,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-SCHEDULE-SCHEDULING-MODEL-REPEAT"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SCHEDULE-0018"
       ],
@@ -22604,12 +22679,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-SCHEDULE-SCHEDULING-MODEL-RETRY"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SCHEDULE-0022",
         "REQ-SCHEDULE-0023",
@@ -22629,12 +22704,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-SCHEDULE-SCHEDULING-MODEL-RETRY-RETRY-FIELDS"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SCHEDULE-0026",
         "REQ-SCHEDULE-0027",
@@ -22654,12 +22729,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-SCHEDULE-VALIDATION"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SCHEDULE-0033",
         "REQ-SCHEDULE-0036",
@@ -22683,12 +22758,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-SCHEDULE-VALIDATION-ELIGIBILITY-RULES"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-SCHEDULE-0034",
         "REQ-SCHEDULE-0035"
@@ -22706,12 +22781,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-LIMIT-SCHEDULE-AND-RETRY-LIMITS"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0009",
         "REQ-LIMIT-0010",
@@ -22732,12 +22807,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-LIMIT-RESULT-AND-BUNDLE-LIMITS"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0021",
         "REQ-LIMIT-0022"
@@ -22755,12 +22830,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.persistence.pending.TestAggregateBytesAndCapacity"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0022"
       ],
@@ -22777,12 +22852,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.persistence.pending.TestCountLimits"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0021",
         "REQ-LIMIT-0022"
@@ -22800,12 +22875,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.persistence.pending.TestRetentionBoundary"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0024"
       ],
@@ -22822,12 +22897,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.root.TestNextBundleAndAcknowledge"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LIMIT-0024"
       ],
@@ -22844,12 +22919,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-LINKAGE-CLEAR-DATA-CONTRACT"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LINKAGE-0023",
         "REQ-LINKAGE-0024"
@@ -22867,12 +22942,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:CC-TRUST-REPLAY-AFTER-CLEARING"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0024",
         "REQ-TRUST-0025"
@@ -22890,12 +22965,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.root.TestClearDeletesEveryStateClass"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LINKAGE-0023",
         "REQ-LINKAGE-0024"
@@ -22913,12 +22988,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.persistence.TestClearOrder"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-LINKAGE-0023"
       ],
@@ -22935,12 +23010,12 @@
       "kind": "conformance",
       "reference": {
         "repository": "https://github.com/tv-rain/barometer-go",
-        "revision": "0997996c4e358717ae059e63be22ed1e57179929",
-        "path": "traceability/evidence/go-unit-e372219.md",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
         "selector": "anchor:UT.internal.persistence.TestStateForgetAfterClear"
       },
       "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
-      "implementation_revision": "e3722195bdbeb9a25b9f9612eead36683be6e92b",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
       "requirement_ids": [
         "REQ-TRUST-0025"
       ],
@@ -22948,6 +23023,122 @@
       "case_results": [
         {
           "case_id": "UT.internal.persistence.TestStateForgetAfterClear",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "EV.CC-EXECUTION-FIELDS-NETWORK-FIELDS-VPN-POLICY",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
+        "selector": "anchor:CC-EXECUTION-FIELDS-NETWORK-FIELDS-VPN-POLICY"
+      },
+      "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
+      "requirement_ids": [
+        "REQ-EXECUTION-0018",
+        "REQ-EXECUTION-0019",
+        "REQ-EXECUTION-0020"
+      ],
+      "scope": "Synthetic core contract cases; Use a fake platform that reports VPN state as detected, not_detected or unknown and evaluate each vpn_policy value (any, exclude, require) for all nine combinations. Expected: any runs for detected, not_detected and unknown; exclude runs only for not_detected and does not run for detected or unknown; require runs only for detected and does not run for not_detected or unknown. Assert omitted vpn_policy behaves as any. Assert the unknown state is carried through evaluation as unknown and is never mapped to not_detected, so exclude with unknown does not run. Reject an unregistered vpn_policy value (for example prefer) at validation. Requirements: REQ-EXECUTION-0018, REQ-EXECUTION-0019, REQ-EXECUTION-0020.",
+      "case_results": [
+        {
+          "case_id": "CC-EXECUTION-FIELDS-NETWORK-FIELDS-VPN-POLICY",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "EV.CC-CONTEXT-CONTEXT-LAYERS-ACCESS-CONTEXT",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
+        "selector": "anchor:CC-CONTEXT-CONTEXT-LAYERS-ACCESS-CONTEXT"
+      },
+      "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
+      "requirement_ids": [
+        "REQ-CONTEXT-0002",
+        "REQ-CONTEXT-0003"
+      ],
+      "scope": "Synthetic core contract cases; Feed the Go core access context through a fake platform that also offers canary values for every forbidden item: interface name, local IPv4 and IPv6 addresses, DNS server address, SSID, BSSID, cell identifier, SIM information, subscriber identifier, carrier account information and physical location. Iterate `network_type` over `wifi`, `cellular`, `ethernet`, `other` and `unknown`, `vpn_state` over `detected`, `not_detected` and `unknown`, `ipv4_available`, `ipv6_available` and `validated` over `yes`, `no` and `unknown`, and `network_changed` over `true` and `false`. Assert the serialized access object contains exactly these six fields with the supplied normalized values. Assert serialized output of the access object, the Measurement Result, logs, cache entries and egress-endpoint requests contains none of the canary values. Reject an access input carrying any additional field. Requirements: REQ-CONTEXT-0002, REQ-CONTEXT-0003.",
+      "case_results": [
+        {
+          "case_id": "CC-CONTEXT-CONTEXT-LAYERS-ACCESS-CONTEXT",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "EV.CC-CONTEXT-FORMAT-ACCESS-OBJECT",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
+        "selector": "anchor:CC-CONTEXT-FORMAT-ACCESS-OBJECT"
+      },
+      "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
+      "requirement_ids": [
+        "REQ-CONTEXT-FORMAT-0004",
+        "REQ-CONTEXT-FORMAT-0005"
+      ],
+      "scope": "Synthetic core contract cases; Iterate every registered access value and accept each: network_type wifi, cellular, ethernet, other, unknown; vpn_state detected, not_detected, unknown; ipv4_available, ipv6_available and validated yes, no, unknown; network_changed true and false. Reject case variants (WIFI, Yes), unregistered strings, network_changed as the string false or as null, and objects missing each required field in turn. Configure the fake platform to expose canaries for interface names, addresses, Wi-Fi identifiers, DNS server addresses, cell information, SIM information, carrier names, subscriber identifiers and location, and assert none appears in the encoded access object or result; reject decoding of an access object carrying any extra field for those items. Requirements: REQ-CONTEXT-FORMAT-0004, REQ-CONTEXT-FORMAT-0005.",
+      "case_results": [
+        {
+          "case_id": "CC-CONTEXT-FORMAT-ACCESS-OBJECT",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "EV.UT.internal.execution.TestNetworkChangeDuringAttempt",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
+        "selector": "anchor:UT.internal.execution.TestNetworkChangeDuringAttempt"
+      },
+      "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
+      "requirement_ids": [
+        "REQ-CONTEXT-0025",
+        "REQ-RESULT-0051",
+        "REQ-RESULT-0052"
+      ],
+      "scope": "Existing synthetic Go unit test TestNetworkChangeDuringAttempt in package internal/execution, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "case_results": [
+        {
+          "case_id": "UT.internal.execution.TestNetworkChangeDuringAttempt",
+          "result": "passed"
+        }
+      ]
+    },
+    {
+      "id": "EV.UT.internal.execution.TestNetworkConditionsBeforeEachAttempt",
+      "kind": "conformance",
+      "reference": {
+        "repository": "https://github.com/tv-rain/barometer-go",
+        "revision": "729ec662c9c36992f2cf70a5a29ec061720cebe3",
+        "path": "traceability/evidence/go-unit-cdbd160.md",
+        "selector": "anchor:UT.internal.execution.TestNetworkConditionsBeforeEachAttempt"
+      },
+      "specification_revision": "5d01879cfd1d47396c780befa2567f7e90439948",
+      "implementation_revision": "cdbd16043d991d4b11544420b5ba8531fb8c95f1",
+      "requirement_ids": [
+        "REQ-EXECUTION-0031"
+      ],
+      "scope": "Existing synthetic Go unit test TestNetworkConditionsBeforeEachAttempt in package internal/execution, executed with go test at the implementation baseline. Partial evidence only for the narrow aspects of each linked requirement recorded in the evidence report; not a planned conformance family case and not runtime, platform or field conformance.",
+      "case_results": [
+        {
+          "case_id": "UT.internal.execution.TestNetworkConditionsBeforeEachAttempt",
           "result": "passed"
         }
       ]

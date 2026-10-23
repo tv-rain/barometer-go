@@ -730,6 +730,39 @@ Every result is therefore retained for at most 86,400 seconds after it was persi
 
 Public record and disposition first, then internal alignment if a retention validation plan names the start point, then Go adoption with retention cases, then bindings. Closure requires the public disposition, its immutable revision if wording changes, and Go adoption evidence or recorded non-applicability.
 
+## GO-SPEC-ISSUE-013: Library Internal Check for `require_validated`
+
+**Current state:** Open, raised October 23, 2026 under DEV-644 while implementing network-condition evaluation. No public record exists yet; public maintainers own the disposition. Go implements the conservative interim rule below, which the task owner approved with the DEV-644 plan.
+
+### Identity, Baselines and Requirements
+
+- **Reporter:** the Go implementation agent, under the task owner's instruction. **Duplicates:** none.
+- **Baseline:** Draft `0.1.0` at [5d01879cfd1d47396c780befa2567f7e90439948](https://github.com/tv-rain/barometer-spec/tree/5d01879cfd1d47396c780befa2567f7e90439948).
+  - [REQ-EXECUTION-0016](https://github.com/tv-rain/barometer-spec/blob/5d01879cfd1d47396c780befa2567f7e90439948/data-formats/task-execution.md#REQ-EXECUTION-0016) describes `require_validated` as "Require confirmed Internet connectivity, system method will be used to check when available, lib internal check will be called otherwise."
+  - [REQ-EXECUTION-0031](https://github.com/tv-rain/barometer-spec/blob/5d01879cfd1d47396c780befa2567f7e90439948/data-formats/task-execution.md#REQ-EXECUTION-0031) makes a network condition that cannot be determined, including validation required by `require_validated`, unsatisfied: the task does not run, Barometer does not guess, and a recorded attempt is `not_run` with `constraints_unsatisfied`.
+  - The access object's `validated` field is the "coarse platform Internet-validation state" ([REQ-CONTEXT-FORMAT-0004](https://github.com/tv-rain/barometer-spec/blob/5d01879cfd1d47396c780befa2567f7e90439948/data-formats/network-context.md#REQ-CONTEXT-FORMAT-0004)).
+- **Implementation:** `tv-rain/barometer-go` on the DEV-644 task branch, based on `0869b97`. `execution.NetworkConditions` ([Network Conditions and Access Context](execution-models.md#network-conditions-and-access-context)).
+
+### Finding and Interim Handling
+
+REQ-EXECUTION-0016 says the library runs its own connectivity check when the platform offers no validation method, while REQ-EXECUTION-0031 says an undeterminable validation state is unsatisfied. The contract defines no such check: no endpoint, protocol, traffic bound, timing, privacy property, result field or relationship to the attempt's limits. A library-originated probe sent before a measurement would be network traffic outside the attempt's registered test and could make Barometer's behavior more distinctive on a monitored network.
+
+**Blocked:** the row of `CC-EXECUTION-FIELDS-NETWORK-FIELDS` that uses "the fake library internal check". **Interim rule:**
+
+1. `require_validated` is satisfied only by the platform's own `validated: yes`.
+2. `no`, `unknown`, a capability error and an unreadable access context are unsatisfied, as REQ-EXECUTION-0031 requires: `StartRun` returns `run_not_due`, and before the first attempt of a reserved run the attempt is `not_run` with `constraints_unsatisfied`.
+3. No library connectivity check is implemented, and no traffic is sent to decide validation.
+
+### Impact, Reviews and Alternatives
+
+- **Safety and privacy:** the interim rule sends no traffic outside the registered test. Its cost is that a task requiring validation never runs on a platform that reports no validation state. Any library check needs a safety and privacy review before implementation; this was accepted as a limitation of the DEV-578 sub-epic.
+- **Alternatives:** (a) remove the internal-check clause from REQ-EXECUTION-0016 and keep REQ-EXECUTION-0031 as the only rule; (b) specify a bounded, reviewed library check, with its endpoint, traffic and attempt-limit accounting, and its result representation; (c) let local policy enable a reviewed check per deployment.
+- **Compatibility:** (a) is a Draft `0.1.0` clarification with no new field; (b) and (c) add behavior and need a version or compatibility decision.
+
+### Ordering and Closure
+
+Public record and disposition first, then internal alignment of the execution validation plan, then Go adoption with the row's case, then bindings. Closure requires the public disposition, its immutable revision if wording changes, and Go adoption evidence or recorded non-applicability.
+
 ## Signed Remote Task Package Adoption
 
 **Status:** Public contract and internal review alignment are merged; the Go core adopts them in DEV-612 with synthetic evidence only. The cryptographic, safety and host integration reviews were performed by the project maintainer in DEV-615 with no findings, and the remote-delivery gate (DEV-595) is lifted. The interpretation question below is closed by REQ-TRUST-0055, adopted by DEV-624. Binding and host adoption remain open (DEV-455).

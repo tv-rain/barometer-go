@@ -388,14 +388,16 @@ func TestClearingCoversEveryAdapter(t *testing.T) {
 		"deadline":      "exempt: lifecycle deadline",
 	}
 	runCovered := map[string]string{
-		"clock":    "exempt: engine clock",
-		"jitter":   "exempt: jitter source",
-		"ledger":   "cleared: RunClass records; Forgetter drops the State index",
-		"paths":    "exempt: path seam holds no stored state",
-		"consent":  "exempt: host-reported capability",
-		"device":   "exempt: host-reported capability",
-		"zone":     "exempt: host-reported capability",
-		"registry": "exempt: copy of the adapters' registry",
+		"clock":          "exempt: engine clock",
+		"jitter":         "exempt: jitter source",
+		"ledger":         "cleared: RunClass records; Forgetter drops the State index",
+		"paths":          "exempt: path seam holds no stored state; directPath caches no context",
+		"network":        "exempt: host-reported capability",
+		"implementation": "exempt: producer identity",
+		"consent":        "exempt: host-reported capability",
+		"device":         "exempt: host-reported capability",
+		"zone":           "exempt: host-reported capability",
+		"registry":       "exempt: copy of the adapters' registry",
 	}
 	for typ, want := range map[reflect.Type]map[string]string{reflect.TypeOf(adapters{}): covered, reflect.TypeOf(runAdapters{}): runCovered} {
 		if typ.NumField() != len(want) {

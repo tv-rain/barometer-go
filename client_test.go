@@ -286,7 +286,7 @@ func TestInitializeFailsClosed(t *testing.T) {
 		"no run jitter":     func(a *adapters) { a.run.jitter = nil },
 		"no record port":    func(a *adapters) { a.records = nil },
 		"no run ledger":     func(a *adapters) { a.run.ledger = nil },
-		"no path seam":      func(a *adapters) { a.run.paths = nil },
+		"no path seam":      func(a *adapters) { a.run.paths, a.run.network = nil, nil },
 	}
 	for name, edit := range edits {
 		t.Run(name, func(t *testing.T) {
