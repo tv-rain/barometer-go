@@ -391,7 +391,7 @@ func TestClearingCoversEveryAdapter(t *testing.T) {
 		"clock":          "exempt: engine clock",
 		"jitter":         "exempt: jitter source",
 		"ledger":         "cleared: RunClass records; Forgetter drops the State index",
-		"paths":          "exempt: path seam holds no stored state; directPath caches no context",
+		"paths":          "exempt: path seam holds no stored state; networkPaths caches no context",
 		"network":        "exempt: host-reported capability",
 		"implementation": "exempt: producer identity",
 		"consent":        "exempt: host-reported capability",

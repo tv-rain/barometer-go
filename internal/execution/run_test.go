@@ -114,7 +114,7 @@ type contextSource struct {
 	t      *testing.T
 	fail   map[int]bool
 	calls  int
-	direct *networkcontext.Direct
+	direct *networkcontext.Source
 	net    *capability.Network
 }
 

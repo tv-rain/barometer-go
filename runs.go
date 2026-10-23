@@ -29,20 +29,24 @@ const (
 	runTerminal = "terminal"
 )
 
-// pathSource is the seam for the direct path of one run, defined from this
+// pathSource is the seam for the network path of one run, defined from this
 // consumer. It reads the run's access context at reservation and supplies the
-// run's context source, attempt-scoped dialers and the result decoder bound to
-// the task. directPath is the production source (DEV-644); tests may bind a
-// scripted one. The proxy path (DEV-645) and egress lookup (DEV-647) are not
-// implemented; a task that needs either never reaches this seam.
+// run's context source, attempt-scoped dialers of the selected path and the
+// result decoder bound to the task. networkPaths is the production source
+// (DEV-644, DEV-645); tests may bind a scripted one. Egress lookup (DEV-647)
+// is not implemented; a task that needs it never reaches this seam.
 type pathSource interface {
-	direct(ctx context.Context, r pathRequest) (pathPlan, error)
+	plan(ctx context.Context, r pathRequest) (pathPlan, error)
 }
 
+// pathRequest names the task's network path and, for a proxy task, the
+// generation's proxy snapshot. A source never substitutes another path.
 type pathRequest struct {
 	TaskID                     string
 	Test                       task.TestVersion
 	MaxAttempts, MaxDurationMS int
+	NetworkPath                string
+	Proxy                      proxySnapshot
 }
 
 // pathPlan carries Access, the access values read at reservation, against
@@ -216,9 +220,17 @@ func (rt *runtime) reserveRun(ctx context.Context, taskHandle string, a admissio
 	if free, err := rt.bundles.Capacity(ctx); err != nil || free < rt.runSet.results+attempts {
 		return "", execution.Plan{}, nil, notDue
 	}
-	path, err := run.paths.direct(ctx, pathRequest{TaskID: c.ID, Test: a.Test(), MaxAttempts: attempts, MaxDurationMS: a.AttemptLimits().DurationMS})
+	path, err := run.paths.plan(ctx, pathRequest{TaskID: c.ID, Test: a.Test(), MaxAttempts: attempts, MaxDurationMS: a.AttemptLimits().DurationMS,
+		NetworkPath: c.Execution.NetworkPath, Proxy: rt.proxy()})
 	if err != nil || path.Result == nil || path.Context == nil || path.Dialers == nil {
 		return "", execution.Plan{}, nil, notDue
+	}
+	// A proxy run is not held back when its path cannot be used: its
+	// attempt records why (REQ-EXECUTION-0010).
+	var check execution.PathCheck
+	if c.Execution.NetworkPath == "proxy" {
+		entry, _ := run.registry.Lookup(a.Test())
+		check = proxyCheck{configured: rt.proxy().configured(), permitted: a.Paths().Proxy, rule: entry.Proxy, parameters: c.Parameters}
 	}
 	if !execution.NetworkConditions(c.Execution.Network, path.Access) {
 		return "", execution.Plan{}, nil, notDue
@@ -256,7 +268,7 @@ func (rt *runtime) reserveRun(ctx context.Context, taskHandle string, a admissio
 	plan := execution.Plan{TaskID: c.ID, Test: a.Test(), Parameters: c.Parameters, Schedule: s, Network: c.Execution.Network, Conditions: start,
 		Deadline:       time.Duration(a.AttemptLimits().DurationMS) * time.Millisecond,
 		Limits:         a.AttemptLimits(),
-		Implementation: path.Implementation, Result: path.Result, Context: path.Context, Dialers: path.Dialers, Preconditions: gates}
+		Implementation: path.Implementation, Result: path.Result, Context: path.Context, Dialers: path.Dialers, Path: check, Preconditions: gates}
 	return handle, plan, r, nil
 }
 

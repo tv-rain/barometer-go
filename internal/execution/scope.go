@@ -48,13 +48,18 @@ var (
 // max_connections before it is issued, whether or not it connects. A write
 // larger than the remaining sent budget is not issued, and a read requests no
 // more than the remaining received budget. An operation the remaining budget
-// cannot cover calls exhaust, which ends the attempt with errBudget as its
-// cause and so releases every connection.
+// cannot cover ends the attempt with errBudget as its cause and so releases
+// every connection.
+//
+// A dial that the path fails with a path failure (proxy_unavailable,
+// proxy_connect_failed) likewise ends the attempt with that failure as its
+// cause. When the attempt had already ended, the failure only records that the
+// path's dial was interrupted, which the engine reads with interrupted.
 type scope struct {
 	ctx     context.Context
 	inner   measurement.Dialer
 	limits  task.AttemptLimits
-	exhaust func()
+	end     func(cause error)
 	started atomic.Bool
 	stop    func() bool
 
@@ -62,10 +67,11 @@ type scope struct {
 	closed bool
 	conns  map[*scopedConn]struct{}
 	usage  measurement.Usage // includes bytes reserved by operations in flight
+	late   task.ExecutionReason
 }
 
-func newScope(ctx context.Context, d measurement.Dialer, limits task.AttemptLimits, exhaust func()) *scope {
-	s := &scope{ctx: ctx, inner: d, limits: limits, exhaust: exhaust, conns: make(map[*scopedConn]struct{})}
+func newScope(ctx context.Context, d measurement.Dialer, limits task.AttemptLimits, end func(cause error)) *scope {
+	s := &scope{ctx: ctx, inner: d, limits: limits, end: end, conns: make(map[*scopedConn]struct{})}
 	s.stop = context.AfterFunc(ctx, s.release)
 	return s
 }
@@ -94,7 +100,7 @@ func (s *scope) DialContext(ctx context.Context, network, address string) (measu
 	s.mu.Lock()
 	if s.usage.Connections >= s.limits.Connections {
 		s.mu.Unlock()
-		s.exhaust()
+		s.end(errBudget)
 		return nil, errBudget
 	}
 	s.usage.Connections++
@@ -105,6 +111,9 @@ func (s *scope) DialContext(ctx context.Context, network, address string) (measu
 	defer unlink()
 	conn, err := s.inner.DialContext(dctx, network, address)
 	if err != nil {
+		if reason, ok := pathFailure(err); ok {
+			s.pathFailed(reason, err)
+		}
 		return nil, err
 	}
 	c := &scopedConn{Conn: conn, scope: s}
@@ -138,12 +147,34 @@ func (s *scope) reserve(n int, sent bool) (int, bool) {
 	k := min(n, limit-*used)
 	if n > 0 && (k <= 0 || sent && k < n) {
 		s.mu.Unlock()
-		s.exhaust()
+		s.end(errBudget)
 		return 0, false
 	}
 	*used += k
 	s.mu.Unlock()
 	return k, true
+}
+
+// pathFailed ends a running attempt with the path failure as its cause, or
+// records the failure of a dial that the attempt's end interrupted.
+func (s *scope) pathFailed(reason task.ExecutionReason, err error) {
+	if s.ctx.Err() == nil {
+		s.end(err)
+		return
+	}
+	s.mu.Lock()
+	if s.late == "" {
+		s.late = reason
+	}
+	s.mu.Unlock()
+}
+
+// interrupted reports the path failure of a dial that was in progress when the
+// attempt ended, such as a CONNECT exchange the attempt deadline cut short.
+func (s *scope) interrupted() task.ExecutionReason {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.late
 }
 
 // settle returns the unused part of a reservation once the operation reports

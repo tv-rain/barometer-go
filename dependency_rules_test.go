@@ -195,9 +195,10 @@ var importRules = []importRule{
 		},
 	},
 	{
-		// DEV-644: the direct-path dialer is the one production socket owner.
-		// Protocol primitives are listed for their planned owner; none exists.
-		name:      "only the direct path opens sockets",
+		// The direct and proxy path dialers in internal/execution are the
+		// production socket owners. Protocol primitives are listed for their
+		// planned owner; none exists.
+		name:      "only the network path dialers open sockets",
 		applies:   func(pkg string) bool { return !underAny(pkg, "execution", "protocol", "testkit") },
 		forbidden: func(_, imp string) bool { return networkIO(imp) },
 	},

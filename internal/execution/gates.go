@@ -39,14 +39,15 @@ func (g Gates) Satisfied(ctx context.Context) bool {
 }
 
 // NetworkSatisfiable reports whether the task states no network condition
-// this build cannot evaluate. Until the proxy path (DEV-645) and egress
-// lookup (DEV-647) exist, a proxy path and Network Context requirements are
-// unsatisfied, so such a task never runs. Transport, VPN and validation
-// conditions depend on the access context and are evaluated against it by
-// NetworkConditions.
+// this build cannot evaluate. Until egress lookup (DEV-647) exists, Network
+// Context requirements are unsatisfied, so such a task never runs. Either
+// network path is accepted: a proxy task whose path cannot be used records
+// that in its attempt through the path's pre-attempt check (PathCheck), never
+// by being held back here. Transport, VPN and validation conditions depend on
+// the access context and are evaluated against it by NetworkConditions.
 func NetworkSatisfiable(e task.Execution) bool {
 	n := e.Network
-	return e.NetworkPath == "direct" && len(n.Context.RequiredFields) == 0 && len(n.Context.AllowedCountryCodes) == 0
+	return (e.NetworkPath == "direct" || e.NetworkPath == "proxy") && len(n.Context.RequiredFields) == 0 && len(n.Context.AllowedCountryCodes) == 0
 }
 
 // AccessRequired reports whether the task states a condition on the access

@@ -33,7 +33,7 @@ var (
 
 // encodedResult builds a completed synthetic TCP-01 result carrying nc and
 // returns its encoding.
-func encodedResult(t *testing.T, d *networkcontext.Direct, snap networkcontext.Snapshot, nc observation.NetworkContext) []byte {
+func encodedResult(t *testing.T, d *networkcontext.Source, snap networkcontext.Snapshot, nc observation.NetworkContext) []byte {
 	t.Helper()
 	dec, err := result.New(result.Binding{TaskID: "campaign-1", Output: result.Output{Test: model.Test{ID: "TCP-01", Version: result.Contract, ResultVersion: result.Contract}},
 		MaxAttempts: 1, MaxDurationMS: 30000, Implementation: model.Implementation{LibraryVersion: "0.1.0", Platform: "android"},

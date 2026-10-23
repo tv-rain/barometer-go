@@ -62,7 +62,7 @@ func (h *harness) bindRunAdapters(t *testing.T) {
 	t.Helper()
 	base := time.Now()
 	network := capability.NewNetwork(defaultAccess)
-	inner, err := newDirectPath(runAdapters{network: network, implementation: implementation})
+	inner, err := newNetworkPaths(runAdapters{network: network, implementation: implementation})
 	if err != nil {
 		t.Fatal("synthetic direct path rejected")
 	}
@@ -211,7 +211,7 @@ func (r *runRunner) Run(ctx context.Context, in measurement.Input) (measurement.
 // fakePaths wraps the production direct path over the harness's fake
 // platform network, counts reservations and can fail or panic.
 type fakePaths struct {
-	inner *directPath
+	inner *networkPaths
 	mu    sync.Mutex
 	calls int
 	fail  bool
@@ -226,7 +226,7 @@ func (p *fakePaths) Calls() int {
 	return p.calls
 }
 
-func (p *fakePaths) direct(ctx context.Context, r pathRequest) (pathPlan, error) {
+func (p *fakePaths) plan(ctx context.Context, r pathRequest) (pathPlan, error) {
 	p.mu.Lock()
 	p.calls++
 	fail, panics := p.fail, p.panic
@@ -237,7 +237,7 @@ func (p *fakePaths) direct(ctx context.Context, r pathRequest) (pathPlan, error)
 	if fail {
 		return pathPlan{}, errors.New("synthetic path failure")
 	}
-	return p.inner.direct(ctx, r)
+	return p.inner.plan(ctx, r)
 }
 
 // tcpCodec is the SYN-01 codec under the TCP-01 identifier.

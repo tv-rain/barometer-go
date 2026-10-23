@@ -65,7 +65,7 @@ type adapters struct {
 // run ledger and path seam are required; initialization fails closed without
 // them. The pending-output port is the generation's pending.Store. bind
 // derives the path seam from the network capability and the producer
-// implementation with newDirectPath when it is unset (DEV-644); tests may
+// implementation with newNetworkPaths when it is unset (DEV-644); tests may
 // substitute it. Consent, device state and time zone are optional: a task that
 // needs a missing one never runs. The ledger is persistence.State.Runs
 // (DEV-641); native network, consent, device and time-zone capabilities and

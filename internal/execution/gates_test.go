@@ -15,16 +15,19 @@ func direct() task.Execution {
 	return task.Execution{NetworkPath: "direct", Network: task.NetworkRequirements{VPNPolicy: "any"}}
 }
 
-// Network conditions this build cannot evaluate are unsatisfied: the proxy
-// path and Network Context requirements (DEV-645, DEV-647). Transport, VPN
-// and validation conditions pass the static gate and are evaluated against
-// the access context.
+// Network conditions this build cannot evaluate are unsatisfied: Network
+// Context requirements (DEV-647) and an unregistered path. Either registered
+// path passes; a proxy path that cannot be used is recorded by its attempt's
+// path check. Transport, VPN and validation conditions pass the static gate
+// and are evaluated against the access context.
 func TestNetworkConditionsFailClosed(t *testing.T) {
-	if !execution.NetworkSatisfiable(direct()) {
-		t.Fatal("direct path without conditions")
+	proxy := direct()
+	proxy.NetworkPath = "proxy"
+	if !execution.NetworkSatisfiable(direct()) || !execution.NetworkSatisfiable(proxy) {
+		t.Fatal("registered path without conditions")
 	}
 	for name, edit := range map[string]func(*task.Execution){
-		"proxy path":        func(e *task.Execution) { e.NetworkPath = "proxy" },
+		"unregistered path": func(e *task.Execution) { e.NetworkPath = "socks" },
 		"unset path":        func(e *task.Execution) { e.NetworkPath = "" },
 		"context fields":    func(e *task.Execution) { e.Network.Context.RequiredFields = []string{"country_code"} },
 		"country allowlist": func(e *task.Execution) { e.Network.Context.AllowedCountryCodes = []string{"NL"} },

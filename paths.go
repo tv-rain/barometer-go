@@ -4,29 +4,41 @@ import (
 	"context"
 	"errors"
 
+	"github.com/tv-rain/barometer-go/internal/config"
 	"github.com/tv-rain/barometer-go/internal/execution"
+	"github.com/tv-rain/barometer-go/internal/measurement"
+	"github.com/tv-rain/barometer-go/internal/model/observation"
 	model "github.com/tv-rain/barometer-go/internal/model/result"
+	"github.com/tv-rain/barometer-go/internal/model/task"
 	"github.com/tv-rain/barometer-go/internal/networkcontext"
+	"github.com/tv-rain/barometer-go/internal/platform"
+	"github.com/tv-rain/barometer-go/internal/registry"
 	"github.com/tv-rain/barometer-go/internal/result"
 )
 
-var errPathUnavailable = errors.New("barometer: direct path unavailable")
+var (
+	errPathUnavailable = errors.New("barometer: network path unavailable")
+	errNoProxy         = errors.New("barometer: no proxy configured")
+)
 
-// directPath is the production direct path (DEV-644). At reservation it reads
-// the access context once, through the platform network capability, and binds
-// the run's result decoder to that snapshot's direct path. Each attempt then
-// captures its own snapshot, evaluates the task's network conditions against
-// it, attaches it to the result with egress unavailable, and dials through a
-// fresh direct dialer inside the metered attempt scope. Implementation is the
-// trusted producer identity of the integration, never host or task input.
-type directPath struct {
-	context        *networkcontext.Direct
+// networkPaths is the production path source (DEV-644, DEV-645). At
+// reservation it reads the access context once, through the platform network
+// capability, and binds the run's result decoder to that snapshot's path:
+// direct, or the generation's proxy snapshot. Each attempt then captures its
+// own snapshot, evaluates the task's network conditions against it, attaches
+// it to the result with egress unavailable, and dials through a fresh dialer
+// of the selected path inside the metered attempt scope. A proxy task never
+// receives a direct dialer. Implementation is the trusted producer identity
+// of the integration, never host or task input.
+type networkPaths struct {
+	network        platform.Network
+	direct         *networkcontext.Source
 	implementation model.Implementation
 }
 
-// newDirectPath fails without a network capability, so a client that cannot
+// newNetworkPaths fails without a network capability, so a client that cannot
 // read access context has no path and starts no run.
-func newDirectPath(r runAdapters) (*directPath, error) {
+func newNetworkPaths(r runAdapters) (*networkPaths, error) {
 	if absent(r.network) {
 		return nil, errPathUnavailable
 	}
@@ -34,19 +46,120 @@ func newDirectPath(r runAdapters) (*directPath, error) {
 	if err != nil {
 		return nil, errPathUnavailable
 	}
-	return &directPath{context: d, implementation: r.implementation}, nil
+	return &networkPaths{network: r.network, direct: d, implementation: r.implementation}, nil
 }
 
-func (p *directPath) direct(ctx context.Context, r pathRequest) (pathPlan, error) {
-	snap, err := p.context.Capture(ctx)
+func (p *networkPaths) plan(ctx context.Context, r pathRequest) (pathPlan, error) {
+	if r.NetworkPath != "proxy" {
+		return p.bind(ctx, r, p.direct, execution.DirectDialers{})
+	}
+	if !r.Proxy.configured() {
+		return p.unconfigured(ctx, r)
+	}
+	src, err := networkcontext.NewProxy(p.network, r.Proxy.generation, r.Proxy.endpoint.ConnectionCode)
 	if err != nil {
 		return pathPlan{}, errPathUnavailable
 	}
-	d, err := result.New(result.Binding{TaskID: r.TaskID, Output: result.Output{Test: model.Test{ID: r.Test.ID, Version: r.Test.Version, ResultVersion: result.Contract}},
+	dialers, err := execution.NewProxyDialers(r.Proxy.endpoint.Host, r.Proxy.endpoint.Port)
+	if err != nil {
+		return pathPlan{}, errPathUnavailable
+	}
+	return p.bind(ctx, r, src, dialers)
+}
+
+func (p *networkPaths) bind(ctx context.Context, r pathRequest, src *networkcontext.Source, dialers execution.DialerSource) (pathPlan, error) {
+	snap, err := src.Capture(ctx)
+	if err != nil {
+		return pathPlan{}, errPathUnavailable
+	}
+	d, err := p.decoder(r, src.Decoder(), snap.Path(), snap.Generation())
+	if err != nil {
+		return pathPlan{}, errPathUnavailable
+	}
+	return pathPlan{Implementation: p.implementation, Access: snap.Access(), Result: d, Context: src, Dialers: dialers}, nil
+}
+
+// unconfigured plans a proxy run without a configured proxy. Its attempts
+// record proxy_not_configured through the path check before any capture or
+// dial, so its context source and dialers only fail. The access reading
+// serves the start check alone; the result decoder is bound to no path, so it
+// would reject any Network Context.
+func (p *networkPaths) unconfigured(ctx context.Context, r pathRequest) (pathPlan, error) {
+	snap, err := p.direct.Capture(ctx)
+	if err != nil {
+		return pathPlan{}, errPathUnavailable
+	}
+	d, err := p.decoder(r, p.direct.Decoder(), observation.Path{}, snap.Generation())
+	if err != nil {
+		return pathPlan{}, errPathUnavailable
+	}
+	return pathPlan{Implementation: p.implementation, Access: snap.Access(), Result: d, Context: noProxy{}, Dialers: noProxy{}}, nil
+}
+
+func (p *networkPaths) decoder(r pathRequest, cd *observation.ContextDecoder, path observation.Path, generation uint64) (*result.Decoder, error) {
+	return result.New(result.Binding{TaskID: r.TaskID, Output: result.Output{Test: model.Test{ID: r.Test.ID, Version: r.Test.Version, ResultVersion: result.Contract}},
 		MaxAttempts: r.MaxAttempts, MaxDurationMS: r.MaxDurationMS, Implementation: p.implementation,
-		ContextDecoder: p.context.Decoder(), Path: snap.Path(), AccessGeneration: snap.Generation()})
-	if err != nil {
-		return pathPlan{}, errPathUnavailable
+		ContextDecoder: cd, Path: path, AccessGeneration: generation})
+}
+
+// noProxy is the context source and dialer source of a proxy run without a
+// configured proxy. It never captures context and never dials.
+type noProxy struct{}
+
+func (noProxy) Capture(context.Context) (networkcontext.Snapshot, error) {
+	return networkcontext.Snapshot{}, errNoProxy
+}
+func (noProxy) Dialer(int) (measurement.Dialer, error) { return nil, errNoProxy }
+
+// proxySnapshot is the generation's proxy configuration. The proxy comes only
+// from Initialize, so it is fixed for the generation and the runtime
+// generation serves as its non-zero proxy generation; replacement and
+// clearing, which assign a new proxy generation of their own, belong to
+// DEV-646. The endpoint is trusted host configuration and never reaches a
+// result (REQ-PROXY-0033).
+type proxySnapshot struct {
+	endpoint   config.Proxy
+	generation uint64 // zero when no proxy is configured
+}
+
+func (p proxySnapshot) configured() bool { return p.generation != 0 }
+
+// proxy returns the generation's proxy snapshot.
+func (rt *runtime) proxy() proxySnapshot {
+	if rt.init == nil || rt.generation == 0 {
+		return proxySnapshot{}
 	}
-	return pathPlan{Implementation: p.implementation, Access: snap.Access(), Result: d, Context: p.context, Dialers: execution.DirectDialers{}}, nil
+	p, ok := rt.init.Configuration().Proxy()
+	if !ok {
+		return proxySnapshot{}
+	}
+	return proxySnapshot{endpoint: p, generation: rt.generation}
+}
+
+// proxyCheck is the pre-attempt check of a proxy run (REQ-EXECUTION-0008),
+// evaluated by the engine before each attempt. The proxy must be configured,
+// the task's admitted path authority, which local policy bounds, must permit
+// the proxy, and the registered rule must accept the test's concrete
+// parameters. Admission already rejects a task that fails either of the last
+// two (REQ-PROXY-0042), and a policy replacement admits every task again, so
+// in this build they hold for every admitted task; the check still re-applies
+// them rather than assume it.
+// requirement-ref: REQ-EXECUTION-0008
+// requirement-ref: REQ-PROXY-0022
+type proxyCheck struct {
+	configured, permitted bool
+	rule                  registry.ProxyRule
+	parameters            task.Parameters
+}
+
+func (c proxyCheck) Check() task.ExecutionReason {
+	switch {
+	case !c.configured:
+		return task.ProxyNotConfigured
+	case !c.permitted:
+		return task.ProxyNotPermitted
+	case absent(c.rule) || !c.rule.Compatible(c.parameters):
+		return task.ProxyPathUnsupported
+	}
+	return ""
 }
