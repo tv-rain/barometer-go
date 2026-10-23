@@ -94,13 +94,19 @@ class ReferenceTests(unittest.TestCase):
             ],
         }}
 
+    def findings(self, *references):
+        return ci.reference_findings(list(references), self.manifests, self.catalog)
+
     def errors(self, *references):
-        return ci.reference_errors(list(references), self.manifests, self.catalog)
+        return self.findings(*references)[0]
+
+    def warnings(self, *references):
+        return self.findings(*references)[1]
 
     def test_linked_source_and_test_references_pass(self):
-        self.assertEqual(self.errors(("internal/a/a.go", 1, "REQ-TASK-0001"),
-                                     ("internal/a/a_test.go", 2, "REQ-TASK-0001"),
-                                     ("internal/b/b.go", 3, "REQ-TASK-0003")), [])
+        self.assertEqual(self.findings(("internal/a/a.go", 1, "REQ-TASK-0001"),
+                                       ("internal/a/a_test.go", 2, "REQ-TASK-0001"),
+                                       ("internal/b/b.go", 3, "REQ-TASK-0003")), ([], []))
 
     def test_unknown_retired_or_unmapped_ids_fail(self):
         for identity, reason in (("REQ-TASK-9999", "unknown"), ("REQ-TASK-0002", "retired"),
@@ -111,21 +117,28 @@ class ReferenceTests(unittest.TestCase):
                 self.assertIn(f"internal/a/a.go:7: requirement-ref {identity}", errors[0])
                 self.assertIn(reason, errors[0])
 
-    def test_unlinked_files_fail(self):
+    def test_unlinked_files_warn_until_the_milestone_update(self):
         for path, target in (("internal/c/c.go", "an implementation location"),
                              ("internal/c/c_test.go", "a case location"),
                              # A test file is not linked by an implementation location, and vice versa.
                              ("internal/a/a_test.go", "a case location")):
             with self.subTest(path=path):
                 identity = "REQ-TASK-0003" if path == "internal/a/a_test.go" else "REQ-TASK-0001"
-                errors = self.errors((path, 1, identity))
-                self.assertEqual(errors, [f"{path}:1: requirement-ref {identity} is not linked from the manifests as {target}"])
+                errors, warnings = self.findings((path, 1, identity))
+                self.assertEqual(errors, [])
+                self.assertEqual(warnings, [f"{path}:1: requirement-ref {identity} is not linked from the manifests as {target}"])
+
+    def test_unknown_or_retired_ids_stay_errors_beside_unlinked_warnings(self):
+        errors, warnings = self.findings(("internal/c/c.go", 1, "REQ-TASK-0001"), ("internal/c/c.go", 2, "REQ-TASK-0002"))
+        self.assertEqual(len(errors), 1)
+        self.assertIn("REQ-TASK-0002 is retired", errors[0])
+        self.assertEqual(len(warnings), 1)
 
     def test_case_of_another_requirement_does_not_link(self):
         self.manifests["a.json"]["requirements"][1]["case_ids"].append("unit-case")
-        self.assertEqual(self.errors(("internal/a/a_test.go", 1, "REQ-TASK-0003")), [])
+        self.assertEqual(self.findings(("internal/a/a_test.go", 1, "REQ-TASK-0003")), ([], []))
         self.manifests["a.json"]["requirements"][1]["case_ids"].remove("unit-case")
-        self.assertTrue(self.errors(("internal/a/a_test.go", 1, "REQ-TASK-0003")))
+        self.assertTrue(self.warnings(("internal/a/a_test.go", 1, "REQ-TASK-0003")))
 
     def test_go_references_scan_working_tree_comments_only(self):
         with tempfile.TemporaryDirectory() as directory:
