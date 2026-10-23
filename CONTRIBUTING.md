@@ -57,4 +57,6 @@ Before requesting review:
 - link durable implementation and validation evidence in the tracked task when applicable;
 - avoid claims that exceed the available implementation, conformance, platform, or field evidence.
 
+Keep reference documents under `docs/` current-state: edit the text a change affects so it describes the code as it now is, and do not append dated or task-numbered paragraphs or per-task validation records. Record what a change added in the [changelog](CHANGELOG.md), the commit message and the tracked task. Traceability manifests and evidence reports are updated at milestones, as described in [Manifest Validation](docs/traceability-manifest.md), not by every change.
+
 Never commit credentials, participant data, sensitive observations, private deployment configuration, unrestricted logs, personal paths, chat transcripts, or temporary agent files.
