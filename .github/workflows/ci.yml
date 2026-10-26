@@ -44,11 +44,11 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
-      - name: Check out pinned public tooling and specification history
+      - name: Check out pinned public reference source and specification history
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: tv-rain/barometer-spec
-          ref: e97502747c917a16bc2b71337535ff972bbd7d64
+          ref: bb805f07a36630db7250d5ab63006ed5e351f7a7
           path: .ci/public-spec
           fetch-depth: 0
           persist-credentials: false

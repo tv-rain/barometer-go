@@ -14,6 +14,8 @@ import tempfile
 SPEC_URL = "https://github.com/tv-rain/barometer-spec"
 IMPL_URL = "https://github.com/tv-rain/barometer-go"
 TOOLING_REVISION = "5d01879cfd1d47396c780befa2567f7e90439948"
+# Current source references advance independently of historical evidence/tooling.
+REFERENCE_REVISION = "bb805f07a36630db7250d5ab63006ed5e351f7a7"
 # Independent reviewed inventory; never infer required mappings from the input under test.
 INVENTORY_REVISION = "c06ce6b7b73b8520f35ce10982315fcb4d05615b"
 BASELINES = {
@@ -78,14 +80,14 @@ def go_references(root):
     return references
 
 
-def reference_findings(references, manifests, catalog):
+def reference_findings(references, manifests, catalog, milestone_ids=None):
     """Return (errors, warnings) for Go requirement-ref comments.
 
-    Every comment must name an active ID mapped in a current manifest; an unknown, retired or
-    unmapped ID is an error. A source file should be an implementation location of that ID and a
-    test file the location of a case mapped to it. Until the next milestone manifest update
-    (decision 0012) a missing link is a warning. A comment alone never establishes implementation
-    or evidence.
+    Unknown and retired IDs are always errors. Missing mappings for IDs already allocated
+    at the pinned milestones are errors, preserving inventory protection. An active ID first
+    allocated after those milestone catalogs may await the next update as an explicit warning
+    (decision 0012), as may an unlinked source/test location. Without milestone metadata,
+    missing mappings fail closed. Warnings establish neither mapping nor conformance.
     """
     status = {item["id"]: item["status"] for item in catalog["requirements"]}
     records = {}
@@ -103,7 +105,11 @@ def reference_findings(references, manifests, catalog):
         elif status[identity] != "active":
             errors.append(f"{where} is {status[identity]} in the pinned public catalog")
         elif identity not in records:
-            errors.append(f"{where} is absent from the current manifests")
+            if milestone_ids is not None and identity not in milestone_ids:
+                warnings.append(f"{where} was allocated after the milestone catalogs; "
+                                "mapping awaits the next milestone update")
+            else:
+                errors.append(f"{where} is absent from the current manifests")
         else:
             kind = 1 if path.endswith("_test.go") else 0
             if not any(path in linked[kind] for linked in records[identity]):
@@ -202,13 +208,21 @@ def run(args):
         # Export immutable public tooling/source. Local checkout modifications cannot change it.
         archive = git(spec, "archive", "--format=tar", TOOLING_REVISION)
         subprocess.run(["tar", "-xf", "-", "-C", str(tools)], input=archive, check=True)
+        references = Path(temporary) / "references"
+        references.mkdir()
+        # Export only reviewed source for reference scanning; execute tooling solely
+        # from TOOLING_REVISION, never from the source checkout or this source pin.
+        archive = git(spec, "archive", "--format=tar", REFERENCE_REVISION)
+        subprocess.run(["tar", "-xf", "-", "-C", str(references)], input=archive, check=True)
         sys.path.insert(0, str(tools / "scripts"))
         import check_traceability as checker
 
         helper = Path(temporary) / "go-selector"
         subprocess.run(["go", "build", "-o", str(helper), str(tools / "scripts/go_selector.go")], check=True)
         commands = [
-            [sys.executable, "-B", str(tools / "scripts/check_requirements.py"), "--consumer", str(root)],
+            [sys.executable, "-B", str(tools / "scripts/check_requirements.py"),
+             "--spec-root", str(references), "--baseline", str(tools / "requirements/catalog.json"),
+             "--consumer", str(root)],
             [sys.executable, "-B", "-m", "unittest", "discover", "-s", str(tools / "scripts"), "-p", "test_*.py", "-v"],
             [sys.executable, "-B", "-m", "unittest", "discover", "-s", str(root / "scripts"), "-p", "test_traceability_ci.py", "-v"],
             ["go", "test", "-count=1", "./internal/testkit/conformance"],
@@ -234,9 +248,12 @@ def run(args):
                 parsed[name] = checker.strict_json(raw)
         expected = {name: checker.strict_json(git(root, "show", f"{INVENTORY_REVISION}:traceability/{name}"))
                     for name in BASELINES}
-        retired = {name: retired_successors(checker.strict_json(
-                       git(spec, "show", f"{spec_revision}:requirements/catalog.json")))
-                   for name, (spec_revision, _) in BASELINES.items()}
+        milestone_catalogs = {name: checker.strict_json(
+            git(spec, "show", f"{spec_revision}:requirements/catalog.json"))
+            for name, (spec_revision, _) in BASELINES.items()}
+        retired = {name: retired_successors(catalog) for name, catalog in milestone_catalogs.items()}
+        milestone_ids = {item["id"] for catalog in milestone_catalogs.values()
+                         for item in catalog["requirements"]}
         actual_names = {p.relative_to(root / "traceability").as_posix()
                         for p in (root / "traceability").rglob("*.json")
                         if "reports" not in p.relative_to(root / "traceability").parts}
@@ -250,12 +267,13 @@ def run(args):
             failed |= bool(errors)
             # Reference comments are checked against the working-tree current manifests.
             errors, warnings = reference_findings(go_references(root), parsed,
-                                                  checker.strict_json((tools / "requirements/catalog.json").read_bytes()))
+                                                  checker.strict_json((references / "requirements/catalog.json").read_bytes()),
+                                                  milestone_ids)
             for error in errors:
                 print(error, flush=True)
             for warning in warnings:
                 print(f"warning: {warning}", flush=True)
-            print(f"Go requirement-ref consistency: {len(errors)} error(s), {len(warnings)} unlinked "
+            print(f"Go requirement-ref consistency: {len(errors)} error(s), {len(warnings)} pending mapping/location "
                   "reference(s) awaiting the milestone manifest update.", flush=True)
             failed |= bool(errors)
             # Plan specificity applies to the current manifests.
@@ -268,6 +286,8 @@ def run(args):
             failed |= bool(errors)
         (reports / "provenance.json").write_text(json.dumps({
             "tooling_revision": TOOLING_REVISION,
+            "reference_revision": REFERENCE_REVISION,
+            "manifest_baselines": BASELINES,
             "inventory_revision": INVENTORY_REVISION,
             "consumer_revision": git(root, "rev-parse", "HEAD").decode().strip(),
             "limits": "Current manifest metadata checks and working-tree references/synthetic tests; no runtime or support claim.",

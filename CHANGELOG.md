@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Align CI reference scanning with the merged explicit-IP proxy contract, independently of historical tooling/evidence pins; report genuinely new active requirements as pending-milestone mapping warnings while keeping unknown/retired IDs and lost older mappings fatal (DEV-659).
 - Enforce execution-time registration/address checks and explicit-IP-only proxy CONNECT (DEV-659): pin checked direct resolution, narrow redirect dialers to complete registered tuples on the shared attempt scope, refuse proxy hostname targets/context lookups, and preserve admission precedence and test-start failure states. Synthetic/loopback evidence only; production runners, native integration and full mixed-family conformance remain pending.
 - Correct safety core closeout records (DEV-652): maintainer class-mapping review confirmations, remaining-work notes and owners, current admission case families, and the local equal-endpoint time-window finding. Manifest baselines, mappings and evidence remain unchanged.
 
