@@ -48,6 +48,12 @@ type TargetDialer interface {
 	Redirect(task.TargetTuple) (TargetDialer, error)
 }
 
+// Clock is the attempt's monotonic time source for bounded protocol operations.
+type Clock interface {
+	Now() time.Time
+	AfterFunc(time.Duration, func()) func() bool
+}
+
 // Input carries the admitted test's normalized parameters, its dialer and the
 // test-start marker. Parameters were produced by the registered codec; a
 // runner must reject a value of an unexpected type with ErrRunner rather than
@@ -62,8 +68,16 @@ type TargetDialer interface {
 // the test.
 type Input struct {
 	Parameters task.Parameters
-	Dialer     Dialer
-	Start      func()
+	Clock      Clock
+	// CheckNetwork starts the test's own stable-generation/family check.
+	// A refusal ends the attempt with the execution owner's reason.
+	CheckNetwork func(family string) error
+	// RecordOutcome fixes a terminal protocol outcome before cleanup. False
+	// means an outer condition already ended the attempt; publish no outcome.
+	// After a successful marker, perform only cleanup, with no further I/O.
+	RecordOutcome func() bool
+	Dialer        Dialer
+	Start         func()
 	// Redirect validates a complete normalized redirect tuple and returns a
 	// dialer restricted to that hop, sharing this attempt's budgets and path.
 	// A rejection is handled as the registered test's redirect_rejected outcome.

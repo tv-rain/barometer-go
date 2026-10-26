@@ -437,7 +437,19 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 	}
 	s := newScope(actx, dialer, p.Limits, cancel)
 	s.targets = p.Targets
-	out, err := runner.Run(actx, measurement.Input{Parameters: p.Parameters, Dialer: s, Start: s.Start, Redirect: s.Redirect})
+	checkNetwork := func(family string) error {
+		s.Start()
+		if actx.Err() != nil {
+			return measurement.ErrRunner
+		}
+		a := snap.Access()
+		if family == "ipv4" && a.IPv4Available == "yes" || family == "ipv6" && a.IPv6Available == "yes" {
+			return nil
+		}
+		cancel(pathError{task.ConstraintsUnsatisfied})
+		return measurement.ErrRunner
+	}
+	out, err := runner.Run(actx, measurement.Input{Parameters: p.Parameters, Clock: e.clock, CheckNetwork: checkNetwork, RecordOutcome: s.RecordOutcome, Dialer: s, Start: s.Start, Redirect: s.Redirect})
 	s.close()
 	usage := s.Usage()
 	running, _ := pending.Start()
@@ -461,7 +473,7 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 	}
 	// An exhausted budget or a path failure stopped the active operation
 	// before the runner produced this outcome. State follows the actual test start.
-	if reason, ok := cutShort(actx); ok {
+	if reason, ok := cutShort(actx); ok && !s.terminal.Load() {
 		at := pending
 		if s.Started() {
 			at = running

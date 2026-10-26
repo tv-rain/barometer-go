@@ -56,13 +56,14 @@ var (
 // cause. When the attempt had already ended, the failure only records that the
 // path's dial was interrupted, which the engine reads with interrupted.
 type scope struct {
-	ctx     context.Context
-	inner   measurement.Dialer
-	targets TargetCheck
-	limits  task.AttemptLimits
-	end     func(cause error)
-	started atomic.Bool
-	stop    func() bool
+	ctx      context.Context
+	inner    measurement.Dialer
+	targets  TargetCheck
+	limits   task.AttemptLimits
+	end      func(cause error)
+	started  atomic.Bool
+	terminal atomic.Bool
+	stop     func() bool
 
 	mu     sync.Mutex
 	closed bool
@@ -81,6 +82,16 @@ func newScope(ctx context.Context, d measurement.Dialer, limits task.AttemptLimi
 func (s *scope) Start() { s.started.Store(true) }
 
 func (s *scope) Started() bool { return s.started.Load() }
+
+// RecordOutcome distinguishes an observed protocol result from interruption
+// during immediate close. A condition already observed cannot be overwritten.
+func (s *scope) RecordOutcome() bool {
+	if s.ctx.Err() != nil {
+		return false
+	}
+	s.terminal.Store(true)
+	return true
+}
 
 // Usage reports the metered bytes and connections; after close it is final.
 func (s *scope) Usage() measurement.Usage {
