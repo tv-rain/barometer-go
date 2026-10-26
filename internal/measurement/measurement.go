@@ -34,6 +34,18 @@ type Conn interface {
 	SetDeadline(time.Time) error
 }
 
+// SessionConn is an attempt connection that can carry a session protocol,
+// TLS, whose handshake and record bytes are not test traffic
+// (REQ-LIMIT-0034). Session switches it once: raw is the same stream without
+// metering, still owned and closed by the attempt, and plaintext wraps the
+// session's application side so those bytes count against the attempt
+// budget. Afterwards the connection itself refuses reads and writes; a
+// second call fails.
+type SessionConn interface {
+	Conn
+	Session() (raw Conn, plaintext func(io.ReadWriter) io.ReadWriter, err error)
+}
+
 // DatagramConn preserves UDP truncation through the attempt meter. The
 // transport compares the source to the checked peer without exposing addresses.
 type DatagramConn interface {

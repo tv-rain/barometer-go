@@ -4,13 +4,11 @@ package dns01
 import (
 	"net/netip"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/tv-rain/barometer-go/internal/jsondecode"
 	"github.com/tv-rain/barometer-go/internal/model/task"
 	"github.com/tv-rain/barometer-go/internal/taskdecode"
-	"golang.org/x/net/idna"
 )
 
 // Parameters is immutable and contains no authority grant.
@@ -34,30 +32,6 @@ func (p Parameters) Engine() string {
 	return p.transport
 }
 func (p Parameters) Resolver() (netip.Addr, uint16) { return p.address, p.port }
-
-// Explicit nontransitional UTS #46 lookup mapping with STD3, context, bidi and
-// DNS-length checks. Dependency and Unicode tables are pinned by go.mod.
-var names = idna.New(idna.MapForLookup(), idna.Transitional(false), idna.StrictDomainName(true), idna.ValidateLabels(true), idna.CheckHyphens(true), idna.CheckJoiners(true), idna.BidiRule(), idna.VerifyDNSLength(true))
-
-func normalizeName(s string) (string, bool) {
-	if len(s) == 0 || len(s) > 4096 || strings.HasSuffix(s, ".") {
-		return "", false
-	}
-	n, e := names.ToASCII(s)
-	n = strings.ToLower(n)
-	if e != nil || len(n) > 253 || !strings.Contains(n, ".") || strings.HasSuffix(n, ".") {
-		return "", false
-	}
-	if _, e := netip.ParseAddr(n); e == nil {
-		return "", false
-	}
-	for _, suffix := range []string{"local", "localhost", "internal", "lan", "home", "home.arpa", "onion", "invalid", "test"} {
-		if n == suffix || strings.HasSuffix(n, "."+suffix) {
-			return "", false
-		}
-	}
-	return n, true
-}
 
 type Codec struct{}
 
@@ -89,7 +63,7 @@ func (c Codec) Normalize(input, options *jsondecode.Value) (task.Parameters, err
 	}
 	n, _ := input.Lookup("hostname")
 	q, _ := input.Lookup("record_type")
-	name, ok := normalizeName(n.Text())
+	name, ok := taskdecode.DNSName(n.Text())
 	if !ok || q.Text() != "A" && q.Text() != "AAAA" {
 		return bad()
 	}

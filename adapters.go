@@ -51,6 +51,11 @@ type adapters struct {
 	contextApprovals observation.ContextApprovals
 	contextRoots     *x509.CertPool
 
+	// measurementRoots are the trust anchors of the production TLS-01 runner
+	// when bind selects productionRegistry; nil selects the system roots,
+	// and tests supply a synthetic CA.
+	measurementRoots *x509.CertPool
+
 	// clearStorage deletes Barometer-owned persistent state for the storage
 	// scope (DEV-564). bind derives it from the record port with
 	// storageClearer when it is unset; tests may substitute it. Without a

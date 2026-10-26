@@ -1,18 +1,25 @@
 package barometer
 
 import (
+	"crypto/x509"
+
 	dnsmeasurement "github.com/tv-rain/barometer-go/internal/measurement/dns01"
 	tcpmeasurement "github.com/tv-rain/barometer-go/internal/measurement/tcp01"
+	tlsmeasurement "github.com/tv-rain/barometer-go/internal/measurement/tls01"
 	"github.com/tv-rain/barometer-go/internal/model/task"
 	"github.com/tv-rain/barometer-go/internal/registry"
 )
 
 // productionRegistry assembles only delivered measurements, per client
 // generation. Presence is not released, platform, or field-validated support.
+// roots are TLS-01's trust anchors; nil selects the system roots.
 // requirement-ref: REQ-TCP-01-0023
 // requirement-ref: REQ-TCP-01-0031
-func productionRegistry() (*registry.Registry, error) {
-	return registry.New([]registry.Entry{{Test: task.TestVersion{ID: "DNS-01", Version: "0.1.0"}, Codec: dnsmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: dns01Targets{}, Proxy: dnsmeasurement.ProxyRule{}, Runner: &dnsmeasurement.Runner{}, Step: true}, {Test: task.TestVersion{ID: "TCP-01", Version: "0.1.0"}, Codec: tcpmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: tcp01Targets{}, Proxy: tcpmeasurement.ProxyRule{}, Runner: &tcpmeasurement.Runner{}, Step: true}})
+// requirement-ref: REQ-TLS-01-0024
+// requirement-ref: REQ-TLS-01-0032
+func productionRegistry(roots *x509.CertPool) (*registry.Registry, error) {
+	return registry.New([]registry.Entry{{Test: task.TestVersion{ID: "DNS-01", Version: "0.1.0"}, Codec: dnsmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: dns01Targets{}, Proxy: dnsmeasurement.ProxyRule{}, Runner: &dnsmeasurement.Runner{}, Step: true}, {Test: task.TestVersion{ID: "TCP-01", Version: "0.1.0"}, Codec: tcpmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: tcp01Targets{}, Proxy: tcpmeasurement.ProxyRule{}, Runner: &tcpmeasurement.Runner{}, Step: true},
+		{Test: task.TestVersion{ID: "TLS-01", Version: "0.1.0"}, Codec: tlsmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: tls01Targets{}, Proxy: tlsmeasurement.ProxyRule{}, Runner: &tlsmeasurement.Runner{Roots: roots}, Step: true}})
 }
 
 type tcp01Targets struct{}
@@ -28,6 +35,24 @@ func (tcp01Targets) Targets(p task.Parameters) ([]registry.Target, bool) {
 		return nil, false
 	}
 	return []registry.Target{{Role: task.MeasurementTarget, Tuple: task.TargetTuple{Address: a, Port: port, Scheme: "tcp"}}}, true
+}
+
+// The complete reviewed tuple is the address, port, server name and ALPN
+// offer. The server name is SNI, not a connection authority.
+// requirement-ref: REQ-TLS-01-0010
+// requirement-ref: REQ-TLS-01-0037
+type tls01Targets struct{}
+
+func (tls01Targets) Targets(p task.Parameters) ([]registry.Target, bool) {
+	v, ok := p.(tlsmeasurement.Parameters)
+	if !ok {
+		return nil, false
+	}
+	a, port, name, ok := v.Target()
+	if !ok {
+		return nil, false
+	}
+	return []registry.Target{{Role: task.MeasurementTarget, Tuple: task.TargetTuple{Address: a, Port: port, Scheme: "tls", TLSServerName: name, ALPN: v.ALPN()}}}, true
 }
 
 // DNS query names are registrations, never CONNECT authorities. Direct mode
