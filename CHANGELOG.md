@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Correct safety core closeout records (DEV-652): maintainer class-mapping review confirmations, remaining-work notes and owners, current admission case families, and the local equal-endpoint time-window finding. Manifest baselines, mappings and evidence remain unchanged.
+
 - Milestone traceability update for Network paths and context (DEV-648, closing DEV-578). The cross-cutting manifest moves to Go `d788a80` at the unchanged public `5d01879`, with its evidence in `traceability/evidence/go-unit-d788a80.md`: the 17 conformance families executed by DEV-645 to DEV-647 move from planned to passed, 25 unit-test cases are added for the proxy, proxy lifecycle and Network Context tests, the two admission egress cases replaced by DEV-647 are removed, and 59 requirements become `partial` (591 active shared requirements; 308 `partial`, 283 `planned`). The `CC-CONTEXT-EXECUTION-INTEGRATION` case plan drops its obsolete admission rejection row and its REQ-TRUST-0036 mapping, and documentation and manifest notes that named DEV-578 as the owner of delivered work now name the delivering task or the remaining owner. No requirement is implemented and no runtime, platform or field support is claimed.
 
 - Leaner traceability and documentation process (DEV-650, coordination decision 0012). Manifests and evidence reports are updated at milestones instead of after every task. Superseded manifest copies under `traceability/historical/` and committed checker reports under `traceability/reports/` are removed: earlier manifests stay at the commits where they were current, and CI uploads fresh reports as artifacts. `scripts/check-traceability.py` no longer re-checks historical copies, and reports a `requirement-ref` that the manifest does not link yet as a warning; unknown, retired or unmapped identifiers stay errors. Reference documents under `docs/` are kept current-state, and the traceability docs drop their per-task rebaseline history. No runtime behavior, manifest content or requirement status changes.
@@ -189,6 +191,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Versioning, compatibility, changelog, tagging, artifact-naming, and experimental-release conventions.
 
 ### Fixed
+
+- Wait for the target accept in the established proxy tunnel cancellation test and remove an unsupported requirement reference from the renewal test (DEV-652). No production behavior changes.
 
 - Delivery resolution decides the step-1 binding before it reads trusted time (DEV-624). An unknown, foreign-instance, stale-generation, invalidated, closed-store or byte-mismatched reference is `task_source_unauthenticated` even when the clock is unavailable; previously it was `task_trust_unavailable`, contrary to the REQ-TRUST-0047 step order. Only a held record that matches the presented bytes is `task_trust_unavailable` without trusted time. Remote records stay single-use and embedded records are not consumed. `TestResolveChecksBindingBeforeTrustedTime` covers the cases.
 - Common candidate validation now rejects duplicate, excessive or invalid UTF-8 labels and normalizes a copied label slice consistently with decoded tasks. Network Context rejects non-ASCII country/region spellings before case conversion can map them onto reviewed ASCII codes. Zero-value result decoders now reject with a binding error before processing input or producer records.

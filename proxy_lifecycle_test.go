@@ -662,7 +662,6 @@ func TestProxyAgainstLifecycleRace(t *testing.T) {
 // requirement-ref: REQ-PROXY-0013
 // requirement-ref: REQ-PROXY-0014
 // requirement-ref: REQ-PROXY-0015
-// requirement-ref: REQ-PROXY-0033
 func TestProxyLoopbackRenewal(t *testing.T) {
 	for _, clear := range []bool{false, true} {
 		h, _, target := proxyHarness(t)
@@ -788,6 +787,9 @@ func TestProxyLoopbackClosesEstablishedTunnel(t *testing.T) {
 			t.Fatal("tunnel remained open", err)
 		}
 		waitTerminal(t, c, rh)
+		if err := target.WaitAccepted(ctx, 1); err != nil {
+			t.Fatal("target did not accept tunnel", err)
+		}
 		got := records(t, h.run.output)
 		if len(got) != 1 || got[0].Execution.Reason != "proxy_reconfigured" || target.Accepted() != 1 {
 			t.Fatalf("tunnel result %+v", got)
