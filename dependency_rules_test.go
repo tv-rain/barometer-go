@@ -196,8 +196,9 @@ var importRules = []importRule{
 	},
 	{
 		// The direct and proxy path dialers in internal/execution are the
-		// production socket owners. Protocol primitives are listed for their
-		// planned owner; none exists.
+		// production socket owners. Protocol primitives may import network
+		// packages to run a protocol over a stream those dialers opened, as
+		// internal/protocol/tls does; they never dial.
 		name:      "only the network path dialers open sockets",
 		applies:   func(pkg string) bool { return !underAny(pkg, "execution", "protocol", "testkit") },
 		forbidden: func(_, imp string) bool { return networkIO(imp) },
@@ -395,7 +396,9 @@ func TestDependencyRulesRejectForbiddenImports(t *testing.T) {
 		file("model/result", false, internalPath("model/observation"), internalPath("model/task")),
 		file("measurement/dns01", false, internalPath("measurement"), internalPath("protocol/dns"), internalPath("model/observation")),
 		file("measurement/tcp01", false, internalPath("measurement"), internalPath("taskdecode"), internalPath("jsondecode"), internalPath("model/task"), internalPath("protocol/tcp")),
-		{path: "registry.go", pkg: modulePath, imports: []string{internalPath("registry"), internalPath("measurement/tcp01")}},
+		file("measurement/tls01", false, internalPath("measurement"), internalPath("taskdecode"), internalPath("model/observation"), internalPath("protocol/tcp"), internalPath("protocol/tls"), "crypto/x509"),
+		file("protocol/tls", false, internalPath("model/observation"), "crypto/tls", "net"),
+		{path: "registry.go", pkg: modulePath, imports: []string{internalPath("registry"), internalPath("measurement/tcp01"), internalPath("measurement/tls01")}},
 		file("bundle", false, internalPath("config"), internalPath("result"), internalPath("model/result")),
 		file("platform", false, "context", "time"),
 		file("platform/android", false, internalPath("platform")),
@@ -413,9 +416,11 @@ func TestDependencyRulesRejectForbiddenImports(t *testing.T) {
 // contains no network, TLS, process-execution or plugin package. Since
 // DEV-644 the root package links the direct-path dialer of
 // internal/execution, so its closure contains package net, and since DEV-647
-// crypto/tls for the Network Context endpoint request; the check then
-// requires that internal/execution is the only module package in that closure
-// importing a network or TLS package, and that the closure contains no
+// crypto/tls for the Network Context endpoint request; since DEV-665 the
+// TLS-01 runner links the bounded handshake of internal/protocol/tls. The
+// check then requires that internal/execution and internal/protocol/tls are
+// the only module packages in that closure importing a network or TLS
+// package, and that the closure contains no
 // process-execution, plugin or testkit package. The import rule "only the
 // direct path opens sockets" keeps the root package and admission from
 // importing network packages themselves. Rejected input therefore produces no
@@ -465,14 +470,14 @@ func TestAdmissionHasNoNetworkDependency(t *testing.T) {
 		}
 		for imp, by := range tlsImporters {
 			for _, p := range by {
-				if p != internalPath("execution") {
+				if p != internalPath("execution") && p != internalPath("protocol/tls") {
 					t.Errorf("%s: %s imports %s", pkg, p, imp)
 				}
 			}
 		}
 		for imp, by := range importers {
 			for _, p := range by {
-				if p != internalPath("execution") {
+				if p != internalPath("execution") && p != internalPath("protocol/tls") {
 					t.Errorf("%s: %s imports %s", pkg, p, imp)
 				}
 			}

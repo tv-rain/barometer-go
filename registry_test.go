@@ -8,20 +8,24 @@ import (
 )
 
 func TestProductionRegistryContainsOnlyDeliveredMeasurements(t *testing.T) {
-	first, err := productionRegistry()
+	first, err := productionRegistry(nil)
 	if err != nil || first == nil {
-		t.Fatalf("productionRegistry() = %v, %v", first, err)
+		t.Fatalf("productionRegistry(nil) = %v, %v", first, err)
 	}
-	second, err := productionRegistry()
+	second, err := productionRegistry(nil)
 	if err != nil || second == nil || first == second {
 		t.Fatal("production registries must be instance-owned")
 	}
-	if len(first.Codecs()) != 2 || len(second.Codecs()) != 2 {
-		t.Fatal("expected DNS-01 and TCP-01")
+	if len(first.Codecs()) != 3 || len(second.Codecs()) != 3 {
+		t.Fatal("expected DNS-01, TCP-01 and TLS-01")
 	}
 	entry, ok := first.Lookup(task.TestVersion{ID: "TCP-01", Version: "0.1.0"})
 	if !ok || entry.Runner == nil || entry.BaselineRisk != task.LowRisk || !entry.Step || entry.Composite {
 		t.Fatal("TCP-01 composition missing or incorrect")
+	}
+	entry, ok = first.Lookup(tls01)
+	if !ok || entry.Runner == nil || entry.BaselineRisk != task.LowRisk || !entry.Step || entry.Composite {
+		t.Fatal("TLS-01 composition missing or incorrect")
 	}
 	for _, id := range []string{"SYN-01", "DNS-03", "NET-05"} {
 		key := task.TestVersion{ID: id, Version: "0.1.0"}

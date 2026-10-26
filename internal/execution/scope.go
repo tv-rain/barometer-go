@@ -3,6 +3,7 @@ package execution
 import (
 	"context"
 	"errors"
+	"io"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -43,8 +44,9 @@ var (
 // releases whatever the runner left open when it returns.
 //
 // The scope is also the attempt's meter. It counts where the attempt exchanges
-// bytes with the path's stream (REQ-LIMIT-0034), so a runner's own read caps
-// and usage reports never decide what is counted. Every dial counts toward
+// bytes with the path's stream or, after Session, with a session's plaintext
+// side (REQ-LIMIT-0034), so a runner's own read caps and usage reports never
+// decide what is counted. Every dial counts toward
 // max_connections before it is issued, whether or not it connects. A write
 // larger than the remaining sent budget is not issued, and a read requests no
 // more than the remaining received budget. An operation the remaining budget
@@ -277,34 +279,90 @@ func (s *scope) close() {
 // from the scope when closed. Close is idempotent.
 type scopedConn struct {
 	measurement.Conn
-	scope *scope
-	once  sync.Once
-	err   error
+	scope   *scope
+	session atomic.Bool
+	once    sync.Once
+	err     error
 }
+
+var errSession = errors.New("execution: connection carries a session")
 
 // Write issues p only when the remaining sent budget covers all of it. A
 // partial write counts only the bytes the stream accepted.
 func (c *scopedConn) Write(p []byte) (int, error) {
-	k, ok := c.scope.reserve(len(p), true)
-	if !ok {
-		return 0, c.scope.err()
+	if c.session.Load() {
+		return 0, errSession
 	}
-	n, err := c.Conn.Write(p)
-	c.scope.settle(k, n, true)
-	return n, err
+	return c.scope.write(c.Conn, p)
 }
 
 // Read requests no more than the remaining received budget, so bytes a caller
 // reads ahead into a buffer count when they are read.
 func (c *scopedConn) Read(p []byte) (int, error) {
-	k, ok := c.scope.reserve(len(p), false)
-	if !ok {
-		return 0, c.scope.err()
+	if c.session.Load() {
+		return 0, errSession
 	}
-	n, err := c.Conn.Read(p[:k])
-	c.scope.settle(k, n, false)
+	return c.scope.read(c.Conn, p)
+}
+
+// Session moves metering from the stream to a session's plaintext side, so
+// TLS handshake and record bytes are not counted (REQ-LIMIT-0034). The raw
+// view still closes through this connection, and release still closes it.
+// requirement-ref: REQ-LIMIT-0034
+func (c *scopedConn) Session() (measurement.Conn, func(io.ReadWriter) io.ReadWriter, error) {
+	if !c.session.CompareAndSwap(false, true) {
+		return nil, nil, errSession
+	}
+	return rawConn{c}, func(rw io.ReadWriter) io.ReadWriter { return plaintext{rw, c.scope} }, nil
+}
+
+func (s *scope) write(w io.Writer, p []byte) (int, error) {
+	k, ok := s.reserve(len(p), true)
+	if !ok {
+		return 0, s.err()
+	}
+	n, err := w.Write(p)
+	s.settle(k, n, true)
 	return n, err
 }
+
+func (s *scope) read(r io.Reader, p []byte) (int, error) {
+	k, ok := s.reserve(len(p), false)
+	if !ok {
+		return 0, s.err()
+	}
+	n, err := r.Read(p[:k])
+	s.settle(k, n, false)
+	return n, err
+}
+
+// rawConn is the unmetered stream under a session. It refuses I/O once the
+// attempt has ended, as the metered connection does.
+type rawConn struct{ c *scopedConn }
+
+func (r rawConn) Read(p []byte) (int, error) {
+	if r.c.scope.isClosed() || r.c.scope.ctx.Err() != nil {
+		return 0, r.c.scope.err()
+	}
+	return r.c.Conn.Read(p)
+}
+func (r rawConn) Write(p []byte) (int, error) {
+	if r.c.scope.isClosed() || r.c.scope.ctx.Err() != nil {
+		return 0, r.c.scope.err()
+	}
+	return r.c.Conn.Write(p)
+}
+func (r rawConn) SetDeadline(t time.Time) error { return r.c.Conn.SetDeadline(t) }
+func (r rawConn) Close() error                  { return r.c.Close() }
+
+// plaintext meters a session's application bytes through the attempt scope.
+type plaintext struct {
+	rw    io.ReadWriter
+	scope *scope
+}
+
+func (p plaintext) Write(b []byte) (int, error) { return p.scope.write(p.rw, b) }
+func (p plaintext) Read(b []byte) (int, error)  { return p.scope.read(p.rw, b) }
 
 func (c *scopedConn) Close() error {
 	c.scope.mu.Lock()
