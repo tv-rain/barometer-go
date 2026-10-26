@@ -202,11 +202,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-OBS-HTTP-EXCHANGE-FAILURES
 
-Public source: `data-formats/measurement-observations.md`, section **HTTP Exchange / Failures**. Intended target: `internal/result/observations.go`. Planned case location: `internal/result/cross_cutting_conformance_test.go`, `symbol:TestCcObsHttpExchangeFailures`.
+Public source: `data-formats/measurement-observations.md`, section **HTTP Exchange / Failures**. Implementation target: `internal/protocol/http`. Primitive case location: `internal/protocol/http/exchange_test.go`, `symbol:TestCcObsHttpExchangeFailures`.
 
 Case plan: Test registered HTTP failures and preceding DNS/TCP/TLS observations; emit HTTP only once HTTP activity starts.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Executed at primitive level with synthetic streams. `internal/execution/http_primitive_test.go` adds loopback HTTPS/CONNECT accounting, production destination-gate and blocked-body cancellation/deadline cases. Registered HTTP-01, DNS-03 and NET-03 callers, their result integration and native validation remain pending; this is not whole-family conformance or platform support. The milestone manifest is unchanged.
 
 <!-- requirement-ref: REQ-OBS-0023 -->
 <!-- requirement-ref: REQ-OBS-0024 -->
@@ -216,11 +216,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-OBS-HTTP-EXCHANGE-DETAILS
 
-Public source: `data-formats/measurement-observations.md`, section **HTTP Exchange / Details**. Intended target: `internal/result/observations.go`. Planned case location: `internal/result/cross_cutting_conformance_test.go`, `symbol:TestCcObsHttpExchangeDetails`.
+Public source: `data-formats/measurement-observations.md`, section **HTTP Exchange / Details**. Implementation target: `internal/protocol/http`. Primitive case location: `internal/protocol/http/exchange_test.go`, `symbol:TestCcObsHttpExchangeDetails`.
 
 Case plan: Construct synthetic http_exchange observations and validate their details object against the public table. Required fields: omit address_family or protocol and assert rejection; iterate address_family over ipv4, ipv6 and unknown and protocol over http/1.1, h2 and unknown and assert acceptance, and reject out-of-vocabulary values (for example h3). Conditional fields: status_code accepted only as an integer valid HTTP status code and absent when no valid status was received; redirect present only when at least one redirect was observed and only as a complete minimized redirect object; body present only when body processing began and only as a complete body summary; content_encoding accepted only as identity, unsupported or unknown. Checks count: accept a checks array of 17 entries (one status, 8 header, 8 body) and reject 18 entries, a second status check, a ninth header check and a ninth body check; assert checks is absent when no checks were configured. Requirements: REQ-OBS-0025.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Executed at primitive level with synthetic streams. `internal/execution/http_primitive_test.go` adds loopback HTTPS/CONNECT accounting, production destination-gate and blocked-body cancellation/deadline cases. Registered HTTP-01, DNS-03 and NET-03 callers, their result integration and native validation remain pending; this is not whole-family conformance or platform support. The milestone manifest is unchanged.
 
 <!-- requirement-ref: REQ-OBS-0025 -->
 
@@ -228,11 +228,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-OBS-HTTP-EXCHANGE-REDIRECT
 
-Public source: `data-formats/measurement-observations.md`, section **HTTP Exchange / Redirect**. Intended target: `internal/result/observations.go`. Planned case location: `internal/result/cross_cutting_conformance_test.go`, `symbol:TestCcObsHttpExchangeRedirect`.
+Public source: `data-formats/measurement-observations.md`, section **HTTP Exchange / Redirect**. Implementation target: `internal/protocol/http`. Primitive case location: `internal/protocol/http/exchange_test.go`, `symbol:TestCcObsHttpExchangeRedirect`.
 
 Case plan: Test redirect counts/classes including uncontacted rejected redirects; exclude full destination data.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Executed at primitive level with synthetic streams. `internal/execution/http_primitive_test.go` adds loopback HTTPS/CONNECT accounting, production destination-gate and blocked-body cancellation/deadline cases. Registered HTTP-01, DNS-03 and NET-03 callers, their result integration and native validation remain pending; this is not whole-family conformance or platform support. The milestone manifest is unchanged.
 
 <!-- requirement-ref: REQ-OBS-0026 -->
 <!-- requirement-ref: REQ-OBS-0027 -->
@@ -242,11 +242,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-OBS-HTTP-EXCHANGE-BODY
 
-Public source: `data-formats/measurement-observations.md`, section **HTTP Exchange / Body**. Intended target: `internal/result/observations.go`. Planned case location: `internal/result/cross_cutting_conformance_test.go`, `symbol:TestCcObsHttpExchangeBody`.
+Public source: `data-formats/measurement-observations.md`, section **HTTP Exchange / Body**. Implementation target: `internal/protocol/http`. Primitive case location: `internal/protocol/http/exchange_test.go`, `symbol:TestCcObsHttpExchangeBody`.
 
 Case plan: Exercise HTTP-01 against a scripted HTTP server on a deterministic clock with identity-encoded synthetic bodies carrying canary bytes, using the registered terminal-body bound of 4,096 bytes (default) and a configured 65,536 bytes (maximum). Iterate body lengths 0, 4,095, 4,096 and 4,097 under the default bound and 65,535, 65,536 and 65,537 under the maximum. Assert bytes_processed is non-negative and never exceeds the configured bound, equals the full body length when the body completed within the bound with truncated false, and equals the bound with truncated true when the bound stopped processing before the body completed (the exactly-at-bound case follows the public table). Configure a synthetic expected body digest and assert only the check result (kind body, index, matched) is reported, while the body bytes, the computed digest and the expected digest are absent from the serialized result. Reject decoding of a body object with bytes_processed above the configured bound, negative bytes_processed, missing truncated, or an extra body-content or digest field. Requirements: REQ-OBS-0028, REQ-OBS-0029.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Executed at primitive level with synthetic streams. `internal/execution/http_primitive_test.go` adds loopback HTTPS/CONNECT accounting, production destination-gate and blocked-body cancellation/deadline cases. Registered HTTP-01, DNS-03 and NET-03 callers, their result integration and native validation remain pending; this is not whole-family conformance or platform support. The milestone manifest is unchanged.
 
 <!-- requirement-ref: REQ-OBS-0028 -->
 <!-- requirement-ref: REQ-OBS-0029 -->
@@ -256,11 +256,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-OBS-HTTP-EXCHANGE-CHECK
 
-Public source: `data-formats/measurement-observations.md`, section **HTTP Exchange / Check**. Intended target: `internal/result/observations.go`. Planned case location: `internal/result/cross_cutting_conformance_test.go`, `symbol:TestCcObsHttpExchangeCheck`.
+Public source: `data-formats/measurement-observations.md`, section **HTTP Exchange / Check**. Implementation target: `internal/protocol/http`. Primitive case location: `internal/protocol/http/exchange_test.go`, `symbol:TestCcObsHttpExchangeCheck`.
 
 Case plan: Test kind/index/matched associations without retaining expected or actual header/body/digest values.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Executed at primitive level with synthetic streams. `internal/execution/http_primitive_test.go` adds loopback HTTPS/CONNECT accounting, production destination-gate and blocked-body cancellation/deadline cases. Registered HTTP-01, DNS-03 and NET-03 callers, their result integration and native validation remain pending; this is not whole-family conformance or platform support. The milestone manifest is unchanged.
 
 <!-- requirement-ref: REQ-OBS-0030 -->
 <!-- requirement-ref: REQ-OBS-0031 -->
@@ -2466,7 +2466,7 @@ Public source: `library/registered-limits.md`, section **Purpose**. Intended tar
 
 Case plan: Registry and stricter values: with no local override, assert a task requesting max_bytes_sent 65,536 is accepted with that exact effective value and 65,537 is rejected at admission; with trusted local policy setting a stricter max_bytes_sent of 16,384, assert 16,384 is accepted unchanged and 16,385 is rejected, and repeat for max_duration_ms (60,000 accepted, 60,001 rejected) and max_connections (12 accepted, 13 rejected). Assert no rejected task is accepted with a reduced (clamped) effective value and no accepted task's effective limits differ from the requested values. Counted boundary (REQ-LIMIT-0033, REQ-LIMIT-0034): bytes count where the attempt exchanges test traffic with a TCP stream, the plaintext side of a TLS session or a UDP datagram payload, including HTTP request lines, headers and bodies, response status lines and headers, DNS messages and each DNS retransmission sent, DNS-over-TCP and DoT two-byte length prefixes, the complete DoH exchange and bytes read ahead into a buffer; TLS records, TCP/IP and UDP/IP headers, retransmissions, proxy transport framing, the CONNECT exchange with the loopback proxy endpoint and Network Context acquisition are not counted. Use a recording transport that reports bytes at the counted boundary and below it (TLS records, CONNECT exchange) as separate counters. With default max_bytes_sent 32,768, assert 32,768 counted bytes plus 40,000 uncounted bytes completes without a byte-limit stop, a write that would make 32,769 counted bytes is not issued and stops the attempt with reason resource_limit, and 1,000 counted bytes plus 100,000 uncounted bytes is not stopped; repeat for max_bytes_received at the default 131,072 (131,072 accepted, a further read stops it, and no read requests more than the remaining budget). For HTTP-01, NET-03, DNS-01, DNS-03 and DNS-04 runners, assert that request and response headers, DNS messages and length prefixes are included in the counted bytes. Assert only the counted-boundary counter is compared with the limit. Requirements: REQ-LIMIT-0001, REQ-LIMIT-0002, REQ-LIMIT-0033, REQ-LIMIT-0034.
 
-DNS rows execute in `dns01_conformance_test.go:TestCcLimitPurposeDNSRows`, `TestCcProxyOverviewDNSRow` and `TestDns01SystemAPIOutputAndHiddenBytes`: UDP payloads, TCP DNS messages and both length prefixes count; exact budgets pass, a one-byte short budget stops as `resource_limit`, the CONNECT exchange stays outside the meter, and hidden system messages are excluded. Other protocol callers and review keep this whole family planned; the milestone manifest is unchanged.
+DNS rows execute in `dns01_conformance_test.go:TestCcLimitPurposeDNSRows`, `TestCcProxyOverviewDNSRow` and `TestDns01SystemAPIOutputAndHiddenBytes`: UDP payloads, TCP DNS messages and both length prefixes count; exact budgets pass, a one-byte short budget stops as `resource_limit`, the CONNECT exchange stays outside the meter, and hidden system messages are excluded. HTTP GET and DNS-media-type POST rows execute at primitive level in `internal/execution/http_primitive_test.go:TestCcLimitPurposeHTTPRows`: exact plaintext budgets include request/status lines, headers and bodies on direct and CONNECT paths; one-byte-short budgets interrupt, while TLS records and CONNECT stay outside the meter. Registered HTTP/DoH/NET-03 callers and review keep this whole family planned; the milestone manifest is unchanged.
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
@@ -2548,11 +2548,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-LIMIT-HTTP-AND-VALIDATION-LIMITS
 
-Public source: `library/registered-limits.md`, section **HTTP and Validation Limits**. Intended target: `internal/protocol/http/limits.go`. Planned case location: `internal/protocol/http/cross_cutting_conformance_test.go`, `symbol:TestCcLimitHttpAndValidationLimits`.
+Public source: `library/registered-limits.md`, section **HTTP and Validation Limits**. Implementation target: `internal/protocol/http`. Primitive case location: `internal/protocol/http/exchange_test.go`, `symbol:TestCcLimitHttpAndValidationLimits`.
 
 Case plan: Parameterize URL/header/body/check/matcher/redirect/ALPN bounds and identity encoding; test undecidable bounded checks and NET-03 redirect non-following.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Executed at primitive level with synthetic streams. `internal/execution/http_primitive_test.go` adds loopback HTTPS/CONNECT accounting, production destination-gate and blocked-body cancellation/deadline cases. Registered HTTP-01, DNS-03 and NET-03 callers, their result integration and native validation remain pending; this is not whole-family conformance or platform support. The milestone manifest is unchanged.
 
 <!-- requirement-ref: REQ-LIMIT-0016 -->
 <!-- requirement-ref: REQ-LIMIT-0017 -->

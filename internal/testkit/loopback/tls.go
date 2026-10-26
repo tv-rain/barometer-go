@@ -68,6 +68,10 @@ func (c *TestCA) Issue(name string, expired bool) (tls.Certificate, error) {
 	tmpl := &x509.Certificate{SerialNumber: big.NewInt(424242), Subject: pkix.Name{CommonName: name, Organization: []string{CertificateCanary}}, DNSNames: []string{name},
 		NotBefore: notBefore, NotAfter: notAfter,
 		KeyUsage: x509.KeyUsageDigitalSignature, ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth}}
+	if ip := net.ParseIP(name); ip != nil {
+		tmpl.DNSNames = nil
+		tmpl.IPAddresses = []net.IP{ip}
+	}
 	der, err := x509.CreateCertificate(rand.Reader, tmpl, c.cert, &key.PublicKey, c.key)
 	if err != nil {
 		return tls.Certificate{}, err
