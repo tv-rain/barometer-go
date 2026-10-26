@@ -873,6 +873,26 @@ Final validation results, approved Go commit/branch links and remaining work are
 - **Alternatives:** for item 1, `task_issuer_not_authorized`, `task_schema_invalid` or `task_unsupported`; for item 2, `task_limit_exceeded` or `task_schema_invalid`; for item 3, a public order (input before options and member order, or limit failures before content failures across the step) or explicit implementation choice.
 - **Ordering:** public record and disposition first, then internal task-trust review alignment, then Go adoption with exact-class cases, then bindings. Item 4 follows independently, with the first codec that needs it (DEV-657).
 
+## GO-SPEC-ISSUE-017: HTTP-01 Terminal Response Outcome Precedence
+
+**Current state:** Open, recorded October 26, 2026 under [DEV-667 — Implement HTTP-01](https://app.clickup.com/t/124kk1zcw4x). The owner approved recording the finding and preparing a public proposal; that approval does not select precedence. The [public proposal](https://github.com/tv-rain/barometer-spec/blob/agent/dev-667-http-outcome-precedence/specification-issues/http-01-outcome-precedence.md) is prepared on a task branch; publication, maintainer disposition and adoption are pending. Go behavior is unchanged.
+
+### Identity, Baselines and Finding
+
+The Go implementation agent reports this finding; public maintainers own disposition. No duplicate was identified in the Go or public findings. Public baseline: Draft `0.1.0` at [`2b843611ddc6fe3718359034574cd2989b3cbf9d`](https://github.com/tv-rain/barometer-spec/tree/2b843611ddc6fe3718359034574cd2989b3cbf9d), HTTP-01 and Measurement Result versions `0.1.0`. REQ-HTTP-01-0007, -0008, -0009, -0036 and -0037 define procedure, checks and outcomes without explicitly ordering overlapping terminal-response failures. REQ-HTTP-01-0038 and the GO-SPEC-ISSUE-004 common termination rules remain separate and authoritative. REQ-OBS-0023, -0028, -0030 and -0031 constrain failure vocabulary, body metadata and minimized check results.
+
+At Go [`8576bbc10d68c4a5c2328df34043d31124b06bad`](https://github.com/tv-rain/barometer-go/tree/8576bbc10d68c4a5c2328df34043d31124b06bad), `internal/protocol/http/checks.go` (`evaluate`) and `exchange.go` (`Exchange`) select unsupported encoding or body-read errors over an earlier failed status check; otherwise status precedes header, header precedes body and a decidable mismatch precedes undecidable checks at the body bound. The public instruction to stop at the first failed stage does not explicitly order these conditions within the HTTP stage. The HTTP-01 normalization case plan prohibits undocumented precedence.
+
+A synthetic expected status 200 plus body `contains: ok`, with response status 503 and `Content-Encoding: gzip`, follows the current source path to `unsupported_content_encoding`, retaining a failed status check and no body check. A 503 response whose declared body ends prematurely instead selects `protocol_error`; a truncated body with an undecidable suffix retains `unexpected_status`. These are source-inspected examples, not newly executed reproductions or conformance evidence. The public proposal supplies alternatives, proposed wording and expected combined-failure cases.
+
+### Impact, Interim Handling and Ordering
+
+Different summaries could affect analysis and cross-implementation comparison even with identical indexed checks. No new traffic, retained content, target, retry, identifier, resource allowance or API is proposed. Ordinary server/content/encoding/transfer failures remain alternatives to censorship. Measurement/implementation review and scoped safety/privacy review of unchanged traffic, bounds, minimization and common termination are pending; native, binding, host and release support are not established.
+
+**Blocked:** affected HTTP-01 outcome selection, exact multi-failure normalization assertions and full DEV-667 completion. Existing primitive behavior is preserved. Unaffected codec, target, bounds and common-termination work may continue within approved scope. No runner, fallback or interim precedence is introduced by recording this finding.
+
+Alternatives are a public deterministic order matching the primitive (proposed), earliest failed configured check, explicit implementation choice, or deferral. No alternative is adopted. No coordination ADR is currently needed because no responsibility boundary changes. Required order: public disposition and immutable wording/clarification with requirement/version decision; required internal review/validation alignment; Go adoption and synthetic cases; then applicable binding/host validation and compatibility assessment. Closure requires links to all applicable evidence or explicit non-applicability; a prepared proposal is not closure.
+
 ## Signed Remote Task Package Adoption
 
 **Status:** Public contract and internal review alignment are merged; the Go core adopts them in DEV-612 with synthetic evidence only. The cryptographic, safety and host integration reviews were performed by the project maintainer in DEV-615 with no findings, and the remote-delivery gate (DEV-595) is lifted. The interpretation question below is closed by REQ-TRUST-0055, adopted by DEV-624. Binding and host adoption remain open (DEV-455).
