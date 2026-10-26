@@ -10,6 +10,8 @@ Baselines and evidence are updated at the milestone cadence of the coordination 
 
 ## Boundaries and Maintenance
 
+The current target-validation notes adopt public `bb805f07a36630db7250d5ab63006ed5e351f7a7` for REQ-PROXY-0043 through REQ-PROXY-0046, REQ-CONTEXT-0043 and REQ-HTTP-01-0051. Their predecessors are retired; current comments/links use successors. New gate tests do not rewrite earlier milestone evidence or promote mixed-family status.
+
 Public PR #8 resolved the DEV-481 [vocabulary finding](specification-issues.md#go-spec-issue-002-missing-registered-observation-vocabularies) by retiring REQ-OBS-0011 and REQ-OBS-0021 in favor of REQ-OBS-0042 and REQ-OBS-0043, and adding REQ-OBS-0044 to REQ-OBS-0051. The successors take over their predecessors' case families; the new requirements use six `CC-OBS-VOCAB-*` families. The retired IDs keep `requirement-history` comments and links to the original PR #6 baseline only. They are not current obligations, and no prior claim is rewritten to a successor. Mapping these requirements establishes no runtime vocabulary adoption evidence; GO-SPEC-ISSUE-002 remains open for that downstream evidence.
 
 The 16 format/library sources plus shared JSON decoding are in scope. Registered test-specific schemas/runners, the full threat-model and measurement-limitations inventories, implementation of these cases, native adapters, host and collector software, and field validation remain outside this mapping task. Their applicability is preserved as report gaps, not silently treated as covered. The [normative source inventory](normative-sources.md) supplies the wider source boundary; this map also includes the subsequently adopted JSON contract.
@@ -18,7 +20,7 @@ Portable Go owns its package targets. Native storage and binding obligations map
 
 Unresolved contract findings use [Specification Issues](specification-issues.md). `GO-SPEC-ISSUE-001` remains open for downstream evidence despite the accepted JSON clarification. `GO-SPEC-ISSUE-007` is adopted in Go decoding and validation and remains open for an admission-level case, the planned family cases and binding and host evidence. `GO-SPEC-ISSUE-008` is adopted in the admission design, case plans, `task.AdmissionError` and the admission steps and remains open for the planned admission families, the safety review of the mapping and binding and host evidence. `GO-SPEC-ISSUE-009` is adopted in admission step 8, the case plans and the execution-time pre-attempt check, and remains open for production compatibility rules and the safety review of the mapping. `GO-SPEC-ISSUE-010` records that the class of a step-8 input or options failure is unmapped and awaits public disposition. `GO-SPEC-ISSUE-011` records that interval due times and catch-up are unspecified; Go implements an approved conservative interim rule pending public disposition. Mapping a planned test never resolves it. A newly discovered ambiguity must block only the affected claim and enter that workflow before implementation selects behavior.
 
-Public prerequisite ordering is satisfied: PR #6 merged the approved allocation head `9dbd72af37205a08484435cb561a168ac7b1876b` as merge commit `47d75925b3829fccfb6954b545c15f695375b76f`, and PR #8 merged approved head `5869bc314c877e2ccd3426b82aadcd9c92414f02` as `a944ed6c389fec9f0d089f0044ead6fe845328b1`. Between those baselines, the shared catalog changes only by the REQ-OBS retirements and additions above. Any later public change requires a renewed source/catalog review, an explicit baseline update, and regenerated traceability report. Preserve previously committed historical manifests/reports rather than presenting old evidence as current. Keep partial coverage while wider source, test-specific or semantic inventory gaps remain.
+Public prerequisite ordering is satisfied: PR #6 merged the approved allocation head `9dbd72af37205a08484435cb561a168ac7b1876b` as merge commit `47d75925b3829fccfb6954b545c15f695375b76f`, and PR #8 merged approved head `5869bc314c877e2ccd3426b82aadcd9c92414f02` as `a944ed6c389fec9f0d089f0044ead6fe845328b1`. Between those baselines, the shared catalog changes only by the REQ-OBS retirements and additions above. Later public changes require renewed source/catalog review and current requirement references and case-plan notes. Update immutable manifest baselines and evidence reports at the milestone cadence above; retain earlier mappings at their original commits rather than copying them or presenting old evidence as current. Keep partial coverage while wider source, test-specific or semantic inventory gaps remain.
 
 Before any future implemented claim, replace planned locations with actual symbols/cases, execute the complete applicable suites at the selected baselines, attach sanitized immutable conformance and completeness-review evidence, and resolve affected specification issues. Platform and field claims require their separately scoped evidence. Do not promote statuses based on compilation or case-plan presence.
 
@@ -2142,13 +2144,13 @@ Case plan: Count primary/fallback calls, test valid-but-empty primary, malformed
 
 Scope: Synthetic core contract cases. Executed by DEV-647: request counts, a valid primary without classifications, malformed, unapproved, oversized and failing responses, exact cache-key hits and misses, reuse at 300 and not at 301 seconds and every invalidation event with a scripted fetch and the injected clock; TLS, HTTP and timeout failures against synthetic HTTPS endpoints in `TestContextEndpointResponses`; shutdown, reinitialization, policy replacement, clearing and proxy changes through the facade in `TestEgressCacheLifecycle` and `TestEgressCacheProxyChange`. The cache is in memory only, with no persistence port. Passed at Go `d788a80` ([evidence](../traceability/evidence/go-unit-d788a80.md#CC-CONTEXT-ACQUISITION-AND-FALLBACK)); partial evidence only. No native, field or support claim.
 
-<!-- requirement-ref: REQ-CONTEXT-0020 -->
+<!-- requirement-ref: REQ-CONTEXT-0043 -->
 <!-- requirement-ref: REQ-CONTEXT-0021 -->
 <!-- requirement-ref: REQ-CONTEXT-0022 -->
 <!-- requirement-ref: REQ-CONTEXT-0023 -->
 <!-- requirement-ref: REQ-CONTEXT-0024 -->
 
-- [REQ-CONTEXT-0020](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0020) → `CC-CONTEXT-ACQUISITION-AND-FALLBACK`.
+- [REQ-CONTEXT-0043](https://github.com/tv-rain/barometer-spec/blob/bb805f07a36630db7250d5ab63006ed5e351f7a7/library/network-context.md#REQ-CONTEXT-0043) → `CC-CONTEXT-ACQUISITION-AND-FALLBACK`.
 - [REQ-CONTEXT-0021](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0021) → `CC-CONTEXT-ACQUISITION-AND-FALLBACK`.
 - [REQ-CONTEXT-0022](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0022) → `CC-CONTEXT-ACQUISITION-AND-FALLBACK`.
 - [REQ-CONTEXT-0023](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/network-context.md#REQ-CONTEXT-0023) → `CC-CONTEXT-ACQUISITION-AND-FALLBACK`.
@@ -2330,12 +2332,12 @@ Scope: Synthetic core contract cases. Runs in `TestCcProxyHttpConnectBehavior` w
 
 <!-- requirement-ref: REQ-PROXY-0017 -->
 <!-- requirement-ref: REQ-PROXY-0018 -->
-<!-- requirement-ref: REQ-PROXY-0019 -->
+<!-- requirement-ref: REQ-PROXY-0043 -->
 <!-- requirement-ref: REQ-PROXY-0020 -->
 
 - [REQ-PROXY-0017](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0017) → `CC-PROXY-HTTP-CONNECT-BEHAVIOR`.
 - [REQ-PROXY-0018](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0018) → `CC-PROXY-HTTP-CONNECT-BEHAVIOR`.
-- [REQ-PROXY-0019](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0019) → `CC-PROXY-HTTP-CONNECT-BEHAVIOR`.
+- [REQ-PROXY-0043](https://github.com/tv-rain/barometer-spec/blob/bb805f07a36630db7250d5ab63006ed5e351f7a7/library/proxy.md#REQ-PROXY-0043) → `CC-PROXY-HTTP-CONNECT-BEHAVIOR`.
 - [REQ-PROXY-0020](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0020) → `CC-PROXY-HTTP-CONNECT-BEHAVIOR`.
 
 ### CC-PROXY-TASK-SELECTION
@@ -2360,11 +2362,11 @@ Case plan: Fail primary context endpoint and verify same-generation proxied fall
 
 Scope: Synthetic core contract cases. Executed by DEV-647 against synthetic HTTPS endpoints through the scripted loopback CONNECT proxy: a failing primary and a same-generation proxied fallback, exact cache keys per proxy generation, required-context gating when the proxy refuses the lookup, and zero direct requests; `TestEgressCacheProxyChange` covers proxy replacement through the facade. Passed at Go `d788a80` ([evidence](../traceability/evidence/go-unit-d788a80.md#CC-PROXY-NETWORK-CONTEXT)); partial evidence only. No native, field or support claim.
 
-<!-- requirement-ref: REQ-PROXY-0023 -->
+<!-- requirement-ref: REQ-PROXY-0045 -->
 <!-- requirement-ref: REQ-PROXY-0024 -->
 <!-- requirement-ref: REQ-PROXY-0025 -->
 
-- [REQ-PROXY-0023](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0023) → `CC-PROXY-NETWORK-CONTEXT`.
+- [REQ-PROXY-0045](https://github.com/tv-rain/barometer-spec/blob/bb805f07a36630db7250d5ab63006ed5e351f7a7/library/proxy.md#REQ-PROXY-0045) → `CC-PROXY-NETWORK-CONTEXT`.
 - [REQ-PROXY-0024](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0024) → `CC-PROXY-NETWORK-CONTEXT`.
 - [REQ-PROXY-0025](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0025) → `CC-PROXY-NETWORK-CONTEXT`.
 
@@ -2376,15 +2378,15 @@ Case plan: Parameterize all nine registered tests and relevant input/options com
 
 Scope: Synthetic core contract cases. No execution evidence or support claim.
 
-<!-- requirement-ref: REQ-PROXY-0026 -->
+<!-- requirement-ref: REQ-PROXY-0044 -->
 <!-- requirement-ref: REQ-PROXY-0027 -->
 <!-- requirement-ref: REQ-TRUST-0039 -->
-<!-- requirement-ref: REQ-PROXY-0042 -->
+<!-- requirement-ref: REQ-PROXY-0046 -->
 
-- [REQ-PROXY-0026](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0026) → `CC-PROXY-INITIAL-TEST-COMPATIBILITY`.
+- [REQ-PROXY-0044](https://github.com/tv-rain/barometer-spec/blob/bb805f07a36630db7250d5ab63006ed5e351f7a7/library/proxy.md#REQ-PROXY-0044) → `CC-PROXY-INITIAL-TEST-COMPATIBILITY`.
 - [REQ-PROXY-0027](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0027) → `CC-PROXY-INITIAL-TEST-COMPATIBILITY`.
 - [REQ-TRUST-0039](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0039) → `CC-PROXY-INITIAL-TEST-COMPATIBILITY`.
-- [REQ-PROXY-0042](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/proxy.md#REQ-PROXY-0042) → `CC-PROXY-INITIAL-TEST-COMPATIBILITY`.
+- [REQ-PROXY-0046](https://github.com/tv-rain/barometer-spec/blob/bb805f07a36630db7250d5ab63006ed5e351f7a7/library/proxy.md#REQ-PROXY-0046) → `CC-PROXY-INITIAL-TEST-COMPATIBILITY`.
 
 ### CC-PROXY-EXECUTION-STATES
 
@@ -2397,12 +2399,12 @@ Scope: Synthetic core contract cases have executable tests for all pre-attempt, 
 <!-- requirement-ref: REQ-PROXY-0028 -->
 <!-- requirement-ref: REQ-PROXY-0029 -->
 <!-- requirement-ref: REQ-PROXY-0030 -->
-<!-- requirement-ref: REQ-PROXY-0042 -->
+<!-- requirement-ref: REQ-PROXY-0046 -->
 
 - [REQ-PROXY-0028](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0028) → `CC-PROXY-EXECUTION-STATES`.
 - [REQ-PROXY-0029](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0029) → `CC-PROXY-EXECUTION-STATES`.
 - [REQ-PROXY-0030](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/proxy.md#REQ-PROXY-0030) → `CC-PROXY-EXECUTION-STATES`.
-- [REQ-PROXY-0042](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/proxy.md#REQ-PROXY-0042) → `CC-PROXY-EXECUTION-STATES`.
+- [REQ-PROXY-0046](https://github.com/tv-rain/barometer-spec/blob/bb805f07a36630db7250d5ab63006ed5e351f7a7/library/proxy.md#REQ-PROXY-0046) → `CC-PROXY-EXECUTION-STATES`.
 
 ### CC-PROXY-RESULT-METADATA
 
@@ -2426,9 +2428,15 @@ Public source: `library/proxy.md`, section **Privacy, Safety, and Interpretation
 
 Case plan: Submit synthetic tasks that attempt to choose or alter the proxy endpoint through execution, input, options, labels or unknown fields (proxy, host, port, endpoint, connection_code) and assert each is rejected at admission with a bounded admission error before any network activity, while the host-configured proxy remains unchanged. Configure a valid proxy with trusted local policy that disallows proxy use and assert a network_path "proxy" task ends not_run with reason proxy_not_permitted and opens no connection. Drive proxy_unavailable, proxy_connect_failed and proxy_reconfigured with a scripted proxy and a recording direct transport and assert zero direct dials to the target and no automatic retry through the direct path. Iterate loopback, private, link-local and other targets prohibited by target validation on both direct and proxy paths and assert identical rejection; assert connection_code in results is copied byte-for-byte from host configuration, never extended with session, installation or endpoint material, and cannot be set by a task. Produce a direct failure followed by a proxied success for the same synthetic target and assert the library emits two independent results with no derived comparison, censorship or path-verdict field. Requirements: REQ-PROXY-0034, REQ-PROXY-0035, REQ-PROXY-0036, REQ-PROXY-0037, REQ-PROXY-0038, REQ-PROXY-0039, REQ-PROXY-0040, REQ-PROXY-0041.
 
-Scope: Planned as a whole. `TestProxyTaskCannotReplaceHostConfiguration` covers task-controlled endpoint fields and preservation of the host proxy; `TestProxyChangesOnlyCancelProxyRuns` covers reconfiguration result minimization. `TestCcProxyResultMetadata` and `TestCcProxyExecutionStates` cover minimized loopback results and no fallback. Production target-validation rows require the registered codecs and rules (DEV-454); independent interpretation review remains open. Mixed-family evidence is not promoted from these Go rows. No support claim.
+Scope: Planned as a whole. `TestProxyTaskCannotReplaceHostConfiguration` covers task-controlled endpoint fields and preservation of the host proxy; `TestProxyChangesOnlyCancelProxyRuns` covers reconfiguration result minimization. `TestCcProxyResultMetadata` and `TestCcProxyExecutionStates` cover minimized loopback results and no fallback. The production execution/path gate has synthetic target-validation evidence in `TestTargetGateResolutionAndRegistration`, `TestTargetGateProxyRefusesHostnameBeforeStartOrResolution`, `TestTargetGateRedirectFullTupleAndSharedScope`, `TestCcProxyProductionTargetRefusal` and `TestCcProxyProductionAllowedTarget` and `TestCcDirectProductionAllowedTarget`. `TestProxyContextHostnameEligibility` and `TestProxyHostnameContextUnavailable` cover the narrowed context boundary. Registered HTTP/NET-05 codec/runner integration and independent interpretation review remain open (DEV-454); gate tests do not implement those runners. Mixed-family evidence is not promoted from these Go rows. No support claim.
 
-Review case `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`): Human review case; not automated coverage. Reviewer role: Measurement interpretation reviewer (analyst role independent of the implementer). Reviewed artifact: Go result documentation and host/analyst guidance for direct versus proxied path comparison at the reviewed implementation revision. Checklist: (1) Does the guidance state that a successful proxied result does not prove the direct path is censored? (2) Does the guidance list outages, DNS-path differences, endpoint changes, proxy behavior and transient network conditions as alternative explanations for a direct failure followed by proxied success? (3) Does the guidance require repeated observations, stable network context, equivalent test inputs and independent supporting signals before any stronger interpretation? (4) Does the guidance note that hostname-based CONNECT moves destination resolution behind the proxy, so proxied HTTP results are not pure transport-only comparisons? (5) Does host integration guidance require connection_code values coarse enough not to identify a user, account, server, session or installation? (6) Does the guidance avoid describing local-policy proxy rejections or proxy execution states as evidence of censorship? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
+<!-- requirement-ref: REQ-PROXY-0043 -->
+<!-- requirement-ref: REQ-PROXY-0046 -->
+<!-- requirement-ref: REQ-HTTP-01-0051 -->
+
+The shared explicit-IP and typed redirect checks above map the successor contract to this existing family; the HTTP observation/parser and NET-05 whole-profile rows remain with their production runners.
+
+Review case `RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION` (`docs/conformance/cross-cutting-review.md`, `heading:RV-CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION`): Human review case; not automated coverage. Reviewer role: Measurement interpretation reviewer (analyst role independent of the implementer). Reviewed artifact: Go result documentation and host/analyst guidance for direct versus proxied path comparison at the reviewed implementation revision. Checklist: (1) Does the guidance state that a successful proxied result does not prove the direct path is censored? (2) Does the guidance list outages, DNS-path differences, endpoint changes, proxy behavior and transient network conditions as alternative explanations for a direct failure followed by proxied success? (3) Does the guidance require repeated observations, stable network context, equivalent test inputs and independent supporting signals before any stronger interpretation? (4) Does the guidance state that hostname CONNECT is unavailable in the current contract, that this causes deliberate missingness, and that rewriting a hostname URL to an IP URL cannot manufacture an equivalent comparison? (5) Does host integration guidance require connection_code values coarse enough not to identify a user, account, server, session or installation? (6) Does the guidance avoid describing local-policy proxy rejections or proxy execution states as evidence of censorship? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
 <!-- requirement-ref: REQ-PROXY-0034 -->
 <!-- requirement-ref: REQ-PROXY-0035 -->

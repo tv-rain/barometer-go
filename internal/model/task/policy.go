@@ -460,3 +460,13 @@ func (r Revocations) Input() RevocationInput {
 	in.RegistrationIDs = slices.Clone(in.RegistrationIDs)
 	return in
 }
+
+// Equal compares every normalized safety-relevant tuple component.
+func (a TargetTuple) Equal(b TargetTuple) bool {
+	return a.Hostname == b.Hostname && a.Address == b.Address && a.Port == b.Port && a.Scheme == b.Scheme && a.URL == b.URL &&
+		a.ResolverName == b.ResolverName && a.TLSServerName == b.TLSServerName && a.ExpectedStatus == b.ExpectedStatus &&
+		slices.Equal(a.BootstrapAddresses, b.BootstrapAddresses) && slices.Equal(a.ALPN, b.ALPN) && slices.Equal(a.BodyChecks, b.BodyChecks) && slices.Equal(a.HeaderChecks, b.HeaderChecks)
+}
+
+// Clone returns owned copies of the registration's collection values.
+func (t TargetRegistration) Clone() TargetRegistration { return copyTarget(t) }

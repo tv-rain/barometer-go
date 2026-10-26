@@ -19,6 +19,13 @@ import (
 // failure. Protocol failures are observations, never runner errors.
 var ErrRunner = errors.New("measurement: runner failed")
 
+// ErrTargetRejected is a local safety refusal, never a transport observation.
+var ErrTargetRejected = errors.New("measurement: target rejected")
+
+// ErrResolutionFailed lets a runner distinguish the resolution stage without
+// receiving a hostname, resolver detail or raw platform error.
+var ErrResolutionFailed = errors.New("measurement: resolution failed")
+
 // Conn is the connection a runner receives. It deliberately exposes no network
 // address, socket or platform handle, and keeps the contract free of the net
 // package so admission-only code that reads the registry links no network code.
@@ -35,6 +42,12 @@ type Dialer interface {
 	DialContext(ctx context.Context, network, address string) (Conn, error)
 }
 
+// TargetDialer keeps redirect chains bound to the preceding registered hop.
+type TargetDialer interface {
+	Dialer
+	Redirect(task.TargetTuple) (TargetDialer, error)
+}
+
 // Input carries the admitted test's normalized parameters, its dialer and the
 // test-start marker. Parameters were produced by the registered codec; a
 // runner must reject a value of an unexpected type with ErrRunner rather than
@@ -42,7 +55,8 @@ type Dialer interface {
 //
 // The test starts at its first test-specific network operation or, when that
 // comes first, its own network-state observation (REQ-RESULT-0051). A dial
-// through Dialer marks the start itself. A runner whose procedure observes
+// through Dialer marks the start at resolution or permitted contact. A local
+// safety/budget refusal does not start it. A runner whose procedure observes
 // network state before dialing calls Start first. Start is idempotent and safe
 // for concurrent use; validation and other local work before it never start
 // the test.
@@ -50,6 +64,10 @@ type Input struct {
 	Parameters task.Parameters
 	Dialer     Dialer
 	Start      func()
+	// Redirect validates a complete normalized redirect tuple and returns a
+	// dialer restricted to that hop, sharing this attempt's budgets and path.
+	// A rejection is handled as the registered test's redirect_rejected outcome.
+	Redirect func(task.TargetTuple) (TargetDialer, error)
 }
 
 // Usage is the runner's account of application bytes and connections. It is

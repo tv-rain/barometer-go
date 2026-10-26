@@ -202,7 +202,7 @@ func TestConnectExchangeIsNotMetered(t *testing.T) {
 		want   want
 	}{
 		{"exact budgets", limits(request, reply, 1), completedConnected},
-		{"no connection budget", limits(request, reply, 0), stoppedByBudget},
+		{"no connection budget", limits(request, reply, 0), want{"not_run", "resource_limit", ""}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			before := p.Counts()
@@ -213,7 +213,7 @@ func TestConnectExchangeIsNotMetered(t *testing.T) {
 			o := <-f.start(t, f.run, loopback.Exchange{})
 			f.expect(t, o.rep, o.err, nil, []want{tc.want}, nil)
 			c := idle(t, p)
-			if tc.want == stoppedByBudget {
+			if tc.limits.Connections == 0 {
 				if c.Accepted != before.Accepted {
 					t.Fatal("a tunnel was opened beyond max_connections")
 				}
@@ -379,7 +379,7 @@ func (c pathCheck) Check() task.ExecutionReason { return task.ExecutionReason(c)
 // task in this build (REQ-PROXY-0042), so a scripted check stands in for them.
 // requirement-ref: REQ-EXECUTION-0008
 // requirement-ref: REQ-EXECUTION-0010
-// requirement-ref: REQ-PROXY-0042
+// requirement-ref: REQ-PROXY-0046
 func TestPathCheckMakesNoContact(t *testing.T) {
 	for _, reason := range []task.ExecutionReason{task.ProxyNotConfigured, task.ProxyNotPermitted, task.ProxyPathUnsupported} {
 		t.Run(string(reason), func(t *testing.T) {
@@ -417,11 +417,10 @@ func dialOnce(t *testing.T, port int, network, address string) (measurement.Conn
 	return d.DialContext(ctx, network, address)
 }
 
-// The CONNECT authority is the exact explicit IP address and port, or the
-// normalized hostname and port, whose resolution happens behind the proxy
-// (REQ-PROXY-0019). A dial HTTP CONNECT cannot carry, or an address that is
+// The CONNECT authority is the exact explicit IP address and port. A
+// hostname is refused before proxy contact (REQ-PROXY-0043). A dial HTTP CONNECT cannot carry, or an address that is
 // not a valid authority, is refused without contacting the endpoint.
-// requirement-ref: REQ-PROXY-0019
+// requirement-ref: REQ-PROXY-0043
 // requirement-ref: REQ-PROXY-0020
 func TestConnectAuthority(t *testing.T) {
 	srv, err := loopback.Listen()
@@ -433,7 +432,6 @@ func TestConnectAuthority(t *testing.T) {
 	p := scriptedProxy(t, loopback.ProxyConfig{Resolve: map[string]string{"target.example.test:" + port: srv.Address()}})
 	for _, tc := range []struct{ address, authority string }{
 		{srv.Address(), srv.Address()},
-		{"Target.Example.TEST:" + port, "target.example.test:" + port},
 	} {
 		before := len(p.Counts().Requests)
 		c, err := dialOnce(t, p.Port(), "tcp", tc.address)
@@ -462,6 +460,7 @@ func TestConnectAuthority(t *testing.T) {
 	}
 	before := p.Counts().Accepted
 	for _, d := range []struct{ network, address string }{
+		{"tcp", "Target.Example.TEST:" + port},
 		{"udp", srv.Address()},
 		{"tcp4", srv.Address()},
 		{"tcp6", "[::1]:443"},

@@ -27,7 +27,7 @@ func (proxyCompatible) Compatible(task.Parameters) bool { return true }
 func proxyHarness(t *testing.T) (*harness, *echoRunner, *loopback.Server) {
 	t.Helper()
 	h, r, srv := directHarness(t)
-	reg, err := registry.New([]registry.Entry{{Test: tcp01, Codec: tcpCodec{}, BaselineRisk: task.LowRisk, Targets: tcpTargets{}, Proxy: proxyCompatible{}, Runner: r}})
+	reg, err := registry.New([]registry.Entry{{Test: tcp01, Codec: tcpCodec{}, BaselineRisk: task.LowRisk, Targets: loopbackTargets(r.address), Proxy: proxyCompatible{}, Runner: r}})
 	if err != nil {
 		t.Fatal("synthetic registry rejected")
 	}

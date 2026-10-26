@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"net"
+	"net/netip"
+	"strconv"
 	"sync"
 	"testing"
 
@@ -64,11 +67,19 @@ func directHarness(t *testing.T) (*harness, *echoRunner, *loopback.Server) {
 	t.Cleanup(func() { _ = srv.Close() })
 	h := runningHarness(t)
 	r := &echoRunner{address: srv.Address()}
-	reg, err := registry.New([]registry.Entry{{Test: tcp01, Codec: tcpCodec{}, BaselineRisk: task.LowRisk, Targets: tcpTargets{}, Proxy: registry.NoProxy{}, Runner: r}})
+	reg, err := registry.New([]registry.Entry{{Test: tcp01, Codec: tcpCodec{}, BaselineRisk: task.LowRisk, Targets: loopbackTargets(r.address), Proxy: registry.NoProxy{}, Runner: r}})
 	if err != nil {
 		t.Fatal("synthetic registry rejected")
 	}
 	h.adapters.registry = reg
+	in := synPolicyInput(2, "reg-a", func(p *task.Permissions) { p.Tests = []task.TestVersion{tcp01} })
+	in.Targets[0].Test = tcp01
+	in.Targets[0].Tuple = *loopbackTargets(r.address).tuple
+	h.adapters.policy, err = task.NewLocalPolicy(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	h.adapters.run.addressPolicy = loopbackAddressPolicy{}
 	h.adapters.run.paths = nil
 	return h, r, srv
 }
@@ -155,4 +166,17 @@ func TestStartRunWithoutAccessContext(t *testing.T) {
 	if r.Calls() != 1 {
 		t.Fatal("did not run once access context was available")
 	}
+}
+
+func loopbackTargets(address string) tcpTargets {
+	host, port, _ := net.SplitHostPort(address)
+	n, _ := strconv.Atoi(port)
+	q := task.TargetTuple{Address: netip.MustParseAddr(host), Port: uint16(n)}
+	return tcpTargets{tuple: &q}
+}
+
+type loopbackAddressPolicy struct{}
+
+func (loopbackAddressPolicy) Allows(a netip.Addr) bool {
+	return a.IsLoopback() || task.PublicAddress(a)
 }

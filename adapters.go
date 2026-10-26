@@ -102,6 +102,9 @@ type runAdapters struct {
 	// map synthetic endpoint names to loopback servers. Production leaves
 	// it nil, which selects execution.DirectDialers.
 	directDialers execution.DialerSource
+	// addressPolicy is a trusted local address restriction. Nil uses the default
+	// prohibited-address policy; synthetic tests provide a loopback-only policy.
+	addressPolicy execution.AddressPolicy
 }
 
 // complete reports whether every required run input is present.

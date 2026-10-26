@@ -26,3 +26,5 @@ func GatedEffectiveRisk(g Gated) task.Risk  { return g.authority.effectiveRisk }
 // Test-only views of an admitted task.
 func AdmittedRecord(a Admitted) persistence.ReplayRecord { return a.record }
 func AdmittedCandidate(a Admitted) task.Candidate        { return a.gated.candidate }
+
+func GatedTargets(g Gated) []task.TargetRegistration { return (Admitted{gated: g}).Targets() }

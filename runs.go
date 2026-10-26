@@ -252,7 +252,7 @@ func (rt *runtime) reserveRun(ctx, parent context.Context, proxy proxySnapshot, 
 	var check execution.PathCheck
 	if c.Execution.NetworkPath == "proxy" {
 		entry, _ := run.registry.Lookup(a.Test())
-		check = proxyCheck{configured: proxy.configured(), permitted: a.Paths().Proxy, rule: entry.Proxy, parameters: c.Parameters}
+		check = proxyCheck{configured: proxy.configured(), permitted: a.Paths().Proxy, rule: entry.Proxy, targets: entry.Targets, parameters: c.Parameters}
 	}
 	if !execution.NetworkConditions(c.Execution.Network, path.Access) {
 		return "", execution.Plan{}, nil, notDue
@@ -290,6 +290,7 @@ func (rt *runtime) reserveRun(ctx, parent context.Context, proxy proxySnapshot, 
 	plan := execution.Plan{TaskID: c.ID, Test: a.Test(), Parameters: c.Parameters, Schedule: s, Network: c.Execution.Network, Conditions: start,
 		Deadline:       time.Duration(a.AttemptLimits().DurationMS) * time.Millisecond,
 		Limits:         a.AttemptLimits(),
+		Targets:        execution.NewTargets(a.Test(), c.Execution.NetworkPath, a.Targets(), run.clock, run.addressPolicy),
 		Implementation: path.Implementation, Result: path.Result, Context: path.Context, Dialers: path.Dialers, Path: check, Preconditions: gates}
 	return handle, plan, r, nil
 }

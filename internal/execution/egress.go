@@ -10,6 +10,7 @@ import (
 	"mime"
 	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"time"
 
@@ -19,15 +20,17 @@ import (
 
 var errContextResponse = errors.New("execution: invalid context endpoint response")
 
-// ContextFetch binds the Network Context endpoint request to d, a dialer of
-// the attempt's own path: the direct dialer, or the proxy generation's
-// CONNECT dialer, which carries the endpoint name to the proxy so no direct
-// resolution or request occurs (REQ-PROXY-0023). The engine does not wrap d
-// in the attempt scope, so lookup bytes are not counted toward the attempt
-// budgets.
+// ContextFetch binds approved Network Context endpoints to a path dialer and
+// the default address policy. Proxy hostname endpoints are refused before
+// resolution or contact; the engine also applies the attempt's trusted policy.
+// Lookup traffic remains outside the measurement byte/connection meter.
 func ContextFetch(d measurement.Dialer) networkcontext.Fetch {
+	return contextFetcher(d, PublicAddresses{})
+}
+
+func contextFetcher(d measurement.Dialer, policy AddressPolicy) networkcontext.Fetch {
 	return func(ctx context.Context, u *url.URL, roots *x509.CertPool) ([]byte, error) {
-		return fetchContext(ctx, d, u, roots)
+		return fetchContext(ctx, d, u, roots, policy)
 	}
 }
 
@@ -44,7 +47,7 @@ func ContextFetch(d measurement.Dialer) networkcontext.Fetch {
 // requirement-ref: REQ-CONTEXT-0011
 // requirement-ref: REQ-CONTEXT-0012
 // requirement-ref: REQ-CONTEXT-0015
-func fetchContext(ctx context.Context, d measurement.Dialer, u *url.URL, roots *x509.CertPool) ([]byte, error) {
+func fetchContext(ctx context.Context, d measurement.Dialer, u *url.URL, roots *x509.CertPool, policy AddressPolicy) ([]byte, error) {
 	if d == nil || u == nil || u.Scheme != "https" || u.Hostname() == "" {
 		return nil, errContextResponse
 	}
@@ -52,7 +55,28 @@ func fetchContext(ctx context.Context, d measurement.Dialer, u *url.URL, roots *
 	if port == "" {
 		port = "443"
 	}
-	raw, err := d.DialContext(ctx, "tcp", net.JoinHostPort(u.Hostname(), port))
+	host := u.Hostname()
+	ip, parseErr := netip.ParseAddr(host)
+	ips := []netip.Addr{ip}
+	if parseErr != nil {
+		if _, proxy := d.(proxyDialer); proxy {
+			return nil, errContextResponse
+		}
+		var err error
+		ips, err = net.DefaultResolver.LookupNetIP(ctx, "ip", host)
+		if err != nil {
+			return nil, errContextResponse
+		}
+	}
+	if len(ips) == 0 || len(ips) > 64 || ctx.Err() != nil {
+		return nil, errContextResponse
+	}
+	for _, a := range ips {
+		if policy == nil || !policy.Allows(a.Unmap()) {
+			return nil, errContextResponse
+		}
+	}
+	raw, err := d.DialContext(ctx, "tcp", net.JoinHostPort(ips[0].Unmap().String(), port))
 	if err != nil {
 		return nil, errContextResponse
 	}

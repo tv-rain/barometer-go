@@ -154,6 +154,7 @@ func (rt *runtime) proxy() proxySnapshot {
 type proxyCheck struct {
 	configured, permitted bool
 	rule                  registry.ProxyRule
+	targets               registry.TargetRule
 	parameters            task.Parameters
 }
 
@@ -163,7 +164,7 @@ func (c proxyCheck) Check() task.ExecutionReason {
 		return task.ProxyNotConfigured
 	case !c.permitted:
 		return task.ProxyNotPermitted
-	case absent(c.rule) || !c.rule.Compatible(c.parameters):
+	case !registry.ProxyCompatible(c.rule, c.targets, c.parameters):
 		return task.ProxyPathUnsupported
 	}
 	return ""

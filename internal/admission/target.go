@@ -62,6 +62,23 @@ func (a *Authority) matchTargets(policy task.LocalPolicy, rule registry.TargetRu
 		}
 		matched = appendNew(matched, r.ID)
 	}
+	// Carry only matched initial targets and explicitly linked redirect registrations
+	// that were already permitted by both issuer and local policy. Traverse the
+	// bounded registration graph so each actual hop still needs its parent's link.
+	permitted := a.registrationIDs
+	queue := slices.Clone(matched)
+	for i := 0; i < len(queue) && i < 256; i++ {
+		r, ok := policy.Target(queue[i])
+		if !ok {
+			continue
+		}
+		a.targets = append(a.targets, r)
+		for _, id := range r.RedirectIDs {
+			if slices.Contains(permitted, id) {
+				queue = appendNew(queue, id)
+			}
+		}
+	}
 	a.registrationIDs = matched
 	return 0
 }
@@ -89,12 +106,7 @@ func pathPermitted(registered, path task.Paths) bool {
 // sameTuple is exact equality of every tuple component, including the order of
 // bootstrap addresses, ALPN values and checks. An absent component matches
 // only an absent component.
-func sameTuple(a, b task.TargetTuple) bool {
-	return a.Hostname == b.Hostname && a.Address == b.Address && a.Port == b.Port && a.Scheme == b.Scheme && a.URL == b.URL &&
-		a.ResolverName == b.ResolverName && a.TLSServerName == b.TLSServerName && a.ExpectedStatus == b.ExpectedStatus &&
-		slices.Equal(a.BootstrapAddresses, b.BootstrapAddresses) && slices.Equal(a.ALPN, b.ALPN) &&
-		slices.Equal(a.BodyChecks, b.BodyChecks) && slices.Equal(a.HeaderChecks, b.HeaderChecks)
-}
+func sameTuple(a, b task.TargetTuple) bool { return a.Equal(b) }
 
 func appendNew(ids []string, id string) []string {
 	if slices.Contains(ids, id) {

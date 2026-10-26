@@ -158,3 +158,13 @@ func redeliver(g Gated, existing persistence.ReplayRecord, digest [sha256.Size]b
 	}
 	return Admitted{gated: g, record: existing, redelivery: true}, nil
 }
+
+// Targets returns an owned snapshot of matched targets and authorized redirect
+// registrations. It carries no issuer, source or unrelated policy authority.
+func (a Admitted) Targets() []task.TargetRegistration {
+	out := make([]task.TargetRegistration, len(a.gated.authority.targets))
+	for i, r := range a.gated.authority.targets {
+		out[i] = r.Clone()
+	}
+	return out
+}

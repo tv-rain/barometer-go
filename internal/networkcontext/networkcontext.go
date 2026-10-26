@@ -208,7 +208,7 @@ func (s *Snapshot) bind(e egressWire) error {
 // requirement-ref: REQ-CONTEXT-FORMAT-0007
 // requirement-ref: REQ-CONTEXT-FORMAT-0008
 // requirement-ref: REQ-CONTEXT-FORMAT-0009
-// requirement-ref: REQ-PROXY-0023
+// requirement-ref: REQ-PROXY-0045
 func (s Snapshot) Acquire(ctx context.Context, fetch Fetch) (Snapshot, error) {
 	if !s.valid {
 		return Snapshot{}, ErrUnavailable

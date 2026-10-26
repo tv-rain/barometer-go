@@ -17,8 +17,9 @@ type DirectDialers struct{}
 
 func (DirectDialers) Dialer(int) (measurement.Dialer, error) { return directDialer{}, nil }
 
-// directDialer dials with a zero net.Dialer, which consults no proxy setting
-// and keeps no connection pool. The dial ends with ctx.
+// directDialer is the path transport under the shared target gate. For a
+// measurement it receives only the checked literal IP, never a name to resolve
+// again. Its zero net.Dialer consults no proxy setting or connection pool.
 type directDialer struct{}
 
 func (directDialer) DialContext(ctx context.Context, network, address string) (measurement.Conn, error) {

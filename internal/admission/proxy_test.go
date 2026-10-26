@@ -40,9 +40,9 @@ func proxyTask(subject string, extra map[string]any) []byte {
 // harness's unused recording transport sees zero calls: every rejection is
 // atomic and before network activity (REQ-PROXY-0027).
 // requirement-ref: REQ-TRUST-0039
-// requirement-ref: REQ-PROXY-0026
+// requirement-ref: REQ-PROXY-0044
 // requirement-ref: REQ-PROXY-0027
-// requirement-ref: REQ-PROXY-0042
+// requirement-ref: REQ-PROXY-0046
 func TestGateProxyCompatibility(t *testing.T) {
 	directOnly := func(p *task.Permissions) { p.Paths = task.Paths{Direct: true} }
 	for _, c := range []struct {

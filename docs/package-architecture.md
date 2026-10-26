@@ -187,6 +187,9 @@ DEV-636 adds [run reservation](execution-models.md#run-reservation) to `internal
 
 ### Registered Measurements and Protocol Primitives
 
+Execution owns the [shared target gate](execution-models.md#execution-time-target-validation), using admission-owned target snapshots rather than importing admission. A runner receives only the guarded attempt dialer and a typed redirect capability; each redirect remains on the same metered scope and narrowed registration chain. Domain models supply pure tuple equality and address classification, with no resolution or I/O.
+
+
 `internal/measurement` owns the minimal runner contract shared by registered measurements. Each child package owns the behavior for exactly one registered test identifier and version.
 
 The packages under `internal/protocol` own reusable bounded protocol operations. Registered measurement packages may depend on these primitives, domain models, and narrowly required platform capabilities. They must not depend on another registered measurement package.
