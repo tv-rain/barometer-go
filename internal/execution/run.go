@@ -443,13 +443,13 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 			return measurement.ErrRunner
 		}
 		a := snap.Access()
-		if family == "ipv4" && a.IPv4Available == "yes" || family == "ipv6" && a.IPv6Available == "yes" {
+		if family == "" || family == "ipv4" && a.IPv4Available == "yes" || family == "ipv6" && a.IPv6Available == "yes" {
 			return nil
 		}
 		cancel(pathError{task.ConstraintsUnsatisfied})
 		return measurement.ErrRunner
 	}
-	out, err := runner.Run(actx, measurement.Input{Parameters: p.Parameters, Clock: e.clock, CheckNetwork: checkNetwork, RecordOutcome: s.RecordOutcome, Dialer: s, Start: s.Start, Redirect: s.Redirect})
+	out, err := runner.Run(actx, measurement.Input{Parameters: p.Parameters, Clock: e.clock, CheckNetwork: checkNetwork, RecordOutcome: s.RecordOutcome, Dialer: s, Start: s.Start, Redirect: s.Redirect, Resolve: s.resolve})
 	s.close()
 	usage := s.Usage()
 	running, _ := pending.Start()

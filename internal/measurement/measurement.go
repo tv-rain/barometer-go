@@ -34,6 +34,13 @@ type Conn interface {
 	SetDeadline(time.Time) error
 }
 
+// DatagramConn preserves UDP truncation through the attempt meter. The
+// transport compares the source to the checked peer without exposing addresses.
+type DatagramConn interface {
+	Conn
+	ReadDatagram([]byte) (n int, truncated, matchingSource bool, err error)
+}
+
 // Dialer is the attempt-scoped connection seam. Execution supplies a fresh
 // dialer for every attempt; the selected path, proxy handling and byte or
 // connection accounting belong to the dialer's owner, not to the runner. A
@@ -68,7 +75,10 @@ type Clock interface {
 // the test.
 type Input struct {
 	Parameters task.Parameters
-	Clock      Clock
+	// Resolve performs one authorized system lookup, returning only a coarse
+	// result. It never exposes platform error text, resolver state or addresses.
+	Resolve func(context.Context, string, string) (bool, string, error)
+	Clock   Clock
 	// CheckNetwork starts the test's own stable-generation/family check.
 	// A refusal ends the attempt with the execution owner's reason.
 	CheckNetwork func(family string) error

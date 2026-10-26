@@ -35,6 +35,8 @@ The test-only `internal/testkit/loopback` subpackage (DEV-635) provides an echo 
 
 The test-only `internal/testkit/contextendpoint` subpackage (DEV-647) provides synthetic Network Context endpoints: a synthetic CA, HTTPS servers on ephemeral `127.0.0.1` ports with certificates for a given synthetic name, scripted or queued responses (status, content type, headers, body, or an unanswered hold), capture of every request and of the decrypted request bytes, and `Routes`, a dialer and dialer source that maps synthetic `name:port` authorities to those servers and records every requested address, standing in for name resolution on the direct path. It contacts no real endpoint and makes no real classification.
 
+The loopback subpackage supplies `ListenDNS`, a bounded UDP/TCP server on `127.0.0.1` with scripted replies and independent query/byte counters. Its synthetic response builder uses `golang.org/x/net/dns/dnsmessage`, independently of the production DNS decoder. It closes accepted streams when stopped. Production-registry tests admit public resolver tuples and map only the checked transport authority to this fixture, without a production loopback exemption or external contact.
+
 ## Public Baseline and References
 
 Fixture categories follow Draft `0.1.0` at public revision [`05c1364af4f9a604b617fca45f060949b557d265`](https://github.com/tv-rain/barometer-spec/commit/05c1364af4f9a604b617fca45f060949b557d265):
