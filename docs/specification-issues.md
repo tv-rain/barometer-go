@@ -645,7 +645,7 @@ DEV-645 adds the pre-attempt check of [REQ-EXECUTION-0008](https://github.com/tv
 
 ## GO-SPEC-ISSUE-010: Admission Class for Step-8 Input and Options Failures
 
-**Current state:** Open, raised October 21, 2026 under DEV-624 from the observation recorded during DEV-598. No public record exists yet; public maintainers own disposition. Go behavior is unchanged.
+**Current state:** Accepted and adopted. The public disposition (alternative (a)) merged at [`12062471875bbfbc55eafc94dc5a7ea4cd07ca5e`](https://github.com/tv-rain/barometer-spec/tree/12062471875bbfbc55eafc94dc5a7ea4cd07ca5e) (public PR #30, [DEV-663](https://app.clickup.com/t/124kk1zcw4r)); internal alignment and the maintainer safety review of the mapping are merged; Go adopts it with synthetic cases and unchanged behavior. Classes and order the public text leaves unnamed continue in [GO-SPEC-ISSUE-016](#go-spec-issue-016-unnamed-classes-and-order-in-step-8-input-and-options). See the [adoption addendum](#adoption-addendum--october-26-2026). The sections before it keep their original wording as historical evidence. Raised October 21, 2026 under DEV-624 from the observation recorded during DEV-598.
 
 ### Identity, Baselines and Requirements
 
@@ -671,6 +671,14 @@ The class of a step-8 input or options failure is unmapped. Go selected `task_sc
 ### Ordering and Closure
 
 Public record and disposition first, then internal task-trust review alignment if its validation plan names the class, then Go adoption with exact-class cases, then bindings. Closure requires the public disposition, its immutable revision if wording changes, and Go adoption evidence or recorded non-applicability.
+
+### Adoption Addendum — October 26, 2026
+
+- **Public:** [Admission Class for Step-8 Input and Options Failures](https://github.com/tv-rain/barometer-spec/blob/12062471875bbfbc55eafc94dc5a7ea4cd07ca5e/specification-issues/step-8-input-options-admission-class.md), merged through public PR #30 at `12062471875bbfbc55eafc94dc5a7ea4cd07ca5e`, retaining Draft `0.1.0`. [REQ-TRUST-0056](https://github.com/tv-rain/barometer-spec/blob/12062471875bbfbc55eafc94dc5a7ea4cd07ca5e/library/task-trust.md#REQ-TRUST-0056) makes an input or options validation failure at step 8 `task_schema_invalid`, and a stricter test-defined byte limit, checked before the content it bounds, `task_limit_exceeded`. [REQ-OPTIONS-0033](https://github.com/tv-rain/barometer-spec/blob/12062471875bbfbc55eafc94dc5a7ea4cd07ca5e/data-formats/task-options.md#REQ-OPTIONS-0033) replaces the retired REQ-OPTIONS-0019: invalid or prohibited options are rejected at admission and never admitted to be skipped.
+- **Internal:** `barometer-spec-internal` PR #14, merged at `bf2fce978f526fcc80aac2cf9d568352a45799f3`, aligned the task-trust review validation plan. PR #15, merged at `7868ed6ca180ef9ab6330d4256070a80d4402cd7`, records the safety review of the mapping by the project maintainer on October 26, 2026: passed, with one follow-up finding carried into GO-SPEC-ISSUE-016. It is a maintainer review, not an independent specialist review.
+- **Go:** behavior is unchanged; `Admitter.Gate` already returns these classes ([Implemented Gates](admission.md#implemented-gates)). `TestGateInputOptionsClasses` asserts each class through the gate with a synthetic test-scoped codec, for embedded and remote origin: unknown input and option members, values outside a field range or of the wrong type and a codec normalization failure are `task_schema_invalid`; options or an option value over a stricter test byte cap, including invalid content over the cap, are `task_limit_exceeded`; the codec is not reached for a schema or limit failure, and the recording transport sees zero calls. The existing `TestGateProxyCompatibility` cases keep invalid input and options before proxy compatibility. The current reference-source pin moves to `1206247`; current comments cite REQ-TRUST-0056 and REQ-OPTIONS-0033, and the retired REQ-OPTIONS-0019 keeps a `requirement-history` citation. Traceability manifests stay at their milestone baselines until the next milestone update.
+- **Not applicable yet:** no Draft `0.1.0` test defines a stricter `input` or `options` byte limit, so the byte-limit rows have synthetic evidence only. Production test codecs (DEV-454) adopt the classes through the codec pattern (DEV-660).
+- **Remaining scope:** binding and host adoption (DEV-455). The unnamed classes and order are tracked in GO-SPEC-ISSUE-016. The finding closes for the Go core when this change merges.
 
 ## GO-SPEC-ISSUE-011: Due Times and Catch-Up for Interval Repetition
 
@@ -838,6 +846,31 @@ Synthetic evidence locations are `internal/execution/targets_test.go`, `internal
 The shared target-validation portion of `CC-PROXY-PRIVACY-SAFETY-AND-INTERPRETATION` has executable synthetic gate cases; the whole mixed family remains planned. Production HTTP-01/NET-05 codecs and runners, their use of the shared redirect boundary and protocol-specific observation construction remain with their measurement tasks. Native/binding/host adoption, independent interpretation review, field validation and release claims remain pending. A malicious proxy may still disobey an explicit-IP request under the existing compromised-component threat limitation. A future hostname enforcement capability requires a separate reviewed public contract.
 
 Final validation results, approved Go commit/branch links and remaining work are recorded once on DEV-659. Closure requires applicable evidence and downstream adoption or explicit non-applicability; this finding is not closed merely because the contract and shared gate exist.
+
+## GO-SPEC-ISSUE-016: Unnamed Classes and Order in Step-8 Input and Options
+
+**Current state:** Open, raised October 26, 2026 under [DEV-663](https://app.clickup.com/t/124kk1zcw4r) from the maintainer safety review of the GO-SPEC-ISSUE-010 mapping and from its Go adoption. No public record exists yet; public maintainers own disposition. Go behavior is unchanged.
+
+### Identity, Baselines and Requirements
+
+- **Reporter:** the Go implementation agent, under the task owner's instruction. **Duplicates:** none. [GO-SPEC-ISSUE-010](#go-spec-issue-010-admission-class-for-step-8-input-and-options-failures) mapped invalid input and options and stricter test byte limits; this finding covers what that mapping leaves unnamed.
+- **Baseline:** Draft `0.1.0` at [`12062471875bbfbc55eafc94dc5a7ea4cd07ca5e`](https://github.com/tv-rain/barometer-spec/tree/12062471875bbfbc55eafc94dc5a7ea4cd07ca5e): [REQ-TRUST-0056](https://github.com/tv-rain/barometer-spec/blob/12062471875bbfbc55eafc94dc5a7ea4cd07ca5e/library/task-trust.md#REQ-TRUST-0056), [REQ-OPTIONS-0033](https://github.com/tv-rain/barometer-spec/blob/12062471875bbfbc55eafc94dc5a7ea4cd07ca5e/data-formats/task-options.md#REQ-OPTIONS-0033), [REQ-TRUST-0047](https://github.com/tv-rain/barometer-spec/blob/12062471875bbfbc55eafc94dc5a7ea4cd07ca5e/library/task-trust.md#REQ-TRUST-0047), [REQ-TRUST-0036](https://github.com/tv-rain/barometer-spec/blob/12062471875bbfbc55eafc94dc5a7ea4cd07ca5e/library/task-trust.md#REQ-TRUST-0036) and [REQ-LIMIT-0002](https://github.com/tv-rain/barometer-spec/blob/12062471875bbfbc55eafc94dc5a7ea4cd07ca5e/library/registered-limits.md#REQ-LIMIT-0002).
+- **Implementation:** `Admitter.Gate`, `taskdecode.Envelope.Parameters` and `jsondecode.Validate` on this branch. Only synthetic test-scoped codecs exist.
+
+### Finding and Interim Handling
+
+1. **Local-policy option restrictions.** REQ-OPTIONS-0033 sends options local policy does not permit to the class REQ-TRUST-0047 lists for that condition, and the public options document lets a probe enforce stricter local safety restrictions. REQ-TRUST-0047 lists local-policy refusal only for a direct or proxy path at step 8 and for the risk bound at step 9, so a stricter local restriction on another option value has no named class. Go has no such local option restriction yet. The maintainer review suggested `task_issuer_not_authorized`, as for the step-8 local-policy path row.
+2. **Registered numeric limits on input or option values.** REQ-TRUST-0056 names `task_limit_exceeded` only for byte limits, so a value above a registered numeric limit, such as a DNS-01 `additional_response_window_ms` above the REQ-LIMIT-0014 maximum, reads as a value the schema does not permit, `task_schema_invalid`. REQ-LIMIT-0002 requires rejection without naming a class. **Interim handling:** Go returns `task_limit_exceeded` for a limit-flagged bound, consistent with the class name and with step 6 for execution limits, as the project owner approved under DEV-663; `TestGateInputOptionsClasses` records it.
+3. **Order among several failing values.** REQ-TRUST-0056 orders a byte limit before the content it bounds and REQ-TRUST-0039 orders input and options before proxy compatibility, but nothing orders input against options or one member against another. A task with invalid input and over-limit options could receive either class from different implementations. **Interim handling:** Go validates input before options and members in their input order, so the first failing value decides; `TestGateInputOptionsClasses` records invalid input before over-limit options.
+4. **Capability gaps reported by a codec.** A codec normalization failure is always `task_schema_invalid`, so a production codec cannot report a valid option that needs an unprovided capability as `task_unsupported` (REQ-TRUST-0036). This is a Go codec-contract gap, not a public ambiguity; it is handed to the codec pattern (DEV-660).
+
+**Blocked:** nothing in current approved work; exact-class conformance assertions for items 1 to 3 stay provisional, and the DNS-01 codec (DEV-662) should not assert item 2 as conformant before disposition. **Unaffected:** the rows REQ-TRUST-0056 names, proxy compatibility, path authority, target registration and composite rows.
+
+### Impact and Ordering
+
+- **Safety:** every case is rejected at admission before network activity; only the class differs. Hosts and issuers that branch on classes could diverge between implementations.
+- **Alternatives:** for item 1, `task_issuer_not_authorized`, `task_schema_invalid` or `task_unsupported`; for item 2, `task_limit_exceeded` or `task_schema_invalid`; for item 3, a public order (input before options and member order, or limit failures before content failures across the step) or explicit implementation choice.
+- **Ordering:** public record and disposition first, then internal task-trust review alignment, then Go adoption with exact-class cases, then bindings. Item 4 follows DEV-660 independently.
 
 ## Signed Remote Task Package Adoption
 
