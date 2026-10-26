@@ -3,6 +3,7 @@ package registry
 import (
 	"context"
 	"errors"
+	"net/netip"
 	"strconv"
 	"sync"
 	"testing"
@@ -253,5 +254,36 @@ func TestRunnerCompositionIsExactAndFailsClosed(t *testing.T) {
 	var nilRegistry *Registry
 	if got, ok := nilRegistry.Runner(entries[0].Test); ok || got != nil {
 		t.Fatal("nil registry must not resolve runners")
+	}
+}
+
+type tupleTargets []Target
+
+func (t tupleTargets) Targets(task.Parameters) ([]Target, bool) { return t, true }
+
+// Common compatibility rejects a hostname HTTP URL even when a tuple carries
+// an address. Resolver hostname authentication with an explicit bootstrap IP
+// remains separate from the CONNECT destination, as do DNS query names.
+// requirement-ref: REQ-PROXY-0044
+func TestCommonProxyDestinationCompatibility(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		role  task.TargetRole
+		tuple task.TargetTuple
+		want  bool
+	}{
+		{"hostname URL", task.MeasurementTarget, task.TargetTuple{URL: "https://target.example/"}, false},
+		{"hostname URL plus explicit address", task.MeasurementTarget, task.TargetTuple{URL: "https://target.example/", Address: netip.MustParseAddr("8.8.8.8")}, false},
+		{"literal URL", task.MeasurementTarget, task.TargetTuple{URL: "https://8.8.8.8/"}, true},
+		{"hostname stream", task.MeasurementTarget, task.TargetTuple{Hostname: "target.example", Port: 443}, false},
+		{"query name", task.MeasurementTarget, task.TargetTuple{Hostname: "query.example"}, true},
+		{"resolver bootstrap", task.ResolverTarget, task.TargetTuple{URL: "https://resolver.example/dns-query", BootstrapAddresses: []netip.Addr{netip.MustParseAddr("8.8.8.8")}}, true},
+		{"hostname redirect deferred", task.RedirectTarget, task.TargetTuple{URL: "https://next.example/"}, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := ProxyCompatible(tcpOnly{}, tupleTargets{{Role: tc.role, Tuple: tc.tuple}}, fixtureParameters{TCP: true}); got != tc.want {
+				t.Fatalf("compatible=%v", got)
+			}
+		})
 	}
 }

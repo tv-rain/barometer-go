@@ -101,11 +101,15 @@ type proxyDialer struct{ endpoint string }
 // proxy_connect_failed. A dial the proxy cannot carry is refused before any
 // contact. The dial and the exchange end with ctx.
 // requirement-ref: REQ-PROXY-0017
-// requirement-ref: REQ-PROXY-0019
+// requirement-ref: REQ-PROXY-0043
 func (d proxyDialer) DialContext(ctx context.Context, network, address string) (measurement.Conn, error) {
 	authority, ok := connectAuthority(network, address)
 	if !ok {
 		return nil, errProxyNetwork
+	}
+	host, _, _ := net.SplitHostPort(authority)
+	if ip, err := netip.ParseAddr(host); err != nil || ip.Zone() != "" {
+		return nil, pathError{task.ProxyPathUnsupported}
 	}
 	var nd net.Dialer
 	conn, err := nd.DialContext(ctx, "tcp", d.endpoint)

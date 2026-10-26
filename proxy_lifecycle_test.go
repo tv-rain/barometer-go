@@ -750,7 +750,7 @@ func TestProxyLoopbackClosesEstablishedTunnel(t *testing.T) {
 	for _, clear := range []bool{false, true} {
 		h, _, target := proxyHarness(t)
 		entered := make(chan struct{})
-		reg, err := registry.New([]registry.Entry{{Test: tcp01, Codec: tcpCodec{}, BaselineRisk: task.LowRisk, Targets: tcpTargets{}, Proxy: proxyCompatible{}, Runner: heldTunnelRunner{address: target.Address(), entered: entered}}})
+		reg, err := registry.New([]registry.Entry{{Test: tcp01, Codec: tcpCodec{}, BaselineRisk: task.LowRisk, Targets: loopbackTargets(target.Address()), Proxy: proxyCompatible{}, Runner: heldTunnelRunner{address: target.Address(), entered: entered}}})
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -8,6 +8,8 @@ package registry
 
 import (
 	"errors"
+	"net/netip"
+	"net/url"
 
 	"github.com/tv-rain/barometer-go/internal/measurement"
 	"github.com/tv-rain/barometer-go/internal/model/task"
@@ -149,4 +151,53 @@ func (r *Registry) Codecs() []taskdecode.TestCodec {
 		codecs[i] = e.Codec
 	}
 	return codecs
+}
+
+// ProxyCompatible combines the registered compatibility rule with the common
+// explicit-IP-only destination rule. Query names and TLS SNI are not CONNECT
+// authorities; redirect registrations are checked when a hop is followed.
+// requirement-ref: REQ-PROXY-0044
+func ProxyCompatible(rule ProxyRule, targets TargetRule, params task.Parameters) bool {
+	if rule == nil || targets == nil || !rule.Compatible(params) {
+		return false
+	}
+	ts, ok := targets.Targets(params)
+	if !ok || len(ts) > 64 {
+		// Extraction failure retains the target-registration failure class at admission.
+		return true
+	}
+	for _, t := range ts {
+		if t.Role == task.RedirectTarget {
+			continue
+		}
+		q := t.Tuple
+		if q.URL != "" && t.Role == task.MeasurementTarget {
+			u, err := url.Parse(q.URL)
+			if err != nil {
+				return false
+			}
+			if a, err := netip.ParseAddr(u.Hostname()); err != nil || a.Zone() != "" {
+				return false
+			}
+			continue
+		}
+		if len(q.BootstrapAddresses) > 0 || q.Address.IsValid() {
+			continue
+		}
+		host := q.Hostname
+		if q.URL != "" {
+			u, err := url.Parse(q.URL)
+			if err != nil {
+				return false
+			}
+			host = u.Hostname()
+		} else if q.Port == 0 {
+			continue
+		}
+		ip, err := netip.ParseAddr(host)
+		if err != nil || ip.Zone() != "" {
+			return false
+		}
+	}
+	return true
 }

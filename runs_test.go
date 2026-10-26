@@ -249,9 +249,12 @@ func (tcpCodec) Definition() taskdecode.Definition {
 	return d
 }
 
-type tcpTargets struct{}
+type tcpTargets struct{ tuple *task.TargetTuple }
 
-func (tcpTargets) Targets(task.Parameters) ([]registry.Target, bool) {
+func (t tcpTargets) Targets(task.Parameters) ([]registry.Target, bool) {
+	if t.tuple != nil {
+		return []registry.Target{{Role: task.MeasurementTarget, Tuple: *t.tuple}}, true
+	}
 	return []registry.Target{{Role: task.MeasurementTarget, Tuple: task.TargetTuple{Hostname: "reg-a.example.test"}}}, true
 }
 

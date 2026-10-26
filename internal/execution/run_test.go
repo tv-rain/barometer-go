@@ -235,7 +235,7 @@ func newFixture(t *testing.T, s task.Schedule, steps ...step) *fixture {
 	f.engine = engine
 	f.plan = execution.Plan{TaskID: "campaign-1", Test: tcp01, Parameters: loopback.Parameters{}, Schedule: s, Network: anyNetwork, Deadline: attemptDeadline, Limits: defaultLimits,
 		Conditions:     validation.StartContext{DueAt: now, Supported: true, ConstraintsSatisfied: true, SafetySatisfied: true},
-		Implementation: implementation, Result: decoder(t), Context: f.ctx, Dialers: f.dialers}
+		Implementation: implementation, Result: decoder(t), Context: f.ctx, Dialers: f.dialers, Targets: fixtureTargets{}}
 	return f
 }
 
@@ -570,7 +570,7 @@ func TestLoopbackRunnerOnRealSockets(t *testing.T) {
 	plan := execution.Plan{TaskID: "campaign-1", Test: tcp01, Parameters: loopback.Parameters{Address: srv.Address()},
 		Schedule: task.Schedule{NotAfter: &expires, Repeat: task.Repeat{Mode: "none"}, MaxRuns: &maxRuns, Retry: task.Retry{MaxAttempts: 1}}, Network: anyNetwork, Deadline: attemptDeadline, Limits: defaultLimits,
 		Conditions:     validation.StartContext{DueAt: start, Supported: true, ConstraintsSatisfied: true, SafetySatisfied: true},
-		Implementation: implementation, Result: decoder(t), Context: newContextSource(t), Dialers: dialers}
+		Implementation: implementation, Result: decoder(t), Context: newContextSource(t), Dialers: dialers, Targets: fixtureTargets{}}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	rep, err := engine.Run(ctx, plan)
@@ -644,4 +644,16 @@ func TestPreconditionsAreRecheckedBeforeEachAttempt(t *testing.T) {
 	if p.calls != 2 {
 		t.Fatal("preconditions not checked before each attempt")
 	}
+}
+
+// fixtureTargets preserves the transport-only scope of older lifecycle tests.
+// Security/conformance cases construct production Targets explicitly instead.
+type fixtureTargets struct{}
+
+func (fixtureTargets) Prepare(_ context.Context, _, address string, start func()) (string, error) {
+	start()
+	return address, nil
+}
+func (fixtureTargets) Redirect(task.TargetTuple) (execution.TargetCheck, error) {
+	return nil, execution.ErrTargetRejected
 }

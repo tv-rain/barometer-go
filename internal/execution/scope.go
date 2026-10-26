@@ -58,6 +58,7 @@ var (
 type scope struct {
 	ctx     context.Context
 	inner   measurement.Dialer
+	targets TargetCheck
 	limits  task.AttemptLimits
 	end     func(cause error)
 	started atomic.Bool
@@ -96,7 +97,23 @@ func (s *scope) DialContext(ctx context.Context, network, address string) (measu
 	if s.isClosed() || s.ctx.Err() != nil {
 		return nil, errScopeClosed
 	}
-	s.Start()
+	return s.dial(ctx, network, address, s.targets)
+}
+
+func (s *scope) dial(ctx context.Context, network, address string, check TargetCheck) (measurement.Conn, error) {
+	if s.isClosed() || s.ctx.Err() != nil {
+		return nil, errScopeClosed
+	}
+	dctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	unlink := context.AfterFunc(s.ctx, cancel)
+	defer unlink()
+	if check == nil {
+		s.end(pathError{task.LocalPolicyRejected})
+		return nil, ErrTargetRejected
+	}
+	// Reserve a connection slot before resolution can send any traffic. A local
+	// refusal releases it; concurrent dials cannot all resolve beyond the bound.
 	s.mu.Lock()
 	if s.usage.Connections >= s.limits.Connections {
 		s.mu.Unlock()
@@ -105,11 +122,27 @@ func (s *scope) DialContext(ctx context.Context, network, address string) (measu
 	}
 	s.usage.Connections++
 	s.mu.Unlock()
-	dctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-	unlink := context.AfterFunc(s.ctx, cancel)
-	defer unlink()
-	conn, err := s.inner.DialContext(dctx, network, address)
+	issued := false
+	defer func() {
+		if !issued {
+			s.mu.Lock()
+			s.usage.Connections--
+			s.mu.Unlock()
+		}
+	}()
+	checked, err := check.Prepare(dctx, network, address, s.Start)
+	if err != nil {
+		if reason, ok := pathFailure(err); ok {
+			s.pathFailed(reason, err)
+		}
+		return nil, err
+	}
+	if dctx.Err() != nil {
+		return nil, errScopeClosed
+	}
+	s.Start()
+	issued = true
+	conn, err := s.inner.DialContext(dctx, network, checked)
 	if err != nil {
 		if reason, ok := pathFailure(err); ok {
 			s.pathFailed(reason, err)
@@ -272,4 +305,38 @@ func (c *scopedConn) Close() error {
 func (c *scopedConn) close() error {
 	c.once.Do(func() { c.err = c.Conn.Close() })
 	return c.err
+}
+
+// Redirect returns no raw path dialer: all hops retain shared metering,
+// cancellation and per-contact authorization.
+// requirement-ref: REQ-HTTP-01-0051
+func (s *scope) Redirect(tuple task.TargetTuple) (measurement.TargetDialer, error) {
+	if s.targets == nil || s.isClosed() || s.ctx.Err() != nil {
+		return nil, ErrTargetRejected
+	}
+	check, err := s.targets.Redirect(tuple)
+	if err != nil {
+		return nil, ErrTargetRejected
+	}
+	return targetDialer{scope: s, check: check}, nil
+}
+
+type targetDialer struct {
+	scope *scope
+	check TargetCheck
+}
+
+func (d targetDialer) DialContext(ctx context.Context, network, address string) (measurement.Conn, error) {
+	return d.scope.dial(ctx, network, address, d.check)
+}
+
+func (d targetDialer) Redirect(tuple task.TargetTuple) (measurement.TargetDialer, error) {
+	if d.scope.isClosed() || d.scope.ctx.Err() != nil {
+		return nil, ErrTargetRejected
+	}
+	check, err := d.check.Redirect(tuple)
+	if err != nil {
+		return nil, ErrTargetRejected
+	}
+	return targetDialer{scope: d.scope, check: check}, nil
 }

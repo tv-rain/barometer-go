@@ -199,7 +199,7 @@ func (a *Admitter) Gate(ctx context.Context, sourceRef string, presented []byte)
 	// invalid for its selected path, whatever authority would permit
 	// (REQ-TRUST-0039). It is never admitted to end in proxy_path_unsupported
 	// at execution (REQ-PROXY-0042).
-	if candidate.Execution.NetworkPath == "proxy" && !entry.Proxy.Compatible(candidate.Parameters) {
+	if candidate.Execution.NetworkPath == "proxy" && !registry.ProxyCompatible(entry.Proxy, entry.Targets, candidate.Parameters) {
 		return Gated{}, admissionError(task.SchemaInvalid)
 	}
 	if class = authority.authorizePath(candidate.Execution.NetworkPath); class != 0 {

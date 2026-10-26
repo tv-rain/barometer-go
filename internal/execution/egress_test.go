@@ -29,8 +29,8 @@ import (
 // endpoint failure is not evidence of censorship.
 
 const (
-	primaryName  = "context.example"
-	fallbackName = "backup.example"
+	primaryName  = "8.8.8.8"
+	fallbackName = "9.9.9.9"
 	nlBody       = `{"country_code":"NL","region_code":"NL-NH","asn":64500,"classification_version":"0.1.0"}`
 )
 
@@ -170,7 +170,7 @@ func TestCcContextEndpointContract(t *testing.T) {
 		t.Fatalf("request %+v", r)
 	}
 	raw := string(e.primary.Raw())
-	if !strings.HasPrefix(raw, "GET /network-context HTTP/1.1\r\nHost: context.example\r\n") {
+	if !strings.HasPrefix(raw, "GET /network-context HTTP/1.1\r\nHost: 8.8.8.8\r\n") {
 		t.Fatalf("request head %q", raw)
 	}
 	for _, leak := range []string{"User-Agent", "Accept-Encoding", "Cookie", "Authorization", "campaign-1", "TCP-01", connectionCode, "127.0.0.1", "run", "attempt"} {
@@ -186,7 +186,7 @@ func TestCcContextEndpointContract(t *testing.T) {
 // operation bound of 5,000 ms on the engine clock stops a stalled primary.
 // requirement-ref: REQ-CONTEXT-0010
 // requirement-ref: REQ-CONTEXT-0015
-// requirement-ref: REQ-CONTEXT-0020
+// requirement-ref: REQ-CONTEXT-0043
 // requirement-ref: REQ-CONTEXT-0021
 func TestContextEndpointResponses(t *testing.T) {
 	deBody := `{"country_code":"DE","classification_version":"0.1.0"}`
@@ -445,7 +445,7 @@ func proxyFor(t *testing.T, e *endpointPair, cfg loopback.ProxyConfig) *loopback
 // its own key; a proxy that cannot carry the lookup leaves egress
 // unavailable, which blocks only a task that requires it. NET-05 steps
 // sharing one snapshot need the NET-05 runner (DEV-454).
-// requirement-ref: REQ-PROXY-0023
+// requirement-ref: REQ-PROXY-0045
 // requirement-ref: REQ-PROXY-0024
 // requirement-ref: REQ-PROXY-0025
 // requirement-ref: REQ-CONTEXT-0017
@@ -586,7 +586,7 @@ func TestCcExecutionFieldsNetworkFieldsNetworkContextRequirements(t *testing.T) 
 		`"network":{"context":{"allowed_asns":[64500]}}`,
 		`"network":{"context":{"allowed_providers":["example"]}}`,
 		`"network":{"context":{"allowed_operators":["example"]}}`,
-		`"network":{"context":{"primary_endpoint":"https://context.example/"}}`,
+		`"network":{"context":{"primary_endpoint":"https://8.8.8.8/"}}`,
 		`"network":{"context":{"required_fields":["city"]}}`,
 		`"network":{"context":{"allowed_country_codes":["nl"]}}`,
 	} {
@@ -625,5 +625,51 @@ func TestCcExecutionFieldsNetworkFieldsNetworkContextRequirements(t *testing.T) 
 	runOnce(t, f)
 	if got := e.routes.Dialed(); !slices.Equal(got, []string{primaryName + ":443", fallbackName + ":443"}) {
 		t.Fatalf("dialed %q", got)
+	}
+}
+
+// Hostname context configuration stays valid, but proxy acquisition skips it
+// without DNS/CONNECT or direct fallback. Required fields prevent the test
+// from starting; optional context leaves a compatible test executable.
+// requirement-ref: REQ-PROXY-0045
+// requirement-ref: REQ-CONTEXT-0043
+func TestProxyHostnameContextUnavailable(t *testing.T) {
+	for _, required := range []bool{false, true} {
+		e := newEndpoints(t, ok(nlBody), ok(nlBody))
+		p := proxyFor(t, e, loopback.ProxyConfig{})
+		f := newFixture(t, schedule(1), connected(t))
+		src, err := networkcontext.NewProxy(f.ctx.net, proxyGeneration, connectionCode)
+		if err != nil {
+			t.Fatal(err)
+		}
+		look, err := networkcontext.NewLookup(networkcontext.Endpoints{Primary: "https://context.example/network-context", Fallback: "https://backup.example/network-context"}, classificationApprovals, e.ca.Pool(), f.clock, networkcontext.NewCache())
+		if err != nil {
+			t.Fatal(err)
+		}
+		src, err = src.WithLookup(look)
+		if err != nil {
+			t.Fatal(err)
+		}
+		f.plan.Context = src
+		f.plan.Dialers = proxyDialers(t, p.Port())
+		f.plan.Result = resultDecoder(t, src, proxyGeneration)
+		if required {
+			f.plan.Network.Context = task.ContextRequirements{RequiredFields: []string{"country_code"}}
+		}
+		// Country is a required field only when it has a task allowlist.
+		if required {
+			f.plan.Network.Context.AllowedCountryCodes = []string{"NL"}
+		}
+		rec := runOnce(t, f)[0]
+		if required {
+			if rec.Execution.State != "not_run" || rec.Execution.Reason != "network_context_unavailable" || rec.Measurement != nil || len(rec.NetworkContext) != 0 {
+				t.Fatalf("required: %+v", rec)
+			}
+		} else if rec.Execution.State != "completed" || egressOf(t, rec)["status"] != "unavailable" {
+			t.Fatalf("optional: %+v", rec)
+		}
+		if p.Counts().Accepted != 0 || len(e.routes.Dialed()) != 0 || len(e.primary.Requests()) != 0 || len(e.fallback.Requests()) != 0 {
+			t.Fatal("hostname lookup made network contact")
+		}
 	}
 }

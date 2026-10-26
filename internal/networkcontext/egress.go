@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/x509"
 	"errors"
+	"net/netip"
 	"net/url"
 	"strconv"
 	"sync"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/tv-rain/barometer-go/internal/jsondecode"
 	"github.com/tv-rain/barometer-go/internal/model/observation"
+	"github.com/tv-rain/barometer-go/internal/model/task"
 )
 
 // Registered values (REQ-CONTEXT-0015, REQ-CONTEXT-0022).
@@ -106,13 +108,13 @@ type classification struct {
 }
 
 // acquire returns the classification for the key in the bounded order of
-// REQ-CONTEXT-0020: a fresh cache entry, otherwise one request to the
+// REQ-CONTEXT-0043: a fresh cache entry, otherwise one request to the
 // primary, otherwise one request to the fallback through the same dialer.
 // It reports the source, or false when no endpoint produced a valid
 // response. It never retries an endpoint, never changes the path and caches
 // no failure. Each operation ends with ctx and within the operation bound.
 // requirement-ref: REQ-CONTEXT-0015
-// requirement-ref: REQ-CONTEXT-0020
+// requirement-ref: REQ-CONTEXT-0043
 // requirement-ref: REQ-CONTEXT-0021
 func (l *Lookup) acquire(ctx context.Context, key cacheKey, fetch Fetch, valid func(classification) bool) (classification, string, bool) {
 	if c, ok := l.cache.get(l.epoch, key, l.clock.Now(), l.freshness); ok && valid(c) {
@@ -121,6 +123,11 @@ func (l *Lookup) acquire(ctx context.Context, key cacheKey, fetch Fetch, valid f
 	for i, u := range l.endpoints {
 		if ctx.Err() != nil {
 			break
+		}
+		if key.path == "proxy" {
+			if a, err := netip.ParseAddr(u.Hostname()); err != nil || !task.PublicAddress(a) {
+				continue
+			}
 		}
 		c, err := l.fetch(ctx, u, fetch)
 		if err != nil || !valid(c) {

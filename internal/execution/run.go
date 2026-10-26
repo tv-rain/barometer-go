@@ -160,6 +160,7 @@ type Plan struct {
 	Result         *result.Decoder
 	Context        ContextSource
 	Dialers        DialerSource
+	Targets        TargetCheck   // nil grants no network destination
 	Path           PathCheck     // the proxy path's pre-attempt check; nil on the direct path
 	Preconditions  Preconditions // optional attempt-start check
 }
@@ -390,7 +391,11 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 	// does not start the test.
 	if actx.Err() == nil && snap.Acquires() {
 		if d, derr := p.Dialers.Dialer(n); derr == nil && d != nil {
-			snap, err = snap.Acquire(actx, ContextFetch(d))
+			var policy AddressPolicy = PublicAddresses{}
+			if targets, ok := p.Targets.(*Targets); ok {
+				policy = targets.policy
+			}
+			snap, err = snap.Acquire(actx, contextFetcher(d, policy))
 		}
 	}
 	if actx.Err() != nil {
@@ -431,7 +436,8 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 		return a, measurement.Usage{}, v, err
 	}
 	s := newScope(actx, dialer, p.Limits, cancel)
-	out, err := runner.Run(actx, measurement.Input{Parameters: p.Parameters, Dialer: s, Start: s.Start})
+	s.targets = p.Targets
+	out, err := runner.Run(actx, measurement.Input{Parameters: p.Parameters, Dialer: s, Start: s.Start, Redirect: s.Redirect})
 	s.close()
 	usage := s.Usage()
 	running, _ := pending.Start()
@@ -454,9 +460,13 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 		return a, usage, v, err
 	}
 	// An exhausted budget or a path failure stopped the active operation
-	// before the runner produced this outcome, so the attempt is incomplete.
+	// before the runner produced this outcome. State follows the actual test start.
 	if reason, ok := cutShort(actx); ok {
-		a, v, err := e.stopped(p, running, reason, &stable, runID, n, started)
+		at := pending
+		if s.Started() {
+			at = running
+		}
+		a, v, err := e.stopped(p, at, reason, &stable, runID, n, started)
 		return a, usage, v, err
 	}
 	completed, _ := running.Complete()

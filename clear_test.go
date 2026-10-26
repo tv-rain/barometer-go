@@ -402,6 +402,7 @@ func TestClearingCoversEveryAdapter(t *testing.T) {
 		"registry":       "exempt: copy of the adapters' registry",
 		"contextCache":   "cleared: eraser drops the in-memory egress cache",
 		"directDialers":  "exempt: test seam for direct dialers; holds no state",
+		"addressPolicy":  "exempt: trusted static address policy; no retained measurement state",
 	}
 	for typ, want := range map[reflect.Type]map[string]string{reflect.TypeOf(adapters{}): covered, reflect.TypeOf(runAdapters{}): runCovered} {
 		if typ.NumField() != len(want) {

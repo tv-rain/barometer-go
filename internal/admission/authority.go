@@ -19,6 +19,7 @@ type Authority struct {
 	// Registration IDs permitted by both the issuer and local policy, narrowed
 	// by target matching to those the task's destinations matched.
 	registrationIDs []string
+	targets         []task.TargetRegistration
 	// Ceilings after intersection, narrowed to the task's declared values.
 	limits                                    task.PolicyLimits
 	maxRisk                                   task.Risk
@@ -121,7 +122,11 @@ func (a *Authority) authorizePath(path string) task.AdmissionCode {
 // requirement-ref: REQ-SAFETY-0029
 func (a *Authority) evaluateRisk(policy task.LocalPolicy, baseline task.Risk, declared string) task.AdmissionCode {
 	risk := restrictive(baseline, declaredRisk(declared))
-	for _, id := range a.registrationIDs {
+	riskIDs := slices.Clone(a.registrationIDs)
+	for _, target := range a.targets {
+		riskIDs = appendNew(riskIDs, target.ID)
+	}
+	for _, id := range riskIDs {
 		r, ok := policy.Target(id)
 		if !ok {
 			r.BaselineRisk = task.UnknownRisk

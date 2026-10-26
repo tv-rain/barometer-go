@@ -328,7 +328,11 @@ func TestGateTargetRegistrationSingleComponentMutations(t *testing.T) {
 	}
 	for _, c := range cases {
 		_, err := h.embedded(t, tupleTask(c.test, c.edits, c.extra))
-		expect(t, c.test+" "+c.name, err, task.TargetNotRegistered)
+		want := task.TargetNotRegistered
+		if c.test == "HTTP-01" && c.name == "HTTP path" {
+			want = task.SchemaInvalid
+		}
+		expect(t, c.test+" "+c.name, err, want)
 	}
 }
 
@@ -443,7 +447,7 @@ func TestGateTargetRegistrationAuthority(t *testing.T) {
 		{"proxy registration for a proxy task", "TCP-01", target("tcp-endpoint", func(r *task.TargetRegistration) { r.Paths = task.Paths{Proxy: true} }), map[string]any{"execution.network_path": "proxy"}, 0},
 		{"redirect not permitting the path", "HTTP-01", func(in *task.PolicyInput) {
 			target("http-status", func(r *task.TargetRegistration) { r.Paths = task.Paths{Direct: true, Proxy: true} })(in)
-		}, map[string]any{"execution.network_path": "proxy"}, task.TargetNotRegistered},
+		}, map[string]any{"execution.network_path": "proxy"}, task.SchemaInvalid},
 		// The same tuple registered twice: the first that satisfies every term
 		// matches, so a proxy-only duplicate does not hide a direct one.
 		{"duplicate tuple on another path", "TCP-01", func(in *task.PolicyInput) {
@@ -589,6 +593,58 @@ func TestTargetRegistrationRejectsCredentialsAndInterpolation(t *testing.T) {
 		in := tuplePolicy(func(in *task.PolicyInput) { in.Targets[0].Tuple = tuple })
 		if _, err := task.NewLocalPolicy(in); !errors.Is(err, task.ErrTrustModel) {
 			t.Errorf("%s: registration accepted", name)
+		}
+	}
+}
+
+// Redirect authority is bounded to the issuer/local-policy intersection, is
+// owned by the admitted snapshot and contributes its risk before execution.
+// requirement-ref: REQ-TRUST-0016
+// requirement-ref: REQ-SAFETY-0029
+func TestGateCarriesAuthorizedRedirectSnapshot(t *testing.T) {
+	raw := tupleTask("HTTP-01", map[string]any{"redirects": nil}, nil)
+	h := tupleHarness(t, nil)
+	g, err := h.embedded(t, raw)
+	expect(t, "initial with deferred redirect", err, 0)
+	got := admission.GatedTargets(g)
+	if len(got) != 2 || got[0].ID != "http-status" || got[1].ID != "http-redirect" {
+		t.Fatalf("snapshot=%v", got)
+	}
+	got[0].RedirectIDs[0] = "mutated"
+	got[0].Tuple.BodyChecks[0].Value = "mutated"
+	again := admission.GatedTargets(g)
+	if again[0].RedirectIDs[0] != "http-redirect" || again[0].Tuple.BodyChecks[0].Value != "ok" {
+		t.Fatal("snapshot alias escaped")
+	}
+	for _, authorized := range []bool{false, true} {
+		h = tupleHarness(t, func(in *task.PolicyInput) {
+			for i := range in.Targets {
+				if in.Targets[i].ID == "http-redirect" {
+					in.Targets[i].BaselineRisk = task.HighRisk
+				}
+			}
+			for _, p := range []*task.Permissions{&in.Permissions, &in.Issuers[0].Permissions} {
+				p.MaxRisk = task.LowRisk
+				p.AllowMediumRisk = false
+			}
+			if !authorized {
+				var ids []string
+				for _, id := range in.Issuers[0].Permissions.RegistrationIDs {
+					if id != "http-redirect" {
+						ids = append(ids, id)
+					}
+				}
+				in.Issuers[0].Permissions.RegistrationIDs = ids
+			}
+		})
+		g, err = h.embedded(t, raw)
+		if authorized {
+			expect(t, "reachable high-risk redirect", err, task.IssuerNotAuthorized)
+		} else {
+			expect(t, "unauthorized redirect excluded", err, 0)
+			if len(admission.GatedTargets(g)) != 1 {
+				t.Fatal("unauthorized redirect carried into execution")
+			}
 		}
 	}
 }

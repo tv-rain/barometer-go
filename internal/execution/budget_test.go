@@ -214,7 +214,7 @@ func TestZeroLimitsPermitNoTraffic(t *testing.T) {
 	f.plan.Limits = limits(0, 0, 0)
 	f.plan.Parameters = loopback.ExchangeParameters{Address: srv.Address(), Connections: 1, Exchanges: 1, Request: 1, Reply: 1}
 	o := <-f.start(t, f.run, loopback.Exchange{})
-	f.expect(t, o.rep, o.err, nil, []want{stoppedByBudget}, nil)
+	f.expect(t, o.rep, o.err, nil, []want{{"not_run", "resource_limit", ""}}, nil)
 	if o.rep.Attempts[0].Usage != (measurement.Usage{}) || f.dialers.Issued()[0].Dials() != 0 || srv.Accepted() != 0 {
 		t.Fatalf("usage %+v, dials %d, accepted %d", o.rep.Attempts[0].Usage, f.dialers.Issued()[0].Dials(), srv.Accepted())
 	}

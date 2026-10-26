@@ -1,6 +1,7 @@
 """Regression tests for CI inventory loss and reference consistency; public tooling owns semantic claim tests."""
 
 import copy
+import re
 import importlib.util
 from pathlib import Path
 import subprocess
@@ -116,6 +117,33 @@ class ReferenceTests(unittest.TestCase):
                 self.assertEqual(len(errors), 1)
                 self.assertIn(f"internal/a/a.go:7: requirement-ref {identity}", errors[0])
                 self.assertIn(reason, errors[0])
+
+    def test_new_active_allocation_warns_until_next_milestone(self):
+        errors, warnings = ci.reference_findings(
+            [("internal/new/new_test.go", 5, "REQ-TASK-0004")], self.manifests,
+            self.catalog, {"REQ-TASK-0001", "REQ-TASK-0002", "REQ-TASK-0003"})
+        self.assertEqual(errors, [])
+        self.assertEqual(warnings, ["internal/new/new_test.go:5: requirement-ref REQ-TASK-0004 "
+                                    "was allocated after the milestone catalogs; mapping awaits the next milestone update"])
+
+    def test_new_allocation_warning_does_not_hide_inventory_loss(self):
+        self.manifests["a.json"]["requirements"].pop()
+        errors, warnings = ci.reference_findings(
+            [("internal/b/b.go", 1, "REQ-TASK-0003"), ("internal/new/new.go", 2, "REQ-TASK-0004")],
+            self.manifests, self.catalog, {"REQ-TASK-0001", "REQ-TASK-0002", "REQ-TASK-0003"})
+        self.assertEqual(len(errors), 1)
+        self.assertIn("REQ-TASK-0003 is absent from the current manifests", errors[0])
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("REQ-TASK-0004 was allocated after", warnings[0])
+
+    def test_milestone_metadata_never_allows_unknown_or_retired_ids(self):
+        errors, warnings = ci.reference_findings(
+            [("internal/a/a.go", 1, "REQ-TASK-9999"), ("internal/a/a.go", 2, "REQ-TASK-0002")],
+            self.manifests, self.catalog, {"REQ-TASK-0001"})
+        self.assertEqual(len(errors), 2)
+        self.assertIn("unknown", errors[0])
+        self.assertIn("retired", errors[1])
+        self.assertEqual(warnings, [])
 
     def test_unlinked_files_warn_until_the_milestone_update(self):
         for path, target in (("internal/c/c.go", "an implementation location"),
@@ -234,6 +262,14 @@ class CasePlanTests(unittest.TestCase):
         # An RV- ID with an automated-style plan is still rejected for missing review structure.
         self.case("RV-CC-A")["scope"] = AUTOMATED_PLAN
         self.assertTrue(ci.case_plan_errors(self.manifests))
+
+
+class SourcePinTests(unittest.TestCase):
+    def test_ci_checkout_matches_reference_pin(self):
+        workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/ci.yml").read_text()
+        match = re.search(r"repository: tv-rain/barometer-spec\n\s+ref: ([0-9a-f]{40})", workflow)
+        self.assertIsNotNone(match)
+        self.assertEqual(match.group(1), ci.REFERENCE_REVISION)
 
 
 class PreflightTests(unittest.TestCase):

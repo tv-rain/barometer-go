@@ -22,8 +22,8 @@ import (
 // endpoint is contacted; these are synthetic cases, not field evidence.
 
 const (
-	contextPrimary  = "https://context.example/network-context"
-	contextFallback = "https://backup.example/network-context"
+	contextPrimary  = "https://8.8.8.8/network-context"
+	contextFallback = "https://9.9.9.9/network-context"
 	contextConfig   = `{"network_context":{"primary_endpoint":"` + contextPrimary + `","fallback_endpoint":"` + contextFallback + `"}}`
 	nlClassified    = `{"country_code":"NL","region_code":"NL-NH","asn":64500,"classification_version":"0.1.0"}`
 )
@@ -47,14 +47,14 @@ func contextHarness(t *testing.T, primary contextendpoint.Response) (*harness, *
 		t.Fatal(err)
 	}
 	var e contextEndpoints
-	if e.primary, err = contextendpoint.Listen(ca, "context.example", primary); err != nil {
+	if e.primary, err = contextendpoint.Listen(ca, "8.8.8.8", primary); err != nil {
 		t.Fatal(err)
 	}
-	if e.fallback, err = contextendpoint.Listen(ca, "backup.example", contextendpoint.Response{Status: 503}); err != nil {
+	if e.fallback, err = contextendpoint.Listen(ca, "9.9.9.9", contextendpoint.Response{Status: 503}); err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = e.primary.Close(); _ = e.fallback.Close() })
-	e.routes = contextendpoint.NewRoutes(map[string]string{"context.example:443": e.primary.Address(), "backup.example:443": e.fallback.Address()})
+	e.routes = contextendpoint.NewRoutes(map[string]string{"8.8.8.8:443": e.primary.Address(), "9.9.9.9:443": e.fallback.Address()})
 	h.adapters.approvals = config.Approvals{Endpoints: []string{contextPrimary, contextFallback}, ConnectionCodes: []string{"outline_mobileproxy"}}
 	h.adapters.contextApprovals = observation.ContextApprovals{ClassificationVersions: []string{"0.1.0"}, CountryCodes: []string{"NL"}, RegionCodes: []string{"NL-NH"}}
 	h.adapters.contextRoots = ca.Pool()
@@ -134,9 +134,9 @@ func TestCcContextHostInitialization(t *testing.T) {
 
 	for name, cfg := range map[string]string{
 		"unapproved":      `{"network_context":{"primary_endpoint":"https://other.example/network-context"}}`,
-		"http":            `{"network_context":{"primary_endpoint":"http://context.example/network-context"}}`,
-		"credentials":     `{"network_context":{"primary_endpoint":"https://user:secret@context.example/network-context"}}`,
-		"fragment":        `{"network_context":{"primary_endpoint":"https://context.example/network-context#x"}}`,
+		"http":            `{"network_context":{"primary_endpoint":"http://8.8.8.8/network-context"}}`,
+		"credentials":     `{"network_context":{"primary_endpoint":"https://user:secret@8.8.8.8/network-context"}}`,
+		"fragment":        `{"network_context":{"primary_endpoint":"https://8.8.8.8/network-context#x"}}`,
 		"no primary":      `{"network_context":{"fallback_endpoint":"` + contextFallback + `"}}`,
 		"unknown field":   `{"network_context":{"primary_endpoint":"` + contextPrimary + `","discovery":true}}`,
 		"fallback list":   `{"network_context":{"primary_endpoint":"` + contextPrimary + `","fallback_endpoint":["` + contextFallback + `"]}}`,
@@ -189,7 +189,7 @@ func mustCA(t *testing.T) *contextendpoint.CA {
 // requirement-ref: REQ-CONTEXT-0023
 // requirement-ref: REQ-CONTEXT-0024
 func TestEgressCacheLifecycle(t *testing.T) {
-	h, _, e := contextHarness(t, contextendpoint.Response{Body: nlClassified})
+	h, r, e := contextHarness(t, contextendpoint.Response{Body: nlClassified})
 	c := initializeWith(t, h, contextConfig)
 	cache := c.bound.run.contextCache
 	startAndWait(t, h, c, runTask("cache-1", "", "", false))
@@ -209,6 +209,7 @@ func TestEgressCacheLifecycle(t *testing.T) {
 
 	in := synPolicyInput(3, "reg-a", func(p *task.Permissions) { p.Tests = []task.TestVersion{tcp01} })
 	in.Targets[0].Test = tcp01
+	in.Targets[0].Tuple = *loopbackTargets(r.address).tuple
 	next, err := task.NewLocalPolicy(in)
 	if err != nil {
 		t.Fatal(err)
@@ -270,7 +271,7 @@ func TestEgressCacheProxyChange(t *testing.T) {
 		t.Fatal(err)
 	}
 	h.adapters.registry = reg
-	resolve := map[string]string{"context.example:443": e.primary.Address(), "backup.example:443": e.fallback.Address()}
+	resolve := map[string]string{"8.8.8.8:443": e.primary.Address(), "9.9.9.9:443": e.fallback.Address()}
 	first, err := loopback.ListenProxy(loopback.ProxyConfig{Resolve: resolve})
 	if err != nil {
 		t.Fatal(err)
@@ -292,7 +293,7 @@ func TestEgressCacheProxyChange(t *testing.T) {
 	if n := len(e.routes.Dialed()); n != directDials {
 		t.Fatalf("a proxy run dialed the direct path: %q", e.routes.Dialed())
 	}
-	if !strings.HasPrefix(first.Counts().Requests[0], "CONNECT context.example:443 ") {
+	if !strings.HasPrefix(first.Counts().Requests[0], "CONNECT 8.8.8.8:443 ") {
 		t.Fatalf("CONNECT requests %q", first.Counts().Requests)
 	}
 
@@ -300,7 +301,7 @@ func TestEgressCacheProxyChange(t *testing.T) {
 		t.Fatalf("SetProxy: %v, %d entries", err, cache.Len())
 	}
 	res = startAndWait(t, h, c, runTask("proxy-2", "", `"network_path":"proxy"`, false))
-	if eg := res.NetworkContext.Egress; eg["lookup_source"] != "primary" || len(second.Counts().Requests) == 0 || !strings.HasPrefix(second.Counts().Requests[0], "CONNECT context.example:443 ") {
+	if eg := res.NetworkContext.Egress; eg["lookup_source"] != "primary" || len(second.Counts().Requests) == 0 || !strings.HasPrefix(second.Counts().Requests[0], "CONNECT 8.8.8.8:443 ") {
 		t.Fatalf("after SetProxy %v, %q", eg, second.Counts().Requests)
 	}
 	if res := startAndWait(t, h, c, runTask("direct-2", "", "", false)); res.NetworkContext.Egress["lookup_source"] != "cache" {
@@ -312,5 +313,5 @@ func TestEgressCacheProxyChange(t *testing.T) {
 }
 
 func proxyRegistry(r *echoRunner) (*registry.Registry, error) {
-	return registry.New([]registry.Entry{{Test: tcp01, Codec: tcpCodec{}, BaselineRisk: task.LowRisk, Targets: tcpTargets{}, Proxy: proxyCompatible{}, Runner: r}})
+	return registry.New([]registry.Entry{{Test: tcp01, Codec: tcpCodec{}, BaselineRisk: task.LowRisk, Targets: loopbackTargets(r.address), Proxy: proxyCompatible{}, Runner: r}})
 }

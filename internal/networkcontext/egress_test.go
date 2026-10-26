@@ -27,8 +27,8 @@ import (
 // not field or platform evidence.
 
 const (
-	primaryURL  = "https://context.example/network-context"
-	fallbackURL = "https://backup.example/network-context"
+	primaryURL  = "https://8.8.8.8/network-context"
+	fallbackURL = "https://9.9.9.9/network-context"
 	fullBody    = `{"country_code":"NL","region_code":"NL-NH","asn":64500,"classification_version":"0.1.0"}`
 )
 
@@ -149,7 +149,7 @@ func wantEgress(t *testing.T, name string, e observation.Egress, status, source 
 // failures are not cached; the cache key is exactly the access-network
 // generation, path and proxy generation; freshness and every invalidation
 // event. The cache is an in-memory value with no persistence port.
-// requirement-ref: REQ-CONTEXT-0020
+// requirement-ref: REQ-CONTEXT-0043
 // requirement-ref: REQ-CONTEXT-0021
 // requirement-ref: REQ-CONTEXT-0022
 // requirement-ref: REQ-CONTEXT-0023
@@ -157,7 +157,7 @@ func wantEgress(t *testing.T, name string, e observation.Egress, status, source 
 func TestCcContextAcquisitionAndFallback(t *testing.T) {
 	t.Run("primary success", func(t *testing.T) {
 		w := newWorld(t, fallbackURL)
-		w.ep.body("context.example", fullBody)
+		w.ep.body("8.8.8.8", fullBody)
 		e := w.acquire(0)
 		wantEgress(t, "primary", e, "fresh", "primary")
 		if e.CountryCode != "NL" || e.RegionCode != "NL-NH" || e.ASN == nil || *e.ASN != 64500 || e.ClassificationVersion != "0.1.0" || w.ep.count() != 1 {
@@ -166,8 +166,8 @@ func TestCcContextAcquisitionAndFallback(t *testing.T) {
 	})
 	t.Run("valid primary with unknown values", func(t *testing.T) {
 		w := newWorld(t, fallbackURL)
-		w.ep.body("context.example", `{"classification_version":"0.1.0"}`)
-		w.ep.body("backup.example", fullBody)
+		w.ep.body("8.8.8.8", `{"classification_version":"0.1.0"}`)
+		w.ep.body("9.9.9.9", fullBody)
 		e := w.acquire(0)
 		wantEgress(t, "unknown values", e, "fresh", "primary")
 		if e.CountryCode != "" || e.ASN != nil || w.ep.count() != 1 {
@@ -175,25 +175,25 @@ func TestCcContextAcquisitionAndFallback(t *testing.T) {
 		}
 	})
 	for name, primary := range map[string]func(*endpoints){
-		"unreachable":      func(e *endpoints) { e.fail("context.example") },
-		"malformed":        func(e *endpoints) { e.body("context.example", `{"country_code":`) },
-		"missing version":  func(e *endpoints) { e.body("context.example", `{"country_code":"NL"}`) },
-		"returned address": func(e *endpoints) { e.body("context.example", `{"ip":"192.0.2.1","classification_version":"0.1.0"}`) },
+		"unreachable":      func(e *endpoints) { e.fail("8.8.8.8") },
+		"malformed":        func(e *endpoints) { e.body("8.8.8.8", `{"country_code":`) },
+		"missing version":  func(e *endpoints) { e.body("8.8.8.8", `{"country_code":"NL"}`) },
+		"returned address": func(e *endpoints) { e.body("8.8.8.8", `{"ip":"192.0.2.1","classification_version":"0.1.0"}`) },
 		"unapproved country": func(e *endpoints) {
-			e.body("context.example", `{"country_code":"FR","classification_version":"0.1.0"}`)
+			e.body("8.8.8.8", `{"country_code":"FR","classification_version":"0.1.0"}`)
 		},
-		"unapproved version": func(e *endpoints) { e.body("context.example", `{"classification_version":"9.9.9"}`) },
+		"unapproved version": func(e *endpoints) { e.body("8.8.8.8", `{"classification_version":"9.9.9"}`) },
 		"region without country": func(e *endpoints) {
-			e.body("context.example", `{"region_code":"NL-NH","classification_version":"0.1.0"}`)
+			e.body("8.8.8.8", `{"region_code":"NL-NH","classification_version":"0.1.0"}`)
 		},
 		"oversized": func(e *endpoints) {
-			e.body("context.example", `{"classification_version":"0.1.0"}`+strings.Repeat(" ", 4096))
+			e.body("8.8.8.8", `{"classification_version":"0.1.0"}`+strings.Repeat(" ", 4096))
 		},
 	} {
 		t.Run("fallback after "+name, func(t *testing.T) {
 			w := newWorld(t, fallbackURL)
 			primary(w.ep)
-			w.ep.body("backup.example", `{"country_code":"DE","classification_version":"0.1.0"}`)
+			w.ep.body("9.9.9.9", `{"country_code":"DE","classification_version":"0.1.0"}`)
 			e := w.acquire(0)
 			wantEgress(t, name, e, "fresh", "fallback")
 			if e.CountryCode != "DE" || w.ep.count() != 2 {
@@ -203,19 +203,19 @@ func TestCcContextAcquisitionAndFallback(t *testing.T) {
 	}
 	t.Run("both fail", func(t *testing.T) {
 		w := newWorld(t, fallbackURL)
-		w.ep.fail("context.example")
-		w.ep.fail("backup.example")
+		w.ep.fail("8.8.8.8")
+		w.ep.fail("9.9.9.9")
 		wantEgress(t, "both fail", w.acquire(0), "unavailable", "none")
 		if n := w.ep.count(); n != 2 {
 			t.Fatalf("%d requests, want one per endpoint", n)
 		}
 		// A failure is not cached: the next acquisition asks again.
-		w.ep.body("context.example", fullBody)
+		w.ep.body("8.8.8.8", fullBody)
 		wantEgress(t, "after failure", w.acquire(0), "fresh", "primary")
 	})
 	t.Run("no fallback configured", func(t *testing.T) {
 		w := newWorld(t, "")
-		w.ep.fail("context.example")
+		w.ep.fail("8.8.8.8")
 		wantEgress(t, "no fallback", w.acquire(0), "unavailable", "none")
 		if w.ep.count() != 1 {
 			t.Fatal("more than one request")
@@ -223,7 +223,7 @@ func TestCcContextAcquisitionAndFallback(t *testing.T) {
 	})
 	t.Run("cache key and freshness", func(t *testing.T) {
 		w := newWorld(t, fallbackURL)
-		w.ep.body("context.example", fullBody)
+		w.ep.body("8.8.8.8", fullBody)
 		w.acquire(0)
 		w.ep.count()
 		wantEgress(t, "same key", w.acquire(0), "cached", "cache")
@@ -304,12 +304,12 @@ func TestCcContextEndpointContract(t *testing.T) {
 		"empty":           ``,
 	} {
 		w := newWorld(t, "")
-		w.ep.body("context.example", body)
+		w.ep.body("8.8.8.8", body)
 		wantEgress(t, name, w.acquire(0), "unavailable", "none")
 	}
 
 	w := newWorld(t, "")
-	w.ep.body("context.example", `{"classification_version":"0.1.0"}`)
+	w.ep.body("8.8.8.8", `{"classification_version":"0.1.0"}`)
 	wantEgress(t, "version only", w.acquire(0), "fresh", "primary")
 	if len(w.ep.roots) != 1 || w.ep.roots[0] != nil {
 		t.Fatal("fetch did not receive the lookup's roots")
@@ -322,7 +322,7 @@ func TestCcContextEndpointContract(t *testing.T) {
 	}
 	for n, want := range map[int]string{networkcontext.MaxResponseBytes: "fresh", networkcontext.MaxResponseBytes + 1: "unavailable"} {
 		w := newWorld(t, "")
-		w.ep.body("context.example", padded(n))
+		w.ep.body("8.8.8.8", padded(n))
 		if e := w.acquire(0); e.Status != want {
 			t.Fatalf("%d bytes: %s", n, e.Status)
 		}
@@ -332,7 +332,7 @@ func TestCcContextEndpointContract(t *testing.T) {
 	// accepted, the operation is stopped at 5,000 ms.
 	for d, want := range map[time.Duration]string{networkcontext.OperationTimeout - time.Millisecond: "fresh", networkcontext.OperationTimeout + time.Millisecond: "unavailable"} {
 		w := newWorld(t, "")
-		w.ep.reply["context.example"] = func(ctx context.Context) ([]byte, error) {
+		w.ep.reply["8.8.8.8"] = func(ctx context.Context) ([]byte, error) {
 			_ = w.clock.Advance(d)
 			if ctx.Err() != nil {
 				return nil, ctx.Err()
@@ -391,18 +391,18 @@ func TestCcContextFormatEgressObject(t *testing.T) {
 			path, code = "proxy", ",connection_code"
 		}
 		w := newWorld(t, fallbackURL)
-		w.ep.fail("context.example")
-		w.ep.fail("backup.example")
+		w.ep.fail("8.8.8.8")
+		w.ep.fail("9.9.9.9")
 		e := egressOf(t, w, proxy)
 		if keys(e) != sortedKeys("lookup_source,network_path,status"+code) || e["status"] != "unavailable" || e["lookup_source"] != "none" || e["network_path"] != path {
 			t.Fatalf("%s unavailable: %v", path, e)
 		}
-		w.ep.body("backup.example", `{"classification_version":"0.1.0"}`)
+		w.ep.body("9.9.9.9", `{"classification_version":"0.1.0"}`)
 		e = egressOf(t, w, proxy)
 		if keys(e) != sortedKeys("classification_version,lookup_source,network_path,status"+code) || e["status"] != "fresh" || e["lookup_source"] != "fallback" {
 			t.Fatalf("%s fallback with unknown values: %v", path, e)
 		}
-		w.ep.body("context.example", fullBody)
+		w.ep.body("8.8.8.8", fullBody)
 		w.cache.Clear()
 		w.relookup(fallbackURL)
 		e = egressOf(t, w, proxy)
@@ -445,10 +445,10 @@ func TestAcquireWithoutLookup(t *testing.T) {
 	clock, cache := testkit.NewClock(time.Unix(0, 0)), networkcontext.NewCache()
 	for name, e := range map[string]networkcontext.Endpoints{
 		"no primary":   {},
-		"http":         {Primary: "http://context.example/"},
-		"credentials":  {Primary: "https://u:p@context.example/"},
-		"fragment":     {Primary: "https://context.example/#f"},
-		"bad fallback": {Primary: primaryURL, Fallback: "ftp://backup.example/"},
+		"http":         {Primary: "http://8.8.8.8/"},
+		"credentials":  {Primary: "https://u:p@8.8.8.8/"},
+		"fragment":     {Primary: "https://8.8.8.8/#f"},
+		"bad fallback": {Primary: primaryURL, Fallback: "ftp://9.9.9.9/"},
 	} {
 		if _, err := networkcontext.NewLookup(e, egressApprovals, nil, clock, cache); err == nil {
 			t.Fatal(name)
@@ -456,5 +456,41 @@ func TestAcquireWithoutLookup(t *testing.T) {
 	}
 	if _, err := networkcontext.NewLookup(networkcontext.Endpoints{Primary: primaryURL}, egressApprovals, nil, nil, cache); err == nil {
 		t.Fatal("lookup without a clock")
+	}
+}
+
+// No proxy context transport sees a hostname or prohibited IP endpoint. A
+// hostname remains valid configuration and continues to work on the direct
+// path through the scripted fetch; no direct fallback fills a proxy cache.
+// requirement-ref: REQ-PROXY-0045
+// requirement-ref: REQ-CONTEXT-0043
+func TestProxyContextHostnameEligibility(t *testing.T) {
+	for _, fallback := range []string{"https://backup.example/network-context", fallbackURL, "https://127.0.0.1/context"} {
+		w := newWorld(t, "")
+		var err error
+		w.look, err = networkcontext.NewLookup(networkcontext.Endpoints{Primary: "https://context.example/network-context", Fallback: fallback}, egressApprovals, nil, w.clock, w.cache)
+		if err != nil {
+			t.Fatal("hostname configuration became invalid", err)
+		}
+		w.ep.body("context.example", fullBody)
+		w.ep.body("backup.example", fullBody)
+		w.ep.body("9.9.9.9", fullBody)
+		eg := w.acquire(1)
+		if fallback == fallbackURL {
+			wantEgress(t, "eligible fallback", eg, "fresh", "fallback")
+			if w.ep.count() != 1 {
+				t.Fatal("hostname primary reached the transport")
+			}
+		} else {
+			wantEgress(t, "ineligible endpoints", eg, "unavailable", "none")
+			if w.ep.count() != 0 || w.cache.Len() != 0 {
+				t.Fatal("ineligible endpoint contacted or cached")
+			}
+		}
+		eg = w.acquire(0)
+		wantEgress(t, "direct hostname", eg, "fresh", "primary")
+		if w.ep.count() != 1 {
+			t.Fatal("direct hostname behavior changed")
+		}
 	}
 }

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net"
 	"slices"
 	"strconv"
 	"strings"
@@ -654,13 +653,12 @@ func TestCcExecutionEnvelope(t *testing.T) {
 // tunnel; cancellation and the deadline close the exchange.
 // requirement-ref: REQ-PROXY-0017
 // requirement-ref: REQ-PROXY-0018
-// requirement-ref: REQ-PROXY-0019
+// requirement-ref: REQ-PROXY-0043
 // requirement-ref: REQ-PROXY-0020
 func TestCcProxyHttpConnectBehavior(t *testing.T) {
 	target := newTLSTarget(t)
-	_, port, _ := net.SplitHostPort(target.Address())
-	p := scriptedProxy(t, loopback.ProxyConfig{Resolve: map[string]string{tlsName + ":" + port: target.Address()}})
-	for _, address := range []string{target.Address(), "TARGET.example.test:" + port} {
+	p := scriptedProxy(t, loopback.ProxyConfig{})
+	for _, address := range []string{target.Address(), target.Address()} {
 		c, err := dialOnce(t, p.Port(), "tcp", address)
 		if err != nil {
 			t.Fatal(err)
@@ -684,7 +682,7 @@ func TestCcProxyHttpConnectBehavior(t *testing.T) {
 		t.Fatalf("mismatched name accepted through the tunnel: %v", err)
 	}
 	counts := idle(t, p)
-	wantReqs := []string{connectRequest(target.Address()), connectRequest(tlsName + ":" + port), connectRequest(target.Address())}
+	wantReqs := []string{connectRequest(target.Address()), connectRequest(target.Address()), connectRequest(target.Address())}
 	if strings.Join(counts.Requests, "") != strings.Join(wantReqs, "") || counts.Accepted != 3 {
 		t.Fatalf("requests = %q", counts.Requests)
 	}
@@ -738,7 +736,7 @@ func TestCcProxyTaskSelection(t *testing.T) {
 // requirement-ref: REQ-PROXY-0028
 // requirement-ref: REQ-PROXY-0029
 // requirement-ref: REQ-PROXY-0030
-// requirement-ref: REQ-PROXY-0042
+// requirement-ref: REQ-PROXY-0046
 func TestCcProxyExecutionStates(t *testing.T) {
 	t.Run("preconditions", TestPathCheckMakesNoContact)
 	t.Run("connection failures", TestProxyFailuresAreExecutionStates)
