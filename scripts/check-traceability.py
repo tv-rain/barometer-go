@@ -21,8 +21,8 @@ INVENTORY_REVISION = "c06ce6b7b73b8520f35ce10982315fcb4d05615b"
 BASELINES = {
     "cross-cutting.json": ("5d01879cfd1d47396c780befa2567f7e90439948",
                            "d788a80754e9f3f55852601bf8df16db4b1a1808"),
-    "measurements.json": ("59d49364d85e48cc8e69c762d130a7a86dc1fe65",
-                          "c5f4e92e06936cb677c7a03e9769ff75b1f51874"),
+    "measurements.json": ("5d01879cfd1d47396c780befa2567f7e90439948",
+                          "178bda0c73bab64efaf0158f757edc316eeddd1a"),
 }
 # Earlier manifests are retained at the immutable commits where they were current, not as
 # committed copies (decision 0012); git history and CI report artifacts hold them.
