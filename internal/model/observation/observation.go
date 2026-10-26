@@ -309,6 +309,27 @@ func httpEncoding(d HTTPDetails) httpWire {
 	return w
 }
 
+// NewHTTP validates a minimized producer value using the enclosing test's bounds.
+func NewHTTP(contract, status string, duration int, failure string, d HTTPDetails, limits ProtocolLimits) (Observation, error) {
+	if contract != Contract {
+		return Observation{}, ErrVersion
+	}
+	if len(status) > 16 || len(failure) > 32 || len(d.AddressFamily) > 16 || len(d.Protocol) > 16 || len(d.ContentEncoding) > 16 || len(d.Checks) > 17 || d.Redirect != nil && len(d.Redirect.TerminalLocationClass) > 32 {
+		return Observation{}, ErrValue
+	}
+	b, err := json.Marshal(struct {
+		Type     string   `json:"type"`
+		Status   string   `json:"status"`
+		Duration int      `json:"duration_ms"`
+		Failure  string   `json:"failure,omitempty"`
+		Details  httpWire `json:"details"`
+	}{"http_exchange", status, duration, failure, httpEncoding(d)})
+	if err != nil {
+		return Observation{}, ErrValue
+	}
+	return DecodeProtocol(contract, b, limits)
+}
+
 func oneOf(s string, values ...string) bool { return slices.Contains(values, s) }
 func field(v *jsondecode.Value, name string) string {
 	x, ok := v.Lookup(name)

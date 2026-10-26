@@ -11,7 +11,6 @@ import (
 	"errors"
 	"io"
 	"net"
-	"net/netip"
 	"reflect"
 	"slices"
 	"syscall"
@@ -43,7 +42,7 @@ type Stream interface {
 // hostname validation always run against Roots, and nil Roots selects the
 // platform's system trust roots through crypto/x509.
 type Config struct {
-	ServerName string   // normalized DNS name; never an IP literal
+	ServerName string   // normalized DNS name or explicit IP, verified against the certificate
 	ALPN       []string // registered offer, in order; may be empty
 	Roots      *x509.CertPool
 }
@@ -79,7 +78,7 @@ func Handshake(ctx context.Context, clock Clock, family string, raw Stream, cfg 
 	if raw == nil {
 		return nil, observation.Observation{}, ErrInterrupted
 	}
-	if _, notIP := netip.ParseAddr(cfg.ServerName); ctx.Err() != nil || clock == nil || family != "ipv4" && family != "ipv6" || cfg.ServerName == "" || notIP == nil ||
+	if ctx.Err() != nil || clock == nil || family != "ipv4" && family != "ipv6" || cfg.ServerName == "" ||
 		observation.ValidateALPNOffer(observation.Contract, cfg.ALPN) != nil {
 		_ = raw.Close()
 		return nil, observation.Observation{}, ErrInterrupted

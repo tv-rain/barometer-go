@@ -37,6 +37,8 @@ The test-only `internal/testkit/contextendpoint` subpackage (DEV-647) provides s
 
 The loopback subpackage supplies `ListenDNS`, a bounded UDP/TCP server on `127.0.0.1` with scripted replies and independent query/byte counters. Its synthetic response builder uses `golang.org/x/net/dns/dnsmessage`, independently of the production DNS decoder. It closes accepted streams when stopped. Production-registry tests admit public resolver tuples and map only the checked transport authority to this fixture, without a production loopback exemption or external contact.
 
+`loopback.ListenHTTP` provides a scripted HTTPS server on an ephemeral loopback port with a synthetic CA/leaf, raw response bytes, optional stalling, captured synthetic requests, and separate plaintext and TLS socket byte counters. Raw responses permit malformed status/header/framing and oversized-header cases. `Wait` exposes request/output and connection-release checkpoints; `Close` also terminates stalled connections. The fixture can sit behind `loopback.Proxy` so HTTP plaintext accounting can be compared with TLS tunnel bytes and the uncounted CONNECT exchange. Synthetic certificates can carry either a DNS SAN or an IP SAN; they never enter production trust stores.
+
 ## Public Baseline and References
 
 Fixture categories follow Draft `0.1.0` at public revision [`05c1364af4f9a604b617fca45f060949b557d265`](https://github.com/tv-rain/barometer-spec/commit/05c1364af4f9a604b617fca45f060949b557d265):
