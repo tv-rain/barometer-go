@@ -351,3 +351,47 @@ func (d targetDialer) Redirect(tuple task.TargetTuple) (measurement.TargetDialer
 	}
 	return targetDialer{scope: d.scope, check: check}, nil
 }
+
+// ReadDatagram meters all returned DNS bytes, preserving truncation detection.
+func (c *scopedConn) ReadDatagram(p []byte) (int, bool, bool, error) {
+	k, ok := c.scope.reserve(len(p), false)
+	if !ok {
+		return 0, false, false, c.scope.err()
+	}
+	var n int
+	var truncated bool
+	matchingSource := true
+	var err error
+	if d, ok := c.Conn.(measurement.DatagramConn); ok {
+		n, truncated, matchingSource, err = d.ReadDatagram(p[:k])
+	} else {
+		n, err = c.Conn.Read(p[:k])
+		truncated = n == k && k < len(p)
+	}
+	c.scope.settle(k, n, false)
+	if truncated && k < len(p) {
+		c.scope.end(errBudget)
+		return n, true, matchingSource, c.scope.err()
+	}
+	return n, truncated, matchingSource, err
+}
+
+// resolve retains execution ownership of the target gate and hidden-wire API.
+func (s *scope) resolve(ctx context.Context, name, query string) (bool, string, error) {
+	t, ok := s.targets.(interface {
+		Lookup(context.Context, string, string, func()) (bool, string, error)
+	})
+	if !ok || s.isClosed() || s.ctx.Err() != nil {
+		s.end(pathError{task.LocalPolicyRejected})
+		return false, "", measurement.ErrTargetRejected
+	}
+	dctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	unlink := context.AfterFunc(s.ctx, cancel)
+	defer unlink()
+	found, failure, err := t.Lookup(dctx, name, query, s.Start)
+	if reason, ok := pathFailure(err); ok {
+		s.pathFailed(reason, err)
+	}
+	return found, failure, err
+}

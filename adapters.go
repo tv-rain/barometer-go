@@ -83,6 +83,7 @@ type adapters struct {
 // (DEV-641); native network, consent, device and time-zone capabilities and
 // the implementation identity belong to DEV-455; tests bind synthetic ones.
 type runAdapters struct {
+	resolver       execution.SystemResolver // optional trusted ordinary-system-lookup adapter
 	clock          execution.Clock
 	jitter         execution.Jitter
 	ledger         persistence.RunLedger

@@ -390,6 +390,7 @@ func TestClearingCoversEveryAdapter(t *testing.T) {
 		"deadline":         "exempt: lifecycle deadline",
 	}
 	runCovered := map[string]string{
+		"resolver":       "exempt: narrow system lookup capability; retains no Barometer-owned query or result state",
 		"clock":          "exempt: engine clock",
 		"jitter":         "exempt: jitter source",
 		"ledger":         "cleared: RunClass records; Forgetter drops the State index",

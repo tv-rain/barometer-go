@@ -2,6 +2,7 @@ package execution
 
 import (
 	"context"
+	"errors"
 	"net"
 	"net/netip"
 	"net/url"
@@ -32,6 +33,13 @@ type TargetCheck interface {
 	Redirect(task.TargetTuple) (TargetCheck, error)
 }
 
+// SystemResolver performs an ordinary per-name platform lookup. Implementors
+// honor cancellation and retain no Barometer-owned query/result state or
+// unrelated resolver activity. Native behavior needs separate validation.
+type SystemResolver interface {
+	LookupNetIP(context.Context, string, string) ([]netip.Addr, error)
+}
+
 // Targets owns only admitted registrations and their redirect links. Each
 // redirect child narrows to its full normalized tuple and shares no mutable
 // registration state. Expiry/path/address checks are repeated for every dial.
@@ -44,9 +52,7 @@ type Targets struct {
 	ancestors     []string
 	clock         interface{ Now() time.Time }
 	policy        AddressPolicy
-	resolver      interface {
-		LookupNetIP(context.Context, string, string) ([]netip.Addr, error)
-	}
+	resolver      SystemResolver
 }
 
 func NewTargets(test task.TestVersion, path string, registrations []task.TargetRegistration, clock interface{ Now() time.Time }, policy AddressPolicy) *Targets {
@@ -246,6 +252,13 @@ func (t *Targets) validChain() bool {
 	if t == nil {
 		return false
 	}
+	if t.test.ID == "DNS-01" {
+		for _, r := range t.registrations {
+			if slices.Contains(t.current, r.ID) && r.Role == task.MeasurementTarget && !t.permitted(r) {
+				return false
+			}
+		}
+	}
 	for _, id := range t.ancestors {
 		found := false
 		for _, r := range t.registrations {
@@ -259,4 +272,71 @@ func (t *Targets) validChain() bool {
 		}
 	}
 	return true
+}
+
+// Lookup authorizes exactly the admitted query name again immediately before
+// one ordinary system API lookup. Returned addresses are never contacted or
+// retained. The API exposes no wire messages, so its traffic is not metered.
+// Native resolver selection, cancellation and error fidelity need device proof.
+// requirement-ref: REQ-DNS-01-0018
+// requirement-ref: REQ-DNS-01-0030
+// requirement-ref: REQ-LIMIT-0034
+func (t *Targets) Lookup(ctx context.Context, name, query string, start func()) (bool, string, error) {
+	reject := func() (bool, string, error) { return false, "", pathError{task.LocalPolicyRejected} }
+	if t == nil || t.proxy || t.test != (task.TestVersion{ID: "DNS-01", Version: "0.1.0"}) || t.resolver == nil || !t.validChain() || ctx.Err() != nil || query != "A" && query != "AAAA" {
+		return reject()
+	}
+	allowed := false
+	for _, r := range t.registrations {
+		if slices.Contains(t.current, r.ID) && r.Role == task.MeasurementTarget && r.Tuple.Hostname == name && r.Tuple.Port == 0 && t.permitted(r) {
+			allowed = true
+		}
+	}
+	if !allowed {
+		return reject()
+	}
+	if start != nil {
+		start()
+	}
+	family := "ip4"
+	if query == "AAAA" {
+		family = "ip6"
+	}
+	ips, err := t.resolver.LookupNetIP(ctx, family, name+".")
+	if ctx.Err() != nil {
+		return false, "", measurement.ErrRunner
+	}
+	if err != nil {
+		var de *net.DNSError
+		if errors.As(err, &de) {
+			if de.IsTimeout {
+				return false, "timeout", nil
+			}
+			if de.IsNotFound {
+				// IsNotFound merges NXDOMAIN and no-data; the API cannot distinguish.
+				return false, "inconclusive", nil
+			}
+		}
+		return false, "resolver_error", nil
+	}
+	if len(ips) > 16 {
+		return false, "malformed_response", nil
+	}
+	for _, ip := range ips {
+		if !ip.IsValid() || ip.Zone() != "" || query == "A" && !ip.Unmap().Is4() || query == "AAAA" && !ip.Is6() {
+			return false, "malformed_response", nil
+		}
+	}
+	return len(ips) > 0, "", nil
+}
+
+// WithResolver returns a private copy bound to the trusted per-client resolver.
+// Nil selects the ordinary Go system API; no task can supply this capability.
+func (t *Targets) WithResolver(r SystemResolver) *Targets {
+	if r == nil {
+		return t
+	}
+	c := *t
+	c.resolver = r
+	return &c
 }

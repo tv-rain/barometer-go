@@ -7,6 +7,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/config"
 	"github.com/tv-rain/barometer-go/internal/execution"
 	"github.com/tv-rain/barometer-go/internal/measurement"
+	"github.com/tv-rain/barometer-go/internal/measurement/dns01"
 	"github.com/tv-rain/barometer-go/internal/model/observation"
 	model "github.com/tv-rain/barometer-go/internal/model/result"
 	"github.com/tv-rain/barometer-go/internal/model/task"
@@ -108,7 +109,13 @@ func (p *networkPaths) unconfigured(ctx context.Context, r pathRequest) (pathPla
 }
 
 func (p *networkPaths) decoder(r pathRequest, cd *observation.ContextDecoder, path observation.Path, generation uint64) (*result.Decoder, error) {
-	return result.New(result.Binding{TaskID: r.TaskID, Output: result.Output{Test: model.Test{ID: r.Test.ID, Version: r.Test.Version, ResultVersion: result.Contract}},
+	output := result.Output{Test: model.Test{ID: r.Test.ID, Version: r.Test.Version, ResultVersion: result.Contract}}
+	if params, ok := r.Parameters.(dns01.Parameters); ok {
+		output.DNSMode = params.Engine()
+		output.QueryType = params.QueryType()
+		output.Limits.RetainDNSAnswers = true
+	}
+	return result.New(result.Binding{TaskID: r.TaskID, Output: output,
 		MaxAttempts: r.MaxAttempts, MaxDurationMS: r.MaxDurationMS, Implementation: p.implementation,
 		ContextDecoder: cd, Path: path, AccessGeneration: generation})
 }
