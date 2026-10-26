@@ -45,7 +45,8 @@ func TestDns01AllTerminationBoundaries(t *testing.T) {
 					clock := testkit.NewWaitClock(time.Now())
 					ctx, cancel := context.WithCancelCause(context.Background())
 					defer cancel(nil)
-					interrupt := func() { cancel(tc.cause); cancel(errNetworkChanged) } // first condition wins
+					var fired atomic.Bool
+					interrupt := func() { fired.Store(true); cancel(tc.cause); cancel(errNetworkChanged) } // first condition wins
 					network := capability.NewNetwork(platform.AccessState{Generation: 1, Type: platform.NetworkWiFi, IPv4: platform.AvailabilityYes})
 					source, err := networkcontext.NewDirect(network)
 					if err != nil {
@@ -76,7 +77,7 @@ func TestDns01AllTerminationBoundaries(t *testing.T) {
 					if err != nil {
 						t.Fatal(err)
 					}
-					dial := &dnsTerminationDial{stage: stage, transport: transport, interrupt: interrupt, clock: clock}
+					dial := &dnsTerminationDial{stage: stage, transport: transport, interrupt: interrupt, clock: clock, fired: &fired}
 					targets := dnsTerminationTarget{tcpTerminationTarget{stage: stage, interrupt: interrupt}}
 					p := Plan{TaskID: "dns-boundaries", Test: task.TestVersion{ID: "DNS-01", Version: "0.1.0"}, Parameters: params, Network: task.NetworkRequirements{VPNPolicy: "any"}, Deadline: 30 * time.Second, Limits: task.AttemptLimits{Connections: 1, BytesSent: 65536, BytesReceived: 262144}, Implementation: impl, Result: decoder, Context: capture, Dialers: dial, Targets: targets}
 					engine := &Engine{clock: dnsBoundaryClock{clock, dial}}
@@ -104,6 +105,15 @@ func TestDns01AllTerminationBoundaries(t *testing.T) {
 					}
 					if want == NotRun && v.NetworkContext != nil {
 						t.Fatal("context on not_run")
+					}
+					// No query, dial, read or write follows the interruption, and a
+					// system lookup or an interruption before the connect never
+					// falls back to a direct query.
+					if dial.after.Load() != 0 {
+						t.Fatalf("%d transport operations after the interruption", dial.after.Load())
+					}
+					if (stage == "before start" || stage == "generation and family" || stage == "system") && dial.calls != 0 {
+						t.Fatal("dialed after a pre-connect interruption or from system mode")
 					}
 					if usage.BytesSent > 65536 || usage.BytesReceived > 262144 || dial.calls > 1 || int(dial.closed.Load()) != dial.calls {
 						t.Fatalf("traffic or leaked connection: %+v %+v", usage, dial)
@@ -155,10 +165,19 @@ type dnsTerminationDial struct {
 	calls     int
 	closed    atomic.Int32
 	armed     atomic.Bool
+	fired     *atomic.Bool
+	after     atomic.Int32 // dials, reads and writes started after the interruption
+}
+
+func (d *dnsTerminationDial) observe() {
+	if d.fired.Load() {
+		d.after.Add(1)
+	}
 }
 
 func (d *dnsTerminationDial) Dialer(int) (measurement.Dialer, error) { return d, nil }
 func (d *dnsTerminationDial) DialContext(ctx context.Context, _, _ string) (measurement.Conn, error) {
+	d.observe()
 	d.calls++
 	if d.stage == "connect" {
 		d.interrupt()
@@ -186,6 +205,7 @@ func (c *dnsTerminationConn) Close() error {
 }
 func (c *dnsTerminationConn) SetDeadline(time.Time) error { return nil }
 func (c *dnsTerminationConn) Write(p []byte) (int, error) {
+	c.dial.observe()
 	if c.dial.stage == "write" {
 		c.dial.interrupt()
 		return 0, c.ctx.Err()
@@ -197,6 +217,7 @@ func (c *dnsTerminationConn) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 func (c *dnsTerminationConn) Read(p []byte) (int, error) {
+	c.dial.observe()
 	c.reads++
 	stage := c.dial.stage
 	if stage == "read" || stage == "window1" && c.reads == 2 || stage == "window2" && c.reads == 3 {

@@ -104,8 +104,8 @@ Not counted at this layer, as the public text requires: TLS handshake and record
 |---|---|---|
 | `Output` (pending results) | Production `pending.Store` over `persistence.Records` since DEV-563; test-only `internal/testkit/output` for engine tests | Platform record backend: DEV-455 |
 | `ContextSource` | `networkcontext.Source` over `platform.Network` for the direct and proxy paths, with egress acquired through `networkcontext.Lookup` when configured; scripted fakes in tests | Native network capability: DEV-455 |
-| `DialerSource` / `measurement.Dialer` | `execution.DirectDialers` and `execution.ProxyDialers`; test-only `internal/testkit/loopback`; metered by the attempt scope | Per-protocol accounting: DEV-454; whole NET-05 profile evidence: DEV-454 |
-| `PathCheck` | The root package's proxy check; scripted checks in tests | Production test-specific compatibility rules: DEV-454 |
+| `DialerSource` / `measurement.Dialer` | `execution.DirectDialers` and `execution.ProxyDialers`; test-only `internal/testkit/loopback`; metered by the attempt scope | Per-protocol accounting: delivered for TCP-01 and DNS-01, remaining tests DEV-657 and DEV-658; whole NET-05 profile evidence: DEV-657 |
+| `PathCheck` | The root package's proxy check; scripted checks in tests | Production test-specific compatibility rules: delivered for TCP-01 and DNS-01, remaining tests DEV-657 and DEV-658 |
 | `Clock` | `SystemClock`; `testkit.WaitClock` in tests | Platform timer and suspension behavior: DEV-455 |
 | `Preconditions` (DEV-636) | `execution.Gates`; scripted fakes in tests | Operating-system and user vetoes: DEV-455 |
 
@@ -174,7 +174,7 @@ A task with `network_path: proxy` runs through the single local HTTP/1.1 CONNECT
 - **Failures.** A failed connection to the endpoint is `proxy_unavailable`; a non-2xx, closed, malformed or oversized response is `proxy_connect_failed`. The dial started the test, so the attempt is `incomplete` and keeps its proxy Network Context. The failure becomes the attempt's cancellation cause, so an outcome the runner builds from the failed dial is not retained: path states are execution observations, never the test's and never evidence of censorship ([REQ-PROXY-0029](https://github.com/tv-rain/barometer-spec/blob/5d01879cfd1d47396c780befa2567f7e90439948/library/proxy.md#REQ-PROXY-0029)). A CONNECT the attempt deadline cuts short is `proxy_connect_failed`; a host cancellation or a network change during the exchange keeps its own reason. `proxy_unavailable` is a retry candidate when `retry_on` lists it, and the retry uses a new dialer of the same snapshot. Nothing is ever retried through the direct path ([REQ-PROXY-0030](https://github.com/tv-rain/barometer-spec/blob/5d01879cfd1d47396c780befa2567f7e90439948/library/proxy.md#REQ-PROXY-0030)).
 - **Result metadata.** Proxied results record egress with `network_path: proxy` and the configured `connection_code`, acquired through the same proxy generation, or `{status: unavailable, lookup_source: none}` when no egress classification is configured or available. No result carries the proxy host, port or generation, the CONNECT request or the proxy's response ([REQ-PROXY-0031](https://github.com/tv-rain/barometer-spec/blob/5d01879cfd1d47396c780befa2567f7e90439948/library/proxy.md#REQ-PROXY-0031) to [REQ-PROXY-0033](https://github.com/tv-rain/barometer-spec/blob/5d01879cfd1d47396c780befa2567f7e90439948/library/proxy.md#REQ-PROXY-0033)).
 
-Limits: the CONNECT dialer is exercised only against the scripted proxy of `internal/testkit/loopback` on `127.0.0.1`, not against Outline MobileProxy or another host proxy, and with the production TCP-01 codec/runner and separate synthetic runtime runners. TLS-01, HTTP-01, DNS and NET-05 production runners remain pending. TCP-01 fixture coverage is recorded in [Current TCP-01 Execution](measurement-requirements.md#current-tcp-01-execution). No native binding passes a proxy (DEV-455). A proxied outcome is not evidence that the direct path is censored ([REQ-PROXY-0039](https://github.com/tv-rain/barometer-spec/blob/5d01879cfd1d47396c780befa2567f7e90439948/library/proxy.md#REQ-PROXY-0039)).
+Limits: the CONNECT dialer is exercised only against the scripted proxy of `internal/testkit/loopback` on `127.0.0.1`, not against Outline MobileProxy or another host proxy, and with the production TCP-01 codec/runner and separate synthetic runtime runners. TLS-01, HTTP-01, DNS-03, DNS-04, NET-01, NET-03 and NET-05 production runners remain pending. TCP-01 and DNS-01 fixture coverage is recorded in [Current TCP-01 Execution](measurement-requirements.md#current-tcp-01-execution) and [Current DNS-01 Execution](measurement-requirements.md#current-dns-01-execution). No native binding passes a proxy (DEV-455). A proxied outcome is not evidence that the direct path is censored ([REQ-PROXY-0039](https://github.com/tv-rain/barometer-spec/blob/5d01879cfd1d47396c780befa2567f7e90439948/library/proxy.md#REQ-PROXY-0039)).
 
 ## Egress Network Context
 
@@ -228,7 +228,7 @@ The shared-gate tests are synthetic Go evidence only. Native integration, produc
 
 DEV-640 classifies the 49 runtime-scope cross-cutting families for the runtime and execution closeout (DEV-576): the `CC-EXECUTION-*`, `CC-SCHEDULE-*` and `CC-LIMIT-*` families, their `RV-` review cases, and the run-dependent `CC-RESULT-EXECUTION-OBJECT`, `CC-RESULT-TIME-OBJECT`, `CC-SAFETY-USER-CONSENT`, `CC-OPTIONS-EXECUTION-PRECEDENCE`, `CC-CONTEXT-FORMAT-USE-IN-EXECUTION`, `CC-CONTEXT-EXECUTION-INTEGRATION`, `CC-PROXY-EXECUTION-STATES` and `CC-TRUST-LOCAL-POLICY-LIFECYCLE-RUNTIME`. A family is executed only when every row of its case plan runs with synthetic adapters, the injected clock and the test-only loopback runner. Mixed families are not split, and planned cases are not conformance.
 
-Where a plan names a registered test only as the vehicle for a schedule or execution rule (for example the NET-01 tasks of `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW`), the synthetic runner registered under the TCP-01 identifier stands in for it, and no behavior of the named test is asserted. This substitution was approved for DEV-640.
+Where a plan names a registered test only as the vehicle for a schedule or execution rule (for example the NET-01 tasks of `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW`), a test-only synthetic runner, registered in a test registry under the TCP-01 identifier, carries the rule, and no behavior of the named test is asserted. This substitution was approved for DEV-640. It is a fixture distinct from the production TCP-01 codec and runner, which the production registry selects and which never run in these families; production TCP-01 evidence is recorded in [Current TCP-01 Execution](measurement-requirements.md#current-tcp-01-execution).
 
 ### Executed
 
@@ -271,11 +271,11 @@ Every other runtime-scope family stays `planned` because a row of its case plan 
 |---|---|---|
 | `CC-RESULT-TIME-OBJECT` | Stage rounding needs protocol stages from registered runners. | DEV-454 |
 | `CC-OPTIONS-EXECUTION-PRECEDENCE` | It needs per-test options with a protocol timeout. | DEV-454 |
-| `CC-EXECUTION-FIELDS-LIMITS-FIELDS` | Its rows count HTTP headers, DNS messages and length prefixes. | DEV-454 |
-| `CC-LIMIT-PURPOSE` | Its rows need HTTP-01, NET-03, DNS-01, DNS-03 and DNS-04 runners at the counted boundary. | DEV-454 |
+| `CC-EXECUTION-FIELDS-LIMITS-FIELDS` | Its rows count HTTP headers and DoH and DoT framing; the DNS-01 message and length-prefix rows run in `TestCcLimitPurposeDNSRows`. | DEV-657, DEV-658 |
+| `CC-LIMIT-PURPOSE` | Its rows need HTTP-01, NET-03, DNS-03 and DNS-04 runners at the counted boundary; the DNS-01 rows run in `TestCcLimitPurposeDNSRows`. | DEV-657, DEV-658 |
 | `CC-LIMIT-TASK-AND-IDENTIFIER-LIMITS` | Its rows use production input and options schemas and the NET-05 `step_id`. | DEV-454 |
 | `CC-LIMIT-ATTEMPT-LIMITS` | Its rows need the NET-01 zero-traffic exception and the 15,000 ms protocol ceiling. | DEV-454 |
-| `CC-LIMIT-DNS-LIMITS` | It needs DNS runners. | DEV-454 |
+| `CC-LIMIT-DNS-LIMITS` | Its DoH and DoT rows need the DNS-03 and DNS-04 runners; the DNS-01 rows run in `TestMDns01Limits`. | DEV-658 |
 | `CC-LIMIT-HTTP-AND-VALIDATION-LIMITS` | It needs HTTP-01 and NET-03 runners. | DEV-454 |
 | `CC-LIMIT-NET-05-COMPOSITE-LIMITS` | It needs the NET-05 codec and composite budgets. | DEV-454 |
 | `CC-LIMIT-LIMIT-HANDLING` | Its rows need an HTTP-01 body bound, a NET-05 profile and production codecs. | DEV-454 |

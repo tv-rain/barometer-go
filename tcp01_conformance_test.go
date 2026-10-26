@@ -340,7 +340,7 @@ func TestMTcp01Normalization(t *testing.T) {
 	}
 }
 
-// M-TCP-01-LIMITS: independent operation/attempt deadlines and connection budget.
+// M-TCP-01-LIMITS: independent operation and attempt deadlines.
 // requirement-ref: REQ-TCP-01-0022
 func TestMTcp01Limits(t *testing.T) {
 	for _, tc := range []struct {
@@ -363,6 +363,40 @@ func TestMTcp01Limits(t *testing.T) {
 			tcpResult(t, tcpRaw(t, h, c, data), tc.state, tc.reason, tc.outcome)
 			if d.calls.Load() != 1 {
 				t.Fatal("unexpected dial count")
+			}
+		})
+	}
+}
+
+// M-TCP-01-LIMITS connection rows through Client: the schema floor of
+// max_connections is 1, and at it or above it TCP-01 issues exactly one
+// connection. TestTcp01ConnectionMeter covers the refused row below it.
+// requirement-ref: REQ-TCP-01-0022
+// requirement-ref: REQ-LIMIT-0006
+func TestMTcp01ConnectionBudget(t *testing.T) {
+	for _, limit := range []int{1, 2} {
+		t.Run(fmt.Sprint(limit), func(t *testing.T) {
+			h, d := tcpProductionHarness(t)
+			srv, err := loopback.Listen()
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer srv.Close()
+			d.dial = func(ctx context.Context) (measurement.Conn, error) {
+				var nd net.Dialer
+				return nd.DialContext(ctx, "tcp", srv.Address())
+			}
+			c := h.initialized(t)
+			defer c.Close()
+			data := strings.Replace(tcpTask("connections"), `"limits":{}`, fmt.Sprintf(`"limits":{"max_connections":%d}`, limit), 1)
+			tcpResult(t, tcpRaw(t, h, c, data), "completed", "", "connected")
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+			if err := srv.WaitAccepted(ctx, 1); err != nil {
+				t.Fatal(err)
+			}
+			if d.calls.Load() != 1 || srv.Accepted() != 1 {
+				t.Fatal("not exactly one connection")
 			}
 		})
 	}
@@ -522,7 +556,7 @@ func TestMTcp01Versions(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, field := range []string{"schema_version", "version", "result_version"} {
-		for _, v := range []any{"0.2.0", "1.0.0", "0.1", "v0.1.0", "", 0.1, nil} {
+		for _, v := range []any{"0.1.1", "0.2.0", "1.0.0", "0.1", "v0.1.0", "", 0.1, nil} {
 			var value map[string]any
 			_ = json.Unmarshal(raw, &value)
 			if field == "schema_version" {
