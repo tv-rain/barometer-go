@@ -85,9 +85,10 @@ func stepTest(id string) bool {
 }
 
 // New validates every entry before returning a registry built from owned
-// copies. Any invalid, incomplete or duplicate entry rejects the whole set.
+// copies. An empty set is valid and resolves no test. Any invalid, incomplete
+// or duplicate entry rejects the whole set.
 func New(entries []Entry) (*Registry, error) {
-	if len(entries) == 0 || len(entries) > maxEntries {
+	if len(entries) > maxEntries {
 		return nil, ErrInvalid
 	}
 	r := &Registry{entries: make([]Entry, 0, len(entries)), index: make(map[task.TestVersion]int, len(entries))}

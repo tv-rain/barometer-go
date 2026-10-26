@@ -35,8 +35,8 @@ const (
 // synthetic adapters from internal/testkit. Native wiring belongs to DEV-455.
 type adapters struct {
 	clock       platform.Clock
-	registry    *registry.Registry
-	policy      task.LocalPolicy // its Generation is the active policy generation; only replacePolicy changes it
+	registry    *registry.Registry // nil selects productionRegistry at bind; tests may inject a synthetic set
+	policy      task.LocalPolicy   // its Generation is the active policy generation; only replacePolicy changes it
 	deliveries  *admission.DeliveryStore
 	replay      persistence.ReplayStore
 	approvals   config.Approvals

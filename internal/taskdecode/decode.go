@@ -52,8 +52,9 @@ var version = regexp.MustCompile(`^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-
 // New selects only supplied exact test/version pairs. No runtime registry,
 // measurement support or empty-object fallback is installed by this package.
 // Descriptors and codecs must remain immutable for the decoder's lifetime.
+// An empty set is valid: framing is still checked, but no test is selected.
 func New(codecs []TestCodec) (*Decoder, error) {
-	if len(codecs) == 0 || len(codecs) > 256 {
+	if len(codecs) > 256 {
 		return nil, jsondecode.ErrConfig
 	}
 	d := &Decoder{}

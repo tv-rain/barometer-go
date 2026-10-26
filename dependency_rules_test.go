@@ -394,6 +394,8 @@ func TestDependencyRulesRejectForbiddenImports(t *testing.T) {
 		file("model/observation", false, internalPath("jsondecode"), "strings", "net/netip", "net/url"),
 		file("model/result", false, internalPath("model/observation"), internalPath("model/task")),
 		file("measurement/dns01", false, internalPath("measurement"), internalPath("protocol/dns"), internalPath("model/observation")),
+		file("measurement/tcp01", false, internalPath("measurement"), internalPath("taskdecode"), internalPath("jsondecode"), internalPath("model/task"), internalPath("protocol/tcp")),
+		{path: "registry.go", pkg: modulePath, imports: []string{internalPath("registry"), internalPath("measurement/tcp01")}},
 		file("bundle", false, internalPath("config"), internalPath("result"), internalPath("model/result")),
 		file("platform", false, "context", "time"),
 		file("platform/android", false, internalPath("platform")),
