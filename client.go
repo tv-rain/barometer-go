@@ -113,6 +113,13 @@ func (c *Client) bind(a adapters) error {
 	if err := c.refusal(); err != nil {
 		return err
 	}
+	if a.registry == nil {
+		var err error
+		a.registry, err = productionRegistry()
+		if err != nil {
+			return fail(notInitialized)
+		}
+	}
 	if a.run.contextCache == nil {
 		a.run.contextCache = networkcontext.NewCache()
 	}

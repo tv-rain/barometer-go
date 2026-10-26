@@ -278,7 +278,6 @@ func TestInitializeFailsClosed(t *testing.T) {
 	edits := map[string]func(*adapters){
 		"no clock":          func(a *adapters) { a.clock = nil },
 		"typed nil clock":   func(a *adapters) { a.clock = typedNilClock },
-		"no registry":       func(a *adapters) { a.registry = nil },
 		"no delivery store": func(a *adapters) { a.deliveries = nil },
 		"no replay store":   func(a *adapters) { a.replay = nil },
 		"typed nil replay":  func(a *adapters) { a.replay = typedNilReplay },

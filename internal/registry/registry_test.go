@@ -76,6 +76,25 @@ func mustNew(t *testing.T, entries []Entry) *Registry {
 	return r
 }
 
+func TestEmptyRegistryResolvesNothing(t *testing.T) {
+	for _, entries := range [][]Entry{nil, {}} {
+		r := mustNew(t, entries)
+		key := task.TestVersion{ID: "TCP-01", Version: "0.1.0"}
+		if e, ok := r.Lookup(key); ok || e != (Entry{}) {
+			t.Fatal("empty registry resolved an entry")
+		}
+		if runner, ok := r.Runner(key); ok || runner != nil {
+			t.Fatal("empty registry resolved a runner")
+		}
+		if len(r.Codecs()) != 0 {
+			t.Fatal("empty registry supplied codecs")
+		}
+		if _, err := taskdecode.New(r.Codecs()); err != nil {
+			t.Fatal("empty registry cannot construct an admission decoder:", err)
+		}
+	}
+}
+
 func TestLookupIsExact(t *testing.T) {
 	r := mustNew(t, fixtureEntries())
 	for _, e := range fixtureEntries() {
@@ -149,8 +168,6 @@ func TestNewRejectsInvalidSetsAtomically(t *testing.T) {
 		tooMany[i] = entry("SYN-01", "0.0."+strconv.Itoa(i))
 	}
 	cases := map[string][]Entry{
-		"nil":                    nil,
-		"empty":                  {},
 		"over bound":             tooMany,
 		"duplicate":              append(fixtureEntries(), entry("SYN-01", "0.1.0")),
 		"missing codec":          mutate(0, func(e *Entry) { e.Codec = nil }),

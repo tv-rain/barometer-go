@@ -82,6 +82,32 @@ func timing() validation.TimingContext {
 
 const baseJSON = `{"schema_version":"0.1.0","task_id":"synthetic-task","test_id":"SYN-01","test_version":"0.1.0","input":{"subject":"EXAMPLE"},"options":{},"schedule":{"not_after":"2026-10-15T00:00:00Z"},"execution":{"limits":{}},"safety":{"risk_level":"low","requires_user_consent":false}}`
 
+// Empty production registries retain strict framing and exact-version checks.
+// requirement-ref: REQ-JSON-0003
+// requirement-ref: REQ-JSON-0008
+func TestEmptyCodecSetRejectsEveryTest(t *testing.T) {
+	for _, codecs := range [][]TestCodec{nil, {}} {
+		d, err := New(codecs)
+		if err != nil || d == nil {
+			t.Fatalf("New(empty) = %v, %v", d, err)
+		}
+		for _, tc := range []struct {
+			input []byte
+			want  error
+		}{
+			{[]byte(baseJSON), ErrUnregistered},
+			{[]byte(strings.Replace(baseJSON, `"SYN-01"`, `"TCP-01"`, 1)), ErrUnregistered},
+			{[]byte(strings.Replace(baseJSON, `"schema_version":"0.1.0"`, `"schema_version":"0.2.0"`, 1)), jsondecode.ErrVersion},
+			{[]byte(strings.Replace(baseJSON, `"subject":"EXAMPLE"`, `"subject":"EXAMPLE","sub\u006aect":"EXAMPLE"`, 1)), jsondecode.ErrDuplicate},
+			{[]byte(baseJSON + `{}`), jsondecode.ErrSyntax},
+		} {
+			if c, err := d.Decode(tc.input, timing()); c != nil || !errors.Is(err, tc.want) {
+				t.Fatalf("empty decoder = %v, %v; want nil, %v", c, err, tc.want)
+			}
+		}
+	}
+}
+
 func fixtureMap() map[string]any {
 	var v map[string]any
 	if err := json.Unmarshal([]byte(baseJSON), &v); err != nil {
@@ -341,7 +367,7 @@ func TestByteAndLabelBounds(t *testing.T) {
 
 func TestDescriptorConfiguration(t *testing.T) {
 	def := fixtureDefinition("SYN-01", "0.1.0")
-	for _, codecs := range [][]TestCodec{nil, {nil}, {fixtureCodec{def: def}, fixtureCodec{def: def}}, {fixtureCodec{def: Definition{TestID: "SYN-01", TestVersion: "0.1.0"}}}} {
+	for _, codecs := range [][]TestCodec{{nil}, {fixtureCodec{def: def}, fixtureCodec{def: def}}, {fixtureCodec{def: Definition{TestID: "SYN-01", TestVersion: "0.1.0"}}}} {
 		if d, err := New(codecs); d != nil || !errors.Is(err, jsondecode.ErrConfig) {
 			t.Fatal("bad codec configuration accepted")
 		}
