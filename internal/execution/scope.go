@@ -114,6 +114,10 @@ func (s *scope) DialContext(ctx context.Context, network, address string) (measu
 }
 
 func (s *scope) dial(ctx context.Context, network, address string, check TargetCheck) (measurement.Conn, error) {
+	return s.dialVia(ctx, network, address, check, func(c context.Context, a string) (measurement.Conn, error) { return s.inner.DialContext(c, network, a) })
+}
+
+func (s *scope) dialVia(ctx context.Context, network, address string, check TargetCheck, connect func(context.Context, string) (measurement.Conn, error)) (measurement.Conn, error) {
 	if s.isClosed() || s.ctx.Err() != nil {
 		return nil, errScopeClosed
 	}
@@ -155,7 +159,7 @@ func (s *scope) dial(ctx context.Context, network, address string, check TargetC
 	}
 	s.Start()
 	issued = true
-	conn, err := s.inner.DialContext(dctx, network, checked)
+	conn, err := connect(dctx, checked)
 	if err != nil {
 		if reason, ok := pathFailure(err); ok {
 			s.pathFailed(reason, err)

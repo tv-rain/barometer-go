@@ -477,7 +477,7 @@ func TestAdmissionHasNoNetworkDependency(t *testing.T) {
 		}
 		for imp, by := range importers {
 			for _, p := range by {
-				if p != internalPath("execution") && p != internalPath("protocol/tls") {
+				if p != internalPath("execution") && p != internalPath("protocol/tls") && !(p == internalPath("protocol/http") && imp == "net/http") {
 					t.Errorf("%s: %s imports %s", pkg, p, imp)
 				}
 			}

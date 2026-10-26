@@ -8,6 +8,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/execution"
 	"github.com/tv-rain/barometer-go/internal/measurement"
 	"github.com/tv-rain/barometer-go/internal/measurement/dns01"
+	"github.com/tv-rain/barometer-go/internal/measurement/http01"
 	"github.com/tv-rain/barometer-go/internal/model/observation"
 	model "github.com/tv-rain/barometer-go/internal/model/result"
 	"github.com/tv-rain/barometer-go/internal/model/task"
@@ -114,6 +115,10 @@ func (p *networkPaths) decoder(r pathRequest, cd *observation.ContextDecoder, pa
 		output.DNSMode = params.Engine()
 		output.QueryType = params.QueryType()
 		output.Limits.RetainDNSAnswers = true
+	}
+	if params, ok := r.Parameters.(http01.Parameters); ok {
+		output.Limits = params.Limits()
+		output.HTTPS = true
 	}
 	return result.New(result.Binding{TaskID: r.TaskID, Output: output,
 		MaxAttempts: r.MaxAttempts, MaxDurationMS: r.MaxDurationMS, Implementation: p.implementation,

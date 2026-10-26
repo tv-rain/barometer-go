@@ -170,8 +170,18 @@ func (e *Envelope) Parameters() (task.Parameters, error) {
 		return nil, err
 	}
 	p, err := e.decoder.codecs[e.codec].Normalize(input, options)
+	// Preserve only the fixed registered-limit class; never a codec diagnostic.
+	if errors.Is(err, jsondecode.ErrLimit) {
+		return nil, jsondecode.ErrLimit
+	}
 	if err != nil || p == nil {
 		return nil, ErrParameters
+	}
+	if bounded, ok := p.(interface{ ValidateLimits(task.AttemptLimits) bool }); ok {
+		c, err := common(e.value)
+		if err != nil || !bounded.ValidateLimits(c.Execution.Limits) {
+			return nil, jsondecode.ErrLimit
+		}
 	}
 	return p, nil
 }

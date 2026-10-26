@@ -4,6 +4,7 @@ import (
 	"crypto/x509"
 
 	dnsmeasurement "github.com/tv-rain/barometer-go/internal/measurement/dns01"
+	httpmeasurement "github.com/tv-rain/barometer-go/internal/measurement/http01"
 	tcpmeasurement "github.com/tv-rain/barometer-go/internal/measurement/tcp01"
 	tlsmeasurement "github.com/tv-rain/barometer-go/internal/measurement/tls01"
 	"github.com/tv-rain/barometer-go/internal/model/task"
@@ -19,7 +20,7 @@ import (
 // requirement-ref: REQ-TLS-01-0032
 func productionRegistry(roots *x509.CertPool) (*registry.Registry, error) {
 	return registry.New([]registry.Entry{{Test: task.TestVersion{ID: "DNS-01", Version: "0.1.0"}, Codec: dnsmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: dns01Targets{}, Proxy: dnsmeasurement.ProxyRule{}, Runner: &dnsmeasurement.Runner{}, Step: true}, {Test: task.TestVersion{ID: "TCP-01", Version: "0.1.0"}, Codec: tcpmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: tcp01Targets{}, Proxy: tcpmeasurement.ProxyRule{}, Runner: &tcpmeasurement.Runner{}, Step: true},
-		{Test: task.TestVersion{ID: "TLS-01", Version: "0.1.0"}, Codec: tlsmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: tls01Targets{}, Proxy: tlsmeasurement.ProxyRule{}, Runner: &tlsmeasurement.Runner{Roots: roots}, Step: true}})
+		{Test: task.TestVersion{ID: "TLS-01", Version: "0.1.0"}, Codec: tlsmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: tls01Targets{}, Proxy: tlsmeasurement.ProxyRule{}, Runner: &tlsmeasurement.Runner{Roots: roots}, Step: true}, {Test: task.TestVersion{ID: "HTTP-01", Version: "0.1.0"}, Codec: httpmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: http01Targets{}, Proxy: httpmeasurement.ProxyRule{}, Runner: &httpmeasurement.Runner{Roots: roots}, Step: true}})
 }
 
 type tcp01Targets struct{}
@@ -73,4 +74,15 @@ func (dns01Targets) Targets(params task.Parameters) ([]registry.Target, bool) {
 		out = append(out, registry.Target{Role: task.ResolverTarget, Tuple: task.TargetTuple{Address: a, Port: port, Scheme: p.Engine()}})
 	}
 	return out, true
+}
+
+// HTTP-01 matches the complete normalized URL and expected checks.
+type http01Targets struct{}
+
+func (http01Targets) Targets(p task.Parameters) ([]registry.Target, bool) {
+	v, ok := p.(httpmeasurement.Parameters)
+	if !ok || v.Target().URL == "" {
+		return nil, false
+	}
+	return []registry.Target{{Role: task.MeasurementTarget, Tuple: v.Target()}}, true
 }

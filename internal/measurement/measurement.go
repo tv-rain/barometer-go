@@ -67,6 +67,13 @@ type TargetDialer interface {
 	Redirect(task.TargetTuple) (TargetDialer, error)
 }
 
+// StagedDialer exposes minimized DNS/TCP observations from the execution-owned
+// gate. It resolves once and pins contact while preserving scope accounting.
+type StagedDialer interface {
+	Dialer
+	ConnectStages(context.Context, string, string, Clock) (Conn, []observation.Observation, string, error)
+}
+
 // Clock is the attempt's monotonic time source for bounded protocol operations.
 type Clock interface {
 	Now() time.Time
