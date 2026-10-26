@@ -213,7 +213,7 @@ DEV-588 implements the target part of step 8 ([REQ-TRUST-0013](https://github.co
   - re-check that the registrations have not expired;
   - make no contact on failure.
 
-  This obligation belongs to Measurement implementation (DEV-454), with the registered runners that resolve names and follow redirects, and has no implementation yet. The Network paths and context sub-epic (DEV-578) delivered the direct and proxy dialers but no address or redirect check.
+  The execution target gate delivered by DEV-659 performs these checks before every contact on the direct and proxy paths ([decision 0013](https://github.com/tv-rain/barometer/blob/main/docs/decisions/0013-explicit-ip-only-proxy-connect.md)); the TCP-01 and DNS-01 runners use it, and runners that follow redirects use its redirect check when they are delivered.
 
 Registrations with credentials, interpolation syntax, wildcard or noncanonical hosts, or IPv4-mapped addresses are already refused when the policy snapshot is built ([Trusted Context and Local Policy Models](trusted-policy-models.md#target-representation-and-limits)). NET-05 composite-step matching remains an unimplemented part of step 8. Composite-step matching needs the NET-05 codec (DEV-454); until then composite tasks are rejected ([Unsupported Capabilities](#unsupported-capabilities)).
 
@@ -457,15 +457,15 @@ Reproduce with `go test . -run='^$' -fuzz='^FuzzAdmitTask$' -fuzztime=120s -fuzz
 | `CC-TRUST-OVERVIEW` | Its rows use NET-01 tasks; no production NET-01 codec is registered (DEV-454). |
 | `CC-TRUST-TRUSTED-SOURCE-CONTEXT` | It runs an admitted task against a recording transport and result sink. Runs and the pending-output port exist synthetically since DEV-636, and the production direct and proxy paths exist since DEV-644 and DEV-645, but its rows use registered test codecs and runners (DEV-454). |
 | `CC-TRUST-ISSUER-AUTHORIZATION` | Its rows use NET-01 and NET-05 tasks and a platform-capability dimension; no production codecs (DEV-454) or NET-05 composite matching exist. |
-| `CC-TRUST-TARGET-REGISTRATION` | Its rows use TCP-01, TLS-01, HTTP-01 and DNS-01 tuples (DEV-454) and execution-time resolver and redirect checks, which belong to the registered runners (DEV-454). |
-| `CC-TRUST-ADMISSION-PROCEDURE` | It needs transport and DNS fakes and production proxy-compatibility rules (DEV-454). |
+| `CC-TRUST-TARGET-REGISTRATION` | Its TLS-01 and HTTP-01 tuple and redirect rows need those runners (DEV-657); the TCP-01 and DNS-01 tuples and the execution-time resolver check exist since DEV-659, DEV-661 and DEV-662. |
+| `CC-TRUST-ADMISSION-PROCEDURE` | Its rows use production proxy-compatibility rules of tests after TCP-01 and DNS-01 (DEV-657, DEV-658). |
 | `CC-TRUST-TASK-IDENTIFIER-RULES` | Its campaign-identity rows compare task IDs emitted in results across installations with linkage tokens; result production exists, but linkage integration and the cross-installation case remain DEV-454. |
 | `CC-TRUST-TARGETED-DELIVERY` | Its linkage rows compare scheduling decisions and host task-selection hooks, which do not exist; run reservation exists since DEV-636, the host task-selection hooks remain DEV-455's. |
 | `CC-TRUST-ADMISSION-ERRORS` | It needs result-sink and bundle fakes and captured log output (DEV-454). |
 | `CC-TRUST-LOCAL-POLICY-LIFECYCLE-RUNTIME` | It needs the host policy adapter (DEV-455); run reservation, cancellation of runs on replacement and Network Context cache invalidation exist. |
 | `CC-LIMIT-TASK-AND-IDENTIFIER-LIMITS` | Its rows use a NET-05 `step_id` (DEV-454) and a counting reader at the native adapter (DEV-455). |
 | `CC-LIMIT-LIMIT-HANDLING` | Generic runtime deadlines and budgets exist (DEV-561, DEV-562); its remaining rows need an HTTP-01 body bound, a NET-05 profile and production codecs (DEV-454). |
-| `CC-INPUT-JSON-STRUCTURE` | Its rows use the registered NET-01 and DNS-01 input schemas (DEV-454). |
+| `CC-INPUT-JSON-STRUCTURE` | Its rows use the registered NET-01 input schema (DEV-658); the DNS-01 schema exists since DEV-662. |
 | `CC-SAFETY-ENVELOPE`, `CC-SAFETY-EFFECTIVE-RISK`, `CC-SAFETY-SAFETY-EVALUATION` | Their per-attempt rows need a host consent provider and host or device restrictions (DEV-455), and rows using registered tests need production codecs (DEV-454). DEV-636 checks consent and device state at attempt start through synthetic capabilities ([Consent Handoff](#consent-handoff)); the families stay planned. |
 
 The admission rows of several planned families are already exercised by `UT.*` cases recorded in the traceability manifest. Splitting those rows into separately executable cases, as DEV-593 did for local policy, is follow-up work; it does not change admission behavior.
