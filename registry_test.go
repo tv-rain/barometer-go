@@ -16,8 +16,8 @@ func TestProductionRegistryContainsOnlyDeliveredMeasurements(t *testing.T) {
 	if err != nil || second == nil || first == second {
 		t.Fatal("production registries must be instance-owned")
 	}
-	if len(first.Codecs()) != 3 || len(second.Codecs()) != 3 {
-		t.Fatal("expected DNS-01, TCP-01 and TLS-01")
+	if len(first.Codecs()) != 4 || len(second.Codecs()) != 4 {
+		t.Fatal("expected DNS-01, TCP-01, TLS-01 and HTTP-01")
 	}
 	entry, ok := first.Lookup(task.TestVersion{ID: "TCP-01", Version: "0.1.0"})
 	if !ok || entry.Runner == nil || entry.BaselineRisk != task.LowRisk || !entry.Step || entry.Composite {

@@ -2,9 +2,9 @@
 
 ## Status, Authority, and Baselines
 
-This map covers 394 allocated public requirement units across the nine Draft `0.1.0` measurements and 108 case families. The measurement manifest is pinned to public `5d01879cfd1d47396c780befa2567f7e90439948`, the cross-cutting baseline, and Go `178bda0c73bab64efaf0158f757edc316eeddd1a`, the Measurement reachability primitives milestone (DEV-664): 68 units are `partial`, 326 are `planned`, none is `implemented`, and 16 family records are `passed` with [evidence](../traceability/evidence/go-unit-178bda0.md). Earlier manifests and evidence are retained in Git history.
+The last milestone manifest covers 394 allocated public requirement units across the nine Draft `0.1.0` measurements and 108 case families. The measurement manifest is pinned to public `5d01879cfd1d47396c780befa2567f7e90439948`, the cross-cutting baseline, and Go `178bda0c73bab64efaf0158f757edc316eeddd1a`, the Measurement reachability primitives milestone (DEV-664): 68 units are `partial`, 326 are `planned`, none is `implemented`, and 16 family records are `passed` with [evidence](../traceability/evidence/go-unit-178bda0.md). Earlier manifests and evidence are retained in Git history.
 
-DNS-01, TCP-01 and TLS-01 have production codecs and runners. The DNS-01 and TCP-01 ADMISSION, OPTIONS, EXECUTION, NORMALIZATION, LIMITS, TERMINATION, OUTPUT and VERSIONS families are `passed` with synthetic evidence, as recorded below; the same TLS-01 families execute with synthetic evidence recorded in [Current TLS-01 Execution](#current-tls-01-execution) and stay `planned` in the manifest until the next milestone. Their PRECONDITIONS, MINIMIZATION, INTERPRETATION and SAFETY families and all `RV-*` cases stay planned, and the other measurement runners remain pending. Execution does not establish review completeness, full conformance, platform or field support, or a release. The next measurement milestone updates the manifest under [decision 0012](https://github.com/tv-rain/barometer/blob/main/docs/decisions/0012-lean-task-process.md); REQ-HTTP-01-0051, allocated at public `1206247`, waits for it.
+DNS-01, TCP-01, TLS-01 and HTTP-01 have production codecs and runners. The DNS-01 and TCP-01 ADMISSION, OPTIONS, EXECUTION, NORMALIZATION, LIMITS, TERMINATION, OUTPUT and VERSIONS families are `passed` with synthetic evidence, as recorded below; the same TLS-01 families execute with synthetic evidence recorded in [Current TLS-01 Execution](#current-tls-01-execution) and stay `planned` in the manifest until the next milestone. Their PRECONDITIONS, MINIMIZATION, INTERPRETATION and SAFETY families and all `RV-*` cases stay planned, and the other measurement runners remain pending. HTTP-01 has executable synthetic ADMISSION, OPTIONS, EXECUTION, NORMALIZATION, LIMITS, TERMINATION, OUTPUT and VERSIONS suites described in [Current HTTP-01 Execution](#current-http-01-execution); its manifest records remain planned until the next milestone. Execution does not establish review completeness, full conformance, platform or field support, or a release. The next measurement milestone updates the manifest under [decision 0012](https://github.com/tv-rain/barometer/blob/main/docs/decisions/0012-lean-task-process.md); REQ-HTTP-01-0051 and the precedence rule REQ-HTTP-01-0052 wait for that milestone.
 
 The [public allocation guide](https://github.com/tv-rain/barometer-spec/blob/59d49364d85e48cc8e69c762d130a7a86dc1fe65/requirements/measurement-allocation.md) records unit boundaries and informative dispositions. The public text owns observable behavior; this document assigns Go work and plans validation. Existing [cross-cutting mappings](cross-cutting-requirements.md) and reports retain their original selected baselines. All shared data-format/library source files and existing catalog entries are unchanged between their public PR #6 baseline and this PR #7 merge. This establishes source continuity, not newly executed conformance or support.
 
@@ -19,6 +19,18 @@ Admission and option families plan strict test-specific schemas and pure validat
 Portable fake-platform tests are necessary for NET-01/NET-03/network generation but cannot establish Android or Apple API, permissions, trust-store, suspension, routing or cleanup behavior. Preconditions/safety require separately recorded native and host review/validation. Interpretation families pair a portable check for prohibited claims with a typed `RV-*` result/host/analyst review case: a Go test cannot establish correctness of an external analyst's interpretation. Local synthetic canaries, deterministic clocks and recording transports are the default; no participant data or uncontrolled measurement is needed.
 
 Unresolved public contract ambiguities must enter [Specification Issues](specification-issues.md) and block affected implementation/claims. In particular, outcome-table testing must not invent precedence for combinations the public contract leaves unclear. GO-SPEC-ISSUE-001 remains open for downstream consumer/model, admission, binding and producer evidence; mapping these measurements does not close it.
+
+## Current HTTP-01 Execution
+
+The production `HTTP-01/0.1.0` entry uses `internal/measurement/http01` for closed input/options decoding, normalization, exact URL/check target extraction, explicit-IP-only proxy compatibility and one bounded HTTPS GET chain. The public baseline for its outcome order is [`e6257ec64564ad415a2d6c1f8d106fa1763d7de8`](https://github.com/tv-rain/barometer-spec/tree/e6257ec64564ad415a2d6c1f8d106fa1763d7de8), with internal validation alignment merged at `986a207176a9190d1c4c354fd69df55cfab23616`. The implementation-author scoped precedence review and baseline reconciliation are recorded in the internal HTTP-01 companion; broader reviews remain deferred.
+
+The runner composes the execution-owned staged connection capability, authenticated TLS primitive and bounded HTTP/1.1 exchange primitive. One direct hostname lookup is pinned by the target gate before TCP; it emits only an empty-response system DNS observation, without retaining addresses. Direct hostname `auto` currently selects IPv4 without fallback; explicit `ipv6` selects one AAAA lookup. An explicit-IP URL uses its literal family and emits no DNS observation. Proxy URLs require a literal public IP and `address_family: auto`; every redirect uses a complete registered tuple and the same scope, path generation, budgets and cancellation. URL normalization folds the authority case, canonicalizes IPs, omits default port 443 and supplies an empty path as `/`, preserving query and nonempty path bytes.
+
+HTTP uses identity encoding, no credentials/cookies/User-Agent/body, no automatic retry or connection reuse, at most two authorized redirect requests, and the registered header/body bounds. The TLS plaintext wrapper meters request/response framing and read-ahead; TLS records and CONNECT stay below that boundary. `max_body_bytes` exceeding the task receive bound rejects at decoding/admission without clamping. Codec byte-bound errors preserve only the fixed limit class. Equivalent normalized URLs serialize under their attempt contexts. The containing result decoder receives the exact configured body, redirect and check limits; all output is minimized and revalidated before persistence.
+
+`http01_conformance_test.go` contains the eight `TestMHttp01*` family suites plus production direct/proxy, DNS, redirect, schema/minimization and resource cases. `internal/measurement/http01/codec_test.go` covers URL/check length/count boundaries, immutable tuples and fuzz seeds. `internal/execution/http01_termination_test.go:TestHttp01AllTerminationBoundaries` applies eight common reasons to pre-start, DNS, TCP, TLS, HTTP headers, body and recorded-outcome cleanup, without emitting partial HTTP-01 output. The shared primitive suites provide additional body/check, header, encoding and counted-boundary evidence. Final validation results belong to the tracker, not a per-task manifest rebaseline.
+
+These are synthetic Go cases. Full family conformance, independent deployment/interpretation review, native resolver/trust-store behavior, host integration, device validation, platform support and release support are not claimed. A response mismatch or transport failure is an observation with ordinary server, network, certificate or configuration explanations, not a censorship verdict.
 
 ## Shared Authority and Reuse
 
@@ -1874,7 +1886,7 @@ Review case `RV-M-TLS-01-SAFETY` (`docs/measurement-deployment-review.md`, `head
 
 #### M-HTTP-01-ADMISSION
 
-Intended owner: `internal/validation/http01.go`. Planned case: `internal/validation/http01_conformance_test.go`, `symbol:TestMHttp01Admission`. Disposition: **planned**, with no execution or support evidence. Additional intended owners: `internal/taskdecode/http01.go`, `internal/admission/measurements.go`, `internal/measurement/http01/run.go`.
+Owner: `internal/measurement/http01`, shared execution/protocol/result boundaries and production registry composition. Executable synthetic case: `http01_conformance_test.go`, `symbol:TestMHttp01Admission`; related boundary suites are listed in [Current HTTP-01 Execution](#current-http-01-execution). Disposition: **synthetic cases executed; milestone manifest remains planned**. No whole-family, native or support claim.
 
 Case plan: Vary HTTPS URL/2,048-byte bounds, optional status, body/header arrays 0..8 and value bounds through 256 UTF-8 bytes; check all nested types/enums/conditional values, SHA-256 syntax and unknown fields. Exercise case-sensitive body operations, case-insensitive header names, multivalue any-match and all-checks conjunction. Reject sensitive headers, unsafe URLs/addresses and unregistered redirect targets before contact.
 
@@ -1925,7 +1937,7 @@ Case plan: Vary HTTPS URL/2,048-byte bounds, optional status, body/header arrays
 
 #### M-HTTP-01-OPTIONS
 
-Intended owner: `internal/validation/http01.go`. Planned case: `internal/validation/http01_conformance_test.go`, `symbol:TestMHttp01Options`. Disposition: **planned**, with no execution or support evidence. Additional intended owners: `internal/taskdecode/http01.go`, `internal/admission/measurements.go`, `internal/measurement/http01/run.go`.
+Owner: `internal/measurement/http01`, shared execution/protocol/result boundaries and production registry composition. Executable synthetic case: `http01_conformance_test.go`, `symbol:TestMHttp01Options`; related boundary suites are listed in [Current HTTP-01 Execution](#current-http-01-execution). Disposition: **synthetic cases executed; milestone manifest remains planned**. No whole-family, native or support claim.
 
 Case plan: Test auto/ipv4/ipv6, max_body_bytes default 4096 and 1..65536 with stricter task bounds, follow_redirects default false and conditional max_redirects 1/2. Reject max_redirects when disabled and every custom method/header/body/cookie/credential/proxy/compression/TLS override.
 
@@ -1965,7 +1977,7 @@ Review case `RV-M-HTTP-01-PRECONDITIONS` (`docs/measurement-deployment-review.md
 
 #### M-HTTP-01-EXECUTION
 
-Intended owner: `internal/measurement/http01/run.go`. Planned case: `internal/measurement/http01/conformance_test.go`, `symbol:TestMHttp01Execution`. Disposition: **planned**, with no execution or support evidence. Additional intended owners: `internal/execution/measurements.go`.
+Owner: `internal/measurement/http01`, shared execution/protocol/result boundaries and production registry composition. Executable synthetic case: `http01_conformance_test.go`, `symbol:TestMHttp01Execution`; related boundary suites are listed in [Current HTTP-01 Execution](#current-http-01-execution). Disposition: **synthetic cases executed; milestone manifest remains planned**. No whole-family, native or support claim.
 
 Case plan: Record system DNS, TCP, authenticated TLS, ordinary bodyless credential-free GET requesting identity encoding, bounded redirect decision and terminal checks/body close. Validate each next target and resolved address before contact; no downgrade, unsafe redirects, excessive redirect contact or test-layer retries.
 
@@ -1980,9 +1992,12 @@ Case plan: Record system DNS, TCP, authenticated TLS, ordinary bodyless credenti
 
 #### M-HTTP-01-NORMALIZATION
 
-Intended owner: `internal/measurement/http01/run.go`. Planned case: `internal/measurement/http01/conformance_test.go`, `symbol:TestMHttp01Normalization`. Disposition: **planned**, with no execution or support evidence. Additional intended owners: `internal/result/http01.go`.
+Owner: `internal/measurement/http01`, shared execution/protocol/result boundaries and production registry composition. Executable synthetic case: `http01_conformance_test.go`, `symbol:TestMHttp01Normalization`; related boundary suites are listed in [Current HTTP-01 Execution](#current-http-01-execution). Disposition: **synthetic cases executed; milestone manifest remains planned**. No whole-family, native or support claim.
 
 Case plan: Exercise every outcome row plus configured-check combinations and partial/unevaluated checks, body completion versus truncation and unsupported content encoding. Preserve failure at the observed stage and indexed decidable check outcomes; do not invent verdicts for checks not evaluated or select undocumented precedence.
+
+<!-- requirement-ref: REQ-HTTP-01-0052 -->
+[REQ-HTTP-01-0052](https://github.com/tv-rain/barometer-spec/blob/e6257ec64564ad415a2d6c1f8d106fa1763d7de8/tests/http-01.md#REQ-HTTP-01-0052) → `M-HTTP-01-NORMALIZATION`. Overlapping terminal-response conditions use the merged order; preserve decidable checks and common interruption precedence.
 
 <!-- requirement-ref: REQ-HTTP-01-0008 -->
 [REQ-HTTP-01-0008](https://github.com/tv-rain/barometer-spec/blob/59d49364d85e48cc8e69c762d130a7a86dc1fe65/tests/http-01.md#REQ-HTTP-01-0008) → `M-HTTP-01-NORMALIZATION` (Success Condition).
@@ -1998,7 +2013,7 @@ Case plan: Exercise every outcome row plus configured-check combinations and par
 
 #### M-HTTP-01-LIMITS
 
-Intended owner: `internal/measurement/http01/run.go`. Planned case: `internal/measurement/http01/conformance_test.go`, `symbol:TestMHttp01Limits`. Disposition: **planned**, with no execution or support evidence. Additional intended owners: `internal/execution/measurements.go`.
+Owner: `internal/measurement/http01`, shared execution/protocol/result boundaries and production registry composition. Executable synthetic case: `http01_conformance_test.go`, `symbol:TestMHttp01Limits`; related boundary suites are listed in [Current HTTP-01 Execution](#current-http-01-execution). Disposition: **synthetic cases executed; milestone manifest remains planned**. No whole-family, native or support claim.
 
 Case plan: Test 16,384 response-header bytes, configured body bound and at most two followed redirects within outer connection/byte/time bounds at below/equal/above boundaries. Verify close at the active bound, no test retries and URL deduplication; distinguish application bytes processed from lower-layer buffering/on-wire use.
 
@@ -2007,7 +2022,7 @@ Case plan: Test 16,384 response-header bytes, configured body bound and at most 
 
 #### M-HTTP-01-VERSIONS
 
-Intended owner: `internal/registry/measurements.go`. Planned case: `internal/registry/measurement_conformance_test.go`, `symbol:TestMHttp01Versions`. Disposition: **planned**, with no execution or support evidence. Additional intended owners: `internal/result/http01.go`.
+Owner: `internal/measurement/http01`, shared execution/protocol/result boundaries and production registry composition. Executable synthetic case: `http01_conformance_test.go`, `symbol:TestMHttp01Versions`; related boundary suites are listed in [Current HTTP-01 Execution](#current-http-01-execution). Disposition: **synthetic cases executed; milestone manifest remains planned**. No whole-family, native or support claim.
 
 Case plan: Exercise task acceptance and result validation with the single registered combination test.id HTTP-01, test.version 0.1.0, schema_version 0.1.0 and test.result_version 0.1.0, and assert that an emitted result carries exactly that combination. Iterate unsupported and malformed values for each field independently: 0.2.0, 1.0.0, 0.1, v0.1.0, 0.1.0 with trailing whitespace, empty string, numeric 0.1, null and missing. Iterate cross-test combinations: test.id HTTP-01 with a measurement shaped as the NET-01 access-only object or carrying NET-05 profile/step fields, NET-03 or TLS-01 test.id with an HTTP-01 measurement object, and lowercase http-01. Assert task-side unsupported versions are task-validation failures that produce no Measurement Result and no network contact on the recording transport, and that a receiver rejects or quarantines unsupported result versions without best-effort parsing, coercion to 0.1.0, dropping unknown fields or adding another version; Draft status confers no support. Requirements: REQ-HTTP-01-0033.
 
@@ -2016,7 +2031,7 @@ Case plan: Exercise task acceptance and result validation with the single regist
 
 #### M-HTTP-01-OUTPUT
 
-Intended owner: `internal/result/http01.go`. Planned case: `internal/result/http01_conformance_test.go`, `symbol:TestMHttp01Output`. Disposition: **planned**, with no execution or support evidence.
+Owner: `internal/measurement/http01`, shared execution/protocol/result boundaries and production registry composition. Executable synthetic case: `http01_conformance_test.go`, `symbol:TestMHttp01Output`; related boundary suites are listed in [Current HTTP-01 Execution](#current-http-01-execution). Disposition: **synthetic cases executed; milestone manifest remains planned**. No whole-family, native or support claim.
 
 Case plan: Validate ordered observations only for performed DNS/TCP/TLS/HTTP operations, including bounded redirect chains and connection-reuse omissions. Terminal HTTP retains only status, minimized redirect class, bounded body metadata and indexed checks; no request/response content.
 
@@ -2028,7 +2043,7 @@ Case plan: Validate ordered observations only for performed DNS/TCP/TLS/HTTP ope
 
 #### M-HTTP-01-TERMINATION
 
-Intended owner: `internal/measurement/http01/run.go`. Planned case: `internal/measurement/http01/conformance_test.go`, `symbol:TestMHttp01Termination`. Disposition: **planned**, with no execution or support evidence. Additional intended owners: `internal/execution/measurements.go`.
+Owner: `internal/measurement/http01`, shared execution/protocol/result boundaries and production registry composition. Executable synthetic case: `http01_conformance_test.go`, `symbol:TestMHttp01Termination`; related boundary suites are listed in [Current HTTP-01 Execution](#current-http-01-execution). Disposition: **synthetic cases executed; milestone manifest remains planned**. No whole-family, native or support claim.
 
 Case plan: Drive HTTP-01 with a synthetic registered HTTPS target, a scripted resolver/TCP/TLS/HTTP transport, a fake network-generation source and a deterministic clock, and inject each interruption at each Procedure point: after input validation and before DNS (step 1-2), during the system DNS query (step 3), after DNS before TCP, during TCP connect and during the TLS handshake (step 4), after the GET is sent while awaiting response headers and during header read (step 5), after a redirect response is received with following disabled and with following enabled before next-URL validation (steps 6-7), during each redirect hop's DNS, TCP, TLS and HTTP stages for max_redirects 1 and 2, and during terminal-response body reading below max_body_bytes (step 8). Expected states follow the GO-SPEC-ISSUE-004 disposition: after input validation and before the test's first network-state observation or DNS query the attempt is not_run with that reason, no measurement and no network_context; every other listed point precedes the terminal outcome and is incomplete as asserted below. Inject in turn a network-generation change, host cancellation, outer attempt deadline expiry, a non-time outer connection or data bound, platform suspension and, where the host has configured a proxy path, proxy_unavailable, proxy_connect_failed and proxy_reconfigured. At the incomplete points, assert execution.state is incomplete with exactly the first matching reason from the common table (network_changed, cancelled_by_host, attempt_deadline_exceeded, resource_limit, platform_suspended, proxy_unavailable, proxy_connect_failed, proxy_reconfigured), measurement is absent at those points because HTTP-01 does not register bounded partial output, and no HTTP outcome (including network_changed, http_timeout or inconclusive) or check outcome is invented. Verify a bounded protocol timeout before the outer deadline still yields state completed with outcome http_timeout, that an uninterrupted run yields completed with measurement, that the response body and connections are closed, and that the recording transport shows no retry, fallback stack, further redirect hop or new connection after the interruption. Requirements: REQ-HTTP-01-0038.
 

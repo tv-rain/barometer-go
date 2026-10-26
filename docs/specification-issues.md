@@ -875,7 +875,7 @@ Final validation results, approved Go commit/branch links and remaining work are
 
 ## GO-SPEC-ISSUE-017: HTTP-01 Terminal Response Outcome Precedence
 
-**Current state:** Open, recorded October 26, 2026 under [DEV-667 — Implement HTTP-01](https://app.clickup.com/t/124kk1zcw4x). The owner approved recording the finding and preparing a public proposal; that approval does not select precedence. The [public proposal](https://github.com/tv-rain/barometer-spec/blob/agent/dev-667-http-outcome-precedence/specification-issues/http-01-outcome-precedence.md) is prepared on a task branch; publication, maintainer disposition and adoption are pending. Go behavior is unchanged.
+**Current state:** The owner selected the proposed order; [public PR #33](https://github.com/tv-rain/barometer-spec/pull/33) merged REQ-HTTP-01-0052 at `e6257ec64564ad415a2d6c1f8d106fa1763d7de8`, retaining Draft `0.1.0`. [Internal PR #17](https://github.com/tv-rain/barometer-spec-internal/pull/17) merged validation alignment at `986a207176a9190d1c4c354fd69df55cfab23616`; baseline reconciliation and scoped implementation-author review are prepared in the internal companion. Go HTTP-01 adoption and synthetic cases are prepared under [DEV-667](https://app.clickup.com/t/124kk1zcw4x), pending final approval and merge. The finding remains open for durable adoption/compatibility evidence; broader reviews and platform/field/release support are not claimed.
 
 ### Identity, Baselines and Finding
 
@@ -887,11 +887,11 @@ A synthetic expected status 200 plus body `contains: ok`, with response status 5
 
 ### Impact, Interim Handling and Ordering
 
-Different summaries could affect analysis and cross-implementation comparison even with identical indexed checks. No new traffic, retained content, target, retry, identifier, resource allowance or API is proposed. Ordinary server/content/encoding/transfer failures remain alternatives to censorship. Measurement/implementation review and scoped safety/privacy review of unchanged traffic, bounds, minimization and common termination are pending; native, binding, host and release support are not established.
+Different summaries could affect analysis and cross-implementation comparison even with identical indexed checks. No new traffic, retained content, target, retry, identifier, resource allowance or API is proposed. Ordinary server/content/encoding/transfer failures remain alternatives to censorship. The owner selected the order, and scoped implementation-author technical/safety/privacy review records unchanged traffic, bounds, minimization and common termination in the reconciled internal companion. Independent and whole-deployment reviews remain separate; native, binding, host and release support are not established.
 
-**Blocked:** affected HTTP-01 outcome selection, exact multi-failure normalization assertions and full DEV-667 completion. Existing primitive behavior is preserved. Unaffected codec, target, bounds and common-termination work may continue within approved scope. No runner, fallback or interim precedence is introduced by recording this finding.
+**Adoption:** the public ambiguity is resolved by REQ-HTTP-01-0052. The production HTTP-01 runner reuses the bounded primitive's selected order, preserves decidable checks and fixes its terminal marker before cleanup. Synthetic overlapping-failure cases and common interruption boundaries are listed in [Current HTTP-01 Execution](measurement-requirements.md#current-http-01-execution). No new fallback or censorship classification is introduced.
 
-Alternatives are a public deterministic order matching the primitive (proposed), earliest failed configured check, explicit implementation choice, or deferral. No alternative is adopted. No coordination ADR is currently needed because no responsibility boundary changes. Required order: public disposition and immutable wording/clarification with requirement/version decision; required internal review/validation alignment; Go adoption and synthetic cases; then applicable binding/host validation and compatibility assessment. Closure requires links to all applicable evidence or explicit non-applicability; a prepared proposal is not closure.
+Required order remains public contract, internal alignment, Go adoption, then applicable binding/host validation. Public and semantic internal alignment merges are recorded above; the internal immutable-baseline reconciliation and Go implementation await final commit/push approval. Closure needs durable adoption evidence and applicable downstream validation or explicit non-applicability. A prepared or passing synthetic suite alone is not closure.
 
 ## Signed Remote Task Package Adoption
 
