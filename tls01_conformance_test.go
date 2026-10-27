@@ -599,12 +599,20 @@ func TestMTls01TupleConcurrency(t *testing.T) {
 	if d.calls.Load() != 1 {
 		t.Fatal("equivalent tuple contacted concurrently")
 	}
-	tlsResult(t, h.run.output.Records()[0], tlsExpect{state: "not_run", reason: "cancelled_by_host"})
+	rows := h.run.output.Records()
+	if len(rows) != 1 {
+		t.Fatalf("waiting run produced %d results, want 1", len(rows))
+	}
+	tlsResult(t, rows[0], tlsExpect{state: "not_run", reason: "cancelled_by_host"})
 	if err := c.CancelRun(first); err != nil {
 		t.Fatal(err)
 	}
 	waitTerminal(t, c, first)
-	tlsResult(t, h.run.output.Records()[1], tlsExpect{state: "incomplete", reason: "cancelled_by_host"})
+	rows = h.run.output.Records()
+	if len(rows) != 2 {
+		t.Fatalf("cancelled runs produced %d results, want 2", len(rows))
+	}
+	tlsResult(t, rows[1], tlsExpect{state: "incomplete", reason: "cancelled_by_host"})
 	if err := srv.WaitIdle(ctx); err != nil || srv.Counts().Accepted != 1 {
 		t.Fatal("stalled session not released")
 	}

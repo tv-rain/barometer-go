@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Preserve the first `not_run` cancellation result when cancellation arrives during initial precondition evaluation (DEV-567 CI follow-up). Add deterministic regression cases for either gate return value and explicit result-count diagnostics in the TLS tuple-concurrency test.
 - Validate runtime DNS/TLS observation vocabularies (DEV-567): add complete effective-DNS-code packet coverage, UDP/TCP caller/result cases, authenticated TLS 1.2/1.3 and registered ALPN cases, every explicit peer-alert grouping, hostile unoffered ALPN and opaque-error cases, strict result rejection and HTTP-01/NET-05 reuse. Extend synthetic DNS/TLS fixtures without changing production behavior or wire versions. GO-SPEC-ISSUE-002 stays open for remaining runner, native/host and compatibility evidence.
 
 - Implement the NET-05 sequential runner and aggregate runtime limits (DEV-669). Primitive steps call shared DNS/TCP/TLS/HTTP operations within one metered attempt scope, with exact step target/redirect authority, a single path/context/proxy generation, whole-profile serialization, and bounded partial results. Add the approved platform-only validation gate, required by default, and synthetic execution, normalization, aggregate-boundary, termination, output and proxy-lifecycle evidence. Preserve profile-history and summed-maxima admission deferrals; fresh/cached NET-03 context, deployment reviews, native/device/field validation, milestone traceability and full support remain pending.
