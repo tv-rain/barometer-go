@@ -59,13 +59,23 @@ func net05Wire(t *testing.T, raw []byte) net05Result {
 	if v.Measurement != nil && (v.Measurement.Profile.ID != "baseline" || v.Measurement.Profile.Version != 1 || v.Measurement.Validation.Source != "platform") {
 		t.Fatal("profile/context identity")
 	}
-	if v.Schema != "0.1.0" || v.Test.ID != "NET-05" || v.Test.ResultVersion != "0.1.0" {
+	if v.Schema != "0.1.0" || v.Test.ID != "NET-05" || v.Test.Version != "0.1.0" || v.Test.ResultVersion != "0.1.0" {
 		t.Fatal("outer versions")
 	}
 	if v.Measurement == nil {
 		t.Fatalf("missing expected profile measurement: %s", raw)
 	}
+	switch v.Measurement.Validation.State {
+	case "validated", "not_validated", "captive_portal_suspected", "unknown":
+	default:
+		t.Fatalf("network_validation.state: %s", raw)
+	}
 	for _, s := range v.Measurement.Steps {
+		switch s.Test.ID {
+		case "DNS-01", "TCP-01", "TLS-01", "HTTP-01":
+		default:
+			t.Fatalf("step test.id: %s", raw)
+		}
 		if s.Test.Version != "0.1.0" || s.Test.ResultVersion != "0.1.0" {
 			t.Fatal("step versions")
 		}
@@ -130,8 +140,16 @@ func TestMNet05ExecutionAndOutput(t *testing.T) {
 	if v.Execution.State != "completed" || v.Measurement == nil || v.Measurement.Outcome != "completed" || len(v.Measurement.Steps) != 4 || d.calls.Load() != 3 {
 		t.Fatalf("execution %s", raw)
 	}
+	// M-NET-05-VERSIONS and OUTPUT: exact step identities, in profile order,
+	// and the platform validation state that authorized the run.
+	if v.Measurement.Validation.State != "validated" {
+		t.Fatalf("network_validation.state: %s", raw)
+	}
 	for i, want := range []string{"resolved", "connected", "alpn_no_overlap", "expected_response"} {
 		s := v.Measurement.Steps[i]
+		if s.ID != []string{"dns", "tcp", "tls", "http"}[i] || s.Test.ID != []string{"DNS-01", "TCP-01", "TLS-01", "HTTP-01"}[i] {
+			t.Fatalf("step %d identity: %s", i, raw)
+		}
 		if s.State != "completed" || s.Measurement == nil || s.Measurement.Outcome != want {
 			t.Fatalf("step %d: %s", i, raw)
 		}
@@ -225,6 +243,13 @@ func TestMNet05PlatformValidationGate(t *testing.T) {
 		}
 		if v.Execution.State != "completed" || v.Measurement.Outcome != want || len(v.Measurement.Steps) != 0 || d.calls.Load() != 0 {
 			t.Fatal("validation gate")
+		}
+		wantState := "not_validated"
+		if state == platform.AvailabilityUnknown {
+			wantState = "unknown"
+		}
+		if v.Measurement.Validation.State != wantState {
+			t.Fatalf("network_validation.state: %s", raw)
 		}
 		data := net05Task("task-validation", profileInput(primitiveSteps()[1]), `{}`, `"network":{"require_validated":true}`)
 		if rh, e := c.StartRun(h.admit(t, c, data)); rh != "" || codeOf(e) != "run_not_due" {

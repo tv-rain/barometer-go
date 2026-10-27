@@ -208,13 +208,10 @@ func TestMHttp01Admission(t *testing.T) {
 	for _, b := range []string{`{"name":"Set-Cookie","type":"present"}`, `{"name":"x","type":"present","value":""}`, `{"name":"x","type":"equals"}`, `{"name":"x","type":"equals","value":""}`, `{"name":"bad header","type":"present"}`} {
 		invalid = append(invalid, `{"url":"https://8.8.8.8/check","header_checks":[`+b+`]}`)
 	}
+	// Each rejection is a schema-class admission failure with no handle,
+	// replay commit, run or transport contact.
 	for i, in := range invalid {
-		h, c, _ := httpAdmissionClient(t)
-		data := httpTask(fmt.Sprint("bad-", i), in, `{}`)
-		handle, e := c.AdmitTask(data, h.embedded(t, data))
-		if e == nil || handle != "" {
-			t.Fatalf("accepted %s", in)
-		}
+		assertHttp01Rejected(t, httpTask(fmt.Sprint("bad-", i), in, `{}`), "task_schema_invalid")
 	}
 	data := httpTask("unregistered", strings.Replace(httpInput, "/check", "/other", 1), `{}`)
 	if _, e := c.AdmitTask(data, h.embedded(t, data)); codeOf(e) != "target_not_registered" {
@@ -231,12 +228,14 @@ func TestMHttp01Options(t *testing.T) {
 	h, d, _ := httpHarness(t, httpInput, responseHTTP(""), false)
 	c := h.initialized(t)
 	defer c.Close()
-	for i, opt := range []string{`{"address_family":"unknown"}`, `{"address_family":null}`, `{"max_body_bytes":0}`, `{"max_body_bytes":65537}`, `{"max_body_bytes":"4"}`, `{"follow_redirects":true}`, `{"max_redirects":1}`, `{"follow_redirects":false,"max_redirects":2}`, `{"follow_redirects":true,"max_redirects":3}`, `{"method":"POST"}`, `{"headers":{}}`, `{"cookies":true}`, `{"insecure_skip_verify":true}`} {
-		h, c, _ := httpAdmissionClient(t)
-		data := httpTask(fmt.Sprint("bad-opt-", i), httpInput, opt)
-		if _, e := c.AdmitTask(data, h.embedded(t, data)); e == nil {
-			t.Fatal(opt)
-		}
+	for i, tc := range []struct{ opt, want string }{
+		{`{"address_family":"unknown"}`, "task_schema_invalid"}, {`{"address_family":null}`, "task_schema_invalid"},
+		{`{"max_body_bytes":0}`, "task_schema_invalid"}, {`{"max_body_bytes":65537}`, "task_limit_exceeded"}, {`{"max_body_bytes":"4"}`, "task_schema_invalid"},
+		{`{"follow_redirects":true}`, "task_schema_invalid"}, {`{"max_redirects":1}`, "task_schema_invalid"}, {`{"follow_redirects":false,"max_redirects":2}`, "task_schema_invalid"},
+		{`{"follow_redirects":true,"max_redirects":3}`, "task_limit_exceeded"}, {`{"method":"POST"}`, "task_schema_invalid"}, {`{"headers":{}}`, "task_schema_invalid"},
+		{`{"cookies":true}`, "task_schema_invalid"}, {`{"insecure_skip_verify":true}`, "task_schema_invalid"},
+	} {
+		assertHttp01Rejected(t, httpTask(fmt.Sprint("bad-opt-", i), httpInput, tc.opt), tc.want)
 	}
 	for i, opt := range []string{`{}`, `{"address_family":"ipv4"}`, `{"max_body_bytes":1}`, `{"max_body_bytes":65536}`, `{"follow_redirects":true,"max_redirects":1}`, `{"follow_redirects":true,"max_redirects":2}`} {
 		data := httpTask(fmt.Sprint("good-opt-", i), httpInput, opt)

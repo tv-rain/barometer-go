@@ -289,6 +289,83 @@ func TestMNet05Options(t *testing.T) {
 	if handle, e := c.AdmitTask(data, h.embedded(t, data)); handle != "" || codeOf(e) != "task_limit_exceeded" {
 		t.Fatal("primitive bound not enforced")
 	}
+	// Composite options cannot carry limits, retries, ordering or safety.
+	for _, opt := range []string{`{"limits":{}}`, `{"limits":{"max_connections":13}}`, `{"max_duration_ms":120000}`, `{"retries":1}`, `{"max_attempts":2}`, `{"parallel":true}`, `{"order":["http","dns"]}`, `{"fallback":"direct"}`, `{"network_path":"direct"}`, `{"":0}`} {
+		assertNet05Rejected(t, all, opt, "", "task_schema_invalid", nil)
+	}
+	// A step cannot override primitive limits, retry, ordering, path or safety
+	// beside its input/options; the closed step object rejects the member.
+	for _, member := range []string{`"limits":{}`, `"limits":{"max_connections":13,"max_duration_ms":120000}`, `"retries":1`, `"max_attempts":2`, `"order":0`, `"parallel":true`, `"network_path":"direct"`, `"risk_level":"low"`} {
+		assertNet05Rejected(t, profileInput(primitiveSteps()[1], strings.Replace(primitiveSteps()[3], `"step_id":`, member+`,"step_id":`, 1)), `{}`, "", "task_schema_invalid", nil)
+	}
+	// Each primitive option is checked by that primitive's exact versioned
+	// schema, independently and in a later step after a valid one; limit and
+	// retry members inside step options are unknown primitive options.
+	tcp := `{"ip_address":"8.8.8.8","port":443}`
+	tls := `{"ip_address":"8.8.8.8","port":443,"server_name":"example.com"}`
+	dns := `{"hostname":"example.com","record_type":"A","resolver":{"ip_address":"8.8.8.8"}}`
+	for _, tc := range []struct{ test, input, options, want string }{
+		{"TCP-01", tcp, `{"limits":{"max_connections":13}}`, "task_schema_invalid"},
+		{"TCP-01", tcp, `{"max_duration_ms":120000}`, "task_schema_invalid"},
+		{"TCP-01", tcp, `{"timeout_ms":1}`, "task_schema_invalid"},
+		{"TCP-01", tcp, `null`, "task_schema_invalid"},
+		{"TLS-01", tls, `{"alpn_protocols":["h3"]}`, "task_schema_invalid"},
+		{"TLS-01", tls, `{"alpn_protocols":["h2","h2"]}`, "task_schema_invalid"},
+		{"TLS-01", tls, `{"alpn_protocols":"h2"}`, "task_schema_invalid"},
+		{"TLS-01", tls, `{"session_resumption":true}`, "task_schema_invalid"},
+		{"TLS-01", tls, `{"retries":1}`, "task_schema_invalid"},
+		{"DNS-01", dns, `{"resolver_mode":"direct","transport":"doh"}`, "task_schema_invalid"},
+		{"DNS-01", dns, `{"resolver_mode":"direct","transport":"tcp","collect_additional_responses":"yes"}`, "task_schema_invalid"},
+		{"DNS-01", dns, `{"resolver_mode":"direct","transport":"tcp","additional_response_window_ms":1}`, "task_schema_invalid"},
+		{"DNS-01", dns, `{"resolver_mode":"direct","transport":"tcp","max_attempts":2}`, "task_schema_invalid"},
+		{"HTTP-01", httpInput, `{"max_redirects":3}`, "task_limit_exceeded"},
+		{"HTTP-01", httpInput, `{"follow_redirects":"yes"}`, "task_schema_invalid"},
+		{"HTTP-01", httpInput, `{"address_family":"ipv5"}`, "task_schema_invalid"},
+		{"HTTP-01", httpInput, `{"max_body_bytes":"4096"}`, "task_schema_invalid"},
+		{"HTTP-01", httpInput, `{"limits":{"max_bytes_received":262145}}`, "task_schema_invalid"},
+		{"HTTP-01", httpInput, `{"retry":true}`, "task_schema_invalid"},
+	} {
+		assertNet05Rejected(t, profileInput(primitiveSteps()[1], profileStep("last", tc.test, tc.input, tc.options)), `{}`, "", tc.want, nil)
+	}
+	// A narrower primitive option within the outer envelope is accepted.
+	h, c, d := net05AdmissionClient(t, nil)
+	data = net05Task("primitive-option", input, `{}`, "")
+	if handle, e := c.AdmitTask(data, h.embedded(t, data)); e != nil || handle == "" || d.calls.Load() != 0 {
+		t.Fatalf("narrower primitive option: %s", codeOf(e))
+	}
+}
+
+// M-NET-05-LIMITS registered ceilings at admission: 60,000 ms, 12 connections
+// or tunnels, 65,536 bytes sent and 262,144 received, each below, at and
+// above the ceiling with the other limits omitted. Over-budget summed declared
+// maxima are an approved deferral and are not asserted here; actual aggregate
+// use at the ceilings is driven in internal/execution.
+// requirement-ref: REQ-NET-05-0037
+// requirement-ref: REQ-NET-05-0038
+func TestMNet05RegisteredCeilingAdmission(t *testing.T) {
+	all := profileInput(primitiveSteps()...)
+	for _, tc := range []struct {
+		key     string
+		ceiling int
+	}{{"max_duration_ms", 60000}, {"max_connections", 12}, {"max_bytes_sent", 65536}, {"max_bytes_received", 262144}} {
+		for _, delta := range []int{-1, 0, 1} {
+			t.Run(fmt.Sprintf("%s/%d", tc.key, tc.ceiling+delta), func(t *testing.T) {
+				data := strings.Replace(net05Task("ceiling", all, `{}`, ""), `"limits":{}`, fmt.Sprintf(`"limits":{%q:%d}`, tc.key, tc.ceiling+delta), 1)
+				h, c, d := net05AdmissionClient(t, nil)
+				handle, e := c.AdmitTask(data, h.embedded(t, data))
+				if d.calls.Load() != 0 {
+					t.Fatal("admission contacted transport")
+				}
+				if delta > 0 {
+					if handle != "" || codeOf(e) != "task_limit_exceeded" || taskHandles(c) != 0 || h.replay.Commits() != 0 {
+						t.Fatalf("above ceiling: %q %s", handle, codeOf(e))
+					}
+				} else if e != nil || handle == "" {
+					t.Fatalf("within ceiling: %s", codeOf(e))
+				}
+			})
+		}
+	}
 }
 
 // Task dispatch portion of VERSIONS. Result-version and emitted-result cases

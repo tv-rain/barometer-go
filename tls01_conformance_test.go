@@ -299,7 +299,7 @@ func TestMTls01Options(t *testing.T) {
 		options string
 		alpn    []string
 	}{
-		{`{}`, nil}, {`{"alpn_protocols":[]}`, nil}, {`{"alpn_protocols":["h2"]}`, []string{"h2"}}, {`{"alpn_protocols":["dot"]}`, []string{"dot"}},
+		{`{}`, nil}, {`{"alpn_protocols":[]}`, nil}, {`{"alpn_protocols":["h2"]}`, []string{"h2"}}, {`{"alpn_protocols":["dot"]}`, []string{"dot"}}, {`{"alpn_protocols":["http/1.1"]}`, []string{"http/1.1"}},
 		{`{"alpn_protocols":["http/1.1","h2","dot"]}`, []string{"http/1.1", "h2", "dot"}},
 	} {
 		t.Run("valid/"+tc.options, func(t *testing.T) {
@@ -675,13 +675,25 @@ func TestMTls01Termination(t *testing.T) {
 // requirement-ref: REQ-TLS-01-0024
 func TestMTls01Versions(t *testing.T) {
 	f := newTLSFixture(t)
-	for _, version := range []string{`"0.1.1"`, `"0.2.0"`, `"1.0.0"`, `""`, `"v0.1.0"`, `"0.1"`, `0.1`, `null`} {
+	// "missing" removes the member. A well-formed unregistered version is
+	// task_unsupported (REQ-TRUST-0047 step 4); a malformed or missing one
+	// fails the envelope schema. Either is a task-validation failure with no
+	// handle, replay record, contact or Measurement Result.
+	for _, version := range []string{`"0.1.1"`, `"0.2.0"`, `"1.0.0"`, `""`, `"v0.1.0"`, `"0.1"`, `"0.1.0 "`, `0.1`, `1`, `null`, "missing"} {
 		h, d := tlsProductionHarness(t, f)
 		c := h.initialized(t)
-		data := strings.Replace(tlsTask("version"), `"test_version":"0.1.0"`, `"test_version":`+version, 1)
+		replacement := `"test_version":` + version + `,`
+		if version == "missing" {
+			replacement = ""
+		}
+		data := strings.Replace(tlsTask("version"), `"test_version":"0.1.0",`, replacement, 1)
+		want := "task_schema_invalid"
+		if version == `"0.1.1"` || version == `"0.2.0"` || version == `"1.0.0"` {
+			want = "task_unsupported"
+		}
 		handle, err := c.AdmitTask(data, h.embedded(t, data))
-		if err == nil || handle != "" || h.replay.Commits() != 0 || d.calls.Load() != 0 {
-			t.Fatal("unsupported version admitted", version)
+		if codeOf(err) != want || handle != "" || h.replay.Commits() != 0 || d.calls.Load() != 0 || len(h.run.output.Records()) != 0 {
+			t.Fatalf("version %s: %s, want %s", version, codeOf(err), want)
 		}
 		c.Close()
 	}
