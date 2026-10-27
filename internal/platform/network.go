@@ -1,6 +1,14 @@
 package platform
 
-import "context"
+import (
+	"context"
+	"errors"
+)
+
+// ErrNetworkUnavailable is the error a Network returns when the platform
+// exposes no supported network-state API. Any other error is a failure of an
+// available API. It carries no platform detail.
+var ErrNetworkUnavailable = errors.New("platform: network state unavailable")
 
 // NetworkType is the coarse base transport of the device network. The zero
 // value is NetworkUnknown, so an unset type never satisfies a requirement.
@@ -55,7 +63,8 @@ type AccessState struct {
 // results. The query carries no task value, so no task selects or changes the
 // answer. An error, a zero generation or an unrecognized value never satisfies
 // a requirement; values the platform cannot determine are reported as unknown
-// (REQ-CONTEXT-0034).
+// (REQ-CONTEXT-0034). Access returns ErrNetworkUnavailable, or an error
+// wrapping it, only when no supported network-state API exists.
 //
 // Watch arranges for changed to be called once, from any goroutine, when the
 // access-network generation is no longer generation, immediately if it already

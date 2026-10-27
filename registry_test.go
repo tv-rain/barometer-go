@@ -16,10 +16,14 @@ func TestProductionRegistryContainsOnlyDeliveredMeasurements(t *testing.T) {
 	if err != nil || second == nil || first == second {
 		t.Fatal("production registries must be instance-owned")
 	}
-	if len(first.Codecs()) != 5 || len(second.Codecs()) != 5 {
-		t.Fatal("expected four primitives and sequential NET-05")
+	if len(first.Codecs()) != 6 || len(second.Codecs()) != 6 {
+		t.Fatal("expected four primitives, NET-01 and sequential NET-05")
 	}
-	entry, ok := first.Lookup(task.TestVersion{ID: "TCP-01", Version: "0.1.0"})
+	entry, ok := first.Lookup(net01Test)
+	if !ok || entry.Runner == nil || entry.BaselineRisk != task.LowRisk || entry.Step || entry.Composite {
+		t.Fatal("NET-01 composition missing or incorrect")
+	}
+	entry, ok = first.Lookup(task.TestVersion{ID: "TCP-01", Version: "0.1.0"})
 	if !ok || entry.Runner == nil || entry.BaselineRisk != task.LowRisk || !entry.Step || entry.Composite {
 		t.Fatal("TCP-01 composition missing or incorrect")
 	}

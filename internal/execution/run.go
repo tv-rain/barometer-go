@@ -368,6 +368,9 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 			return a, measurement.Usage{}, v, err
 		}
 	}
+	if localTest(p) {
+		return e.localAttempt(actx, cancel, p, runner, pending, runID, n, started)
+	}
 	snap, err := p.Context.Capture(actx)
 	if actx.Err() != nil {
 		a, v, err := e.stopped(p, pending, stopReason(actx), nil, runID, n, started)

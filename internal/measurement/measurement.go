@@ -22,6 +22,14 @@ var ErrRunner = errors.New("measurement: runner failed")
 // ErrTargetRejected is a local safety refusal, never a transport observation.
 var ErrTargetRejected = errors.New("measurement: target rejected")
 
+// ErrNoNetworkState and ErrNetworkState are the two fixed failures of a
+// network-state read: no supported platform API, or a failure of an available
+// API before a coherent snapshot. Neither carries platform detail.
+var (
+	ErrNoNetworkState = errors.New("measurement: network state unavailable")
+	ErrNetworkState   = errors.New("measurement: network state failed")
+)
+
 // ErrResolutionFailed lets a runner distinguish the resolution stage without
 // receiving a hostname, resolver detail or raw platform error.
 var ErrResolutionFailed = errors.New("measurement: resolution failed")
@@ -128,7 +136,13 @@ type Input struct {
 	// After a successful marker, perform only cleanup, with no further I/O.
 	RecordOutcome func() bool
 	Dialer        Dialer
-	Start         func()
+	// Network reads the access state once through the shared Network
+	// Context collector, for a test whose procedure is that read (NET-01).
+	// It starts the test and arms the attempt's generation watch; it sends
+	// no traffic and acquires no egress context. It is nil for every other
+	// test, which then also receives no access values.
+	Network func(context.Context) (observation.AccessSnapshot, error)
+	Start   func()
 	// Redirect validates a complete normalized redirect tuple and returns a
 	// dialer restricted to that hop, sharing this attempt's budgets and path.
 	// A rejection is handled as the registered test's redirect_rejected outcome.
@@ -146,7 +160,9 @@ type Usage struct {
 // negative DNS, TCP, TLS or HTTP outcome is still a terminal outcome
 // (REQ-SCHEDULE-0025). Result construction validates it against the test.
 type Output struct {
-	Composite    *CompositeOutput
+	Composite *CompositeOutput
+	// Access is NET-01's normalized access object; nil for every other test.
+	Access       *observation.AccessSnapshot
 	Outcome      string
 	Observations []observation.Observation
 	Usage        Usage

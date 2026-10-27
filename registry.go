@@ -5,6 +5,7 @@ import (
 
 	dnsmeasurement "github.com/tv-rain/barometer-go/internal/measurement/dns01"
 	httpmeasurement "github.com/tv-rain/barometer-go/internal/measurement/http01"
+	"github.com/tv-rain/barometer-go/internal/measurement/net01"
 	"github.com/tv-rain/barometer-go/internal/measurement/net05"
 	tcpmeasurement "github.com/tv-rain/barometer-go/internal/measurement/tcp01"
 	tlsmeasurement "github.com/tv-rain/barometer-go/internal/measurement/tls01"
@@ -19,6 +20,8 @@ import (
 // requirement-ref: REQ-TCP-01-0031
 // requirement-ref: REQ-TLS-01-0024
 // requirement-ref: REQ-TLS-01-0032
+// requirement-ref: REQ-NET-01-0022
+// requirement-ref: REQ-NET-01-0032
 func productionRegistry(roots *x509.CertPool) (*registry.Registry, error) {
 	entries := []registry.Entry{{Test: task.TestVersion{ID: "DNS-01", Version: "0.1.0"}, Codec: dnsmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: dns01Targets{}, Proxy: dnsmeasurement.ProxyRule{}, Runner: &dnsmeasurement.Runner{}, Step: true}, {Test: task.TestVersion{ID: "TCP-01", Version: "0.1.0"}, Codec: tcpmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: tcp01Targets{}, Proxy: tcpmeasurement.ProxyRule{}, Runner: &tcpmeasurement.Runner{}, Step: true},
 		{Test: task.TestVersion{ID: "TLS-01", Version: "0.1.0"}, Codec: tlsmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: tls01Targets{}, Proxy: tlsmeasurement.ProxyRule{}, Runner: &tlsmeasurement.Runner{Roots: roots}, Step: true}, {Test: task.TestVersion{ID: "HTTP-01", Version: "0.1.0"}, Codec: httpmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: http01Targets{}, Proxy: httpmeasurement.ProxyRule{}, Runner: &httpmeasurement.Runner{Roots: roots}, Step: true}}
@@ -31,6 +34,9 @@ func productionRegistry(roots *x509.CertPool) (*registry.Registry, error) {
 		return nil, err
 	}
 	rules := net05Rules{primitives: primitives}
+	// NET-01 has no remote target and is rejected on the proxy path
+	// (REQ-PROXY-0026); it is not a NET-05 step.
+	entries = append(entries, registry.Entry{Test: task.TestVersion{ID: "NET-01", Version: "0.1.0"}, Codec: net01.Codec{}, BaselineRisk: task.LowRisk, Targets: registry.NoTargets{}, Proxy: registry.NoProxy{}, Runner: net01.Runner{}})
 	entries = append(entries, registry.Entry{Test: task.TestVersion{ID: "NET-05", Version: "0.1.0"}, Codec: codec, BaselineRisk: task.MediumRisk, Targets: rules, Proxy: rules, Runner: &net05.Runner{Roots: roots}, Composite: true})
 	return registry.New(entries)
 }
