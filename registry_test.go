@@ -17,8 +17,8 @@ func TestProductionRegistryContainsOnlyDeliveredMeasurements(t *testing.T) {
 	if err != nil || second == nil || first == second {
 		t.Fatal("production registries must be instance-owned")
 	}
-	if len(first.Codecs()) != 7 || len(second.Codecs()) != 7 {
-		t.Fatal("expected four primitives, NET-01, NET-03 and sequential NET-05")
+	if len(first.Codecs()) != 8 || len(second.Codecs()) != 8 {
+		t.Fatal("expected four primitives, NET-01, NET-03, DNS-04 and sequential NET-05")
 	}
 	entry, ok := first.Lookup(net01Test)
 	if !ok || entry.Runner == nil || entry.BaselineRisk != task.LowRisk || entry.Step || entry.Composite {
@@ -27,6 +27,10 @@ func TestProductionRegistryContainsOnlyDeliveredMeasurements(t *testing.T) {
 	entry, ok = first.Lookup(task.TestVersion{ID: "NET-03", Version: "0.1.0"})
 	if _, noProxy := entry.Proxy.(registry.NoProxy); !ok || entry.Runner == nil || entry.BaselineRisk != task.LowRisk || entry.Step || entry.Composite || !noProxy {
 		t.Fatal("NET-03 composition missing or incorrect")
+	}
+	entry, ok = first.Lookup(task.TestVersion{ID: "DNS-04", Version: "0.1.0"})
+	if _, noProxy := entry.Proxy.(registry.NoProxy); !ok || entry.Runner == nil || entry.BaselineRisk != task.MediumRisk || entry.Step || entry.Composite || noProxy {
+		t.Fatal("DNS-04 composition missing or incorrect")
 	}
 	entry, ok = first.Lookup(task.TestVersion{ID: "TCP-01", Version: "0.1.0"})
 	if !ok || entry.Runner == nil || entry.BaselineRisk != task.LowRisk || !entry.Step || entry.Composite {

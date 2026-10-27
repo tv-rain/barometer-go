@@ -45,7 +45,26 @@ type Result struct {
 // requirement-ref: REQ-LIMIT-0034
 // requirement-ref: REQ-DNS-01-0033
 // requirement-ref: REQ-DNS-01-0038
-func Direct(ctx context.Context, in Input, q Question, transport, address, family string, collect bool, window time.Duration) (conn Conn, result Result, err error) {
+func Direct(ctx context.Context, in Input, q Question, transport, address, family string, collect bool, window time.Duration) (Conn, Result, error) {
+	return exchange(ctx, in, q, transport, transport, address, family, collect, window)
+}
+
+// Session performs one length-prefixed DNS-over-TLS exchange on the plaintext
+// side of an established, authenticated session, recorded with engine dot. The
+// caller owns conn and records the terminal outcome before closing it; the
+// operation bound or an outer interruption closes conn. There is no retry,
+// cleartext fallback or second resolver.
+// requirement-ref: REQ-LIMIT-0034
+func Session(ctx context.Context, clock Clock, conn Conn, q Question, family string) (Result, error) {
+	if conn == nil {
+		return Result{}, ErrInterrupted
+	}
+	dial := func(context.Context, string, string) (Conn, error) { return conn, nil }
+	_, result, err := exchange(ctx, Input{Clock: clock, Dial: dial}, q, "tcp", "dot", "", family, false, 0)
+	return result, err
+}
+
+func exchange(ctx context.Context, in Input, q Question, transport, engine, address, family string, collect bool, window time.Duration) (conn Conn, result Result, err error) {
 	query, e := Query(q)
 	if e != nil || in.Clock == nil || in.Dial == nil || transport != "udp" && transport != "tcp" || collect && (transport != "udp" || window <= 0 || window > time.Second) {
 		return nil, Result{}, ErrInterrupted
@@ -118,7 +137,7 @@ func Direct(ctx context.Context, in Input, q Question, transport, address, famil
 			}
 		}
 		duration := coarse(in.Clock.Now().Sub(started))
-		o, e := observation.NewDNS(observation.Contract, status, duration, failure, observation.DNSDetails{Engine: transport, AddressFamily: family, QueryType: q.Type, Responses: responses, ResponseLimitReached: limited}, observation.ProtocolLimits{RetainDNSAnswers: true})
+		o, e := observation.NewDNS(observation.Contract, status, duration, failure, observation.DNSDetails{Engine: engine, AddressFamily: family, QueryType: q.Type, Responses: responses, ResponseLimitReached: limited}, observation.ProtocolLimits{RetainDNSAnswers: true})
 		if e != nil {
 			if conn != nil {
 				_ = conn.Close()
