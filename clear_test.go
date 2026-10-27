@@ -384,6 +384,7 @@ func TestClearingCoversEveryAdapter(t *testing.T) {
 		"contextRoots":     "exempt: context endpoint trust anchors",
 		"measurementRoots": "exempt: TLS-01 trust anchors",
 		"linkageKeys":      "cleared: eraser deletes the protected key",
+		"linkage":          "cleared: eraser drops the in-memory linkage epoch state",
 		"clearStorage":     "the clearing capability itself",
 		"run":              "see runAdapters",
 		"records":          "cleared: every record class",

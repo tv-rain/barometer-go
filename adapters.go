@@ -15,6 +15,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/model/task"
 	"github.com/tv-rain/barometer-go/internal/networkcontext"
 	"github.com/tv-rain/barometer-go/internal/persistence"
+	"github.com/tv-rain/barometer-go/internal/persistence/linkage"
 	"github.com/tv-rain/barometer-go/internal/persistence/pending"
 	"github.com/tv-rain/barometer-go/internal/platform"
 	"github.com/tv-rain/barometer-go/internal/registry"
@@ -41,6 +42,12 @@ type adapters struct {
 	replay      persistence.ReplayStore
 	approvals   config.Approvals
 	linkageKeys platform.LinkageKeyStore // optional; absence disables linkage only
+
+	// linkage holds the in-memory linkage epoch state of the client
+	// (DEV-675). bind creates it; each generation derives the linkage of new
+	// bundles through it when initialization enables linkage, and clearing
+	// erases it.
+	linkage *linkage.Source
 
 	// contextApprovals are the reviewed egress classification versions,
 	// country codes and region codes a context endpoint may return
@@ -137,6 +144,10 @@ func storageClearer(a *adapters) func(context.Context) error {
 	if !absent(a.linkageKeys) {
 		// Deleting the key creates no replacement (REQ-LINKAGE-0023 item 8).
 		erasers = append(erasers, a.linkageKeys.Delete)
+	}
+	if a.linkage != nil {
+		// The epoch floor is in memory only; erasing it sends nothing.
+		erasers = append(erasers, a.linkage.Erase)
 	}
 	if a.run.contextCache != nil {
 		// The egress cache is in memory only; erasing it sends nothing.
@@ -255,7 +266,7 @@ func successor(a *adapters, init *config.Initialization, policy task.LocalPolicy
 	if err != nil {
 		return nil
 	}
-	store, err := pending.New(a.records, builder, a.run.clock, a.pendingLimits, a.lifecycleDeadline())
+	store, err := pending.New(a.records, builder, pending.Linkage(a.linkage.For(init)), a.run.clock, a.pendingLimits, a.lifecycleDeadline())
 	if err != nil {
 		return nil
 	}

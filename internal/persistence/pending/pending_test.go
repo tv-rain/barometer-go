@@ -91,7 +91,7 @@ func newFixture(t *testing.T, limits pending.Limits) *fixture {
 // reopen models a new owner over the same storage, as after a restart.
 func (f *fixture) reopen() {
 	f.t.Helper()
-	s, err := pending.New(f.records, builder(f.t), f.clock, f.limits, time.Second)
+	s, err := pending.New(f.records, builder(f.t), nil, f.clock, f.limits, time.Second)
 	if err != nil {
 		f.t.Fatal(err)
 	}
@@ -156,24 +156,28 @@ func members(t testing.TB, id string, b []byte) []string {
 func TestNewRejectsInvalidInputs(t *testing.T) {
 	r, b, c := records.New(), builder(t), testkit.NewClock(epoch)
 	for name, mk := range map[string]func() (*pending.Store, error){
-		"no records":        func() (*pending.Store, error) { return pending.New(nil, b, c, pending.Limits{}, time.Second) },
-		"no builder":        func() (*pending.Store, error) { return pending.New(r, nil, c, pending.Limits{}, time.Second) },
-		"no clock":          func() (*pending.Store, error) { return pending.New(r, b, nil, pending.Limits{}, time.Second) },
-		"no deadline":       func() (*pending.Store, error) { return pending.New(r, b, c, pending.Limits{}, 0) },
-		"bundles above max": func() (*pending.Store, error) { return pending.New(r, b, c, pending.Limits{Bundles: 33}, time.Second) },
-		"negative bundles":  func() (*pending.Store, error) { return pending.New(r, b, c, pending.Limits{Bundles: -1}, time.Second) },
+		"no records":  func() (*pending.Store, error) { return pending.New(nil, b, nil, c, pending.Limits{}, time.Second) },
+		"no builder":  func() (*pending.Store, error) { return pending.New(r, nil, nil, c, pending.Limits{}, time.Second) },
+		"no clock":    func() (*pending.Store, error) { return pending.New(r, b, nil, nil, pending.Limits{}, time.Second) },
+		"no deadline": func() (*pending.Store, error) { return pending.New(r, b, nil, c, pending.Limits{}, 0) },
+		"bundles above max": func() (*pending.Store, error) {
+			return pending.New(r, b, nil, c, pending.Limits{Bundles: 33}, time.Second)
+		},
+		"negative bundles": func() (*pending.Store, error) {
+			return pending.New(r, b, nil, c, pending.Limits{Bundles: -1}, time.Second)
+		},
 		"bytes above max": func() (*pending.Store, error) {
-			return pending.New(r, b, c, pending.Limits{Bytes: 4194305}, time.Second)
+			return pending.New(r, b, nil, c, pending.Limits{Bytes: 4194305}, time.Second)
 		},
 		"bytes below one result": func() (*pending.Store, error) {
-			return pending.New(r, b, c, pending.Limits{Bytes: 65611}, time.Second)
+			return pending.New(r, b, nil, c, pending.Limits{Bytes: 65611}, time.Second)
 		},
 	} {
 		if s, err := mk(); s != nil || !errors.Is(err, pending.ErrConfig) {
 			t.Errorf("%s: accepted", name)
 		}
 	}
-	if s, err := pending.New(r, b, c, pending.Limits{Bundles: 32, Bytes: 4194304}, time.Second); err != nil || fmt.Sprintf("%v %#v", s, s) != "pending.Store pending.Store" {
+	if s, err := pending.New(r, b, nil, c, pending.Limits{Bundles: 32, Bytes: 4194304}, time.Second); err != nil || fmt.Sprintf("%v %#v", s, s) != "pending.Store pending.Store" {
 		t.Fatal("registered maxima rejected or store formatting exposes state")
 	}
 }
@@ -523,7 +527,7 @@ func TestRestartRecovery(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			r := records.New()
 			r.Corrupt(keys[0], raw)
-			s, _ := pending.New(r, builder(t), f.clock, pending.Limits{}, time.Second)
+			s, _ := pending.New(r, builder(t), nil, f.clock, pending.Limits{}, time.Second)
 			if err := s.Open(context.Background()); !errors.Is(err, pending.ErrUnavailable) {
 				t.Fatal("invalid stored record accepted")
 			}
@@ -537,7 +541,7 @@ func TestRestartRecovery(t *testing.T) {
 		k := keys[0]
 		k.Name[0] ^= 1
 		r.Corrupt(k, good)
-		s, _ := pending.New(r, builder(t), f.clock, pending.Limits{}, time.Second)
+		s, _ := pending.New(r, builder(t), nil, f.clock, pending.Limits{}, time.Second)
 		if err := s.Open(context.Background()); !errors.Is(err, pending.ErrUnavailable) {
 			t.Fatal("misnamed record accepted")
 		}
@@ -547,7 +551,7 @@ func TestRestartRecovery(t *testing.T) {
 			r := records.New()
 			r.Corrupt(keys[0], good)
 			r.Inject(fault, true)
-			s, _ := pending.New(r, builder(t), f.clock, pending.Limits{}, time.Second)
+			s, _ := pending.New(r, builder(t), nil, f.clock, pending.Limits{}, time.Second)
 			if err := s.Open(context.Background()); !errors.Is(err, pending.ErrUnavailable) {
 				t.Fatal("unreadable storage opened")
 			}
@@ -559,7 +563,7 @@ func TestRestartRecovery(t *testing.T) {
 // store returns when its own context ends.
 func TestStallAndCancellation(t *testing.T) {
 	r := records.New()
-	s, err := pending.New(r, builder(t), testkit.NewClock(epoch), pending.Limits{}, 50*time.Millisecond)
+	s, err := pending.New(r, builder(t), nil, testkit.NewClock(epoch), pending.Limits{}, 50*time.Millisecond)
 	if err != nil {
 		t.Fatal(err)
 	}

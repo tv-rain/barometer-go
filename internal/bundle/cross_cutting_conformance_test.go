@@ -167,7 +167,7 @@ func newPendingFixture(t *testing.T, limits pending.Limits) *pendingFixture {
 // reopen opens a new store over the same storage, sealing every bundle.
 func (f *pendingFixture) reopen(t *testing.T) {
 	t.Helper()
-	s, err := pending.New(f.records, builder(t, false), f.clock, f.limits, time.Second)
+	s, err := pending.New(f.records, builder(t, false), nil, f.clock, f.limits, time.Second)
 	if err != nil || s.Open(context.Background()) != nil {
 		t.Fatal("pending store did not open")
 	}
