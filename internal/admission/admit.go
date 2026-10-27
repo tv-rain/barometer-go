@@ -190,9 +190,8 @@ func (a *Admitter) Gate(ctx context.Context, sourceRef string, presented []byte)
 	if candidate.Parameters, err = envelope.Parameters(); err != nil {
 		return Gated{}, admissionError(fieldClass(err))
 	}
-	// Composite steps cannot be matched yet, so an enabled NET-05 task fails
-	// closed here rather than being admitted with its steps unchecked.
-	if requiresCompositeSteps(entry) {
+	// A composite without a normalized bounded step list remains unsupported.
+	if requiresCompositeSteps(entry, candidate.Parameters) {
 		return Gated{}, admissionError(task.Unsupported)
 	}
 	// A proxy task whose test, input or options HTTP CONNECT cannot carry is
@@ -205,12 +204,18 @@ func (a *Admitter) Gate(ctx context.Context, sourceRef string, presented []byte)
 	if class = authority.authorizePath(candidate.Execution.NetworkPath); class != 0 {
 		return Gated{}, admissionError(class)
 	}
-	if class = authority.matchTargets(a.policy, entry.Targets, entry.Test, candidate.Parameters, now); class != 0 {
+	baseline := entry.BaselineRisk
+	if entry.Composite {
+		baseline, class = a.matchComposite(&authority, source, candidate.Parameters, now, baseline)
+	} else {
+		class = authority.matchTargets(a.policy, entry.Targets, entry.Test, candidate.Parameters, now)
+	}
+	if class != 0 {
 		return Gated{}, admissionError(class)
 	}
 	// Step 9: effective risk from the registered baseline, the declared level
 	// and the matched registrations, against the intersected risk bounds.
-	if class = authority.evaluateRisk(a.policy, entry.BaselineRisk, candidate.Safety.RiskLevel); class != 0 {
+	if class = authority.evaluateRisk(a.policy, baseline, candidate.Safety.RiskLevel); class != 0 {
 		return Gated{}, admissionError(class)
 	}
 	return Gated{source: source, digest: sha256.Sum256(exactTask), acceptedAt: now, entry: entry, candidate: candidate, authority: authority}, nil

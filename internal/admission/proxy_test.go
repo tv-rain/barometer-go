@@ -117,10 +117,8 @@ func TestGateProxyCompatibility(t *testing.T) {
 	expect(t, "never-compatible test on the direct path", err, 0)
 }
 
-// NET-05 composite compatibility needs the NET-05 codec (DEV-454). Until then
-// an enabled composite task fails closed at step 8 as task_unsupported before
-// its registry rule is consulted, so a proxy NET-05 task is not classified as
-// incompatible by a placeholder rule.
+// A synthetic composite codec without normalized steps fails closed before
+// consulting proxy rules. Production NET-05 coverage is in the root suite.
 // requirement-ref: REQ-TRUST-0036
 // requirement-ref: REQ-TRUST-0039
 func TestGateCompositeBeforeProxyCompatibility(t *testing.T) {
