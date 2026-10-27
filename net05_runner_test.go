@@ -163,7 +163,6 @@ func TestMNet05ExecutionAndOutput(t *testing.T) {
 // CC-PROXY-LIFECYCLE-AND-RENEWAL, CC-CONTEXT-PATH-CONSISTENCY and
 // CC-EXECUTION-FIELDS-NETWORK-PATH NET-05 rows: old-generation TCP completes,
 // HTTP is interrupted, and the final TCP never contacts either path.
-// requirement-ref: REQ-PROXY-0033
 // requirement-ref: REQ-NET-05-0040
 // requirement-ref: REQ-NET-05-0045
 // requirement-ref: REQ-NET-05-0061

@@ -106,21 +106,21 @@ func dohServer(t *testing.T) (*loopback.TestCA, loopback.HTTPConfig) {
 
 // HTTP request and response framing and the DNS messages are attempt bytes
 // on both paths; TLS handshake and record bytes and CONNECT are not. The
-// metered usage equals the plaintext the server read and wrote. A sent
-// budget equal to the request completes; one byte short ends the attempt
-// before the request is complete, as a stricter common limit
-// (REQ-LIMIT-0034).
+// metered usage equals the plaintext the server read and wrote. A sent or
+// received budget equal to the measured request or response completes; one
+// byte short ends the attempt as a stricter common limit, before the request
+// is complete or while the response is read (REQ-LIMIT-0034).
 // requirement-ref: REQ-LIMIT-0034
 // requirement-ref: REQ-DNS-03-0005
 // requirement-ref: REQ-DNS-03-0023
 func TestDns03PlaintextAccounting(t *testing.T) {
 	ca, cfg := dohServer(t)
-	request := 0 // measured on the direct path, then used as the exact bound
+	request, response := 0, 0 // measured on the direct path, then used as the exact bounds
 	for _, tc := range []struct {
-		name  string
-		proxy bool
-		bound int // 0: 4096; 1: the measured request; 2: one byte short
-	}{{"direct", false, 0}, {"proxy", true, 0}, {"sent equal", false, 1}, {"sent below", false, 2}} {
+		name        string
+		proxy       bool
+		bound, recv int // 0: 4096; 1: the measured request or response; 2: one byte short
+	}{{"direct", false, 0, 0}, {"proxy", true, 0, 0}, {"sent equal", false, 1, 0}, {"sent below", false, 2, 0}, {"received equal", false, 0, 1}, {"received below", false, 0, 2}} {
 		t.Run(tc.name, func(t *testing.T) {
 			srv, err := loopback.ListenHTTP(cfg)
 			if err != nil {
@@ -140,16 +140,22 @@ func TestDns03PlaintextAccounting(t *testing.T) {
 				}
 				path = "proxy"
 			}
-			sent := 4096
+			sent, received := 4096, 4096
 			switch tc.bound {
 			case 1:
 				sent = request
 			case 2:
 				sent = request - 1
 			}
+			switch tc.recv {
+			case 1:
+				received = response
+			case 2:
+				received = response - 1
+			}
 			clock := testkit.NewWaitClock(time.Now())
 			params := dns03Params(t, dohBootstrap)
-			plan := dns03Plan(t, tc.proxy, task.AttemptLimits{Connections: 1, BytesSent: sent, BytesReceived: 4096}, params, dial, dns03Gate(clock, params, path, nil))
+			plan := dns03Plan(t, tc.proxy, task.AttemptLimits{Connections: 1, BytesSent: sent, BytesReceived: received}, params, dial, dns03Gate(clock, params, path, nil))
 			engine := &Engine{clock: clock}
 			attempt, usage, value, err := engine.attempt(context.Background(), plan, &dns03.Runner{Roots: ca.Pool()}, "AQEBAQEBAQEBAQEBAQEBAQ", 1)
 			if err != nil {
@@ -161,8 +167,10 @@ func TestDns03PlaintextAccounting(t *testing.T) {
 				t.Fatal(err)
 			}
 			c := srv.Counts()
-			if tc.bound == 2 {
-				if attempt.Phase() != Incomplete || attempt.Reason() != task.ResourceLimit || value.View().Measurement != nil || len(c.Requests) != 0 {
+			if tc.bound == 2 || tc.recv == 2 {
+				// A short sent budget stops before the request is complete; a
+				// short received budget after the request, while reading.
+				if attempt.Phase() != Incomplete || attempt.Reason() != task.ResourceLimit || value.View().Measurement != nil || len(c.Requests) != tc.recv/2 {
 					t.Fatalf("phase %v reason %q requests %d", attempt.Phase(), attempt.Reason(), len(c.Requests))
 				}
 				return
@@ -178,43 +186,73 @@ func TestDns03PlaintextAccounting(t *testing.T) {
 				t.Fatal("TLS bytes not below the counted boundary")
 			}
 			if request == 0 {
-				request = c.In
-			} else if c.In != request {
-				t.Fatalf("request size %d on %s, want %d", c.In, tc.name, request)
+				request, response = c.In, c.Out
+			} else if c.In != request || c.Out != response {
+				t.Fatalf("request %d and response %d on %s, want %d and %d", c.In, c.Out, tc.name, request, response)
 			}
 		})
 	}
 }
 
+// dns03ConnectedDial interrupts after a successful connect, before the
+// ClientHello is sent.
+type dns03ConnectedDial struct{ *dns04PointDial }
+
+func (d dns03ConnectedDial) Dialer(int) (measurement.Dialer, error) { return d, nil }
+func (d dns03ConnectedDial) DialContext(ctx context.Context, network, address string) (measurement.Conn, error) {
+	c, err := d.dns04PointDial.DialContext(ctx, network, address)
+	if err == nil {
+		d.hit()
+	}
+	return c, err
+}
+
 // M-DNS-03-TERMINATION at every Procedure point under the GO-SPEC-ISSUE-004
-// table: before the test starts the attempt is not_run; during bootstrap,
-// TCP connect, TLS establishment and after the POST is read it is incomplete
-// with exactly the first reason, no measurement, no further dial or lookup
-// and every connection closed; while closing the session after the outcome
-// is recorded it stays completed.
+// table, with and without a bootstrap address: before the test starts the
+// attempt is not_run; during bootstrap, after bootstrap before TCP, during
+// TCP connect, after TCP before the ClientHello, during TLS establishment,
+// after the POST is read and while the response body is read it is
+// incomplete with exactly the first reason, no measurement, no further dial
+// or lookup and every connection closed; while closing the session after the
+// outcome is recorded it stays completed.
 // requirement-ref: REQ-DNS-03-0028
 // requirement-ref: REQ-RESULT-0051
 // requirement-ref: REQ-RESULT-0052
 func TestDns03TerminationPoints(t *testing.T) {
 	ca, base := dohServer(t)
+	const partial = "HTTP/1.1 200 OK\r\nContent-Type: application/dns-message\r\nContent-Length: 100\r\n\r\na"
 	causes := []struct {
 		cause  error
 		reason task.ExecutionReason
 	}{{context.Canceled, task.CancelledByHost}, {errNetworkChanged, task.NetworkChanged}, {errDeadline, task.AttemptDeadlineExceeded}, {pathError{task.PlatformSuspended}, task.PlatformSuspended}, {errProxyUnavailable, task.ProxyUnavailable}, {errProxyConnect, task.ProxyConnectFailed}, {ErrProxyReconfigured, task.ProxyReconfigured}}
-	points := []struct {
+	type point struct {
 		stage, input   string
 		dials, lookups int
-	}{
-		{"before start", dohBootstrap, 0, 0},
-		{"bootstrap", dohSystem, 0, 1},
-		{"connect", dohBootstrap, 1, 0},
-		{"tls", dohSystem, 1, 1},
-		{"http", dohBootstrap, 1, 0},
-		{"close", dohBootstrap, 1, 0},
+	}
+	var points []point
+	for _, stage := range []string{"before start", "bootstrap", "after bootstrap", "connect", "before tls", "tls", "http", "body", "close"} {
+		for _, input := range []string{dohBootstrap, dohSystem} {
+			system := input == dohSystem
+			if !system && (stage == "bootstrap" || stage == "after bootstrap") {
+				continue // the bootstrap observation is omitted
+			}
+			pt := point{stage: stage, input: input, dials: 1}
+			if stage == "before start" || stage == "bootstrap" || stage == "after bootstrap" {
+				pt.dials = 0
+			}
+			if system && stage != "before start" {
+				pt.lookups = 1
+			}
+			points = append(points, pt)
+		}
 	}
 	for _, tc := range causes {
 		for _, pt := range points {
-			t.Run(string(tc.reason)+"/"+pt.stage, func(t *testing.T) {
+			variant := "bootstrap_ip"
+			if pt.input == dohSystem {
+				variant = "system"
+			}
+			t.Run(string(tc.reason)+"/"+pt.stage+"/"+variant, func(t *testing.T) {
 				clock := testkit.NewWaitClock(time.Now())
 				ctx, cancel := context.WithCancelCause(context.Background())
 				defer cancel(nil)
@@ -232,8 +270,12 @@ func TestDns03TerminationPoints(t *testing.T) {
 					tlsSrv, address = s, s.Address()
 				} else {
 					cfg := base
-					if pt.stage == "http" {
+					switch pt.stage {
+					case "http":
 						cfg.DoH = func([]byte) []byte { return nil }
+						cfg.Stall = true
+					case "body":
+						cfg.DoH = func([]byte) []byte { return []byte(partial) }
 						cfg.Stall = true
 					}
 					s, err := loopback.ListenHTTP(cfg)
@@ -247,19 +289,22 @@ func TestDns03TerminationPoints(t *testing.T) {
 				if pt.stage == "close" {
 					dial.onClose = interrupt
 				}
+				var source DialerSource = dial
+				if pt.stage == "before tls" {
+					source = dns03ConnectedDial{dial}
+				}
 				lookups := &atomic.Int32{}
 				resolver := http01PointResolver{lookups: lookups, interruptAt: -1, hit: interrupt}
-				if pt.stage == "bootstrap" {
-					resolver.interruptAt = 0
+				if pt.stage == "bootstrap" || pt.stage == "after bootstrap" {
+					resolver.interruptAt, resolver.afterAnswer = 0, pt.stage == "after bootstrap"
 				}
 				params := dns03Params(t, pt.input)
-				plan := dns03Plan(t, false, task.AttemptLimits{Connections: 1, BytesSent: 4096, BytesReceived: 4096}, params, dial, dns03Gate(clock, params, "direct", resolver))
-				source := plan.Context.(*networkcontext.Source)
+				plan := dns03Plan(t, false, task.AttemptLimits{Connections: 1, BytesSent: 4096, BytesReceived: 4096}, params, source, dns03Gate(clock, params, "direct", resolver))
 				if pt.stage == "before start" {
-					plan.Context = tcpInterruptedCapture{source, interrupt}
+					plan.Context = tcpInterruptedCapture{plan.Context.(*networkcontext.Source), interrupt}
 				}
 				done := make(chan struct{})
-				if pt.stage == "tls" || pt.stage == "http" {
+				if pt.stage == "tls" || pt.stage == "http" || pt.stage == "body" {
 					go func() {
 						defer close(done)
 						wait, stop := context.WithTimeout(ctx, 5*time.Second)
@@ -267,8 +312,10 @@ func TestDns03TerminationPoints(t *testing.T) {
 						var e error
 						if pt.stage == "tls" {
 							e = tlsSrv.Wait(wait, func(c loopback.TLSCounts) bool { return c.In > 0 })
-						} else {
+						} else if pt.stage == "http" {
 							e = httpSrv.Wait(wait, func(c loopback.HTTPCounts) bool { return len(c.Requests) == 1 })
+						} else {
+							e = httpSrv.Wait(wait, func(c loopback.HTTPCounts) bool { return len(c.Requests) == 1 && c.Out >= len(partial) })
 						}
 						if e == nil {
 							interrupt()
@@ -318,8 +365,11 @@ func TestDns03TerminationPoints(t *testing.T) {
 				}
 				if httpSrv != nil {
 					c := httpSrv.Counts()
-					if want := map[bool]int{true: 1, false: 0}[pt.stage == "http" || pt.stage == "close"]; c.Accepted > 1 || len(c.Requests) != want {
+					if want := map[bool]int{true: 1, false: 0}[pt.stage == "http" || pt.stage == "body" || pt.stage == "close"]; c.Accepted > 1 || len(c.Requests) != want {
 						t.Fatalf("second connection or request after interruption: %+v", c)
+					}
+					if pt.stage == "before tls" && len(c.Hellos) != 0 {
+						t.Fatal("ClientHello sent after the interruption")
 					}
 				}
 				if tlsSrv != nil && tlsSrv.Counts().Accepted > 1 {

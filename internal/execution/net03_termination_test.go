@@ -2,6 +2,7 @@ package execution
 
 import (
 	"context"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -19,8 +20,9 @@ import (
 )
 
 // net03PointRunner wraps the production runner to interrupt at the runner's
-// own Procedure points: after the stability check has started the test,
-// before or after the platform read, and after the outcome is recorded.
+// own Procedure points: during the stability check that starts the test,
+// after it, before or after the platform read, and after the outcome is
+// recorded.
 type net03PointRunner struct {
 	inner measurement.Runner
 	stage string
@@ -30,6 +32,9 @@ type net03PointRunner struct {
 func (r net03PointRunner) Run(ctx context.Context, in measurement.Input) (measurement.Output, error) {
 	check, read := in.CheckNetwork, in.Validation
 	in.CheckNetwork = func(family string) error {
+		if family == "" && r.stage == "during-stability" {
+			r.hit()
+		}
 		err := check(family)
 		if family == "" && r.stage == "stability" {
 			r.hit()
@@ -53,19 +58,43 @@ func (r net03PointRunner) Run(ctx context.Context, in measurement.Input) (measur
 	return out, err
 }
 
+// net03AfterConnect interrupts once the TCP connection is established: before
+// the tls_handshake for an https URL and before the request is sent for an
+// http URL.
+type net03AfterConnect struct{ *http01PointDial }
+
+func (d net03AfterConnect) Dialer(int) (measurement.Dialer, error) { return d, nil }
+func (d net03AfterConnect) DialContext(ctx context.Context, network, address string) (measurement.Conn, error) {
+	c, err := d.http01PointDial.DialContext(ctx, network, address)
+	if err == nil {
+		d.hit()
+	}
+	return c, err
+}
+
 // Every NET-03 Procedure point with every common cause, at the engine and
 // production-runner boundary. Before the test starts the attempt is not_run;
 // from the NET-01 stability check until the outcome is recorded it is
 // incomplete with exactly the first reason and no measurement; once the
 // outcome is recorded, release leaves it completed (GO-SPEC-ISSUE-004). No
-// second request or redirect contact follows an interruption and every opened
-// connection is closed. Suspension is injected as an execution cause; this is
-// no native lifecycle evidence.
+// second request or redirect contact follows an interruption, and every
+// opened connection, timer and goroutine is released. Suspension is injected
+// as an execution cause; this is no native lifecycle evidence.
 // requirement-ref: REQ-NET-03-0029
 // requirement-ref: REQ-RESULT-0051
 // requirement-ref: REQ-RESULT-0052
 // requirement-ref: REQ-RESULT-0053
 func TestNet03AllTerminationBoundaries(t *testing.T) {
+	baseline := runtime.NumGoroutine()
+	defer func() {
+		// Every runner, exchange and fixture goroutine is released.
+		for deadline := time.Now().Add(5 * time.Second); runtime.NumGoroutine() > baseline; time.Sleep(time.Millisecond) {
+			if time.Now().After(deadline) {
+				t.Errorf("goroutines %d, baseline %d", runtime.NumGoroutine(), baseline)
+				return
+			}
+		}
+	}()
 	ca, e := loopback.NewTestCA()
 	if e != nil {
 		t.Fatal(e)
@@ -86,8 +115,8 @@ func TestNet03AllTerminationBoundaries(t *testing.T) {
 	}
 	var points []point
 	for _, https := range []bool{true, false} {
-		points = append(points, point{"before-start", https, 0, 0}, point{"stability", https, 0, 0}, point{"during-read", https, 0, 0}, point{"after-read", https, 0, 0},
-			point{"dns", https, 0, 1}, point{"after-dns", https, 0, 1}, point{"connect", https, 1, 1}, point{"headers", https, 1, 1}, point{"prefix", https, 1, 1}, point{"release", https, 1, 1})
+		points = append(points, point{"before-start", https, 0, 0}, point{"during-stability", https, 0, 0}, point{"stability", https, 0, 0}, point{"during-read", https, 0, 0}, point{"after-read", https, 0, 0},
+			point{"dns", https, 0, 1}, point{"after-dns", https, 0, 1}, point{"connect", https, 1, 1}, point{"after-connect", https, 1, 1}, point{"headers", https, 1, 1}, point{"prefix", https, 1, 1}, point{"release", https, 1, 1})
 		if https {
 			// A tls_handshake point exists only for an https URL.
 			points = append(points, point{"tls", true, 1, 1})
@@ -167,7 +196,11 @@ func TestNet03AllTerminationBoundaries(t *testing.T) {
 					resolver.interruptAt, resolver.afterAnswer = 0, true
 				}
 				gate := NewTargets(test, "direct", regs, clock, nil).WithResolver(resolver)
-				p := tls01Plan(t, false, 30*time.Second, task.AttemptLimits{Connections: 4, BytesSent: 32768, BytesReceived: 131072}, dial, gate)
+				var dialers DialerSource = dial
+				if pt.stage == "after-connect" {
+					dialers = net03AfterConnect{dial}
+				}
+				p := tls01Plan(t, false, 30*time.Second, task.AttemptLimits{Connections: 4, BytesSent: 32768, BytesReceived: 131072}, dialers, gate)
 				p.TaskID, p.Test, p.Parameters = "net03-points", test, params
 				source := p.Context.(*networkcontext.Source)
 				snap, err := source.Capture(ctx)

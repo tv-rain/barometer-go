@@ -17,6 +17,7 @@ import (
 	model "github.com/tv-rain/barometer-go/internal/model/result"
 	"github.com/tv-rain/barometer-go/internal/model/task"
 	"github.com/tv-rain/barometer-go/internal/platform"
+	"github.com/tv-rain/barometer-go/internal/registry"
 	"github.com/tv-rain/barometer-go/internal/result"
 	"github.com/tv-rain/barometer-go/internal/testkit/capability"
 )
@@ -196,7 +197,9 @@ func TestMNet01Admission(t *testing.T) {
 			t.Fatal(err)
 		}
 		e, ok := reg.Lookup(net01Test)
-		if !ok || e.Step || e.Composite || e.BaselineRisk != task.LowRisk {
+		_, noTargets := e.Targets.(registry.NoTargets)
+		_, noProxy := e.Proxy.(registry.NoProxy)
+		if !ok || e.Step || e.Composite || e.BaselineRisk != task.LowRisk || !noTargets || !noProxy {
 			t.Fatal("NET-01 registry entry")
 		}
 	})
@@ -379,6 +382,20 @@ func TestMNet01Limits(t *testing.T) {
 			t.Fatal("transport or watch")
 		}
 	})
+	t.Run("no retry", func(t *testing.T) {
+		// A failed platform read is one completed outcome: the run reads once
+		// after the reservation check and never retries or opens a path.
+		h, n, d := net01Harness(t)
+		n.script = func(_ context.Context, read int) (platform.AccessState, error, bool) {
+			return platform.AccessState{}, errors.New("synthetic platform failure"), read >= 2
+		}
+		c := h.initialized(t)
+		defer c.Close()
+		net01Result(t, tcpRaw(t, h, c, net01Task("no-retry")), "completed", "", "platform_error", false)
+		if n.Reads() != 2 || d.calls.Load() != 0 || n.Watching() != 0 || len(h.run.output.Records()) != 1 {
+			t.Fatalf("reads %d, transport %d, results %d", n.Reads(), d.calls.Load(), len(h.run.output.Records()))
+		}
+	})
 	t.Run("concurrent transition", func(t *testing.T) {
 		h, n, d := net01Harness(t)
 		first := platform.AccessState{Generation: 1, Type: platform.NetworkWiFi, VPN: platform.VPNNotDetected, IPv4: platform.AvailabilityYes, IPv6: platform.AvailabilityNo, Validated: platform.AvailabilityYes}
@@ -484,8 +501,8 @@ func TestMNet01Versions(t *testing.T) {
 				data = strings.Replace(net01Task("version"), `"`+field+`":"0.1.0",`, ``, 1)
 			}
 			handle, err := c.AdmitTask(data, h.embedded(t, data))
-			if err == nil || handle != "" || h.replay.Commits() != 0 || n.Reads() != 0 || d.calls.Load() != 0 {
-				t.Fatal("unsupported version admitted", field, version)
+			if code := codeOf(err); code != "task_schema_invalid" && code != "task_unsupported" || handle != "" || h.replay.Commits() != 0 || n.Reads() != 0 || d.calls.Load() != 0 || len(h.run.output.Records()) != 0 {
+				t.Fatal("unsupported version admitted", field, version, codeOf(err))
 			}
 			c.Close()
 		}
@@ -546,13 +563,30 @@ func TestMNet01Versions(t *testing.T) {
 		}
 	}
 	tcpObservation := map[string]any{"type": "tcp_connect", "status": "succeeded", "duration_ms": 0, "details": map[string]any{"address_family": "ipv4"}}
+	access := func(v map[string]any) map[string]any {
+		return v["measurement"].(map[string]any)["access"].(map[string]any)
+	}
 	for _, mutate := range []func(map[string]any){
+		func(v map[string]any) { delete(v, "schema_version") },
+		func(v map[string]any) { delete(v["test"].(map[string]any), "version") },
 		func(v map[string]any) { delete(v["test"].(map[string]any), "result_version") },
 		func(v map[string]any) { v["test"].(map[string]any)["id"] = "NET-03" },
 		func(v map[string]any) { v["test"].(map[string]any)["id"] = "TCP-01" },
 		func(v map[string]any) { v["measurement"].(map[string]any)["outcome"] = "connected" },
 		func(v map[string]any) { v["measurement"].(map[string]any)["observations"] = []any{tcpObservation} },
 		func(v map[string]any) { v["measurement"].(map[string]any)["platform_validation"] = "validated" },
+		// A complete TCP-01 measurement under the NET-01 identity.
+		func(v map[string]any) {
+			v["measurement"] = map[string]any{"outcome": "connected", "observations": []any{tcpObservation}}
+		},
+		// The access object is complete and closed over its registered values.
+		func(v map[string]any) { delete(access(v), "validated") },
+		func(v map[string]any) { access(v)["network_type"] = "satellite" },
+		func(v map[string]any) { access(v)["vpn_state"] = "yes" },
+		func(v map[string]any) { access(v)["ipv4_available"] = true },
+		func(v map[string]any) { access(v)["ipv6_available"] = "partial" },
+		func(v map[string]any) { access(v)["validated"] = nil },
+		func(v map[string]any) { access(v)["network_changed"] = "false" },
 		func(v map[string]any) { delete(v["measurement"].(map[string]any), "access") },
 		func(v map[string]any) {
 			v["measurement"].(map[string]any)["access"].(map[string]any)["network_changed"] = true

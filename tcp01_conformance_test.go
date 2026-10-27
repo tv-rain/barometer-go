@@ -406,7 +406,6 @@ func TestMTcp01ConnectionBudget(t *testing.T) {
 // requirement-ref: REQ-TCP-01-0026
 // requirement-ref: REQ-RESULT-0051
 // requirement-ref: REQ-RESULT-0052
-// requirement-ref: REQ-RESULT-0053
 func TestMTcp01Termination(t *testing.T) {
 	for _, reason := range []string{"network_changed", "cancelled_by_host"} {
 		t.Run(reason, func(t *testing.T) {

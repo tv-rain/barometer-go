@@ -208,6 +208,15 @@ func dohSized(size int) func([]byte) []byte {
 	}
 }
 
+// dohReadFails accepts writes and fails every read with an untyped error,
+// which no stage class covers.
+type dohReadFails struct{}
+
+func (dohReadFails) Read([]byte) (int, error)    { return 0, errors.New("CANARY-RAW-ERROR") }
+func (dohReadFails) Write(b []byte) (int, error) { return len(b), nil }
+func (dohReadFails) Close() error                { return nil }
+func (dohReadFails) SetDeadline(time.Time) error { return nil }
+
 type dohExpect struct {
 	state, reason, outcome string
 	types                  []string // observation types, in order
@@ -574,6 +583,21 @@ func TestMDns03ExecutionAndOutput(t *testing.T) {
 			}
 		})
 	}
+	// The system bootstrap returns two addresses; the one selected address is
+	// refused and no other address is tried.
+	t.Run("one selected address without fallback", func(t *testing.T) {
+		h, d := dohHarness(t, f, dohSystem)
+		h.adapters.run.resolver = dnsSystemResolver{func(context.Context, string, string) ([]netip.Addr, error) {
+			d.lookups.Add(1)
+			return []netip.Addr{netip.MustParseAddr("8.8.8.8"), netip.MustParseAddr("8.8.4.4")}, nil
+		}}
+		c := h.initialized(t)
+		defer c.Close()
+		dohResult(t, tcpRaw(t, h, c, dohTask("one-address", dohSystem, `{}`)), dohExpect{state: "completed", outcome: "tcp_failure", types: []string{"dns_query", "tcp_connect"}, failure: "connection_refused"})
+		if d.calls.Load() != 1 || d.lookups.Load() != 1 {
+			t.Fatalf("dials %d lookups %d: address or bootstrap fallback", d.calls.Load(), d.lookups.Load())
+		}
+	})
 	t.Run("proxy without bootstrap address", func(t *testing.T) {
 		h, d := dohHarness(t, f, dohSystem)
 		p, err := loopback.ListenProxy(loopback.ProxyConfig{})
@@ -601,6 +625,7 @@ func TestMDns03ExecutionAndOutput(t *testing.T) {
 // contacted (GO-SPEC-ISSUE-020).
 // requirement-ref: REQ-DNS-03-0007
 // requirement-ref: REQ-DNS-03-0008
+// requirement-ref: REQ-DNS-03-0011
 // requirement-ref: REQ-DNS-03-0012
 // requirement-ref: REQ-DNS-03-0027
 // requirement-ref: REQ-DNS-03-0029
@@ -616,6 +641,12 @@ func TestMDns03Normalization(t *testing.T) {
 		t.Fatal(err)
 	}
 	mismatched, err := f.ca.Issue("other.example", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// A certificate valid only for the bootstrap address does not
+	// authenticate the URL hostname (REQ-DNS-03-0011).
+	addressOnly, err := f.ca.Issue("8.8.8.8", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -653,7 +684,10 @@ func TestMDns03Normalization(t *testing.T) {
 		{name: "reset during TLS", input: dohInput, tlsServer: &loopback.TLSConfig{Mode: loopback.TLSReset}, want: dohExpect{state: "completed", outcome: "tls_failure", types: tls, failure: "connection_reset", validation: "not_completed"}},
 		{name: "untrusted certificate", input: dohInput, tlsServer: &loopback.TLSConfig{Certificate: untrusted}, want: dohExpect{state: "completed", outcome: "tls_failure", types: tls, failure: "certificate_untrusted", validation: "untrusted"}},
 		{name: "resolver name mismatch", input: dohSystem, tlsServer: &loopback.TLSConfig{Certificate: mismatched}, want: dohExpect{state: "completed", outcome: "tls_failure", types: []string{"dns_query", "tcp_connect", "tls_handshake"}, failure: "certificate_name_mismatch", validation: "name_mismatch"}},
+		{name: "resolver name mismatch with bootstrap address", input: dohInput, tlsServer: &loopback.TLSConfig{Certificate: mismatched}, want: dohExpect{state: "completed", outcome: "tls_failure", types: tls, failure: "certificate_name_mismatch", validation: "name_mismatch"}},
+		{name: "bootstrap address certificate", input: dohInput, tlsServer: &loopback.TLSConfig{Certificate: addressOnly}, want: dohExpect{state: "completed", outcome: "tls_failure", types: tls, failure: "certificate_name_mismatch", validation: "name_mismatch"}},
 		{name: "tls alert", input: dohInput, tlsServer: &loopback.TLSConfig{Mode: loopback.TLSAlert, Alert: 40}, want: dohExpect{state: "completed", outcome: "tls_failure", types: tls, failure: "alert", validation: "not_completed"}},
+		{name: "tls unclassified", input: dohInput, dial: func(context.Context) (measurement.Conn, error) { return dohReadFails{}, nil }, want: dohExpect{state: "completed", outcome: "inconclusive", types: tls, failure: "inconclusive", validation: "inconclusive"}},
 		{name: "tls protocol error", input: dohInput, tlsServer: &loopback.TLSConfig{Mode: loopback.TLSGarbage}, want: dohExpect{state: "completed", outcome: "tls_failure", types: tls, failure: "protocol_error", validation: "not_completed"}},
 		{name: "non-success html", input: dohInput, server: ptr(f.reply(fixed(string(dohHTTP(503, "text/html", []byte("body-canary")))))), want: httpFailed("", 503)},
 		{name: "non-success dns message", input: dohInput, server: ptr(f.reply(func(q []byte) []byte { return dohHTTP(404, "application/dns-message", loopback.DNSResponse(q, 0, nil)) })), want: httpFailed("", 404)},
@@ -673,6 +707,11 @@ func TestMDns03Normalization(t *testing.T) {
 		{name: "query identifier mismatch", input: dohInput, server: ptr(f.reply(func(q []byte) []byte {
 			r := loopback.DNSResponse(q, 0, nil)
 			r[0] ^= 0xff
+			return dohHTTP(200, "application/dns-message", r)
+		})), want: dnsFailed("query_mismatch", "query_mismatch", "")},
+		{name: "query name mismatch", input: dohInput, server: ptr(f.reply(func(q []byte) []byte {
+			r := loopback.DNSResponse(q, 0, nil)
+			r[13] = 'x' // first byte of the question's first label
 			return dohHTTP(200, "application/dns-message", r)
 		})), want: dnsFailed("query_mismatch", "query_mismatch", "")},
 		{name: "query type mismatch", input: dohInput, server: ptr(f.reply(func(q []byte) []byte {
@@ -790,6 +829,7 @@ func TestMDns03Limits(t *testing.T) {
 		{"message above bound", `"max_bytes_received":262144`, dohSized(65536), dohExpect{state: "completed", outcome: "malformed_dns_response", types: dohBootstrapped, failure: "malformed_response", status: 200}},
 		{"oversized message not read", `"max_bytes_received":262144`, dohSized(200000), dohExpect{state: "completed", outcome: "malformed_dns_response", types: dohBootstrapped, failure: "malformed_response", status: 200}},
 		{"message above received limit", `"max_bytes_received":65536`, dohSized(65535), dohExpect{state: "incomplete", reason: "resource_limit"}},
+		{"fifteen answers", `"max_bytes_received":4096`, dohReply(0, seventeen[:15]...), dohExpect{state: "completed", outcome: "response", types: dohBootstrapped, rcode: "NOERROR", answers: 15, status: 200}},
 		{"sixteen answers", `"max_bytes_received":4096`, dohReply(0, seventeen[:16]...), dohExpect{state: "completed", outcome: "response", types: dohBootstrapped, rcode: "NOERROR", answers: 16, status: 200}},
 		{"seventeen answers", `"max_bytes_received":4096`, dohReply(0, seventeen...), dohExpect{state: "completed", outcome: "malformed_dns_response", types: dohBootstrapped, failure: "malformed_response", status: 200}},
 		{"one connection", `"max_connections":1`, dohAnswer, dohResponse},
