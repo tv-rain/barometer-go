@@ -126,8 +126,8 @@ func assertNet05Rejected(t *testing.T, input, options, execution, want string, e
 	}
 }
 
-// Admission-only coverage; profile history and summed maxima are approved
-// deferrals. No runner or full measurement conformance is claimed.
+// Admission coverage; profile history and summed maxima are approved
+// deferrals. Runner evidence is separate in net05_runner_test.go.
 // requirement-ref: REQ-NET-05-0014
 // requirement-ref: REQ-NET-05-0015
 // requirement-ref: REQ-NET-05-0016
@@ -157,11 +157,8 @@ func TestMNet05Admission(t *testing.T) {
 			if h.replay.Commits() != 1 || d.calls.Load() != 0 {
 				t.Fatal("admission side effects")
 			}
-			if _, ok := c.bound.registry.Runner(net05Test); ok {
-				t.Fatal("NET-05 runner unexpectedly installed")
-			}
-			if rh, e := c.StartRun(handle); e == nil || rh != "" {
-				t.Fatal("admission-only NET-05 executed")
+			if _, ok := c.bound.registry.Runner(net05Test); !ok {
+				t.Fatal("NET-05 runner missing")
 			}
 		})
 	}

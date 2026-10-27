@@ -148,21 +148,22 @@ func NewEngine(r *registry.Registry, c Clock, j Jitter, o Output) (*Engine, erro
 // and ignores DurationMS, which Deadline carries. Network holds the task's
 // network conditions, evaluated against each attempt's access snapshot.
 type Plan struct {
-	TaskID         string
-	Test           task.TestVersion
-	Parameters     task.Parameters
-	Schedule       task.Schedule
-	Network        task.NetworkRequirements
-	Deadline       time.Duration
-	Limits         task.AttemptLimits
-	Conditions     validation.StartContext
-	Implementation model.Implementation
-	Result         *result.Decoder
-	Context        ContextSource
-	Dialers        DialerSource
-	Targets        TargetCheck   // nil grants no network destination
-	Path           PathCheck     // the proxy path's pre-attempt check; nil on the direct path
-	Preconditions  Preconditions // optional attempt-start check
+	RequireCompositeValidation bool
+	TaskID                     string
+	Test                       task.TestVersion
+	Parameters                 task.Parameters
+	Schedule                   task.Schedule
+	Network                    task.NetworkRequirements
+	Deadline                   time.Duration
+	Limits                     task.AttemptLimits
+	Conditions                 validation.StartContext
+	Implementation             model.Implementation
+	Result                     *result.Decoder
+	Context                    ContextSource
+	Dialers                    DialerSource
+	Targets                    TargetCheck   // nil grants no network destination
+	Path                       PathCheck     // the proxy path's pre-attempt check; nil on the direct path
+	Preconditions              Preconditions // optional attempt-start check
 }
 
 // PathCheck is the pre-attempt check of a proxy path (REQ-EXECUTION-0008): a
@@ -449,10 +450,55 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 		cancel(pathError{task.ConstraintsUnsatisfied})
 		return measurement.ErrRunner
 	}
-	out, err := runner.Run(actx, measurement.Input{Parameters: p.Parameters, Clock: e.clock, CheckNetwork: checkNetwork, RecordOutcome: s.RecordOutcome, Dialer: s, Start: s.Start, Redirect: s.Redirect, Resolve: s.resolve})
+	input := measurement.Input{Parameters: p.Parameters, Clock: e.clock, CheckNetwork: checkNetwork, RecordOutcome: s.RecordOutcome, Dialer: s, Start: s.Start, Redirect: s.Redirect, Resolve: s.resolve}
+	if p.Test.ID == "NET-05" {
+		input.Composite = &measurement.CompositeInput{Validation: snap.Access().Validated, RequireValidation: p.RequireCompositeValidation,
+			Step: func(test task.TestVersion, tuples []task.TargetTuple) (measurement.Input, error) {
+				targets, ok := p.Targets.(interface {
+					Step(task.TestVersion, []task.TargetTuple) TargetCheck
+				})
+				if !ok {
+					return measurement.Input{}, measurement.ErrRunner
+				}
+				check := targets.Step(test, tuples)
+				if check == nil {
+					return measurement.Input{}, measurement.ErrRunner
+				}
+				d := targetDialer{scope: s, check: check}
+				child := input
+				child.Composite = nil
+				child.Dialer = d
+				child.Resolve = d.resolve
+				child.Redirect = d.Redirect
+				child.RecordOutcome = func() bool { return actx.Err() == nil }
+				return child, nil
+			}}
+	}
+	out, err := runner.Run(actx, input)
 	s.close()
 	usage := s.Usage()
 	running, _ := pending.Start()
+	if p.Test.ID == "NET-05" && out.Composite != nil && out.Outcome == "incomplete" && s.Started() {
+		reason := task.InternalError
+		if actx.Err() != nil {
+			reason = stopReason(actx)
+		}
+		if reason == task.AttemptDeadlineExceeded && s.interrupted() == task.ProxyConnectFailed {
+			reason = task.ProxyConnectFailed
+		}
+		at, _ := running.Stop(reason)
+		v, buildErr := e.envelope(p, at, runID, n, started)
+		if buildErr == nil {
+			v.NetworkContext = contextFor(reason)
+			v.Measurement = compositeMeasurement(out)
+			built, bErr := p.Result.Build(v)
+			if bErr == nil {
+				return at, usage, built, nil
+			}
+		}
+		a, stoppedValue, bErr := e.stopped(p, running, task.InternalError, contextFor(reason), runID, n, started)
+		return a, usage, stoppedValue, bErr
+	}
 	if err != nil {
 		reason := task.InternalError
 		if actx.Err() != nil {
@@ -488,6 +534,9 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 	}
 	r.NetworkContext = &stable
 	r.Measurement = &model.Measurement{Outcome: out.Outcome, Observations: out.Observations}
+	if p.Test.ID == "NET-05" && out.Composite != nil {
+		r.Measurement = compositeMeasurement(out)
+	}
 	if v, err := p.Result.Build(r); err == nil {
 		return completed, usage, v, nil
 	}
@@ -540,4 +589,18 @@ func (e *Engine) envelope(p Plan, a Attempt, runID string, n int, started time.T
 		Implementation: p.Implementation, Time: timing,
 		Execution: model.Execution{State: state, Reason: a.Reason()},
 	}, nil
+}
+
+func compositeMeasurement(out measurement.Output) *model.Measurement {
+	c := out.Composite
+	m := &model.Measurement{Outcome: out.Outcome, Profile: &model.Profile{ID: c.ID, Version: c.Version}, NetworkValidation: &model.NetworkValidation{State: c.Validation, Source: "platform"}, Steps: []model.Step{}, StoppedBeforeStep: c.StoppedBefore}
+	for _, step := range c.Steps {
+		s := model.Step{ID: step.ID, Test: model.Test{ID: step.Test.ID, Version: step.Test.Version, ResultVersion: result.Contract}, State: "incomplete"}
+		if step.Output != nil {
+			s.State = "completed"
+			s.Measurement = &model.Measurement{Outcome: step.Output.Outcome, Observations: step.Output.Observations}
+		}
+		m.Steps = append(m.Steps, s)
+	}
+	return m
 }

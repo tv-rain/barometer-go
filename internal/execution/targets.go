@@ -340,3 +340,35 @@ func (t *Targets) WithResolver(r SystemResolver) *Targets {
 	c.resolver = r
 	return &c
 }
+
+// Step narrows the admitted union to one primitive's exact version. The path,
+// clock, resolver and local address policy remain the attempt's original ones.
+func (t *Targets) Step(test task.TestVersion, tuples []task.TargetTuple) TargetCheck {
+	if t == nil || t.test.ID != "NET-05" || len(tuples) < 1 || len(tuples) > 2 {
+		return nil
+	}
+	switch test.ID {
+	case "DNS-01", "TCP-01", "TLS-01", "HTTP-01":
+	default:
+		return nil
+	}
+	if test.Version != "0.1.0" {
+		return nil
+	}
+	child := *t
+	child.test = test
+	child.current = nil
+	for _, tuple := range tuples {
+		found := false
+		for _, reg := range child.registrations {
+			if reg.Test == test && reg.Role != task.RedirectTarget && reg.Tuple.Equal(tuple) {
+				child.current = append(child.current, reg.ID)
+				found = true
+			}
+		}
+		if !found {
+			return nil
+		}
+	}
+	return &child
+}

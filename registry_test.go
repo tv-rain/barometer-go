@@ -17,7 +17,7 @@ func TestProductionRegistryContainsOnlyDeliveredMeasurements(t *testing.T) {
 		t.Fatal("production registries must be instance-owned")
 	}
 	if len(first.Codecs()) != 5 || len(second.Codecs()) != 5 {
-		t.Fatal("expected four primitives and admission-only NET-05")
+		t.Fatal("expected four primitives and sequential NET-05")
 	}
 	entry, ok := first.Lookup(task.TestVersion{ID: "TCP-01", Version: "0.1.0"})
 	if !ok || entry.Runner == nil || entry.BaselineRisk != task.LowRisk || !entry.Step || entry.Composite {
@@ -28,8 +28,8 @@ func TestProductionRegistryContainsOnlyDeliveredMeasurements(t *testing.T) {
 		t.Fatal("TLS-01 composition missing or incorrect")
 	}
 	entry, ok = first.Lookup(task.TestVersion{ID: "NET-05", Version: "0.1.0"})
-	if !ok || entry.Runner != nil || entry.BaselineRisk != task.MediumRisk || entry.Step || !entry.Composite {
-		t.Fatal("NET-05 admission-only entry missing or incorrect")
+	if !ok || entry.Runner == nil || entry.BaselineRisk != task.MediumRisk || entry.Step || !entry.Composite {
+		t.Fatal("NET-05 runner entry missing or incorrect")
 	}
 	for _, id := range []string{"SYN-01", "DNS-03"} {
 		key := task.TestVersion{ID: id, Version: "0.1.0"}

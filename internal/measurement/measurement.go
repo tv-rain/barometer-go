@@ -80,6 +80,27 @@ type Clock interface {
 	AfterFunc(time.Duration, func()) func() bool
 }
 
+// CompositeInput carries trusted attempt capabilities for an admitted profile.
+// Step narrows target authority without replacing path, context or budgets.
+type CompositeInput struct {
+	Validation        string
+	RequireValidation bool
+	Step              func(task.TestVersion, []task.TargetTuple) (Input, error)
+}
+
+type CompositeOutput struct {
+	ID            string
+	Version       int64
+	Validation    string
+	Steps         []StepOutput
+	StoppedBefore string
+}
+type StepOutput struct {
+	ID     string
+	Test   task.TestVersion
+	Output *Output // nil only for the single final interrupted step
+}
+
 // Input carries the admitted test's normalized parameters, its dialer and the
 // test-start marker. Parameters were produced by the registered codec; a
 // runner must reject a value of an unexpected type with ErrRunner rather than
@@ -93,6 +114,7 @@ type Clock interface {
 // for concurrent use; validation and other local work before it never start
 // the test.
 type Input struct {
+	Composite  *CompositeInput
 	Parameters task.Parameters
 	// Resolve performs one authorized system lookup, returning only a coarse
 	// result. It never exposes platform error text, resolver state or addresses.
@@ -119,10 +141,12 @@ type Usage struct {
 	BytesSent, BytesReceived, Connections int
 }
 
-// Output is a terminal measurement outcome with its bounded observations. A
+// Output carries a terminal primitive outcome or a bounded composite profile.
+// Only a composite may retain incomplete steps after an outer interruption. A
 // negative DNS, TCP, TLS or HTTP outcome is still a terminal outcome
 // (REQ-SCHEDULE-0025). Result construction validates it against the test.
 type Output struct {
+	Composite    *CompositeOutput
 	Outcome      string
 	Observations []observation.Observation
 	Usage        Usage
@@ -131,10 +155,12 @@ type Output struct {
 // Runner executes exactly one attempt of one registered test version. It must
 // honor ctx, open connections only through Input.Dialer and return ErrRunner,
 // not a raw platform error, when it cannot produce a terminal outcome. A
-// returned outcome is terminal: execution records it as completed even when
+// returned primitive outcome is terminal: execution records it as completed even when
 // ctx ends while connections close (REQ-RESULT-0052), so a runner interrupted
 // before its outcome must return ErrRunner instead. Implementations must be
-// safe for concurrent use by independent attempts.
+// safe for concurrent use by independent attempts. NET-05 may instead return
+// Output.Composite with outcome incomplete; execution supplies the common
+// stopping reason and validates the retained partial profile.
 type Runner interface {
 	Run(ctx context.Context, in Input) (Output, error)
 }

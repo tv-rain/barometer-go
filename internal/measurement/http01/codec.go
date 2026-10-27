@@ -31,6 +31,8 @@ func (p Parameters) Target() task.TargetTuple {
 	t.HeaderChecks = slices.Clone(t.HeaderChecks)
 	return t
 }
+func (p Parameters) AddressFamily() string                           { return p.family }
+func (p Parameters) RedirectURL(raw string) (task.TargetTuple, bool) { return NormalizeURL(raw) }
 func (p Parameters) Limits() observation.ProtocolLimits {
 	return observation.ProtocolLimits{MaxBodyBytes: p.body, MaxRedirects: p.redirects, StatusCheck: p.tuple.ExpectedStatus != 0, HeaderChecks: len(p.tuple.HeaderChecks), BodyChecks: len(p.tuple.BodyChecks)}
 }
