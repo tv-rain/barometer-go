@@ -4,7 +4,7 @@
 
 The last milestone manifest covers 396 allocated public requirement units across the nine Draft `0.1.0` measurements and 108 case families. The measurement manifest is pinned to public `e6257ec64564ad415a2d6c1f8d106fa1763d7de8`, which adds REQ-HTTP-01-0051 (hostname proxy redirect rejection) and REQ-HTTP-01-0052 (HTTP-01 terminal-outcome precedence), and Go `1a3760305c8f3f8a6ff7aba362eec3646b1559df`, the Measurement web reachability and composite milestone (DEV-670, closing DEV-657): 157 units are `partial`, 239 are `planned`, none is `implemented`, and 37 family records and 66 unit-test cases are `passed` with [evidence](../traceability/evidence/go-unit-1a37603.md). Earlier manifests and evidence are retained in Git history.
 
-DNS-01, TCP-01, TLS-01 and HTTP-01 have production codecs and runners, and NET-05 has a production codec and sequential runner. The DNS-01, TCP-01, TLS-01 and HTTP-01 ADMISSION, OPTIONS, EXECUTION, NORMALIZATION, LIMITS, TERMINATION, OUTPUT and VERSIONS families and the NET-05 OPTIONS, NORMALIZATION, OUTPUT, TERMINATION and VERSIONS families are `passed` with synthetic evidence, as recorded below. NET-05 ADMISSION, EXECUTION and LIMITS stay `planned` because rows of their plans are approved deferrals owned by [DEV-658](https://app.clickup.com/t/124kk1zcw4g): profile-version monotonicity, summed declared primitive maxima and fresh or cached NET-03 context ([NET-05](#net-05)); unit-test cases record the rows they execute. Four plan rows record approved dispositions instead of tests: the TLS-01 ALPN length bound, subsumed by registry membership; the HTTP-01 `inconclusive` outcome, exercised at the exchange layer; and, in the planned NET-05 limits plan, the 65,536-byte sent ceiling and the 49,152-byte profile bound (GO-SPEC-ISSUE-018), exercised at admission only. REQ-HTTP-01-0051 is mapped to the HTTP-01 admission and execution families and REQ-HTTP-01-0052 to normalization. The PRECONDITIONS, MINIMIZATION, INTERPRETATION and SAFETY families of these tests, all `RV-*` cases and the NET-01, NET-03, DNS-03 and DNS-04 families stay planned. Execution does not establish review completeness, full conformance, platform or field support, or a release.
+DNS-01, TCP-01, TLS-01 and HTTP-01 have production codecs and runners, NET-05 has a production codec and sequential runner, and NET-01 has a production codec and zero-traffic runner whose synthetic family evidence is recorded in [Current NET-01 Execution](#current-net-01-execution) until the next milestone. The DNS-01, TCP-01, TLS-01 and HTTP-01 ADMISSION, OPTIONS, EXECUTION, NORMALIZATION, LIMITS, TERMINATION, OUTPUT and VERSIONS families and the NET-05 OPTIONS, NORMALIZATION, OUTPUT, TERMINATION and VERSIONS families are `passed` with synthetic evidence, as recorded below. NET-05 ADMISSION, EXECUTION and LIMITS stay `planned` because rows of their plans are approved deferrals owned by [DEV-658](https://app.clickup.com/t/124kk1zcw4g): profile-version monotonicity, summed declared primitive maxima and fresh or cached NET-03 context ([NET-05](#net-05)); unit-test cases record the rows they execute. Four plan rows record approved dispositions instead of tests: the TLS-01 ALPN length bound, subsumed by registry membership; the HTTP-01 `inconclusive` outcome, exercised at the exchange layer; and, in the planned NET-05 limits plan, the 65,536-byte sent ceiling and the 49,152-byte profile bound (GO-SPEC-ISSUE-018), exercised at admission only. REQ-HTTP-01-0051 is mapped to the HTTP-01 admission and execution families and REQ-HTTP-01-0052 to normalization. The PRECONDITIONS, MINIMIZATION, INTERPRETATION and SAFETY families of these tests, all `RV-*` cases and the NET-03, DNS-03 and DNS-04 families stay planned. Execution does not establish review completeness, full conformance, platform or field support, or a release.
 
 The [public allocation guide](https://github.com/tv-rain/barometer-spec/blob/59d49364d85e48cc8e69c762d130a7a86dc1fe65/requirements/measurement-allocation.md) records unit boundaries and informative dispositions. The public text owns observable behavior; this document assigns Go work and plans validation. Existing [cross-cutting mappings](cross-cutting-requirements.md) and reports retain their original selected baselines. All shared data-format/library source files and existing catalog entries are unchanged between their public PR #6 baseline and this PR #7 merge. This establishes source continuity, not newly executed conformance or support.
 
@@ -95,9 +95,28 @@ A required network condition that cannot be determined is unsatisfied, so the at
 
 ### NET-01
 
+#### Current NET-01 Execution
+
+`internal/measurement/net01` owns the strict empty-object codec and the runner; the root `registry.go` assembles its exact `0.1.0` entry with low baseline risk, `registry.NoTargets` and `registry.NoProxy`. NET-01 is not a NET-05 step. Admission accepts its empty target list because it has no remote target (REQ-TRUST-0013), and rejects the proxy path (REQ-PROXY-0026). The execution engine runs NET-01 without a path dialer, resolver or egress acquisition: stated access conditions are evaluated on a gate read before the test starts, a stated egress requirement is `not_run` with `network_context_unavailable`, and the test's own read through `networkcontext.Source` starts it and arms the generation watch. The platform port reports `platform.ErrNetworkUnavailable` for a missing network-state API, which becomes `platform_unavailable`; any other failure becomes `platform_error`. The `inconclusive` outcome is not emitted until the public contract defines an inconsistent snapshot. A platform that is already unavailable at `StartRun` leaves no run, because the reservation check reads access state first. No result carries the top-level Network Context.
+
+The suites are portable synthetic evidence with a fake platform port, a deterministic clock and a recording transport. Native Android and Apple network-state APIs, permissions, change signals and suspension delivery (DEV-455), and the PRECONDITIONS, MINIMIZATION, INTERPRETATION and SAFETY families and their `RV-*` cases remain deferred.
+
+| Family | Executable suite |
+|---|---|
+| `M-NET-01-ADMISSION` | `TestMNet01Admission` |
+| `M-NET-01-OPTIONS` | `TestMNet01Options` |
+| `M-NET-01-EXECUTION` | `TestMNet01ExecutionAndOutput` |
+| `M-NET-01-NORMALIZATION` | `TestMNet01Normalization` (partial: no `inconclusive` row) |
+| `M-NET-01-LIMITS` | `TestMNet01Limits`, `TestNet01DeadlineReleasesRead` |
+| `M-NET-01-TERMINATION` | `TestMNet01Termination`, `TestNet01AllTerminationBoundaries`, `TestNet01GenerationChange` |
+| `M-NET-01-OUTPUT` | `TestMNet01ExecutionAndOutput`, `TestMNet01Versions` |
+| `M-NET-01-VERSIONS` | `TestMNet01Versions` |
+
+The manifest records these families at the next milestone.
+
 #### M-NET-01-ADMISSION
 
-Intended owner: `internal/validation/net01.go`. Planned case: `internal/validation/net01_conformance_test.go`, `symbol:TestMNet01Admission`. Disposition: **planned**, with no execution or support evidence. Additional intended owners: `internal/taskdecode/net01.go`, `internal/admission/measurements.go`, `internal/measurement/net01/run.go`.
+Disposition: **passed** for synthetic production admission in `net01_conformance_test.go`, `symbol:TestMNet01Admission`: the empty input object is admitted with no target registration, and wrong root types, a missing input and interface, address, device, Wi-Fi, subscriber and hostname properties are rejected as `task_schema_invalid` with no handle, replay, run, platform read, transport use or result. The proxy path is rejected at admission. No support claim follows.
 
 Case plan: Accept only empty input; vary wrong root types, null, missing input and every extra property, including interface names and identifiers. Assert rejection before platform collection, traffic, or Measurement Result construction.
 
@@ -121,7 +140,7 @@ Case plan: Accept only empty input; vary wrong root types, null, missing input a
 
 #### M-NET-01-OPTIONS
 
-Intended owner: `internal/validation/net01.go`. Planned case: `internal/validation/net01_conformance_test.go`, `symbol:TestMNet01Options`. Disposition: **planned**, with no execution or support evidence. Additional intended owners: `internal/taskdecode/net01.go`, `internal/admission/measurements.go`, `internal/measurement/net01/run.go`.
+Disposition: **passed** for synthetic production admission in `net01_conformance_test.go`, `symbol:TestMNet01Options`: only the empty options object is admitted, and it selects the one snapshot behavior.
 
 Case plan: Accept the empty options object and reject every added property or wrong type without changing the selected snapshot behavior.
 
@@ -155,7 +174,7 @@ Review case `RV-M-NET-01-PRECONDITIONS` (`docs/measurement-deployment-review.md`
 
 #### M-NET-01-EXECUTION
 
-Intended owner: `internal/measurement/net01/run.go`. Planned case: `internal/measurement/net01/conformance_test.go`, `symbol:TestMNet01Execution`. Disposition: **planned**, with no execution or support evidence. Additional intended owners: `internal/execution/measurements.go`.
+Disposition: **passed** for synthetic production execution in `net01_conformance_test.go`, `symbol:TestMNet01ExecutionAndOutput`, through `Client` with the production registry and direct path. One platform read through the shared collector starts the test; the recording transport sees no dialer request, connection or egress lookup, and the generation watch is released. Native Android and Apple network-state behavior remains a DEV-455 gap.
 
 Case plan: Use a recording platform provider to assert normalized access reads, unknown values, transition detection and release of handles/callbacks. Install a transport that fails on any use; no primary or fallback egress endpoint may be contacted.
 
@@ -167,7 +186,7 @@ Case plan: Use a recording platform provider to assert normalized access reads, 
 
 #### M-NET-01-NORMALIZATION
 
-Intended owner: `internal/measurement/net01/run.go`. Planned case: `internal/measurement/net01/conformance_test.go`, `symbol:TestMNet01Normalization`. Disposition: **planned**, with no execution or support evidence. Additional intended owners: `internal/result/net01.go`.
+Disposition: **partial**, synthetic production cases in `net01_conformance_test.go`, `symbol:TestMNet01Normalization`: every access value, unrecognized platform values as `unknown`, `platform_unavailable` from the platform's no-API signal and `platform_error` from any other failure or a zero generation, with no raw error text. The `inconclusive` row is not executed: the public contract does not define an internally inconsistent snapshot, so the runner never emits `inconclusive` until it does. A snapshot is one platform read and cannot combine generations.
 
 Case plan: Supply coherent, unavailable, failed and inconsistent snapshots; exercise every failure/outcome row and distinguish unknown properties from unavailable/inconsistent snapshots. Verify completed snapshots cannot combine generations.
 
@@ -182,7 +201,7 @@ Case plan: Supply coherent, unavailable, failed and inconsistent snapshots; exer
 
 #### M-NET-01-LIMITS
 
-Intended owner: `internal/measurement/net01/run.go`. Planned case: `internal/measurement/net01/conformance_test.go`, `symbol:TestMNet01Limits`. Disposition: **planned**, with no execution or support evidence. Additional intended owners: `internal/execution/measurements.go`.
+Disposition: **passed** for synthetic cases in `net01_conformance_test.go`, `symbol:TestMNet01Limits`, and `internal/execution/net01_termination_test.go`, `symbol:TestNet01DeadlineReleasesRead`: the outer deadline releases an unanswered read with zero transport use, and concurrent runs across a generation transition each keep one coherent generation or end `incomplete` with `network_changed`.
 
 Case plan: Drive the fake clock to the outer deadline and assert prompt release with zero network operations/bytes. Run concurrent snapshots with a generation transition and assert coherent values or the prescribed incomplete state, never merged state.
 
@@ -191,7 +210,7 @@ Case plan: Drive the fake clock to the outer deadline and assert prompt release 
 
 #### M-NET-01-VERSIONS
 
-Intended owner: `internal/registry/measurements.go`. Planned case: `internal/registry/measurement_conformance_test.go`, `symbol:TestMNet01Versions`. Disposition: **planned**, with no execution or support evidence. Additional intended owners: `internal/result/net01.go`.
+Disposition: **passed** for synthetic cases in `net01_conformance_test.go`, `symbol:TestMNet01Versions` (the task's singular VERSION family): the exact emitted task/schema/result combination, task-time rejection of unsupported, malformed and missing `test_version` and `schema_version`, and result rejection of unsupported versions and cross-test identities and shapes.
 
 Case plan: Select the exact registered combination `test.id: NET-01`, `test.version: 0.1.0`, `test.result_version: 0.1.0` with Measurement Result `schema_version: 0.1.0` and verify it is accepted and emitted as exactly that combination. Iterate rejections on each field independently, with the other fields at their registered values: an unregistered but well-formed version (`0.2.0`, `1.0.0`), malformed strings (`0.1`, `v0.1.0`, `0.1.0-draft`, empty string, non-string value) and a missing field, for `schema_version`, `test.version` and `test.result_version`. Iterate cross-test combinations: a result with `test.id: NET-03` carrying the NET-01 `access` measurement shape, and a NET-01 result whose `measurement` follows another registered test's Output shape. Assert unsupported task versions are rejected as task-validation failures before execution through the operational interface and produce no Measurement Result, and that unsupported result combinations are rejected rather than coerced, interpreted best-effort or mapped to another version. Assert the `Draft` status and `0.1.0` registration metadata alone add no supported combination. Requirements: REQ-NET-01-0022.
 
@@ -200,7 +219,7 @@ Case plan: Select the exact registered combination `test.id: NET-01`, `test.vers
 
 #### M-NET-01-OUTPUT
 
-Intended owner: `internal/result/net01.go`. Planned case: `internal/result/net01_conformance_test.go`, `symbol:TestMNet01Output`. Disposition: **planned**, with no execution or support evidence.
+Disposition: **passed** for synthetic production output in `net01_conformance_test.go`, `symbol:TestMNet01ExecutionAndOutput` and `symbol:TestMNet01Versions`: no top-level `network_context` or `egress`, an empty `observations` array, the six-field `access` object for `snapshot`, and the result boundary's conditional `access` rule for `inconclusive` and the failure outcomes.
 
 Case plan: Verify no top-level network_context, no egress, empty observations and the conditional complete access object for snapshot/inconclusive. Exercise all access enums through the canonical shared format suite.
 
@@ -215,7 +234,7 @@ Case plan: Verify no top-level network_context, no egress, empty observations an
 
 #### M-NET-01-TERMINATION
 
-Intended owner: `internal/measurement/net01/run.go`. Planned case: `internal/measurement/net01/conformance_test.go`, `symbol:TestMNet01Termination`. Disposition: **planned**, with no execution or support evidence. Additional intended owners: `internal/execution/measurements.go`.
+Disposition: **passed** for synthetic cases in `internal/execution/net01_termination_test.go`, `symbol:TestNet01AllTerminationBoundaries` and `symbol:TestNet01GenerationChange`, and `net01_conformance_test.go`, `symbol:TestMNet01Termination`: before the read is `not_run`; during and after the read is `incomplete` with the first cause; after the outcome is recorded is `completed` with the watch released. Suspension is an injected engine cause, not device evidence.
 
 Case plan: Use a fake platform network-state provider, a deterministic clock and a recording transport that fails on any use, and inject interruptions at each NET-01 Procedure point: before step 1 (read current path/connectivity state through the shared Network Context collector), during step 1 (provider call outstanding), between steps 1 and 2 (raw state read, not yet normalized into `access`), during step 3 (network-generation check) and during step 4 (release of callbacks/handles). Expected states follow the GO-SPEC-ISSUE-004 disposition: before step 1 the attempt is not_run with that reason, no measurement and no network_context; collection starts the test, so steps 1 to 3 are incomplete as asserted below; during step 4, after the outcome is recorded, the attempt stays completed with the recorded outcome and the release still completes. At each point inject separately: a network-generation change, host cancellation, outer attempt-deadline expiry on the fake clock, and platform suspension. At the incomplete points, assert a generation change during collection yields `execution.state: incomplete` with `execution.reason: network_changed` and no `measurement` object (no `outcome`, `observations` or `access`); assert cancellation, deadline expiry and suspension yield the common execution layer reasons `cancelled_by_host`, `attempt_deadline_exceeded` and `platform_suspended` with no `measurement`, never a NET-01 `outcome` value such as `platform_error` or `inconclusive`. Inject two conditions in sequence and assert `reason` names only the first. Assert no top-level `network_context` or `egress` is added on any interrupted path, every provider handle and callback created for the run is released, the recording transport records zero connections and zero bytes, and no retry or fallback (including any egress-classification endpoint) is attempted within the run. Proxy loss/reconfiguration is not exercised because NET-01 opens no network path. Requirements: REQ-NET-01-0027.
 

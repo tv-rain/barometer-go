@@ -20,13 +20,19 @@ const maxTaskTargets = 64
 // must also be listed by a matched non-redirect registration. Matching compares
 // normalized typed values only: there is no substring, suffix, wildcard or
 // resolution rule. Any failure, including a rule that reports no measurement
-// target or an incomplete tuple, is target_not_registered. The matched IDs
+// target or an incomplete tuple, is target_not_registered. A test whose rule is
+// registry.NoTargets has no remote destination or name, so there is nothing to
+// match and no registration is carried (REQ-TRUST-0013). The matched IDs
 // narrow the carried registration IDs; DNS answers and redirects followed at
 // execution must still be checked before contact (REQ-TRUST-0016).
 // requirement-ref: REQ-TRUST-0013
 // requirement-ref: REQ-TRUST-0014
 // requirement-ref: REQ-TRUST-0015
+// requirement-ref: REQ-NET-01-0005
 func (a *Authority) matchTargets(policy task.LocalPolicy, rule registry.TargetRule, test task.TestVersion, params task.Parameters, now time.Time) task.AdmissionCode {
+	if _, local := rule.(registry.NoTargets); local {
+		return 0
+	}
 	targets, ok := rule.Targets(params)
 	if !ok || len(targets) == 0 || len(targets) > maxTaskTargets {
 		return task.TargetNotRegistered

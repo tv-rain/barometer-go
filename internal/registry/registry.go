@@ -53,6 +53,14 @@ type TargetRule interface {
 	Targets(task.Parameters) ([]Target, bool)
 }
 
+// NoTargets is the rule of a test with no remote target, such as NET-01, whose
+// target is the local operating-system network-state API (REQ-NET-01-0005).
+// It reports an empty list for any parameters. Admission accepts an empty
+// list only from this rule; a test with this rule is never a NET-05 step.
+type NoTargets struct{}
+
+func (NoTargets) Targets(task.Parameters) ([]Target, bool) { return nil, true }
+
 // Entry is one reviewed test version. Codec, Targets, Proxy and Runner must
 // remain immutable for the registry's lifetime. Runner is optional so that an
 // admission-only entry stays valid; execution fails closed without one.

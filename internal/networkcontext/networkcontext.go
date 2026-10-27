@@ -11,6 +11,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/tv-rain/barometer-go/internal/model/observation"
 	"github.com/tv-rain/barometer-go/internal/platform"
@@ -19,6 +20,10 @@ import (
 var (
 	ErrCapability  = errors.New("networkcontext: invalid capability")
 	ErrUnavailable = errors.New("networkcontext: access context unavailable")
+	// ErrNoNetworkState is the ErrUnavailable a capture returns when the
+	// platform reports no supported network-state API, which NET-01 records
+	// as platform_unavailable. errors.Is matches it to ErrUnavailable.
+	ErrNoNetworkState = fmt.Errorf("%w: no network-state API", ErrUnavailable)
 )
 
 // Source captures access context for the attempts of one network path. It
@@ -103,8 +108,9 @@ func (d *Source) Decoder() *observation.ContextDecoder { return d.decoder }
 
 // Capture reads the access context once and binds it to the source's path in
 // its access-network generation. It sends no traffic (REQ-CONTEXT-0018). A
-// capability error, a zero generation or an ended context is ErrUnavailable;
-// nothing is guessed. Values the platform reports as unknown, and values this
+// capability error, a zero generation or an ended context is ErrUnavailable,
+// and ErrNoNetworkState when the platform has no network-state API; nothing
+// is guessed. Values the platform reports as unknown, and values this
 // build does not recognize, stay unknown (REQ-CONTEXT-0034).
 // requirement-ref: REQ-CONTEXT-0002
 // requirement-ref: REQ-CONTEXT-0003
@@ -113,6 +119,9 @@ func (d *Source) Capture(ctx context.Context) (Snapshot, error) {
 		return Snapshot{}, ErrUnavailable
 	}
 	s, err := d.network.Access(ctx)
+	if err != nil && ctx.Err() == nil && errors.Is(err, platform.ErrNetworkUnavailable) {
+		return Snapshot{}, ErrNoNetworkState
+	}
 	if err != nil || s.Generation == 0 || ctx.Err() != nil {
 		return Snapshot{}, ErrUnavailable
 	}
