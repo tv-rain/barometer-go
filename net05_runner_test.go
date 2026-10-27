@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/netip"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -317,6 +318,33 @@ func TestNet05TLSPrimitiveSuccess(t *testing.T) {
 	v := net05Wire(t, raw)
 	if v.Execution.State != "completed" || v.Measurement.Outcome != "completed" || v.Measurement.Steps[0].Measurement.Outcome != "handshake_succeeded" || d.calls.Load() != 1 {
 		t.Fatalf("TLS primitive: %s", raw)
+	}
+}
+
+// A TCP failure without a TLS-01 class reaches the TLS step's generated
+// tcp_connect observation, which the strict observation decoder re-decodes
+// before the step publishes it; the unsupported failure value is not retained.
+// requirement-ref: REQ-JSON-0010
+func TestNet05TLSPrimitiveUnclassifiedConnectFailure(t *testing.T) {
+	h, d := net05AdmissionHarness(t, func(in *task.PolicyInput) {
+		for i := range in.Targets {
+			if in.Targets[i].Test.ID == "TLS-01" {
+				in.Targets[i].Tuple.ALPN = nil
+			}
+		}
+	})
+	d.dial = func(context.Context, string, string) (measurement.Conn, error) { return nil, syscall.ENETUNREACH }
+	readyComposite(h)
+	c := h.initialized(t)
+	defer c.Close()
+	step := profileStep("tls", "TLS-01", `{"ip_address":"8.8.8.8","port":443,"server_name":"example.com"}`, `{}`)
+	raw := tcpRaw(t, h, c, net05Task("tls-unclassified", profileInput(step), `{}`, ""))
+	v := net05Wire(t, raw)
+	if v.Execution.State != "completed" || v.Measurement.Steps[0].Measurement.Outcome != "inconclusive" || d.calls.Load() != 1 {
+		t.Fatalf("TLS primitive: %s", raw)
+	}
+	if !strings.Contains(string(raw), `"failure":"inconclusive"`) || strings.Contains(string(raw), "network_unreachable") {
+		t.Fatalf("connect observation: %s", raw)
 	}
 }
 func TestNet05DirectDNSPrimitives(t *testing.T) {

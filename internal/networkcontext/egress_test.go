@@ -284,29 +284,41 @@ func TestCcContextAcquisitionAndFallback(t *testing.T) {
 // requirement-ref: REQ-CONTEXT-0014
 // requirement-ref: REQ-CONTEXT-0015
 // requirement-ref: REQ-CONTEXT-0016
+// requirement-ref: REQ-JSON-0003
+// requirement-ref: REQ-JSON-0004
+// requirement-ref: REQ-JSON-0006
 func TestCcContextEndpointContract(t *testing.T) {
 	for name, body := range map[string]string{
-		"address":         `{"ip":"192.0.2.1","classification_version":"0.1.0"}`,
-		"coordinates":     `{"latitude":52.3,"classification_version":"0.1.0"}`,
-		"city":            `{"city":"Amsterdam","classification_version":"0.1.0"}`,
-		"postal code":     `{"postal_code":"1011","classification_version":"0.1.0"}`,
-		"operator name":   `{"isp":"Example","classification_version":"0.1.0"}`,
-		"request id":      `{"request_id":"r-1","classification_version":"0.1.0"}`,
-		"duplicate":       `{"country_code":"NL","country_code":"DE","classification_version":"0.1.0"}`,
-		"asn zero":        `{"asn":0,"classification_version":"0.1.0"}`,
-		"asn too large":   `{"asn":4294967296,"classification_version":"0.1.0"}`,
-		"asn string":      `{"asn":"64500","classification_version":"0.1.0"}`,
-		"empty country":   `{"country_code":"","classification_version":"0.1.0"}`,
-		"long country":    `{"country_code":"NLD","classification_version":"0.1.0"}`,
-		"region mismatch": `{"country_code":"DE","region_code":"NL-NH","classification_version":"0.1.0"}`,
-		"empty version":   `{"classification_version":""}`,
-		"not an object":   `["NL"]`,
-		"empty":           ``,
+		"address":           `{"ip":"192.0.2.1","classification_version":"0.1.0"}`,
+		"coordinates":       `{"latitude":52.3,"classification_version":"0.1.0"}`,
+		"city":              `{"city":"Amsterdam","classification_version":"0.1.0"}`,
+		"postal code":       `{"postal_code":"1011","classification_version":"0.1.0"}`,
+		"operator name":     `{"isp":"Example","classification_version":"0.1.0"}`,
+		"request id":        `{"request_id":"r-1","classification_version":"0.1.0"}`,
+		"duplicate":         `{"country_code":"NL","country_code":"DE","classification_version":"0.1.0"}`,
+		"escaped duplicate": `{"country_code":"NL","\u0063ountry_code":"NL","classification_version":"0.1.0"}`,
+		"escaped unknown":   `{"\u0078":1,"classification_version":"0.1.0"}`,
+		"asn negative zero": `{"asn":-0,"classification_version":"0.1.0"}`,
+		"asn decimal":       `{"asn":64500.0,"classification_version":"0.1.0"}`,
+		"asn exponent":      `{"asn":6.45e4,"classification_version":"0.1.0"}`,
+		"asn zero":          `{"asn":0,"classification_version":"0.1.0"}`,
+		"asn too large":     `{"asn":4294967296,"classification_version":"0.1.0"}`,
+		"asn string":        `{"asn":"64500","classification_version":"0.1.0"}`,
+		"empty country":     `{"country_code":"","classification_version":"0.1.0"}`,
+		"long country":      `{"country_code":"NLD","classification_version":"0.1.0"}`,
+		"region mismatch":   `{"country_code":"DE","region_code":"NL-NH","classification_version":"0.1.0"}`,
+		"empty version":     `{"classification_version":""}`,
+		"not an object":     `["NL"]`,
+		"empty":             ``,
 	} {
 		w := newWorld(t, "")
 		w.ep.body("8.8.8.8", body)
 		wantEgress(t, name, w.acquire(0), "unavailable", "none")
 	}
+
+	escaped := newWorld(t, "")
+	escaped.ep.body("8.8.8.8", `{"\u0061sn":64500,"classification_version":"0.1.0"}`)
+	wantEgress(t, "escaped known name", escaped.acquire(0), "fresh", "primary")
 
 	w := newWorld(t, "")
 	w.ep.body("8.8.8.8", `{"classification_version":"0.1.0"}`)
