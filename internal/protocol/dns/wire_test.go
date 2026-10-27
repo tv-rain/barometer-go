@@ -131,6 +131,34 @@ func TestWireExtendedRcodeAndEDNSBounds(t *testing.T) {
 		t.Fatal("accepted malformed EDNS option")
 	}
 }
+
+// Exercise the complete effective-code wire domain, including extended codes
+// whose low header bits resemble a retained code. Expectations are the fixed
+// public table, not the model's mapping function.
+// requirement-ref: REQ-OBS-0046
+func TestWireEffectiveCodeVocabulary(t *testing.T) {
+	labels := []string{"NOERROR", "FORMERR", "SERVFAIL", "NXDOMAIN", "NOTIMP", "REFUSED"}
+	for code := uint16(0); code < 4096; code++ {
+		b := loopback.DNSResponse(query(t), code, nil)
+		if len(b) < 12 || b[3]&15 != byte(code&15) {
+			t.Fatalf("fixture header for %d", code)
+		}
+		if code > 15 && (binary.BigEndian.Uint16(b[10:12]) != 1 || b[len(b)-6] != byte(code>>4)) {
+			t.Fatalf("fixture extended bits for %d", code)
+		}
+		want := "OTHER"
+		if code < 6 {
+			want = labels[code]
+		}
+		r, err := dns.Parse(b, question, dns.MaxUDP)
+		if err != nil || r.RCode != want || len(r.Answers) != 0 {
+			t.Fatalf("code %d: %+v %v", code, r, err)
+		}
+	}
+	if loopback.DNSResponse(query(t), 4096, nil) != nil {
+		t.Fatal("fixture silently truncated a non-wire code")
+	}
+}
 func FuzzParse(f *testing.F) {
 	q, _ := dns.Query(question)
 	f.Add(loopback.DNSResponse(q, 0, nil))

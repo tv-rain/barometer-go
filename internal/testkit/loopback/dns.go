@@ -146,7 +146,12 @@ func (s *DNSServer) Close() error {
 // uses the question name. Values and names are never deployment data.
 type DNSRecord struct{ Owner, Type, Value string }
 
+// DNSResponse encodes a 12-bit effective RCODE, adding an empty EDNS OPT
+// record when its extended bits are nonzero. Larger codes are not wire values.
 func DNSResponse(query []byte, code uint16, records []DNSRecord) []byte {
+	if code > 4095 {
+		return nil
+	}
 	var p dnsmessage.Parser
 	h, e := p.Start(query)
 	if e != nil {
@@ -156,7 +161,7 @@ func DNSResponse(query []byte, code uint16, records []DNSRecord) []byte {
 	if e != nil {
 		return nil
 	}
-	b := dnsmessage.NewBuilder(nil, dnsmessage.Header{ID: h.ID, Response: true, RecursionDesired: true, RecursionAvailable: true, RCode: dnsmessage.RCode(code)})
+	b := dnsmessage.NewBuilder(nil, dnsmessage.Header{ID: h.ID, Response: true, RecursionDesired: true, RecursionAvailable: true, RCode: dnsmessage.RCode(code & 15)})
 	b.EnableCompression()
 	if b.StartQuestions() != nil || b.Question(q) != nil || b.StartAnswers() != nil {
 		return nil
@@ -197,6 +202,11 @@ func DNSResponse(query []byte, code uint16, records []DNSRecord) []byte {
 			return nil
 		}
 		if e != nil {
+			return nil
+		}
+	}
+	if code > 15 {
+		if b.StartAdditionals() != nil || b.OPTResource(dnsmessage.ResourceHeader{Name: dnsmessage.MustNewName("."), Type: dnsmessage.TypeOPT, Class: 4096, TTL: uint32(code>>4) << 24}, dnsmessage.OPTResource{}) != nil {
 			return nil
 		}
 	}

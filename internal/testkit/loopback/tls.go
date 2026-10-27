@@ -94,6 +94,9 @@ const (
 	TLSReset
 	// TLSGarbage reads the first record and answers with non-TLS bytes.
 	TLSGarbage
+	// TLSUnofferedALPN sends a synthetic TLS 1.2 ServerHello selecting a
+	// private protocol that no registered task may offer. No handshake follows.
+	TLSUnofferedALPN
 )
 
 // TLSConfig configures a TLSServer. Certificate is presented in TLSAccept
@@ -103,6 +106,9 @@ type TLSConfig struct {
 	Certificate tls.Certificate
 	ALPN        []string
 	Alert       uint8
+	// MaxVersion restricts only the synthetic server, to exercise genuine
+	// TLS 1.2 negotiation without changing the production client's profile.
+	MaxVersion uint16
 }
 
 // Hello is what a TLSServer observed of one ClientHello in TLSAccept mode.
@@ -128,7 +134,7 @@ type TLSServer struct {
 
 // ListenTLS starts a scripted TLS server on an ephemeral 127.0.0.1 port.
 func ListenTLS(cfg TLSConfig) (*TLSServer, error) {
-	if cfg.Mode < TLSAccept || cfg.Mode > TLSGarbage || cfg.Mode == TLSAccept && len(cfg.Certificate.Certificate) == 0 {
+	if cfg.Mode < TLSAccept || cfg.Mode > TLSUnofferedALPN || cfg.Mode == TLSAccept && len(cfg.Certificate.Certificate) == 0 {
 		return nil, errors.New("loopback: invalid TLS server configuration")
 	}
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
@@ -182,10 +188,22 @@ func (s *TLSServer) handle(raw net.Conn) {
 			}
 		case TLSGarbage:
 			_, _ = c.Write([]byte("HTTP/1.1 400 Bad Request\r\n\r\n"))
+		case TLSUnofferedALPN:
+			// RFC 5246 ServerHello with ECDHE_RSA_AES_128_GCM_SHA256 and
+			// an RFC 7301 ALPN extension. The client must reject the
+			// unoffered selection before certificate/application exchange.
+			protocol := []byte("PRIVATE-ALPN-CANARY")
+			ext := []byte{0, 16, 0, byte(len(protocol) + 3), 0, byte(len(protocol) + 1), byte(len(protocol))}
+			ext = append(ext, protocol...)
+			body := append([]byte{3, 3}, make([]byte, 32)...)
+			body = append(body, 0, 0xc0, 0x2f, 0, 0, byte(len(ext)))
+			body = append(body, ext...)
+			hello := append([]byte{2, 0, 0, byte(len(body))}, body...)
+			_, _ = c.Write(append([]byte{22, 3, 3, 0, byte(len(hello))}, hello...))
 		}
 		return
 	}
-	conn := tls.Server(c, &tls.Config{Certificates: []tls.Certificate{s.cfg.Certificate}, NextProtos: s.cfg.ALPN, MinVersion: tls.VersionTLS12,
+	conn := tls.Server(c, &tls.Config{Certificates: []tls.Certificate{s.cfg.Certificate}, NextProtos: s.cfg.ALPN, MinVersion: tls.VersionTLS12, MaxVersion: s.cfg.MaxVersion,
 		GetConfigForClient: func(h *tls.ClientHelloInfo) (*tls.Config, error) {
 			s.mu.Lock()
 			s.hellos = append(s.hellos, Hello{ServerName: h.ServerName, ALPN: slices.Clone(h.SupportedProtos)})
