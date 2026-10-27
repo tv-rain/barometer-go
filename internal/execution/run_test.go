@@ -443,6 +443,39 @@ func TestHostCancellation(t *testing.T) {
 	}
 }
 
+type preconditionFunc func(context.Context) bool
+
+func (f preconditionFunc) Satisfied(ctx context.Context) bool { return f(ctx) }
+
+// Cancellation can arrive after the first context check, while a capability
+// evaluates the initial gates. It must retain the cancelled first attempt
+// even when that capability returns false because its context ended.
+// requirement-ref: REQ-RESULT-0051
+func TestHostCancellationDuringInitialPreconditions(t *testing.T) {
+	for _, satisfied := range []bool{false, true} {
+		name := "unsatisfied"
+		if satisfied {
+			name = "satisfied"
+		}
+		t.Run(name, func(t *testing.T) {
+			f := newFixture(t, schedule(2, task.InternalError), connected(t))
+			run, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			calls := 0
+			f.plan.Preconditions = preconditionFunc(func(context.Context) bool {
+				calls++
+				cancel()
+				return satisfied
+			})
+			rep, err := f.engine.Run(run, f.plan)
+			f.expect(t, rep, err, nil, []want{{"not_run", "cancelled_by_host", ""}}, nil)
+			if calls != 1 || f.runner.Calls() != 0 || f.ctx.calls != 0 || len(f.dialers.Issued()) != 0 {
+				t.Fatal("cancellation during preconditions performed further work")
+			}
+		})
+	}
+}
+
 // cancelOnWait cancels the run as soon as the engine starts a backoff wait.
 type cancelOnWait struct {
 	*testkit.WaitClock

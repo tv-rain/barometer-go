@@ -1658,6 +1658,8 @@ Review case `RV-M-TCP-01-SAFETY` (`docs/measurement-deployment-review.md`, `head
 
 ### TLS-01
 
+Shared DNS/TLS vocabulary packet, handshake and result-integration cases, including HTTP-01 and NET-05 reuse, are recorded in [Runtime Vocabulary Evidence and Compatibility](observation-models.md#runtime-vocabulary-evidence-and-compatibility). These cases do not promote broader measurement or review families, and native/host adoption remains pending.
+
 #### Current TLS-01 Execution
 
 `internal/measurement/tls01` owns the strict codec, normalized typed parameters, proxy compatibility and runner. The root `registry.go` assembles its exact `0.1.0` entry and target adapter, whose registered tuple is the address, port, normalized `server_name` and ordered ALPN offer under scheme `tls`. `internal/protocol/tls` owns the reusable handshake: one ClientHello with the configured SNI and registered ALPN offer, TLS 1.2 or later, certificate chain and hostname validation always enabled, no session cache, tickets, renegotiation, client certificate, cipher or version control, a 15-second operation bound, typed failure mapping and a quantized observation. The runner reuses `internal/protocol/tcp` for the explicit-IP connect, records the outcome before close and sends no application data; the normal TLS closure is a record, not plaintext. Equivalent endpoint and server-name tuples wait within one registry instance. No DNS lookup, second address, alternate SNI or profile, or in-attempt retry is issued.

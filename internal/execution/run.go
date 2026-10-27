@@ -228,6 +228,13 @@ func (e *Engine) Run(ctx context.Context, p Plan) (Report, error) {
 	}
 	report := Report{RunID: result.NewRunID()}
 	write := context.WithoutCancel(ctx)
+	eligible := false
+	if ctx.Err() == nil {
+		eligible = validation.RunEligible(p.Schedule, e.conditions(p)) && p.satisfied(ctx)
+	}
+	// A precondition capability may observe cancellation and return false.
+	// Recheck its context before treating that as an ineligible run, so the
+	// cancelled first attempt is still recorded without starting any work.
 	if ctx.Err() != nil {
 		a, v, err := e.stopped(p, NewAttempt(), stopReason(ctx), nil, report.RunID, 1, e.clock.Now())
 		if err != nil {
@@ -239,7 +246,7 @@ func (e *Engine) Run(ctx context.Context, p Plan) (Report, error) {
 		report.Attempts = append(report.Attempts, AttemptReport{Number: 1, Attempt: a})
 		return report, nil
 	}
-	if !validation.RunEligible(p.Schedule, e.conditions(p)) || !p.satisfied(ctx) {
+	if !eligible {
 		return Report{}, ErrNotEligible
 	}
 	for n := 1; n <= p.Schedule.Retry.MaxAttempts; n++ {

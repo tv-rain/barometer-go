@@ -125,11 +125,11 @@ DEV-566 records the strict-JSON evidence for the JSON consumers that exist in th
 
 ## GO-SPEC-ISSUE-002: Missing Registered Observation Vocabularies
 
-**Current state:** Public resolution, required internal alignment and DEV-481 Go model adoption are merged and verified. Actual runtime producer, protocol/API, result-integration and applicable binding/host evidence remains pending under the [runtime vocabulary adoption task](https://app.clickup.com/t/124kk1zc4aj). The finding remains open. The original finding and dated preparation-stage statements below are historical evidence.
+**Current state:** Public resolution, required internal alignment and DEV-481 Go model adoption are merged and verified. DNS-01/TLS-01 packet/handshake producers, HTTP-01/NET-05 shared-consumer paths and strict result round-trips have local synthetic [runtime vocabulary evidence](observation-models.md#runtime-vocabulary-evidence-and-compatibility). Under the approved Go-first scope of the [runtime vocabulary adoption task](https://app.clickup.com/t/124kk1zc4aj), the finding remains open for the pending DNS-03/DNS-04/NET-03 runners, applicable native/binding/host adoption and stored-data/downstream compatibility evidence or reviewed non-applicability. No native/device or release support is established. The original finding and dated preparation-stage statements below are historical evidence.
 
 ### Identity and Ownership
 
-- **Disposition:** Open. The public resolution merged on October 15, 2026 at [a944ed6c389fec9f0d089f0044ead6fe845328b1](https://github.com/tv-rain/barometer-spec/commit/a944ed6c389fec9f0d089f0044ead6fe845328b1); runtime and applicable binding/host adoption remains pending as described under **Current state** above. Original disposition (October 15, 2026, historical): no public resolution or downstream adoption.
+- **Disposition:** Open. The public resolution merged on October 15, 2026 at [a944ed6c389fec9f0d089f0044ead6fe845328b1](https://github.com/tv-rain/barometer-spec/commit/a944ed6c389fec9f0d089f0044ead6fe845328b1); remaining runner, applicable binding/host adoption and compatibility evidence remains pending as described under **Current state** above. Original disposition (October 15, 2026, historical): no public resolution or downstream adoption.
 - **Discovering role:** Go implementation agent for [DEV-481 — Implement observation and Network Context models](https://app.clickup.com/t/86cbb8f2n). Public maintainer/reviewer assignment and public issue/PR are pending human direction. No public review is claimed.
 - **Related findings:** GO-SPEC-ISSUE-001 supplies strict JSON infrastructure but does not resolve vocabulary membership. The public `specification-issues` directory contains no matching vocabulary finding at the baseline below.
 
@@ -204,7 +204,7 @@ The accepted public contract is [a944ed6c389fec9f0d089f0044ead6fe845328b1](https
 
 Go [PR #22](https://github.com/tv-rain/barometer-go/pull/22) merged approved implementation `84ccd5c2d4003183d21ffe225a4479b6b572c53e` at [dea8351f618d48f916c1fd9f2576765460b84309](https://github.com/tv-rain/barometer-go/commit/dea8351f618d48f916c1fd9f2576765460b84309). The merge and head are ancestors of the refreshed integrated Foundation baseline. Bounded models, accepted fixed vocabulary mappings and their synthetic tests are delivered; the [observation model record](observation-models.md) remains canonical for that scope.
 
-The [runtime vocabulary adoption task](https://app.clickup.com/t/124kk1zc4aj) owns actual DNS/TLS producer normalization, protocol/API and result integration, applicable bindings, compatibility and evidence or reviewed non-applicability. This finding stays open for that work; merged models and passing compiler checks do not establish protocol execution or platform support.
+The [runtime vocabulary adoption task](https://app.clickup.com/t/124kk1zc4aj) owns actual DNS/TLS producer normalization, protocol/API and result integration, applicable bindings, compatibility and evidence or reviewed non-applicability. The current runtime evidence and remaining adoption boundary are summarized under **Current state** above. This finding stays open; merged models and passing compiler checks alone do not establish protocol execution or platform support.
 
 ## GO-SPEC-ISSUE-003: Local Host-Configuration Decoding Bounds
 
