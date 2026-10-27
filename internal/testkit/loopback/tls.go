@@ -109,6 +109,11 @@ type TLSConfig struct {
 	// MaxVersion restricts only the synthetic server, to exercise genuine
 	// TLS 1.2 negotiation without changing the production client's profile.
 	MaxVersion uint16
+	// DoT, in TLSAccept mode, reads one length-prefixed DNS query after the
+	// handshake and writes the returned bytes verbatim, so a test scripts the
+	// length prefix too. Nil bytes write nothing; the server then reads until
+	// the client closes. The query is not otherwise interpreted.
+	DoT func(query []byte) []byte
 }
 
 // Hello is what a TLSServer observed of one ClientHello in TLSAccept mode.
@@ -213,9 +218,32 @@ func (s *TLSServer) handle(raw net.Conn) {
 	if conn.Handshake() != nil {
 		return
 	}
+	if s.cfg.DoT != nil {
+		prefix := make([]byte, 2)
+		if n, err := io.ReadFull(conn, prefix); err != nil {
+			s.addPlaintext(n)
+			return
+		}
+		q := make([]byte, int(prefix[0])<<8|int(prefix[1]))
+		n, err := io.ReadFull(conn, q)
+		s.addPlaintext(2 + n)
+		if err != nil {
+			return
+		}
+		if reply := s.cfg.DoT(q); len(reply) > 0 {
+			_, _ = conn.Write(reply)
+		}
+	}
 	n, _ := io.Copy(io.Discard, conn)
 	s.mu.Lock()
 	s.plaintext += int(n)
+	s.signal()
+	s.mu.Unlock()
+}
+
+func (s *TLSServer) addPlaintext(n int) {
+	s.mu.Lock()
+	s.plaintext += n
 	s.signal()
 	s.mu.Unlock()
 }
