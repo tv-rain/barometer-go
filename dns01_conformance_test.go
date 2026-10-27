@@ -990,11 +990,9 @@ func TestDns01ResultVersionsAndClosedOutput(t *testing.T) {
 	}
 }
 
-// requirement-ref: REQ-JSON-0001
 // requirement-ref: REQ-JSON-0002
 // requirement-ref: REQ-JSON-0003
 // requirement-ref: REQ-JSON-0004
-// requirement-ref: REQ-JSON-0005
 // requirement-ref: REQ-DNS-01-0023
 func TestDns01StrictSchemaBothOrigins(t *testing.T) {
 	for _, origin := range []string{"embedded", "remote"} {

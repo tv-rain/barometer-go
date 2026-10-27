@@ -292,7 +292,6 @@ func TestMTls01Admission(t *testing.T) {
 // requirement-ref: REQ-TLS-01-0016
 // requirement-ref: REQ-TLS-01-0017
 // requirement-ref: REQ-OBS-0049
-// requirement-ref: REQ-LIMIT-0004
 func TestMTls01Options(t *testing.T) {
 	f := newTLSFixture(t)
 	for _, tc := range []struct {
@@ -622,7 +621,6 @@ func TestMTls01TupleConcurrency(t *testing.T) {
 // internal/execution covers every reason at every Procedure point.
 // requirement-ref: REQ-TLS-01-0027
 // requirement-ref: REQ-RESULT-0051
-// requirement-ref: REQ-RESULT-0053
 func TestMTls01Termination(t *testing.T) {
 	f := newTLSFixture(t)
 	for _, reason := range []string{"network_changed", "cancelled_by_host"} {

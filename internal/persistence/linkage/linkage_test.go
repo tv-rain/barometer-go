@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -269,5 +270,36 @@ func TestConcurrentDerivation(t *testing.T) {
 		if tok == nil || *tok != token(t, "yqSMAm-CKF5-kfbeaTlTfNqpd_xXKFv9hPfEIV7D23w") {
 			t.Fatal("concurrent derivation disagreed or failed")
 		}
+	}
+}
+
+// CC-LINKAGE-ROTATION-SEMANTICS: two sources holding the same secret agree on
+// the token of one scope and epoch up to the last second of the epoch and
+// both move to the new token at the boundary; another scope differs in the
+// same epoch. The projection holds only scope, epoch and token, so no
+// mapping between old and new tokens exists, and once the next epoch is used
+// the previous token is never derived again.
+// requirement-ref: REQ-LINKAGE-0015
+// requirement-ref: REQ-LINKAGE-0016
+func TestCcLinkageRotationSemantics(t *testing.T) {
+	c := &clock{now: time.Unix(2965*604800-1, 0)}
+	first := linkage.NewSource().For(initialization(t, rotating(scope, 604800), true, c, capability.NewLinkageKeys(key)))
+	second := linkage.NewSource().For(initialization(t, rotating(scope, 604800), true, c, capability.NewLinkageKeys(key)))
+	staging := linkage.NewSource().For(initialization(t, rotating("org.example.staging", 604800), true, c, capability.NewLinkageKeys(key)))
+	a, b, s := first(context.Background()), second(context.Background()), staging(context.Background())
+	if a == nil || b == nil || s == nil || *a != *b || a.Epoch != 2964 || s.Epoch != 2964 || s.Token == a.Token {
+		t.Fatal("same scope and epoch disagree, or scopes collide")
+	}
+	c.set(time.Unix(2965*604800, 0))
+	na, nb := first(context.Background()), second(context.Background())
+	if na == nil || nb == nil || *na != *nb || na.Epoch != 2965 || na.Token == a.Token {
+		t.Fatal("tokens did not rotate together at the boundary")
+	}
+	if n := reflect.TypeOf(*na).NumField(); n != 3 {
+		t.Fatalf("projection has %d fields, want scope, epoch and token", n)
+	}
+	c.set(time.Unix(2965*604800-1, 0))
+	if first(context.Background()) != nil {
+		t.Fatal("previous epoch's token derived after rotation")
 	}
 }

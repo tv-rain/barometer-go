@@ -251,3 +251,51 @@ func TestLinkageReserve(t *testing.T) {
 		t.Fatal("capacity of an empty linked store at the registered maxima:", n)
 	}
 }
+
+// CC-BUNDLE-LINKAGE-OBJECT: a linked bundle carries exactly the complete
+// rotating-installation object, with the configured scope, the decimal epoch
+// and the token as unpadded base64url of 32 bytes, and no user_id. A stored
+// bundle with a stable mode, a renamed or additional linkage member, or a
+// user_id member is rejected.
+// requirement-ref: REQ-BUNDLE-0010
+// requirement-ref: REQ-BUNDLE-0011
+// requirement-ref: REQ-BUNDLE-0012
+func TestCcBundleLinkageObject(t *testing.T) {
+	r, c, s := records.New(), testkit.NewClock(epoch), &script{}
+	l := projection(20748, 0)
+	for i := range l.Token {
+		l.Token[i] = byte(i * 7)
+	}
+	s.set(l)
+	p := linkedStore(t, r, c, s, pending.Limits{})
+	if err := p.Put(context.Background(), value(t)); err != nil {
+		t.Fatal(err)
+	}
+	_, b, _, err := p.Next(context.Background())
+	token := base64.RawURLEncoding.EncodeToString(l.Token[:])
+	want := `,"linkage":{"mode":"rotating_installation","scope":"` + linkScope + `","epoch":20748,"token":"` + token + `"}`
+	if err != nil || len(token) != 43 || bytes.Count(b, []byte(want)) != 1 || bytes.Count(b, []byte(`"linkage"`)) != 1 || bytes.Contains(b, []byte("user_id")) {
+		t.Fatalf("linkage object in %s", b)
+	}
+
+	keys, _ := r.List(context.Background(), persistence.PendingClass)
+	good, _ := r.Value(keys[0])
+	for name, raw := range map[string][]byte{
+		"stable mode":       bytes.Replace(good, []byte(`"rotating_installation"`), []byte(`"stable_installation"`), 1),
+		"token as user_id":  bytes.Replace(good, []byte(`"token":`), []byte(`"user_id":`), 1),
+		"user_id member":    bytes.Replace(good, []byte(`"`+token+`"}`), []byte(`"`+token+`","user_id":"x"}`), 1),
+		"top-level user_id": bytes.Replace(good, []byte(`,"linkage":`), []byte(`,"user_id":"x","linkage":`), 1),
+	} {
+		t.Run(name, func(t *testing.T) {
+			if bytes.Equal(raw, good) {
+				t.Fatal("corruption did not apply")
+			}
+			r := records.New()
+			r.Corrupt(keys[0], raw)
+			s, _ := pending.New(r, linkedBuilder(t), nil, c, pending.Limits{}, time.Second)
+			if err := s.Open(context.Background()); !errors.Is(err, pending.ErrUnavailable) {
+				t.Fatal("invalid stored linkage accepted")
+			}
+		})
+	}
+}

@@ -110,7 +110,6 @@ func TestCcObsHttpExchangeBody(t *testing.T) {
 }
 
 // requirement-ref: REQ-OBS-0030
-// requirement-ref: REQ-OBS-0031
 func TestCcObsHttpExchangeCheck(t *testing.T) {
 	c := config()
 	c.ExpectedStatus = 200
