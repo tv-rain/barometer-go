@@ -9,6 +9,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/measurement"
 	"github.com/tv-rain/barometer-go/internal/measurement/dns01"
 	"github.com/tv-rain/barometer-go/internal/measurement/http01"
+	"github.com/tv-rain/barometer-go/internal/measurement/net03"
 	"github.com/tv-rain/barometer-go/internal/measurement/net05"
 	"github.com/tv-rain/barometer-go/internal/model/observation"
 	model "github.com/tv-rain/barometer-go/internal/model/result"
@@ -134,6 +135,10 @@ func measurementOutput(test task.TestVersion, params task.Parameters) result.Out
 	if p, ok := params.(http01.Parameters); ok {
 		output.Limits = p.Limits()
 		output.HTTPS = true
+	}
+	if p, ok := params.(net03.Parameters); ok {
+		output.Limits = p.Limits()
+		output.HTTPS = p.HTTPS()
 	}
 	return output
 }

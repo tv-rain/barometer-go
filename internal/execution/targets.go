@@ -86,10 +86,13 @@ func destination(q task.TargetTuple) (string, uint16) {
 	}
 	if q.URL != "" {
 		u, err := url.Parse(q.URL)
-		if err != nil || u.Scheme != "https" || u.User != nil || u.Fragment != "" {
+		if err != nil || u.Scheme != "https" && u.Scheme != "http" || u.User != nil || u.Fragment != "" {
 			return "", 0
 		}
 		port := 443
+		if u.Scheme == "http" {
+			port = 80
+		}
 		if u.Port() != "" {
 			port, err = strconv.Atoi(u.Port())
 			if err != nil || port < 1 || port > 65535 {
@@ -102,7 +105,7 @@ func destination(q task.TargetTuple) (string, uint16) {
 }
 
 func (t *Targets) matches(r task.TargetRegistration, network, host string, port uint16) bool {
-	if !t.permitted(r) || r.Tuple.Scheme == "udp" && !strings.HasPrefix(network, "udp") || (r.Tuple.Scheme == "tcp" || r.Tuple.Scheme == "tls" || r.Tuple.Scheme == "https") && !strings.HasPrefix(network, "tcp") {
+	if !t.permitted(r) || r.Tuple.Scheme == "udp" && !strings.HasPrefix(network, "udp") || (r.Tuple.Scheme == "tcp" || r.Tuple.Scheme == "tls" || r.Tuple.Scheme == "https" || r.Tuple.Scheme == "http") && !strings.HasPrefix(network, "tcp") {
 		return false
 	}
 	h, p := destination(r.Tuple)

@@ -142,7 +142,13 @@ type Input struct {
 	// no traffic and acquires no egress context. It is nil for every other
 	// test, which then also receives no access values.
 	Network func(context.Context) (observation.AccessSnapshot, error)
-	Start   func()
+	// Validation reads NET-03's platform validation and captive-portal state
+	// once, after the stability check and before any contact. It returns only
+	// the coarse platform_validation value, unknown when the platform cannot
+	// report it. A changed generation or an ended attempt is an error, and the
+	// execution owner records the reason. It is nil for every other test.
+	Validation func(context.Context) (string, error)
+	Start      func()
 	// Redirect validates a complete normalized redirect tuple and returns a
 	// dialer restricted to that hop, sharing this attempt's budgets and path.
 	// A rejection is handled as the registered test's redirect_rejected outcome.
@@ -162,10 +168,13 @@ type Usage struct {
 type Output struct {
 	Composite *CompositeOutput
 	// Access is NET-01's normalized access object; nil for every other test.
-	Access       *observation.AccessSnapshot
-	Outcome      string
-	Observations []observation.Observation
-	Usage        Usage
+	Access *observation.AccessSnapshot
+	// PlatformValidation and ResponseClass are NET-03's separate platform
+	// and active evidence; both are empty for every other test.
+	PlatformValidation, ResponseClass string
+	Outcome                           string
+	Observations                      []observation.Observation
+	Usage                             Usage
 }
 
 // Runner executes exactly one attempt of one registered test version. It must

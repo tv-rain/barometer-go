@@ -461,6 +461,9 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 		return measurement.ErrRunner
 	}
 	input := measurement.Input{Parameters: p.Parameters, Clock: e.clock, CheckNetwork: checkNetwork, RecordOutcome: s.RecordOutcome, Dialer: s, Start: s.Start, Redirect: s.Redirect, Resolve: s.resolve}
+	if p.Test.ID == "NET-03" {
+		input.Validation = platformValidation(actx, cancel, p, snap, s)
+	}
 	if p.Test.ID == "NET-05" {
 		input.Composite = &measurement.CompositeInput{Validation: snap.Access().Validated, RequireValidation: p.RequireCompositeValidation,
 			Step: func(test task.TestVersion, tuples []task.TargetTuple) (measurement.Input, error) {
@@ -543,7 +546,7 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 		return Attempt{}, measurement.Usage{}, result.Value{}, err
 	}
 	r.NetworkContext = &stable
-	r.Measurement = &model.Measurement{Outcome: out.Outcome, Observations: out.Observations}
+	r.Measurement = &model.Measurement{Outcome: out.Outcome, Observations: out.Observations, PlatformValidation: out.PlatformValidation, ResponseClass: out.ResponseClass}
 	if p.Test.ID == "NET-05" && out.Composite != nil {
 		r.Measurement = compositeMeasurement(out)
 	}

@@ -49,14 +49,19 @@ const (
 // values belong to; it changes whenever that network changes and is local
 // metadata that never leaves the core. Zero means no generation is known.
 // Validated is the platform's own Internet-validation state; the core never
-// substitutes a connectivity check of its own.
+// substitutes a connectivity check of its own. CaptivePortal is whether the
+// platform reports a captive portal on that network; it is read only, never
+// opens or interacts with a portal, and carries no portal URL. It reaches no
+// Network Context: only NET-03 retains it, as its coarse platform_validation.
+// The field is interim; the native signal is a review point of DEV-455.
 type AccessState struct {
-	Generation uint64
-	Type       NetworkType
-	VPN        VPNState
-	IPv4       Availability
-	IPv6       Availability
-	Validated  Availability
+	Generation    uint64
+	Type          NetworkType
+	VPN           VPNState
+	IPv4          Availability
+	IPv6          Availability
+	Validated     Availability
+	CaptivePortal Availability
 }
 
 // Network reports coarse access context for execution constraints and
