@@ -67,3 +67,24 @@ func envelope(id string) *jsondecode.Schema {
 		"network_context": opt(contextSchema), "measurement": opt(measurementSchema(id)),
 	})
 }
+
+// ValidateStored checks one strictly parsed result that a store wrote earlier
+// against the envelope schema of the registered test its test.id names,
+// within the producer's 65,536-byte bound. It re-checks representation only:
+// vocabulary values and the local binding are not available from storage, so
+// it restores no Value.
+func ValidateStored(v *jsondecode.Value) error {
+	if v == nil || v.Kind() != jsondecode.Object || v.EncodedBytes() > 65536 {
+		return ErrValue
+	}
+	version, _ := v.Lookup("schema_version")
+	test, _ := v.Lookup("test")
+	if version == nil || version.Kind() != jsondecode.String || version.Text() != Contract || test == nil {
+		return ErrValue
+	}
+	id, _ := test.Lookup("id")
+	if id == nil || id.Kind() != jsondecode.String || !oneOf(id.Text(), "DNS-01", "DNS-03", "DNS-04", "TCP-01", "TLS-01", "HTTP-01", "NET-01", "NET-03", "NET-05") {
+		return ErrValue
+	}
+	return jsondecode.Validate(v, envelope(id.Text()))
+}

@@ -22,7 +22,7 @@ The value retains exact encoded bytes. `MarshalJSON` returns a detached copy; `V
 
 This is an output-only producer boundary. Arbitrary JSON import is rejected, including unknown/private fields, caller IDs and alternate linkage modes. It does not restore pending bundles after process restart. A future persistence task must define and review a bounded exact-byte restoration boundary, identity validation and state lifecycle rather than importing JSON directly into this value. No runtime queue, acknowledgements, retry scheduling, durable duplicate suppression or collector is implemented.
 
-Since DEV-563 the [pending store](package-architecture.md#persistence-ports) holds the producer's exact bytes and returns them through `Client.NextBundle` until `Client.AcknowledgeBundle` or expiry; it checks stored bytes against the form it writes but never restores a `Value`, so the restoration boundary above is still not needed. The pending store enforces 32 pending bundles, 4,194,304 pending bytes and the 86,400-second retention maximum. Retry scheduling, durable duplicate suppression and any collector remain out of scope.
+Since DEV-563 the [pending store](package-architecture.md#persistence-ports) holds the producer's exact bytes and returns them through `Client.NextBundle` until `Client.AcknowledgeBundle` or expiry; it checks stored bytes against the form it writes and re-reads them with the shared strict parser, but never restores a `Value`, so the restoration boundary above is still not needed. The pending store enforces 32 pending bundles, 4,194,304 pending bytes and the 86,400-second retention maximum. Retry scheduling, durable duplicate suppression and any collector remain out of scope.
 
 ## Optional Rotating Linkage
 

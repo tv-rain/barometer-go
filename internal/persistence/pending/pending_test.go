@@ -700,3 +700,101 @@ func TestForgetAfterClear(t *testing.T) {
 	}
 	<-done
 }
+
+// Stored bundles are re-read with the shared strict parser and each result
+// with its registered result schema. A hostile stored value leaves the store
+// unavailable without writing or deleting a record; an escaped spelling of a
+// known name is the same name and is returned byte for byte.
+// requirement-ref: REQ-JSON-0003
+func TestStrictReread(t *testing.T) {
+	f := newFixture(t, pending.Limits{})
+	f.mustPut()
+	keys, _ := f.records.List(context.Background(), persistence.PendingClass)
+	good, _ := f.records.Value(keys[0])
+	edit := func(old, new string) []byte {
+		if !bytes.Contains(good, []byte(old)) {
+			t.Fatal("fixture lacks", old)
+		}
+		return bytes.Replace(good, []byte(old), []byte(new), 1)
+	}
+	const state = `"execution":{"state":"not_run"`
+	result := good[bytes.Index(good, []byte(`"results":[`))+11 : len(good)-2]
+	many := append([]byte{}, good[:bytes.Index(good, []byte(`"results":[`))+11]...)
+	for i := range bundle.MaxResults + 1 {
+		if i > 0 {
+			many = append(many, ',')
+		}
+		many = append(many, result...)
+	}
+	many = append(many, "]}"...)
+	for name, raw := range map[string][]byte{
+		"equal duplicate":            edit(state, state+`,"state":"not_run"`),
+		"escaped-equivalent dup":     edit(state, state+`,"state":"not_run"`),
+		"escaped unknown name":       edit(state, state+`,"seed":true`),
+		"unknown result member":      edit(`"attempt":1`, `"attempt":1,"seed":true`),
+		"unregistered test":          edit(`"id":"TCP-01"`, `"id":"TCP-99"`),
+		"other result version":       edit(`"schema_version":"0.1.0","task_id"`, `"schema_version":"0.2.0","task_id"`),
+		"decimal integer":            edit(`"attempt":1`, `"attempt":1.0`),
+		"exponent integer":           edit(`"attempt":1`, `"attempt":1e0`),
+		"quoted integer":             edit(`"attempt":1`, `"attempt":"1"`),
+		"invalid UTF-8":              edit(`"campaign"`, "\"camp\xffign\""),
+		"unpaired surrogate":         edit(`"campaign"`, `"\ud800"`),
+		"control character":          edit(`"campaign"`, "\"camp\naign\""),
+		"non-object result":          edit(string(result), `null`),
+		"trailing comma":             edit(string(result), string(result)+`,`),
+		"more results than a bundle": many,
+	} {
+		t.Run(name, func(t *testing.T) {
+			r := records.New()
+			r.Corrupt(keys[0], raw)
+			s, _ := pending.New(r, builder(t), nil, f.clock, pending.Limits{}, time.Second)
+			if err := s.Open(context.Background()); !errors.Is(err, pending.ErrUnavailable) {
+				t.Fatal("hostile stored bundle accepted")
+			}
+			if _, _, _, err := s.Next(context.Background()); !errors.Is(err, pending.ErrUnavailable) {
+				t.Fatal("hostile stored bundle returned")
+			}
+			if stored, _ := r.Value(keys[0]); r.Puts() != 0 || r.Deletes() != 0 || !bytes.Equal(stored, raw) {
+				t.Fatal("rejecting a stored bundle changed storage")
+			}
+		})
+	}
+
+	t.Run("escaped known name", func(t *testing.T) {
+		raw := edit(state, `"execution":{"state":"not_run"`)
+		r := records.New()
+		r.Corrupt(keys[0], raw)
+		s, _ := pending.New(r, builder(t), nil, f.clock, pending.Limits{}, time.Second)
+		id, b, ok, err := s.Next(context.Background())
+		if err != nil || !ok || !bytes.Equal(b, raw[18:]) || id == "" {
+			t.Fatal("escaped spelling of a known name rejected or altered")
+		}
+	})
+
+	// A record tampered after loading, keeping its identifier and size, is
+	// refused when Next rereads it and stays stored and indexed.
+	t.Run("tampered after load", func(t *testing.T) {
+		g := newFixture(t, pending.Limits{})
+		g.mustPut()
+		raw, _ := g.records.Value(keys[0])
+		old := []byte(`"reason":"constraints_unsatisfied"`)
+		tampered := bytes.Replace(raw, old, []byte(`"state":"xconstraints_unsatisfied"`), 1)
+		if len(tampered) != len(raw) || bytes.Equal(tampered, raw) {
+			t.Fatal("fixture lacks an equal-length duplicate")
+		}
+		g.records.Corrupt(keys[0], tampered)
+		puts, deletes := g.records.Puts(), g.records.Deletes()
+		for range 2 {
+			if _, _, _, err := g.store.Next(context.Background()); !errors.Is(err, pending.ErrUnavailable) {
+				t.Fatal("tampered bundle returned")
+			}
+		}
+		if stored, _ := g.records.Value(keys[0]); g.records.Puts() != puts || g.records.Deletes() != deletes || !bytes.Equal(stored, tampered) {
+			t.Fatal("refusing a tampered bundle changed storage")
+		}
+		g.records.Corrupt(keys[0], raw)
+		if _, b, ok := g.next(); !ok || !bytes.Equal(b, raw[18:]) {
+			t.Fatal("the index lost the bundle")
+		}
+	})
+}
