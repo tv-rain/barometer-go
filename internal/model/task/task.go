@@ -13,6 +13,20 @@ import (
 // The common envelope neither interprets these values nor switches test schemas.
 type Parameters interface{ TaskParameters() }
 
+// PrimitiveStep is one normalized inline composite step. Parameters must be
+// immutable; returning a step never grants authority to execute it.
+type PrimitiveStep struct {
+	ID         string
+	Test       TestVersion
+	Parameters Parameters
+}
+
+// CompositeParameters exposes an owned ordered step list to admission.
+type CompositeParameters interface {
+	Parameters
+	CompositeSteps() []PrimitiveStep
+}
+
 type Candidate struct {
 	SchemaVersion, ID, TestID, TestVersion string
 	Parameters                             Parameters

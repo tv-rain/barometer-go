@@ -129,8 +129,8 @@ func net05Policy(edit func(*task.PolicyInput)) task.PolicyInput {
 
 // NET-05 is rejected when this build does not register it (step 4), when
 // composite execution is not enabled on both sides (step 7), and, because
-// composite steps cannot yet be matched against registrations (DEV-454), even
-// when it is registered and enabled (step 8). All three reject atomically with
+// the synthetic codec exposes no normalized step list, even when it is
+// registered and enabled (step 8). All three reject atomically with
 // zero network activity. Registered SYN-01 stays admissible beside it.
 // requirement-ref: REQ-TRUST-0018
 // requirement-ref: REQ-TRUST-0036

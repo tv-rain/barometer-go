@@ -501,9 +501,13 @@ Review case `RV-M-NET-03-SAFETY` (`docs/measurement-deployment-review.md`, `head
 
 ### NET-05
 
+The production `internal/measurement/net05` codec and root registry composition provide admission-only decoding and composite target/proxy rules. `TestMNet05Admission`, `TestMNet05Options`, `TestMNet05Versions` and `TestMNet05AtomicTargetAndProxyRules` in `net05_conformance_test.go` exercise the production `Client.AdmitTask` path with synthetic policy, registrations and recording transports. No NET-05 runner is installed; `StartRun` fails closed.
+
+Coverage is partial. The task owner explicitly approved two deferrals: `profile_version` is a positive signed 64-bit value without cross-task history or monotonicity enforcement (REQ-NET-05-0015); admission does not sum primitive duration, connection or byte maxima or prove complete-envelope fit (REQ-NET-05-0026, REQ-LIMIT-0020). The latter remains a temporary specification deviation pending clarification and implementation. Primitive schema/option bounds still apply, including HTTP body size against the outer receive bound; the common input cap also bounds the entire wrapped profile. Runtime enforcement of aggregate outer limits remains required in the separate runner work (DEV-669). Result emission, result-version integration, traffic-pattern reviews, platform and full conformance evidence remain pending. These gaps must remain visible at the sub-epic closeout.
+
 #### M-NET-05-ADMISSION
 
-Intended owner: `internal/validation/net05.go`. Planned case: `internal/validation/net05_conformance_test.go`, `symbol:TestMNet05Admission`. Disposition: **planned**, with no execution or support evidence. Additional intended owners: `internal/taskdecode/net05.go`, `internal/admission/measurements.go`, `internal/measurement/net05/run.go`.
+Disposition: **partial**, synthetic admission-only evidence in `net05_conformance_test.go`, `symbol:TestMNet05Admission`. Executed subset: profile/identifier/step-count and encoded-size boundaries, closed primitive schemas, unsafe or invalid final steps, exact registration scope, path/expiry/issuer failures, composite enablement and whole-profile proxy rejection. Monotonic history and summed-maxima rows remain deferred.
 
 Case plan: Validate the outer profile, profile_id/version, each step_id/test_id/exact version/input/options and all nested closed schemas. Test 0/1/8/9 steps, identifier lengths 0/1/64/65, duplicate IDs, nonpositive/nonmonotone versions, unsupported/nested tests, forbidden nested envelopes and interpolation. Put an invalid or unsafe final step after valid earlier steps and assert zero primitive operations.
 
@@ -554,7 +558,7 @@ Case plan: Validate the outer profile, profile_id/version, each step_id/test_id/
 
 #### M-NET-05-OPTIONS
 
-Intended owner: `internal/validation/net05.go`. Planned case: `internal/validation/net05_conformance_test.go`, `symbol:TestMNet05Options`. Disposition: **planned**, with no execution or support evidence. Additional intended owners: `internal/taskdecode/net05.go`, `internal/admission/measurements.go`, `internal/measurement/net05/run.go`.
+Disposition: **partial**, synthetic admission-only evidence in `net05_conformance_test.go`, `symbol:TestMNet05Options`. Executed subset: empty composite options, primitive option dispatch, unknown overrides, invalid primitive options and preserved HTTP body/outer receive bounds.
 
 Case plan: Accept only empty composite options. Independently vary each primitive option via its exact versioned schema; reject attempts to override sequence, outer execution/safety, primitive limits or no-retry behavior.
 
@@ -648,7 +652,7 @@ Case plan: Test 49,152 encoded profile bytes, 60,000 ms, 12 connections/tunnels,
 
 #### M-NET-05-VERSIONS
 
-Intended owner: `internal/registry/measurements.go`. Planned case: `internal/registry/measurement_conformance_test.go`, `symbol:TestMNet05Versions`. Disposition: **planned**, with no execution or support evidence. Additional intended owners: `internal/result/net05.go`.
+Disposition: **partial**, synthetic admission-only evidence in `net05_conformance_test.go`, `symbol:TestMNet05Versions`. Executed subset: exact outer and primitive task-version selection, malformed/unsupported/nested/cross-test rejection and preserved ordered normalized steps. Emitted outer/step result-version cases remain pending with the runner.
 
 Case plan: Select the exact registered combination for NET-05: test.id NET-05, test.version 0.1.0, Measurement Result schema_version 0.1.0 and test.result_version 0.1.0, and for every dispatched primitive step test_id DNS-01, TCP-01, TLS-01 or HTTP-01 with test_version 0.1.0 and emitted step test.result_version 0.1.0. Assert a valid profile produces exactly these strings in the outer envelope and in each steps[].test object. Iterate rejection inputs using a recording transport: outer NET-05 version 0.1.1, 0.2.0, 1.0.0, empty string, v0.1.0 and non-string values; each step test_version set to an unsupported, empty, padded or non-string value while other steps stay valid; a step test_id of NET-05 (nested), NET-01, NET-03, DNS-03 and an unregistered ID; a DNS-01 step whose input/options belong to HTTP-01 (cross-test input); and an emitted result whose schema_version, outer result_version or a step result_version differs from 0.1.0. Assert every unsupported task or step version, malformed version and cross-test combination is a task-validation failure reported outside Measurement Results, that the whole profile is rejected before any primitive step or connection (zero recorded contacts; no compatible subset runs), and that no version is guessed, coerced, defaulted or added. Assert a receiver validator refuses best-effort interpretation of a result carrying an unknown schema, test or result version. Registration metadata and Draft status confer no support claim. Requirements: REQ-NET-05-0039.
 
