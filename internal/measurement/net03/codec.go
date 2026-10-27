@@ -132,6 +132,7 @@ func redirectStatus(status int) bool {
 
 // requirement-ref: REQ-NET-03-0010
 // requirement-ref: REQ-NET-03-0014
+// requirement-ref: REQ-NET-03-0043
 func (c Codec) Normalize(in, opt *jsondecode.Value) (task.Parameters, error) {
 	d := c.Definition()
 	bad := func() (task.Parameters, error) { return nil, taskdecode.ErrParameters }

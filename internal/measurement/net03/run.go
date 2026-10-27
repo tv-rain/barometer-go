@@ -84,6 +84,7 @@ func (r *Runner) Run(ctx context.Context, in measurement.Input) (measurement.Out
 // before the digest is decidable, is unexpected.
 // requirement-ref: REQ-NET-03-0025
 // requirement-ref: REQ-NET-03-0026
+// requirement-ref: REQ-NET-03-0041
 func Classify(primitive string, last observation.Observation) string {
 	h, ok := last.HTTP()
 	if !ok || h.StatusCode == nil {
@@ -106,6 +107,7 @@ func Classify(primitive string, last observation.Observation) string {
 // requirement-ref: REQ-NET-03-0008
 // requirement-ref: REQ-NET-03-0023
 // requirement-ref: REQ-NET-03-0027
+// requirement-ref: REQ-NET-03-0042
 func Outcome(class, platform, primitive string) string {
 	switch class {
 	case "expected":

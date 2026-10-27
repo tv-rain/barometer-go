@@ -320,7 +320,7 @@ Review case `RV-M-NET-01-SAFETY` (`docs/measurement-deployment-review.md`, `head
 
 The runner follows the Procedure. The NET-01 stability check (`CheckNetwork`) starts the test. One platform read through `measurement.Input.Validation` follows; it reads the interim `platform.AccessState.CaptivePortal` and `Validated` flags, maps them to `platform_validation`, records `unknown` when the platform cannot report them, and ends the attempt with `network_changed` when the reading belongs to another generation. One request through the shared HTTP exchange follows, with redirects disabled, a 1,024-byte response prefix, the status check and, when configured, the SHA-256 check; TLS is used only for `https`. A redirect location is classified without contact. The outcome is recorded before the connection closes. A per-client semaphore admits one validation run at a time; a later run waits for it or for its own context.
 
-Response classes and the outcome follow the selected rules prepared as REQ-NET-03-0041 to REQ-NET-03-0043 (GO-SPEC-ISSUE-006, GO-SPEC-ISSUE-019), which are not yet merged publicly. A redirect status is `redirect`; a matching status with a decidable different digest is `content_mismatch`; any other parsed response, including a digest undecidable within the prefix, is `unexpected`; a header block over 16,384 bytes or an exchange without a final status has no class. The request decides first; platform `captive_portal` or `not_validated` selects the outcome only without a class; otherwise the DNS, TCP or TLS failure, or `inconclusive` for an HTTP failure. Go references to the three new IDs stay prose until the reference pin moves to the merged public revision.
+Response classes and the outcome follow REQ-NET-03-0041 to REQ-NET-03-0043, merged through public PR #35 at `f889a38` (GO-SPEC-ISSUE-006, GO-SPEC-ISSUE-019). A redirect status is `redirect`; a matching status with a decidable different digest is `content_mismatch`; any other parsed response, including a digest undecidable within the prefix, is `unexpected`; a header block over 16,384 bytes or an exchange without a final status has no class. The request decides first; platform `captive_portal` or `not_validated` selects the outcome only without a class; otherwise the DNS, TCP or TLS failure, or `inconclusive` for an HTTP failure. Go `requirement-ref` comments cite them against the reference pin `f889a38`.
 
 The suites are portable synthetic evidence with a fake platform port, a deterministic clock, a recording transport and loopback HTTP and HTTPS servers. Native Android and Apple validation and captive-portal signals (DEV-455), the PRECONDITIONS, MINIMIZATION, INTERPRETATION and SAFETY families and their `RV-*` cases, and NET-05's use of NET-03 context remain deferred.
 
@@ -335,7 +335,7 @@ The suites are portable synthetic evidence with a fake platform port, a determin
 | `M-NET-03-OUTPUT` | `TestMNet03Output`, `TestMNet03Execution` |
 | `M-NET-03-VERSIONS` | `TestMNet03Versions` |
 
-The manifest records these families, and maps the new requirement IDs, at the next milestone.
+The manifest records these families and the three new requirement IDs at the next milestone.
 
 #### M-NET-03-ADMISSION
 
@@ -363,6 +363,9 @@ Case plan: Validate HTTP and HTTPS registered endpoints, required expected_statu
 
 <!-- requirement-ref: REQ-NET-03-0014 -->
 [REQ-NET-03-0014](https://github.com/tv-rain/barometer-spec/blob/59d49364d85e48cc8e69c762d130a7a86dc1fe65/tests/net-03.md#REQ-NET-03-0014) → `M-NET-03-ADMISSION` (Input Validation).
+
+<!-- requirement-ref: REQ-NET-03-0043 -->
+[REQ-NET-03-0043](https://github.com/tv-rain/barometer-spec/blob/f889a381c84a781176024f3fed3a3d4f5c92b241/tests/net-03.md#REQ-NET-03-0043) → `M-NET-03-ADMISSION` (Input Validation). A redirect or informational `expected_status` is rejected; GO-SPEC-ISSUE-019 records its adoption.
 
 #### M-NET-03-OPTIONS
 
@@ -412,7 +415,7 @@ Case plan: Record NET-01 stability check, platform validation capture, one reque
 
 #### M-NET-03-NORMALIZATION
 
-Disposition: **passed** for synthetic production cases in `net03_conformance_test.go`, `symbol:TestMNet03Normalization`: every response class and the no-response, TCP, TLS and DNS failure paths, each with platform state `validated`, `not_validated`, `captive_portal` and `unknown`, select the outcome of the prepared REQ-NET-03-0042 order; `platform_validation` is retained unchanged and `response_class` is present exactly when a valid response was received. The selected rule is not yet merged publicly (GO-SPEC-ISSUE-019).
+Disposition: **passed** for synthetic production cases in `net03_conformance_test.go`, `symbol:TestMNet03Normalization`: every response class and the no-response, TCP, TLS and DNS failure paths, each with platform state `validated`, `not_validated`, `captive_portal` and `unknown`, select the outcome of the REQ-NET-03-0042 order; `platform_validation` is retained unchanged and `response_class` is present exactly when a valid response was received.
 
 Case plan: Exercise every failure/outcome row and active-response class with the platform state varied independently, including conflicting/stale/unknown state. Preserve both evidence sources; test expected, mismatch, redirect and unrecognized responses without inventing an outcome precedence when the contract is ambiguous.
 
@@ -427,6 +430,12 @@ Case plan: Exercise every failure/outcome row and active-response class with the
 
 <!-- requirement-ref: REQ-NET-03-0028 -->
 [REQ-NET-03-0028](https://github.com/tv-rain/barometer-spec/blob/59d49364d85e48cc8e69c762d130a7a86dc1fe65/tests/net-03.md#REQ-NET-03-0028) → `M-NET-03-NORMALIZATION` (Outcomes).
+
+<!-- requirement-ref: REQ-NET-03-0041 -->
+[REQ-NET-03-0041](https://github.com/tv-rain/barometer-spec/blob/f889a381c84a781176024f3fed3a3d4f5c92b241/tests/net-03.md#REQ-NET-03-0041) → `M-NET-03-NORMALIZATION` and `M-NET-03-LIMITS` (Outcomes). Valid responses and classes, with a digest undecidable within the prefix classified `unexpected`; GO-SPEC-ISSUE-006 records its adoption.
+
+<!-- requirement-ref: REQ-NET-03-0042 -->
+[REQ-NET-03-0042](https://github.com/tv-rain/barometer-spec/blob/f889a381c84a781176024f3fed3a3d4f5c92b241/tests/net-03.md#REQ-NET-03-0042) → `M-NET-03-NORMALIZATION` (Outcomes). The request selects the outcome first and platform state only without a response class; GO-SPEC-ISSUE-019 records its adoption.
 
 #### M-NET-03-LIMITS
 

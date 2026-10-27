@@ -381,7 +381,7 @@ DEV-645 adds the proxy path ([Proxy Path](execution-models.md#proxy-path)) at pu
 
 ## GO-SPEC-ISSUE-006: NET-03 Over-Bound Response Classification
 
-**Current state:** Open; option (a) selected by the project owner on October 27, 2026 under [DEV-674](https://app.clickup.com/t/124kk1zcw55) for the response prefix, together with [GO-SPEC-ISSUE-019](#go-spec-issue-019-net-03-platform-and-active-outcome-selection). The wording is prepared as REQ-NET-03-0041 in the public record [NET-03 Response Classification and Outcome Selection](https://github.com/tv-rain/barometer-spec/blob/agent/dev-674-net-03-outcome-rules/specification-issues/net-03-outcome-rules.md); public merge, review and internal alignment are pending. A header block over the bound has no parsed status, is not a valid response and carries no `response_class`. The DEV-674 runner adopts the selected rule; the sections below keep their original wording as historical evidence. Originally raised October 16, 2026 under [DEV-573](https://app.clickup.com/t/124kk1zc613) from the DEV-572 triage.
+**Current state:** Open; option (a) selected by the project owner on October 27, 2026 under [DEV-674](https://app.clickup.com/t/124kk1zcw55) for the response prefix, together with [GO-SPEC-ISSUE-019](#go-spec-issue-019-net-03-platform-and-active-outcome-selection). [Public PR #35](https://github.com/tv-rain/barometer-spec/pull/35) merged the wording as REQ-NET-03-0041 at [`f889a38`](https://github.com/tv-rain/barometer-spec/tree/f889a381c84a781176024f3fed3a3d4f5c92b241), with the record [NET-03 Response Classification and Outcome Selection](https://github.com/tv-rain/barometer-spec/blob/f889a381c84a781176024f3fed3a3d4f5c92b241/specification-issues/net-03-outcome-rules.md); internal alignment and binding and host adoption are pending. A header block over the bound has no parsed status, is not a valid response and carries no `response_class`. The DEV-674 runner adopts the selected rule; the sections below keep their original wording as historical evidence. Originally raised October 16, 2026 under [DEV-573](https://app.clickup.com/t/124kk1zc613) from the DEV-572 triage.
 
 ### Identity, Baselines and Requirements
 
@@ -917,7 +917,7 @@ The `{"profile":` and `}` wrapper adds 12 bytes, so the largest admissible `prof
 
 ## GO-SPEC-ISSUE-019: NET-03 Platform and Active Outcome Selection
 
-**Current state:** Open; rules selected by the project owner on October 27, 2026 under [DEV-674](https://app.clickup.com/t/124kk1zcw55) and prepared, with GO-SPEC-ISSUE-006, as REQ-NET-03-0041 to REQ-NET-03-0043 in the public record [NET-03 Response Classification and Outcome Selection](https://github.com/tv-rain/barometer-spec/blob/agent/dev-674-net-03-outcome-rules/specification-issues/net-03-outcome-rules.md). Public merge, required reviews and internal alignment are pending; the DEV-674 runner adopts the selected rules on its branch, to merge after the public record.
+**Current state:** Open; rules selected by the project owner on October 27, 2026 under [DEV-674](https://app.clickup.com/t/124kk1zcw55) and merged, with GO-SPEC-ISSUE-006, as REQ-NET-03-0041 to REQ-NET-03-0043 through [public PR #35](https://github.com/tv-rain/barometer-spec/pull/35) at [`f889a38`](https://github.com/tv-rain/barometer-spec/tree/f889a381c84a781176024f3fed3a3d4f5c92b241), retaining Draft `0.1.0`; the record is [NET-03 Response Classification and Outcome Selection](https://github.com/tv-rain/barometer-spec/blob/f889a381c84a781176024f3fed3a3d4f5c92b241/specification-issues/net-03-outcome-rules.md). The DEV-674 runner adopts them (barometer-go PR #94). Internal alignment, required reviews and binding and host adoption are pending.
 
 ### Identity, Baselines and Finding
 
@@ -929,9 +929,9 @@ The `{"profile":` and `}` wrapper adds 12 bytes, so the largest admissible `prof
 
 The request decides first: `expected` is `validated`, `redirect` or `content_mismatch` is `captive_portal_suspected`, and `unexpected` is `unexpected_response`. Without a response class, platform `captive_portal` or `not_validated` selects the outcome; otherwise the DNS, TCP or TLS failure, or `inconclusive` for an HTTP failure. `content_mismatch` is a matching status with a decidable different digest; every other parsed response is `unexpected`. A redirect or informational `expected_status` is invalid input. The rules add no traffic, read, retry, field or retained value; a different status yields `unexpected_response` rather than a portal claim.
 
-`internal/measurement/net03` (`Classify`, `Outcome`) and the codec implement them, with cases listed in [Current NET-03 Execution](measurement-requirements.md#current-net-03-execution). Go references to REQ-NET-03-0041 to REQ-NET-03-0043 stay prose until the reference pin moves to the merged public revision.
+`internal/measurement/net03` (`Classify`, `Outcome`) and the codec implement them, with cases listed in [Current NET-03 Execution](measurement-requirements.md#current-net-03-execution). Go `requirement-ref` comments cite REQ-NET-03-0041 to REQ-NET-03-0043 against the reference pin `f889a38`.
 
-**Ordering:** public merge, internal NET-03 validation alignment, the Go branch, then native and host validation. Closure requires the merged baseline, the pin update with machine-readable references, and applicable downstream evidence or non-applicability.
+**Ordering:** public merge, internal NET-03 validation alignment, the Go branch, then native and host validation. Closure requires internal alignment, the milestone manifest mapping and applicable downstream evidence or non-applicability.
 
 ## Signed Remote Task Package Adoption
 

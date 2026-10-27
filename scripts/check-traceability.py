@@ -15,7 +15,7 @@ SPEC_URL = "https://github.com/tv-rain/barometer-spec"
 IMPL_URL = "https://github.com/tv-rain/barometer-go"
 TOOLING_REVISION = "5d01879cfd1d47396c780befa2567f7e90439948"
 # Current source references advance independently of historical evidence/tooling.
-REFERENCE_REVISION = "e6257ec64564ad415a2d6c1f8d106fa1763d7de8"
+REFERENCE_REVISION = "f889a381c84a781176024f3fed3a3d4f5c92b241"
 # Independent reviewed inventory; never infer required mappings from the input under test.
 INVENTORY_REVISION = "c06ce6b7b73b8520f35ce10982315fcb4d05615b"
 BASELINES = {
