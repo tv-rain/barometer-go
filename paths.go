@@ -8,6 +8,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/execution"
 	"github.com/tv-rain/barometer-go/internal/measurement"
 	"github.com/tv-rain/barometer-go/internal/measurement/dns01"
+	"github.com/tv-rain/barometer-go/internal/measurement/dns03"
 	"github.com/tv-rain/barometer-go/internal/measurement/dns04"
 	"github.com/tv-rain/barometer-go/internal/measurement/http01"
 	"github.com/tv-rain/barometer-go/internal/measurement/net03"
@@ -131,6 +132,12 @@ func measurementOutput(test task.TestVersion, params task.Parameters) result.Out
 	if p, ok := params.(dns01.Parameters); ok {
 		output.DNSMode = p.Engine()
 		output.QueryType = p.QueryType()
+		output.Limits.RetainDNSAnswers = true
+	}
+	if p, ok := params.(dns03.Parameters); ok {
+		output.QueryType = p.QueryType()
+		output.Bootstrap = p.Bootstrap()
+		output.Limits.MaxBodyBytes = dns03.MaxBody
 		output.Limits.RetainDNSAnswers = true
 	}
 	if p, ok := params.(dns04.Parameters); ok {

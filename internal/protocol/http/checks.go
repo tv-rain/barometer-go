@@ -129,6 +129,15 @@ func evaluate(r *stdhttp.Response, d *observation.HTTPDetails, c Config) ([]byte
 		}
 	}
 	encoding := strings.TrimSpace(strings.Join(r.Header.Values("Content-Encoding"), ","))
+	if len(c.PostBody) > 0 && (r.StatusCode < 200 || r.StatusCode > 299) {
+		// A non-2xx DNS POST ends at its status, before the encoding and
+		// media-type checks; the body is neither read nor parsed
+		// (GO-SPEC-ISSUE-020). An unread unsupported encoding is omitted.
+		if encoding == "" || strings.EqualFold(encoding, "identity") {
+			d.ContentEncoding = "identity"
+		}
+		return nil, ""
+	}
 	if encoding != "" && !strings.EqualFold(encoding, "identity") {
 		if len(c.BodyChecks) > 0 || len(c.PostBody) > 0 {
 			d.ContentEncoding = "unsupported"

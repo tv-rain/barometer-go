@@ -17,8 +17,8 @@ func TestProductionRegistryContainsOnlyDeliveredMeasurements(t *testing.T) {
 	if err != nil || second == nil || first == second {
 		t.Fatal("production registries must be instance-owned")
 	}
-	if len(first.Codecs()) != 8 || len(second.Codecs()) != 8 {
-		t.Fatal("expected four primitives, NET-01, NET-03, DNS-04 and sequential NET-05")
+	if len(first.Codecs()) != 9 || len(second.Codecs()) != 9 {
+		t.Fatal("expected four primitives, NET-01, NET-03, DNS-03, DNS-04 and sequential NET-05")
 	}
 	entry, ok := first.Lookup(net01Test)
 	if !ok || entry.Runner == nil || entry.BaselineRisk != task.LowRisk || entry.Step || entry.Composite {
@@ -27,6 +27,10 @@ func TestProductionRegistryContainsOnlyDeliveredMeasurements(t *testing.T) {
 	entry, ok = first.Lookup(task.TestVersion{ID: "NET-03", Version: "0.1.0"})
 	if _, noProxy := entry.Proxy.(registry.NoProxy); !ok || entry.Runner == nil || entry.BaselineRisk != task.LowRisk || entry.Step || entry.Composite || !noProxy {
 		t.Fatal("NET-03 composition missing or incorrect")
+	}
+	entry, ok = first.Lookup(task.TestVersion{ID: "DNS-03", Version: "0.1.0"})
+	if _, noProxy := entry.Proxy.(registry.NoProxy); !ok || entry.Runner == nil || entry.BaselineRisk != task.MediumRisk || entry.Step || entry.Composite || noProxy {
+		t.Fatal("DNS-03 composition missing or incorrect")
 	}
 	entry, ok = first.Lookup(task.TestVersion{ID: "DNS-04", Version: "0.1.0"})
 	if _, noProxy := entry.Proxy.(registry.NoProxy); !ok || entry.Runner == nil || entry.BaselineRisk != task.MediumRisk || entry.Step || entry.Composite || noProxy {
@@ -44,7 +48,7 @@ func TestProductionRegistryContainsOnlyDeliveredMeasurements(t *testing.T) {
 	if !ok || entry.Runner == nil || entry.BaselineRisk != task.MediumRisk || entry.Step || !entry.Composite {
 		t.Fatal("NET-05 runner entry missing or incorrect")
 	}
-	for _, id := range []string{"SYN-01", "DNS-03"} {
+	for _, id := range []string{"SYN-01"} {
 		key := task.TestVersion{ID: id, Version: "0.1.0"}
 		if _, ok := first.Lookup(key); ok {
 			t.Fatalf("undelivered test %s is registered", id)

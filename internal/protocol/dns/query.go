@@ -96,29 +96,8 @@ func exchange(ctx context.Context, in Input, q Question, transport, engine, addr
 		}
 		outcome, status := failure, "failed"
 		if len(responses) > 0 && failure == "" {
-			status = "succeeded"
-			outcome = "no_data"
+			outcome, status, failure = classify(responses[0], q.Type)
 			first := responses[0]
-			switch first.RCode {
-			case "NXDOMAIN":
-				failure = "nxdomain"
-			case "SERVFAIL":
-				failure = "servfail"
-			case "REFUSED":
-				failure = "refused"
-			case "NOERROR":
-				for _, a := range first.Answers {
-					if a.Type == q.Type {
-						outcome = "resolved"
-					}
-				}
-			default:
-				failure = "inconclusive"
-			}
-			if failure != "" {
-				status = "failed"
-				outcome = failure
-			}
 			conflict := false
 			for _, r := range responses[1:] {
 				if r.RCode != first.RCode || !sameAnswers(r.Answers, first.Answers) {
@@ -277,6 +256,61 @@ func exchange(ctx context.Context, in Input, q Question, transport, engine, addr
 		}
 	}
 }
+
+// classify maps the first valid response's code and answers to the shared
+// DNS outcome, status and failure.
+func classify(first observation.DNSResponse, query string) (outcome, status, failure string) {
+	switch first.RCode {
+	case "NXDOMAIN":
+		failure = "nxdomain"
+	case "SERVFAIL":
+		failure = "servfail"
+	case "REFUSED":
+		failure = "refused"
+	case "NOERROR":
+		outcome = "no_data"
+		for _, a := range first.Answers {
+			if a.Type == query {
+				outcome = "resolved"
+			}
+		}
+		return outcome, "succeeded", ""
+	default:
+		failure = "inconclusive"
+	}
+	return failure, "failed", failure
+}
+
+// Message parses one bounded DNS message already received as the payload of
+// an authenticated DNS-over-HTTPS exchange, recorded with engine doh. The
+// HTTP owner sent the query and read the payload; the observation's duration
+// and arrival offset are that exchange's coarse duration. The payload is
+// transient: only the minimized response is retained. A payload above
+// MaxTCP or one the HTTP owner truncated is malformed.
+func Message(payload []byte, truncated bool, q Question, family string, duration int) (Result, error) {
+	if qtype(q.Type) == 0 || !validName(q.Name) || duration < 0 || duration%250 != 0 {
+		return Result{}, ErrInterrupted
+	}
+	outcome, status, failure := "malformed_response", "failed", "malformed_response"
+	responses := []observation.DNSResponse{}
+	if !truncated && len(payload) <= MaxTCP {
+		response, e := Parse(payload, q, MaxTCP)
+		switch {
+		case errors.Is(e, ErrMismatch):
+			outcome, failure = "query_mismatch", "query_mismatch"
+		case e == nil:
+			response.ArrivalIndex, response.ArrivalOffsetMS = 1, duration
+			responses = append(responses, response)
+			outcome, status, failure = classify(response, q.Type)
+		}
+	}
+	o, e := observation.NewDNS(observation.Contract, status, duration, failure, observation.DNSDetails{Engine: "doh", AddressFamily: family, QueryType: q.Type, Responses: responses}, observation.ProtocolLimits{RetainDNSAnswers: true})
+	if e != nil {
+		return Result{}, ErrInterrupted
+	}
+	return Result{outcome, o}, nil
+}
+
 func coarse(d time.Duration) int { return max(0, int(d/time.Millisecond)) / 250 * 250 }
 func sameAnswers(a, b []observation.DNSAnswer) bool {
 	if len(a) != len(b) {
