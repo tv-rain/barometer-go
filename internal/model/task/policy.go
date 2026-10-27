@@ -273,7 +273,7 @@ func (t TargetTuple) valid() bool {
 			return false
 		}
 	}
-	if t.Scheme != "" && t.Scheme != "https" && t.Scheme != "tls" && t.Scheme != "tcp" && t.Scheme != "udp" {
+	if t.Scheme != "" && t.Scheme != "https" && t.Scheme != "http" && t.Scheme != "tls" && t.Scheme != "tcp" && t.Scheme != "udp" {
 		return false
 	}
 	if t.ExpectedStatus != 0 && !between(t.ExpectedStatus, 100, 599) {
@@ -284,13 +284,18 @@ func (t TargetTuple) valid() bool {
 			return false
 		}
 		u, err := url.Parse(t.URL)
-		if err != nil || len(t.URL) > 2048 || u.Scheme != "https" || u.User != nil || u.Fragment != "" || u.Host == "" || u.Opaque != "" || !canonicalHost(u.Hostname()) || u.String() != t.URL || strings.ContainsAny(t.URL, "\r\n\t ") || strings.ContainsAny(t.URL, "{}") {
+		if err != nil || len(t.URL) > 2048 || u.Scheme != "https" && u.Scheme != "http" || u.User != nil || u.Fragment != "" || u.Host == "" || u.Opaque != "" || !canonicalHost(u.Hostname()) || u.String() != t.URL || strings.ContainsAny(t.URL, "\r\n\t ") || strings.ContainsAny(t.URL, "{}") {
 			return false
 		}
-		if t.Scheme != "" && t.Scheme != "https" || t.Hostname != "" && t.Hostname != u.Hostname() {
+		// Plain http is NET-03's validation URL only; its tuple names the
+		// scheme, so no https registration can match it (REQ-NET-03-0009).
+		if t.Scheme != "" && t.Scheme != u.Scheme || u.Scheme == "http" && t.Scheme != "http" || t.Hostname != "" && t.Hostname != u.Hostname() {
 			return false
 		}
 		port := 443
+		if u.Scheme == "http" {
+			port = 80
+		}
 		if u.Port() != "" {
 			n, err := strconv.Atoi(u.Port())
 			if err != nil || n < 1 || n > 65535 || strconv.Itoa(n) != u.Port() {

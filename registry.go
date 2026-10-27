@@ -6,6 +6,7 @@ import (
 	dnsmeasurement "github.com/tv-rain/barometer-go/internal/measurement/dns01"
 	httpmeasurement "github.com/tv-rain/barometer-go/internal/measurement/http01"
 	"github.com/tv-rain/barometer-go/internal/measurement/net01"
+	"github.com/tv-rain/barometer-go/internal/measurement/net03"
 	"github.com/tv-rain/barometer-go/internal/measurement/net05"
 	tcpmeasurement "github.com/tv-rain/barometer-go/internal/measurement/tcp01"
 	tlsmeasurement "github.com/tv-rain/barometer-go/internal/measurement/tls01"
@@ -22,6 +23,9 @@ import (
 // requirement-ref: REQ-TLS-01-0032
 // requirement-ref: REQ-NET-01-0022
 // requirement-ref: REQ-NET-01-0032
+// requirement-ref: REQ-NET-03-0004
+// requirement-ref: REQ-NET-03-0022
+// requirement-ref: REQ-NET-03-0034
 func productionRegistry(roots *x509.CertPool) (*registry.Registry, error) {
 	entries := []registry.Entry{{Test: task.TestVersion{ID: "DNS-01", Version: "0.1.0"}, Codec: dnsmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: dns01Targets{}, Proxy: dnsmeasurement.ProxyRule{}, Runner: &dnsmeasurement.Runner{}, Step: true}, {Test: task.TestVersion{ID: "TCP-01", Version: "0.1.0"}, Codec: tcpmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: tcp01Targets{}, Proxy: tcpmeasurement.ProxyRule{}, Runner: &tcpmeasurement.Runner{}, Step: true},
 		{Test: task.TestVersion{ID: "TLS-01", Version: "0.1.0"}, Codec: tlsmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: tls01Targets{}, Proxy: tlsmeasurement.ProxyRule{}, Runner: &tlsmeasurement.Runner{Roots: roots}, Step: true}, {Test: task.TestVersion{ID: "HTTP-01", Version: "0.1.0"}, Codec: httpmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: http01Targets{}, Proxy: httpmeasurement.ProxyRule{}, Runner: &httpmeasurement.Runner{Roots: roots}, Step: true}}
@@ -37,6 +41,9 @@ func productionRegistry(roots *x509.CertPool) (*registry.Registry, error) {
 	// NET-01 has no remote target and is rejected on the proxy path
 	// (REQ-PROXY-0026); it is not a NET-05 step.
 	entries = append(entries, registry.Entry{Test: task.TestVersion{ID: "NET-01", Version: "0.1.0"}, Codec: net01.Codec{}, BaselineRisk: task.LowRisk, Targets: registry.NoTargets{}, Proxy: registry.NoProxy{}, Runner: net01.Runner{}})
+	// NET-03 combines platform state with one endpoint request and has no
+	// proxy path semantics (REQ-PROXY-0044); it is not a NET-05 step.
+	entries = append(entries, registry.Entry{Test: task.TestVersion{ID: "NET-03", Version: "0.1.0"}, Codec: net03.Codec{}, BaselineRisk: task.LowRisk, Targets: net03Targets{}, Proxy: registry.NoProxy{}, Runner: &net03.Runner{Roots: roots}})
 	entries = append(entries, registry.Entry{Test: task.TestVersion{ID: "NET-05", Version: "0.1.0"}, Codec: codec, BaselineRisk: task.MediumRisk, Targets: rules, Proxy: rules, Runner: &net05.Runner{Roots: roots}, Composite: true})
 	return registry.New(entries)
 }
@@ -99,6 +106,20 @@ type http01Targets struct{}
 
 func (http01Targets) Targets(p task.Parameters) ([]registry.Target, bool) {
 	v, ok := p.(httpmeasurement.Parameters)
+	if !ok || v.Target().URL == "" {
+		return nil, false
+	}
+	return []registry.Target{{Role: task.MeasurementTarget, Tuple: v.Target()}}, true
+}
+
+// NET-03 matches the complete normalized validation URL, expected status and
+// optional body digest, so only a locally registered profile runs
+// (REQ-NET-03-0010, REQ-NET-03-0018). Redirect targets are never registered.
+type net03Targets struct{}
+
+// requirement-ref: REQ-NET-03-0010
+func (net03Targets) Targets(p task.Parameters) ([]registry.Target, bool) {
+	v, ok := p.(net03.Parameters)
 	if !ok || v.Target().URL == "" {
 		return nil, false
 	}

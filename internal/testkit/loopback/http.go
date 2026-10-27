@@ -17,6 +17,9 @@ type HTTPConfig struct {
 	Certificate tls.Certificate
 	Raw         []byte
 	Stall       bool
+	// Plain serves plaintext HTTP without TLS, for NET-03 http validation
+	// URLs; wire and plaintext counters then see the same bytes.
+	Plain bool
 }
 type HTTPRequest struct {
 	Method, Target string
@@ -28,7 +31,7 @@ type HTTPCounts struct {
 	Requests                                 []HTTPRequest
 }
 
-// HTTPServer is a loopback-only scripted HTTPS endpoint with separate TLS
+// HTTPServer is a loopback-only scripted HTTPS (or, with Plain, HTTP) endpoint with separate TLS
 // socket and plaintext counters. Every connection is closed by Close, even
 // when a client stalls. Tests never contact an external endpoint.
 type HTTPServer struct {
@@ -84,9 +87,13 @@ func (s *HTTPServer) serveHTTP(raw net.Conn) {
 		s.mu.Unlock()
 	}()
 	wire := httpCounted{raw, s, true}
-	conn := tls.Server(wire, &tls.Config{Certificates: []tls.Certificate{s.cfg.Certificate}, NextProtos: []string{"http/1.1"}, MinVersion: tls.VersionTLS12})
-	if conn.Handshake() != nil {
-		return
+	var conn net.Conn = wire
+	if !s.cfg.Plain {
+		t := tls.Server(wire, &tls.Config{Certificates: []tls.Certificate{s.cfg.Certificate}, NextProtos: []string{"http/1.1"}, MinVersion: tls.VersionTLS12})
+		if t.Handshake() != nil {
+			return
+		}
+		conn = t
 	}
 	plain := httpCounted{conn, s, false}
 	r, e := http.ReadRequest(bufio.NewReader(plain))

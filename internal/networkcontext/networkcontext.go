@@ -129,7 +129,7 @@ func (d *Source) Capture(ctx context.Context) (Snapshot, error) {
 	if err != nil {
 		return Snapshot{}, ErrUnavailable
 	}
-	snap := Snapshot{valid: true, network: d.network, source: d, access: Normalize(s), path: path, generation: s.Generation}
+	snap := Snapshot{valid: true, network: d.network, source: d, access: Normalize(s), validation: PlatformValidation(s), path: path, generation: s.Generation}
 	if snap.bind(egressWire{Status: "unavailable", LookupSource: "none"}) != nil {
 		return Snapshot{}, ErrUnavailable
 	}
@@ -150,6 +150,24 @@ func Normalize(s platform.AccessState) observation.Access {
 	}
 }
 
+// PlatformValidation maps a platform reading to NET-03's coarse
+// platform_validation (REQ-NET-03-0024). A reported captive portal takes
+// precedence over the validation flag, so a portal is never recorded as
+// validated; a value the platform cannot determine stays unknown. It never
+// reaches the Network Context.
+// requirement-ref: REQ-NET-03-0024
+func PlatformValidation(s platform.AccessState) string {
+	switch {
+	case s.CaptivePortal == platform.AvailabilityYes:
+		return "captive_portal"
+	case s.Validated == platform.AvailabilityYes:
+		return "validated"
+	case s.Validated == platform.AvailabilityNo:
+		return "not_validated"
+	}
+	return "unknown"
+}
+
 func availability(a platform.Availability) string { return pick(int(a), "unknown", "yes", "no") }
 
 // pick returns names[i], or the first name, which is unknown, for any value
@@ -168,6 +186,7 @@ type Snapshot struct {
 	network    platform.Network
 	source     *Source
 	access     observation.Access
+	validation string
 	path       observation.Path
 	generation uint64
 	contexts   [2]observation.NetworkContext // stable, then changed
@@ -175,6 +194,15 @@ type Snapshot struct {
 
 // Access returns the normalized access values, with network_changed false.
 func (s Snapshot) Access() observation.Access { return s.access }
+
+// PlatformValidation is the platform validation and captive-portal state of
+// the reading, as NET-03's platform_validation.
+func (s Snapshot) PlatformValidation() string {
+	if s.validation == "" {
+		return "unknown"
+	}
+	return s.validation
+}
 
 // Path is the local path binding of the snapshot's generation.
 func (s Snapshot) Path() observation.Path { return s.path }

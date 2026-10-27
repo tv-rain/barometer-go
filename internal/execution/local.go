@@ -118,3 +118,34 @@ func (e *Engine) localAttempt(actx context.Context, cancel context.CancelCauseFu
 	}
 	return stop(running, task.InternalError)
 }
+
+// platformValidation returns NET-03's platform read (Procedure step 2). The
+// NET-01 stability check has already started the test; the read itself sends
+// no traffic and acquires no egress. A platform without the API, or a read
+// that fails, is unknown: NET-03 reads the state only when it is supported
+// (REQ-NET-03-0006). A reading in another generation than the attempt's
+// capture ends the attempt with network_changed, never an outcome
+// (REQ-NET-03-0029). The value is NET-03's own evidence and never changes
+// the attempt's Network Context.
+// requirement-ref: REQ-NET-03-0005
+// requirement-ref: REQ-NET-03-0023
+func platformValidation(actx context.Context, cancel context.CancelCauseFunc, p Plan, attempt networkcontext.Snapshot, s *scope) func(context.Context) (string, error) {
+	var once sync.Once
+	return func(ctx context.Context) (string, error) {
+		value, err := "", measurement.ErrRunner
+		once.Do(func() {
+			s.Start()
+			read, rerr := p.Context.Capture(ctx)
+			switch {
+			case actx.Err() != nil || ctx.Err() != nil:
+			case rerr != nil:
+				value, err = "unknown", nil
+			case read.Generation() != attempt.Generation():
+				cancel(errNetworkChanged)
+			default:
+				value, err = read.PlatformValidation(), nil
+			}
+		})
+		return value, err
+	}
+}
