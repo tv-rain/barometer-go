@@ -33,6 +33,8 @@ func (p Parameters) Engine() string {
 }
 func (p Parameters) Resolver() (netip.Addr, uint16) { return p.address, p.port }
 
+func (p Parameters) AdditionalResponses() (bool, time.Duration) { return p.collect, p.window }
+
 type Codec struct{}
 
 // requirement-ref: REQ-DNS-01-0014

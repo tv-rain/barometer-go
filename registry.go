@@ -31,7 +31,7 @@ func productionRegistry(roots *x509.CertPool) (*registry.Registry, error) {
 		return nil, err
 	}
 	rules := net05Rules{primitives: primitives}
-	entries = append(entries, registry.Entry{Test: task.TestVersion{ID: "NET-05", Version: "0.1.0"}, Codec: codec, BaselineRisk: task.MediumRisk, Targets: rules, Proxy: rules, Composite: true})
+	entries = append(entries, registry.Entry{Test: task.TestVersion{ID: "NET-05", Version: "0.1.0"}, Codec: codec, BaselineRisk: task.MediumRisk, Targets: rules, Proxy: rules, Runner: &net05.Runner{Roots: roots}, Composite: true})
 	return registry.New(entries)
 }
 

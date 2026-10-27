@@ -457,3 +457,21 @@ func (s *scope) resolve(ctx context.Context, name, query string) (bool, string, 
 	}
 	return found, failure, err
 }
+
+func (d targetDialer) resolve(ctx context.Context, name, query string) (bool, string, error) {
+	t, ok := d.check.(interface {
+		Lookup(context.Context, string, string, func()) (bool, string, error)
+	})
+	if !ok || d.scope.isClosed() || d.scope.ctx.Err() != nil {
+		return false, "", measurement.ErrRunner
+	}
+	dctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	unlink := context.AfterFunc(d.scope.ctx, cancel)
+	defer unlink()
+	found, failure, err := t.Lookup(dctx, name, query, d.scope.Start)
+	if reason, ok := pathFailure(err); ok {
+		d.scope.pathFailed(reason, err)
+	}
+	return found, failure, err
+}

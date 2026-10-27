@@ -43,6 +43,7 @@ type pathSource interface {
 // pathRequest names the task's network path and, for a proxy task, the
 // generation's proxy snapshot. A source never substitutes another path.
 type pathRequest struct {
+	RequireCompositeValidation bool
 	Parameters                 task.Parameters
 	TaskID                     string
 	Test                       task.TestVersion
@@ -244,7 +245,7 @@ func (rt *runtime) reserveRun(ctx, parent context.Context, proxy proxySnapshot, 
 		return "", execution.Plan{}, nil, notDue
 	}
 	path, err := run.paths.plan(ctx, pathRequest{TaskID: c.ID, Test: a.Test(), Parameters: c.Parameters, MaxAttempts: attempts, MaxDurationMS: a.AttemptLimits().DurationMS,
-		NetworkPath: c.Execution.NetworkPath, Proxy: proxy, Egress: rt.egress})
+		NetworkPath: c.Execution.NetworkPath, Proxy: proxy, Egress: rt.egress, RequireCompositeValidation: !run.net05AllowUnvalidated})
 	if err != nil || path.Result == nil || path.Context == nil || path.Dialers == nil {
 		return "", execution.Plan{}, nil, notDue
 	}
@@ -288,7 +289,7 @@ func (rt *runtime) reserveRun(ctx, parent context.Context, proxy proxySnapshot, 
 	rt.runSet.active++
 	rt.runSet.results += attempts
 	rt.runSet.exclusive = rt.runSet.exclusive || exclusive
-	plan := execution.Plan{TaskID: c.ID, Test: a.Test(), Parameters: c.Parameters, Schedule: s, Network: c.Execution.Network, Conditions: start,
+	plan := execution.Plan{RequireCompositeValidation: !run.net05AllowUnvalidated, TaskID: c.ID, Test: a.Test(), Parameters: c.Parameters, Schedule: s, Network: c.Execution.Network, Conditions: start,
 		Deadline:       time.Duration(a.AttemptLimits().DurationMS) * time.Millisecond,
 		Limits:         a.AttemptLimits(),
 		Targets:        execution.NewTargets(a.Test(), c.Execution.NetworkPath, a.Targets(), run.clock, run.addressPolicy).WithResolver(run.resolver),

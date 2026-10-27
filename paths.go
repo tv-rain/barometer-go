@@ -9,6 +9,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/measurement"
 	"github.com/tv-rain/barometer-go/internal/measurement/dns01"
 	"github.com/tv-rain/barometer-go/internal/measurement/http01"
+	"github.com/tv-rain/barometer-go/internal/measurement/net05"
 	"github.com/tv-rain/barometer-go/internal/model/observation"
 	model "github.com/tv-rain/barometer-go/internal/model/result"
 	"github.com/tv-rain/barometer-go/internal/model/task"
@@ -110,19 +111,31 @@ func (p *networkPaths) unconfigured(ctx context.Context, r pathRequest) (pathPla
 }
 
 func (p *networkPaths) decoder(r pathRequest, cd *observation.ContextDecoder, path observation.Path, generation uint64) (*result.Decoder, error) {
-	output := result.Output{Test: model.Test{ID: r.Test.ID, Version: r.Test.Version, ResultVersion: result.Contract}}
-	if params, ok := r.Parameters.(dns01.Parameters); ok {
-		output.DNSMode = params.Engine()
-		output.QueryType = params.QueryType()
-		output.Limits.RetainDNSAnswers = true
+	output := measurementOutput(r.Test, r.Parameters)
+	var profile *result.ProfilePlan
+	if params, ok := r.Parameters.(net05.Parameters); ok {
+		id, version := params.Profile()
+		profile = &result.ProfilePlan{ID: id, Version: version, RequireValidation: r.RequireCompositeValidation}
+		for _, step := range params.CompositeSteps() {
+			profile.Steps = append(profile.Steps, result.StepPlan{ID: step.ID, Output: measurementOutput(step.Test, step.Parameters)})
+		}
 	}
-	if params, ok := r.Parameters.(http01.Parameters); ok {
-		output.Limits = params.Limits()
-		output.HTTPS = true
-	}
-	return result.New(result.Binding{TaskID: r.TaskID, Output: output,
+	return result.New(result.Binding{TaskID: r.TaskID, Output: output, Profile: profile,
 		MaxAttempts: r.MaxAttempts, MaxDurationMS: r.MaxDurationMS, Implementation: p.implementation,
 		ContextDecoder: cd, Path: path, AccessGeneration: generation})
+}
+func measurementOutput(test task.TestVersion, params task.Parameters) result.Output {
+	output := result.Output{Test: model.Test{ID: test.ID, Version: test.Version, ResultVersion: result.Contract}}
+	if p, ok := params.(dns01.Parameters); ok {
+		output.DNSMode = p.Engine()
+		output.QueryType = p.QueryType()
+		output.Limits.RetainDNSAnswers = true
+	}
+	if p, ok := params.(http01.Parameters); ok {
+		output.Limits = p.Limits()
+		output.HTTPS = true
+	}
+	return output
 }
 
 // noProxy is the context source and dialer source of a proxy run without a

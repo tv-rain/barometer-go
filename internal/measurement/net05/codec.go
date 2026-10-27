@@ -1,5 +1,5 @@
-// Package net05 owns the bounded inline profile codec. It performs no I/O and
-// supplies no runner. Primitive schemas are explicitly composed by the caller.
+// Package net05 owns bounded inline profile decoding and sequential execution.
+// The codec performs no I/O. Primitive schemas are explicitly composed by the caller.
 package net05
 
 import (

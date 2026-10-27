@@ -88,17 +88,20 @@ type adapters struct {
 // (DEV-641); native network, consent, device and time-zone capabilities and
 // the implementation identity belong to DEV-455; tests bind synthetic ones.
 type runAdapters struct {
-	resolver       execution.SystemResolver // optional trusted ordinary-system-lookup adapter
-	clock          execution.Clock
-	jitter         execution.Jitter
-	ledger         persistence.RunLedger
-	paths          pathSource
-	network        platform.Network
-	implementation model.Implementation
-	consent        platform.Consent
-	device         platform.Device
-	zone           platform.TimeZone
-	registry       *registry.Registry // the adapters' registry, set by successor
+	// Trusted local policy only. Default requires platform validation for NET-05.
+	// No task field or public facade option can enable unvalidated profiles.
+	net05AllowUnvalidated bool
+	resolver              execution.SystemResolver // optional trusted ordinary-system-lookup adapter
+	clock                 execution.Clock
+	jitter                execution.Jitter
+	ledger                persistence.RunLedger
+	paths                 pathSource
+	network               platform.Network
+	implementation        model.Implementation
+	consent               platform.Consent
+	device                platform.Device
+	zone                  platform.TimeZone
+	registry              *registry.Registry // the adapters' registry, set by successor
 
 	// contextCache is the client's in-memory egress cache (DEV-647). bind
 	// creates it; each generation's lookup uses its own epoch of it, and
