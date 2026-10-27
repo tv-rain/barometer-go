@@ -231,6 +231,7 @@ func net03Last(m map[string]any) map[string]any {
 // requirement-ref: REQ-NET-03-0011
 // requirement-ref: REQ-NET-03-0013
 // requirement-ref: REQ-NET-03-0014
+// requirement-ref: REQ-NET-03-0043
 func TestMNet03Admission(t *testing.T) {
 	invalid := []string{`{}`, `null`, `[]`, `{"url":null,"expected_status":200}`, `{"expected_status":200}`, `{"url":"https://8.8.8.8/check"}`,
 		`{"url":"ftp://8.8.8.8/check","expected_status":200}`, `{"url":"https://u:p@8.8.8.8/check","expected_status":200}`, `{"url":"https://8.8.8.8/check#x","expected_status":200}`,
@@ -363,6 +364,8 @@ func TestMNet03Execution(t *testing.T) {
 // requirement-ref: REQ-NET-03-0023
 // requirement-ref: REQ-NET-03-0025
 // requirement-ref: REQ-NET-03-0027
+// requirement-ref: REQ-NET-03-0041
+// requirement-ref: REQ-NET-03-0042
 func TestMNet03Normalization(t *testing.T) {
 	digest := strings.TrimSuffix(net03Input, "}") + `,"expected_body_sha256":"` + net03Digest + `"}`
 	host := strings.Replace(net03Input, "8.8.8.8", "service.example", 1)
@@ -423,6 +426,7 @@ func TestMNet03Normalization(t *testing.T) {
 // requirement-ref: REQ-NET-03-0021
 // requirement-ref: REQ-LIMIT-0016
 // requirement-ref: REQ-LIMIT-0034
+// requirement-ref: REQ-NET-03-0041
 func TestMNet03Limits(t *testing.T) {
 	// The 1,024-byte prefix: a digest decidable within it compares; one that
 	// is not is the over-bound unexpected class. Without a digest, truncation
