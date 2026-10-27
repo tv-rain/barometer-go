@@ -121,7 +121,9 @@ func seedPending(h *harness, seq uint64, created time.Time, id string) {
 	raw := []byte{1, byte(persistence.PendingClass)}
 	raw = binary.BigEndian.AppendUint64(raw, seq)
 	raw = binary.BigEndian.AppendUint64(raw, uint64(created.UnixNano()))
-	raw = append(raw, `{"schema_version":"0.1.0","bundle_id":"`+id+`","results":[{"seed":true}]}`...)
+	raw = append(raw, `{"schema_version":"0.1.0","bundle_id":"`+id+`","results":[{"schema_version":"0.1.0","task_id":"seed","run_id":"seed","attempt":1,`+
+		`"test":{"id":"TCP-01","version":"0.1.0","result_version":"0.1.0"},"implementation":{"library_version":"0.1.0","platform":"android"},`+
+		`"time":{"started_at":"2026-10-22T12:00:00Z","precision":"second","duration_ms":0},"execution":{"state":"not_run","reason":"constraints_unsatisfied"}}]}`...)
 	h.run.output.Corrupt(k, raw)
 }
 

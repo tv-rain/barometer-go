@@ -15,12 +15,10 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/binary"
-	"encoding/json"
 	"errors"
 	"slices"
 	"strconv"
 	"time"
-	"unicode/utf8"
 
 	"github.com/tv-rain/barometer-go/internal/bundle"
 	"github.com/tv-rain/barometer-go/internal/jsondecode"
@@ -471,10 +469,35 @@ func encode(e entry, encoded []byte) []byte {
 	return append(b, encoded...)
 }
 
+// storedBundle is the closed bundle representation a stored value is decoded
+// with. Each result is then validated against its registered result schema.
+var storedBundle = func() *jsondecode.Schema {
+	text := &jsondecode.Schema{Kind: jsondecode.String}
+	return &jsondecode.Schema{Kind: jsondecode.Object, Fields: map[string]jsondecode.Field{
+		"schema_version": {Schema: text, Required: true},
+		"bundle_id":      {Schema: text, Required: true},
+		"linkage": {Schema: &jsondecode.Schema{Kind: jsondecode.Object, Fields: map[string]jsondecode.Field{
+			"mode":  {Schema: text, Required: true},
+			"scope": {Schema: text, Required: true},
+			"epoch": {Schema: &jsondecode.Schema{Kind: jsondecode.Integer, Min: "0", Max: "9223372036854775807"}, Required: true},
+			"token": {Schema: text, Required: true},
+		}}},
+		"results": {Schema: &jsondecode.Schema{Kind: jsondecode.Array, Element: &jsondecode.Schema{Kind: jsondecode.Any}, MaxCount: bundle.MaxResults, Limit: true}, Required: true},
+	}}
+}()
+
+// storedLimits bound the strict re-read: the bundle limit, the producer's
+// result depth plus the bundle object and results array, and one node per
+// encoded byte.
+var storedLimits = jsondecode.Limits{MaxBytes: bundle.MaxBytes, MaxDepth: 18, MaxNodes: bundle.MaxBytes}
+
 // decode validates a stored value strictly: the header, then a bundle in the
 // exact form this store writes, with or without linkage, within the bundle
-// limit. Linkage is accepted in any reviewed scope syntax, because a bundle
-// keeps the linkage of the configuration it was created under.
+// limit, then the whole bundle through the shared strict parser, so duplicate
+// or unknown names, non-canonical integers and malformed text anywhere in it
+// are rejected. Linkage is accepted in any reviewed scope syntax, because a
+// bundle keeps the linkage of the configuration it was created under.
+// requirement-ref: REQ-JSON-0003
 func decode(raw []byte) (entry, []byte, error) {
 	if len(raw) < headerSize || raw[0] != storedFormat || raw[1] != byte(persistence.PendingClass) {
 		return entry{}, nil, ErrUnavailable
@@ -489,9 +512,18 @@ func decode(raw []byte) (entry, []byte, error) {
 	rest, closed := bytes.CutPrefix(encoded[len(idPrefix)+len(id):], []byte(`"`))
 	rest, linked := skipLinkage(rest)
 	if len(id) != idSize || !base64url(id) || !closed || !linked || !bytes.HasPrefix(rest, []byte(resultsStart)) ||
-		len(rest) <= len(resultsStart)+2 || !bytes.HasSuffix(rest, []byte("]}")) ||
-		!utf8.Valid(encoded) || !json.Valid(encoded) {
+		len(rest) <= len(resultsStart)+2 || !bytes.HasSuffix(rest, []byte("]}")) {
 		return entry{}, nil, ErrUnavailable
+	}
+	root, err := jsondecode.Decode(encoded, storedBundle, storedLimits)
+	if err != nil {
+		return entry{}, nil, ErrUnavailable
+	}
+	results, _ := root.Lookup("results")
+	for _, r := range results.Elements() {
+		if result.ValidateStored(r) != nil {
+			return entry{}, nil, ErrUnavailable
+		}
 	}
 	return entry{seq, id, time.Unix(0, nanos), len(encoded)}, slices.Clone(encoded), nil
 }

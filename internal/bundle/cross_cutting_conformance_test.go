@@ -164,10 +164,13 @@ func newPendingFixture(t *testing.T, limits pending.Limits) *pendingFixture {
 	return f
 }
 
-// reopen opens a new store over the same storage, sealing every bundle.
+// reopen opens a new store over the same storage, sealing every bundle. It
+// uses the client's default 5-second lifecycle deadline: strictly re-reading
+// 4,194,304 pending bytes under the race detector on a shared runner can
+// exceed one second.
 func (f *pendingFixture) reopen(t *testing.T) {
 	t.Helper()
-	s, err := pending.New(f.records, builder(t, false), nil, f.clock, f.limits, time.Second)
+	s, err := pending.New(f.records, builder(t, false), nil, f.clock, f.limits, 5*time.Second)
 	if err != nil || s.Open(context.Background()) != nil {
 		t.Fatal("pending store did not open")
 	}
