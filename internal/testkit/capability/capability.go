@@ -1,5 +1,5 @@
-// Package capability owns synthetic consent, device, time-zone and network
-// capabilities for tests only. Production code must not import it. Each fake
+// Package capability owns synthetic consent, device, time-zone, network and
+// linkage-key capabilities for tests only. Production code must not import it. Each fake
 // reports a scripted value, counts its queries and reports no identifier; the
 // network fake holds synthetic canaries it cannot report.
 package capability

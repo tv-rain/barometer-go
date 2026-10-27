@@ -10,7 +10,7 @@
 
 - [`model-validation.md`](model-validation.md) — Foundation model validation order, conservative normalization, acceptance-test mapping and serialization boundaries.
 
-- [`bundle-models.md`](bundle-models.md) — bounded Result Bundle production, immutable retry identity/bytes, trusted optional linkage projections and remaining runtime obligations.
+- [`bundle-models.md`](bundle-models.md) — bounded Result Bundle production, immutable retry identity/bytes, trusted optional linkage projections, their derivation and remaining runtime obligations.
 
 - [`result-models.md`](result-models.md) — bounded Measurement Result models and serialization, exact output selection, context binding, partial results and synthetic evidence limits.
 

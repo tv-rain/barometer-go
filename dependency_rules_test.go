@@ -489,7 +489,7 @@ func TestAdmissionHasNoNetworkDependency(t *testing.T) {
 }
 
 // The clearing path cannot reach the network (DEV-564): persistence.Clear
-// and the stores it clears live in internal/persistence, whose transitive
+// and the stores and linkage state it clears live in internal/persistence, whose transitive
 // dependency closure for the host platform contains no network, TLS,
 // process-execution or plugin package. The root package's closure is checked
 // by TestAdmissionHasNoNetworkDependency. Erasers supplied by a future native
@@ -501,13 +501,13 @@ func TestClearingHasNoNetworkDependency(t *testing.T) {
 			t.Fatal("go command unavailable; the dependency closure cannot be checked")
 		}
 	}
-	for _, pkg := range []string{"./internal/persistence", "./internal/persistence/pending"} {
+	for _, pkg := range []string{"./internal/persistence", "./internal/persistence/pending", "./internal/persistence/linkage"} {
 		out, err := exec.Command(gocmd, "list", "-deps", pkg).Output()
 		if err != nil {
 			t.Fatalf("go list %s: %v", pkg, err)
 		}
 		deps := strings.Fields(string(out))
-		if len(deps) < 10 || !slices.Contains(deps, internalPath("persistence")) || !slices.Contains(deps, "context") {
+		if len(deps) < 10 || !slices.Contains(deps, internalPath(strings.TrimPrefix(pkg, "./internal/"))) || !slices.Contains(deps, "context") {
 			t.Fatalf("go list %s returned an implausible closure", pkg)
 		}
 		for _, dep := range deps {

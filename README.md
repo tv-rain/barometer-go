@@ -32,7 +32,7 @@ A narrow [state record port](docs/package-architecture.md#persistence-ports) sto
 
 [Measurement Result models](docs/result-models.md) add internal typed attempt values, strict bounded serialization, independently selected versions, initial test-output validation and NET-05 partial-result handling. Runtime execution, bundling and the pending-result store exist ([Execution Models](docs/execution-models.md)); platform persistence and delivery remain pending (DEV-455).
 
-[Result Bundle and linkage models](docs/bundle-models.md) add bounded internal bundle production from validated results, random logical-bundle identifiers, immutable retry bytes and optional rotating-linkage projections gated by trusted initialization. Token derivation, epoch lifecycle, persistence, delivery and clearing remain pending.
+[Result Bundle and linkage models](docs/bundle-models.md) add bounded internal bundle production from validated results, random logical-bundle identifiers, immutable retry bytes and optional rotating-linkage projections gated by trusted initialization. Bundles are persisted, delivered through `NextBundle` and cleared; linkage tokens are derived through the internal protected-key capability with a non-decreasing epoch, but no production code binds that capability, so no build emits linkage.
 
 [Model validation and normalization](docs/model-validation.md) records the Foundation models' validation order and acceptance coverage. Common candidate validation preserves label invariants and deterministic ordering, context case normalization stays within ASCII codes, and uninitialized result decoders reject before processing input.
 

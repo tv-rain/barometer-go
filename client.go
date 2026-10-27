@@ -8,6 +8,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/model/task"
 	"github.com/tv-rain/barometer-go/internal/networkcontext"
 	"github.com/tv-rain/barometer-go/internal/persistence"
+	"github.com/tv-rain/barometer-go/internal/persistence/linkage"
 )
 
 // state follows the Lifecycle table in docs/public-api.md. transitioning and
@@ -80,7 +81,8 @@ func (c *Client) Close() error { return c.close() }
 
 // ClearMeasurementData blocks new work, invalidates handles and delivery
 // references and cancels active runs, then deletes Barometer-owned persistent
-// state: pending bundles, run accounting, replay records and the linkage key.
+// state: pending bundles, run accounting, replay records, the linkage key and
+// the linkage epoch state.
 // It uploads nothing, sends no request and creates no replacement secret.
 // Success leaves the client uninitialized, or closed if it was closed. Any
 // failure returns clearing_incomplete and keeps activity blocked, across a
@@ -122,6 +124,9 @@ func (c *Client) bind(a adapters) error {
 	}
 	if a.run.contextCache == nil {
 		a.run.contextCache = networkcontext.NewCache()
+	}
+	if a.linkage == nil {
+		a.linkage = linkage.NewSource()
 	}
 	if a.clearStorage == nil {
 		a.clearStorage = storageClearer(&a)

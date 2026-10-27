@@ -3,24 +3,28 @@
 // canonical Result Bundles with internal/bundle, holds them until
 // acknowledgement or expiry and reports the capacity that run reservation
 // checks before it starts work. It owns the record encoding, bounds and
-// retention; the port only stores bytes. It performs no transport, upload or
-// linkage derivation, and it is not a mobile fallback: a platform backend
-// (DEV-455) supplies the port.
+// retention; the port only stores bytes. It obtains the linkage of a new
+// bundle from the derivation it is given and performs no transport or
+// upload, and it is not a mobile fallback: a platform backend (DEV-455)
+// supplies the port.
 package pending
 
 import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"slices"
+	"strconv"
 	"time"
 	"unicode/utf8"
 
 	"github.com/tv-rain/barometer-go/internal/bundle"
 	"github.com/tv-rain/barometer-go/internal/jsondecode"
+	model "github.com/tv-rain/barometer-go/internal/model/result"
 	"github.com/tv-rain/barometer-go/internal/persistence"
 	"github.com/tv-rain/barometer-go/internal/result"
 )
@@ -65,6 +69,11 @@ type Clock interface {
 	Now() time.Time
 }
 
+// Linkage returns the linkage of a bundle created now, or nil when linkage is
+// disabled or unavailable; internal/persistence/linkage supplies it. A nil
+// Linkage omits linkage from every bundle.
+type Linkage func(context.Context) *model.RotatingLinkage
+
 // Limits are reviewed local pending limits. They may only lower the
 // registered maxima; zero selects the maximum.
 type Limits struct {
@@ -82,19 +91,24 @@ type Limits struct {
 // in one atomic write. A bundle is sealed, and never changes again, once it
 // is returned by Next, holds as many results as the bundle limits allow, or
 // is read back from storage after a restart or an uncertain write. Retention
-// runs from a bundle's creation, the persisting of its first result.
+// runs from a bundle's creation, the persisting of its first result. A bundle
+// carries the linkage derived when it is created, so results added while it
+// is open keep its epoch and token.
 type Store struct {
 	sem      chan struct{}
 	records  persistence.Records
 	builder  *bundle.Builder
+	link     Linkage
+	reserve  int // bytes linkage can add to a bundle
 	clock    Clock
 	limits   Limits
 	deadline time.Duration
 
-	loaded  bool
-	entries []entry        // retained bundles, oldest first
-	open    []result.Value // members of the newest entry while it is open
-	next    uint64         // sequence number of the next new bundle
+	loaded   bool
+	entries  []entry                // retained bundles, oldest first
+	open     []result.Value         // members of the newest entry while it is open
+	openLink *model.RotatingLinkage // the open bundle's linkage, or nil
+	next     uint64                 // sequence number of the next new bundle
 }
 
 type entry struct {
@@ -106,7 +120,7 @@ type entry struct {
 
 // New returns a store that has not read storage yet. Open, or the first
 // operation, loads it.
-func New(records persistence.Records, builder *bundle.Builder, clock Clock, limits Limits, deadline time.Duration) (*Store, error) {
+func New(records persistence.Records, builder *bundle.Builder, link Linkage, clock Clock, limits Limits, deadline time.Duration) (*Store, error) {
 	if records == nil || builder == nil || clock == nil || deadline <= 0 {
 		return nil, ErrConfig
 	}
@@ -116,10 +130,10 @@ func New(records persistence.Records, builder *bundle.Builder, clock Clock, limi
 	if limits.Bytes == 0 {
 		limits.Bytes = MaxBytes
 	}
-	if limits.Bundles < 1 || limits.Bundles > MaxBundles || limits.Bytes < envelope+maxResult || limits.Bytes > MaxBytes {
+	if limits.Bundles < 1 || limits.Bundles > MaxBundles || limits.Bytes < envelope+builder.LinkageReserve()+maxResult || limits.Bytes > MaxBytes {
 		return nil, ErrConfig
 	}
-	return &Store{sem: make(chan struct{}, 1), records: records, builder: builder, clock: clock, limits: limits, deadline: deadline}, nil
+	return &Store{sem: make(chan struct{}, 1), records: records, builder: builder, link: link, reserve: builder.LinkageReserve(), clock: clock, limits: limits, deadline: deadline}, nil
 }
 
 func (*Store) String() string   { return "pending.Store" }
@@ -152,7 +166,7 @@ func (s *Store) Forget() bool {
 	}
 	defer func() { <-s.sem }()
 	clear(s.open)
-	s.entries, s.open, s.loaded = nil, nil, false
+	s.entries, s.open, s.openLink, s.loaded = nil, nil, nil, false
 	return true
 }
 
@@ -174,7 +188,7 @@ func (s *Store) Put(ctx context.Context, v result.Value) error {
 	}
 	if s.open != nil {
 		last := s.entries[len(s.entries)-1]
-		b, err := s.builder.Build(append(slices.Clip(s.open), v), nil)
+		b, err := s.builder.Build(append(slices.Clip(s.open), v), s.openLink)
 		switch {
 		case err == nil:
 			encoded, _ := b.MarshalJSON()
@@ -190,12 +204,18 @@ func (s *Store) Put(ctx context.Context, v result.Value) error {
 			return ErrResult
 		}
 		// The open bundle cannot hold the result: seal it.
-		s.open = nil
+		s.open, s.openLink = nil, nil
 	}
 	if len(s.entries) >= s.limits.Bundles {
 		return ErrFull
 	}
-	b, err := s.builder.Build([]result.Value{v}, nil)
+	l := s.derive(ctx)
+	b, err := s.builder.Build([]result.Value{v}, l)
+	if err != nil && l != nil {
+		// Linkage the builder rejects is omitted, never repaired.
+		l = nil
+		b, err = s.builder.Build([]result.Value{v}, nil)
+	}
 	if err != nil {
 		return ErrResult
 	}
@@ -209,7 +229,7 @@ func (s *Store) Put(ctx context.Context, v result.Value) error {
 		return err
 	}
 	s.next++
-	s.open = []result.Value{v}
+	s.open, s.openLink = []result.Value{v}, l
 	return nil
 }
 
@@ -229,7 +249,7 @@ func (s *Store) Capacity(ctx context.Context) (int, error) {
 	}
 	free, n := s.limits.Bytes-s.total(), 0
 	for range s.limits.Bundles - len(s.entries) {
-		size, count := envelope, 0
+		size, count := envelope+s.reserve, 0
 		for count < bundle.MaxResults && size+maxResult+min(count, 1) <= bundle.MaxBytes && size+maxResult+min(count, 1) <= free {
 			size += maxResult + min(count, 1)
 			count++
@@ -272,7 +292,7 @@ func (s *Store) Next(ctx context.Context) (id string, encoded []byte, ok bool, e
 			return "", nil, false, ErrUnavailable
 		}
 		if len(s.entries) == 1 {
-			s.open = nil
+			s.open, s.openLink = nil, nil
 		}
 		return e.id, encoded, true, nil
 	}
@@ -307,6 +327,14 @@ func (s *Store) Acknowledge(ctx context.Context, id string) error {
 		return nil
 	}
 	return ErrUnknown
+}
+
+// derive returns the linkage of a new bundle, or nil without a derivation.
+func (s *Store) derive(ctx context.Context) *model.RotatingLinkage {
+	if s.link == nil {
+		return nil
+	}
+	return s.link(ctx)
 }
 
 // enter acquires the semaphore within the caller's context and the store
@@ -376,7 +404,7 @@ func (s *Store) load(ctx context.Context) error {
 		}
 		return 0
 	})
-	s.entries, s.open, s.next, s.loaded = entries, nil, 0, true
+	s.entries, s.open, s.openLink, s.next, s.loaded = entries, nil, nil, 0, true
 	if len(entries) > 0 {
 		s.next = entries[len(entries)-1].seq + 1
 	}
@@ -404,7 +432,7 @@ func (e entry) same(o entry) bool {
 
 func (s *Store) drop(i int) {
 	if s.open != nil && i == len(s.entries)-1 {
-		s.open = nil
+		s.open, s.openLink = nil, nil
 	}
 	s.entries = slices.Delete(s.entries, i, i+1)
 }
@@ -431,7 +459,8 @@ const (
 	headerSize   = 18
 	idPrefix     = `{"schema_version":"0.1.0","bundle_id":"`
 	idSize       = 22
-	resultsStart = `","results":[`
+	resultsStart = `,"results":[`
+	linkageStart = `,"linkage":{"mode":"rotating_installation","scope":"`
 )
 
 func encode(e entry, encoded []byte) []byte {
@@ -443,7 +472,9 @@ func encode(e entry, encoded []byte) []byte {
 }
 
 // decode validates a stored value strictly: the header, then a bundle in the
-// exact form this store writes, without linkage, within the bundle limit.
+// exact form this store writes, with or without linkage, within the bundle
+// limit. Linkage is accepted in any reviewed scope syntax, because a bundle
+// keeps the linkage of the configuration it was created under.
 func decode(raw []byte) (entry, []byte, error) {
 	if len(raw) < headerSize || raw[0] != storedFormat || raw[1] != byte(persistence.PendingClass) {
 		return entry{}, nil, ErrUnavailable
@@ -455,13 +486,45 @@ func decode(raw []byte) (entry, []byte, error) {
 		return entry{}, nil, ErrUnavailable
 	}
 	id := string(encoded[len(idPrefix):min(len(encoded), len(idPrefix)+idSize)])
-	rest := encoded[len(idPrefix)+len(id):]
-	if len(id) != idSize || !base64url(id) || !bytes.HasPrefix(rest, []byte(resultsStart)) ||
+	rest, closed := bytes.CutPrefix(encoded[len(idPrefix)+len(id):], []byte(`"`))
+	rest, linked := skipLinkage(rest)
+	if len(id) != idSize || !base64url(id) || !closed || !linked || !bytes.HasPrefix(rest, []byte(resultsStart)) ||
 		len(rest) <= len(resultsStart)+2 || !bytes.HasSuffix(rest, []byte("]}")) ||
 		!utf8.Valid(encoded) || !json.Valid(encoded) {
 		return entry{}, nil, ErrUnavailable
 	}
 	return entry{seq, id, time.Unix(0, nanos), len(encoded)}, slices.Clone(encoded), nil
+}
+
+// skipLinkage returns b after a leading linkage member in the exact form
+// internal/bundle writes, b itself when it has none, and false for a malformed
+// one: a 1–128 byte scope of lowercase letters, digits, dot, underscore or
+// hyphen, a canonical nonnegative 64-bit epoch and a 43-byte base64url token.
+func skipLinkage(b []byte) ([]byte, bool) {
+	if !bytes.HasPrefix(b, []byte(`,"linkage":`)) {
+		return b, true
+	}
+	if !bytes.HasPrefix(b, []byte(linkageStart)) {
+		return nil, false
+	}
+	b = b[len(linkageStart):]
+	scope, b, ok := bytes.Cut(b, []byte(`","epoch":`))
+	if !ok || len(scope) < 1 || len(scope) > 128 || bytes.ContainsFunc(scope, func(r rune) bool {
+		return !('a' <= r && r <= 'z' || '0' <= r && r <= '9' || r == '.' || r == '_' || r == '-')
+	}) {
+		return nil, false
+	}
+	epoch, b, ok := bytes.Cut(b, []byte(`,"token":"`))
+	if _, err := strconv.ParseInt(string(epoch), 10, 64); !ok || err != nil || epoch[0] == '-' || epoch[0] == '+' || len(epoch) > 1 && epoch[0] == '0' {
+		return nil, false
+	}
+	if len(b) < 45 || !base64url(string(b[:43])) || string(b[43:45]) != `"}` {
+		return nil, false
+	}
+	if _, err := base64.RawURLEncoding.Strict().DecodeString(string(b[:43])); err != nil {
+		return nil, false
+	}
+	return b[45:], true
 }
 
 func base64url(s string) bool {

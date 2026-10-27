@@ -29,7 +29,7 @@ var (
 
 // Builder pins trusted initialization, independently of task and result data.
 // Capability availability gates the representation; it does not establish that
-// derivation succeeded. A future private-state owner must supply only a valid
+// derivation succeeded. internal/persistence/linkage supplies only a derived
 // HMAC output and non-decreasing epoch, or nil when linkage is unavailable.
 type Builder struct {
 	ready, linkage bool
@@ -50,6 +50,16 @@ func New(contract string, initialization *config.Initialization) (*Builder, erro
 	_, available := initialization.LinkageKeys()
 	l := initialization.Configuration().Linkage()
 	return &Builder{ready: true, linkage: available && l.Mode == "rotating_installation", scope: l.Scope}, nil
+}
+
+// LinkageReserve is the largest number of bytes linkage can add to a bundle
+// this builder produces: zero when it accepts no linkage, otherwise the
+// member with the configured scope, a 19-digit epoch and the 43-byte token.
+func (b *Builder) LinkageReserve() int {
+	if b == nil || !b.linkage {
+		return 0
+	}
+	return len(`,"linkage":{"mode":"rotating_installation","scope":"`) + len(b.scope) + len(`","epoch":`) + 19 + len(`,"token":"`) + 43 + len(`"}`)
 }
 
 // Value owns the exact retry bytes and logical identity. Copies remain the same
