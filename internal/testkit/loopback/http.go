@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"slices"
 	"sync"
 )
 
@@ -20,6 +21,10 @@ type HTTPConfig struct {
 	// Plain serves plaintext HTTP without TLS, for NET-03 http validation
 	// URLs; wire and plaintext counters then see the same bytes.
 	Plain bool
+	// DoH, when set, replaces Raw: it receives the request body (a DNS
+	// query for DNS-03) and returns the complete raw response verbatim, so a
+	// test scripts status, headers and payload. Nil bytes write nothing.
+	DoH func(body []byte) []byte
 }
 type HTTPRequest struct {
 	Method, Target string
@@ -29,6 +34,8 @@ type HTTPRequest struct {
 type HTTPCounts struct {
 	Accepted, Open, In, Out, WireIn, WireOut int
 	Requests                                 []HTTPRequest
+	// Hellos records the ClientHello server name and ALPN offer.
+	Hellos []Hello
 }
 
 // HTTPServer is a loopback-only scripted HTTPS (or, with Plain, HTTP) endpoint with separate TLS
@@ -89,7 +96,13 @@ func (s *HTTPServer) serveHTTP(raw net.Conn) {
 	wire := httpCounted{raw, s, true}
 	var conn net.Conn = wire
 	if !s.cfg.Plain {
-		t := tls.Server(wire, &tls.Config{Certificates: []tls.Certificate{s.cfg.Certificate}, NextProtos: []string{"http/1.1"}, MinVersion: tls.VersionTLS12})
+		t := tls.Server(wire, &tls.Config{Certificates: []tls.Certificate{s.cfg.Certificate}, NextProtos: []string{"http/1.1"}, MinVersion: tls.VersionTLS12,
+			GetConfigForClient: func(h *tls.ClientHelloInfo) (*tls.Config, error) {
+				s.mu.Lock()
+				s.counts.Hellos = append(s.counts.Hellos, Hello{ServerName: h.ServerName, ALPN: slices.Clone(h.SupportedProtos)})
+				s.mu.Unlock()
+				return nil, nil
+			}})
 		if t.Handshake() != nil {
 			return
 		}
@@ -108,7 +121,11 @@ func (s *HTTPServer) serveHTTP(raw net.Conn) {
 	s.counts.Requests = append(s.counts.Requests, HTTPRequest{r.Method, r.RequestURI, r.Header.Clone(), body})
 	s.signalHTTP()
 	s.mu.Unlock()
-	_, _ = plain.Write(s.cfg.Raw)
+	reply := s.cfg.Raw
+	if s.cfg.DoH != nil {
+		reply = s.cfg.DoH(body)
+	}
+	_, _ = plain.Write(reply)
 	if s.cfg.Stall {
 		_, _ = io.Copy(io.Discard, plain)
 	}
@@ -149,6 +166,7 @@ func (s *HTTPServer) Counts() HTTPCounts { s.mu.Lock(); defer s.mu.Unlock(); ret
 func (s *HTTPServer) snapshotHTTP() HTTPCounts {
 	c := s.counts
 	c.Requests = append([]HTTPRequest(nil), c.Requests...)
+	c.Hellos = slices.Clone(c.Hellos)
 	return c
 }
 func (s *HTTPServer) signalHTTP() { close(s.changed); s.changed = make(chan struct{}) }

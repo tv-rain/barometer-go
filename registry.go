@@ -5,6 +5,7 @@ import (
 	"net/netip"
 
 	dnsmeasurement "github.com/tv-rain/barometer-go/internal/measurement/dns01"
+	"github.com/tv-rain/barometer-go/internal/measurement/dns03"
 	"github.com/tv-rain/barometer-go/internal/measurement/dns04"
 	httpmeasurement "github.com/tv-rain/barometer-go/internal/measurement/http01"
 	"github.com/tv-rain/barometer-go/internal/measurement/net01"
@@ -30,6 +31,8 @@ import (
 // requirement-ref: REQ-NET-03-0034
 // requirement-ref: REQ-DNS-04-0033
 // requirement-ref: REQ-DNS-04-0039
+// requirement-ref: REQ-DNS-03-0033
+// requirement-ref: REQ-DNS-03-0039
 func productionRegistry(roots *x509.CertPool) (*registry.Registry, error) {
 	entries := []registry.Entry{{Test: task.TestVersion{ID: "DNS-01", Version: "0.1.0"}, Codec: dnsmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: dns01Targets{}, Proxy: dnsmeasurement.ProxyRule{}, Runner: &dnsmeasurement.Runner{}, Step: true}, {Test: task.TestVersion{ID: "TCP-01", Version: "0.1.0"}, Codec: tcpmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: tcp01Targets{}, Proxy: tcpmeasurement.ProxyRule{}, Runner: &tcpmeasurement.Runner{}, Step: true},
 		{Test: task.TestVersion{ID: "TLS-01", Version: "0.1.0"}, Codec: tlsmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: tls01Targets{}, Proxy: tlsmeasurement.ProxyRule{}, Runner: &tlsmeasurement.Runner{Roots: roots}, Step: true}, {Test: task.TestVersion{ID: "HTTP-01", Version: "0.1.0"}, Codec: httpmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: http01Targets{}, Proxy: httpmeasurement.ProxyRule{}, Runner: &httpmeasurement.Runner{Roots: roots}, Step: true}}
@@ -51,6 +54,9 @@ func productionRegistry(roots *x509.CertPool) (*registry.Registry, error) {
 	// DNS-04 is proxy-compatible only with an approved bootstrap address
 	// (REQ-PROXY-0044); it is not a NET-05 step.
 	entries = append(entries, registry.Entry{Test: task.TestVersion{ID: "DNS-04", Version: "0.1.0"}, Codec: dns04.Codec{}, BaselineRisk: task.MediumRisk, Targets: dns04Targets{}, Proxy: dns04.ProxyRule{}, Runner: &dns04.Runner{Roots: roots}})
+	// DNS-03 is proxy-compatible only with an approved bootstrap address
+	// (REQ-PROXY-0044); it is not a NET-05 step.
+	entries = append(entries, registry.Entry{Test: task.TestVersion{ID: "DNS-03", Version: "0.1.0"}, Codec: dns03.Codec{}, BaselineRisk: task.MediumRisk, Targets: dns03Targets{}, Proxy: dns03.ProxyRule{}, Runner: &dns03.Runner{Roots: roots}})
 	entries = append(entries, registry.Entry{Test: task.TestVersion{ID: "NET-05", Version: "0.1.0"}, Codec: codec, BaselineRisk: task.MediumRisk, Targets: rules, Proxy: rules, Runner: &net05.Runner{Roots: roots}, Composite: true})
 	return registry.New(entries)
 }
@@ -125,6 +131,30 @@ func (dns04Targets) Targets(params task.Parameters) ([]registry.Target, bool) {
 		return nil, false
 	}
 	profile := task.TargetTuple{Hostname: resolver, ResolverName: resolver, TLSServerName: resolver, Port: port, Scheme: "tls"}
+	if bootstrap.IsValid() {
+		profile.BootstrapAddresses = []netip.Addr{bootstrap}
+	}
+	return []registry.Target{{Role: task.MeasurementTarget, Tuple: task.TargetTuple{Hostname: p.Name()}}, {Role: task.ResolverTarget, Tuple: profile}}, true
+}
+
+// DNS-03 matches the query name and the complete resolver profile: the
+// normalized URL, its hostname and port and the optional bootstrap address.
+// The hostname is the connection destination only without a bootstrap
+// address, and always the TLS name.
+// requirement-ref: REQ-DNS-03-0004
+// requirement-ref: REQ-DNS-03-0010
+// requirement-ref: REQ-DNS-03-0011
+// requirement-ref: REQ-DNS-03-0013
+// requirement-ref: REQ-DNS-03-0038
+type dns03Targets struct{}
+
+func (dns03Targets) Targets(params task.Parameters) ([]registry.Target, bool) {
+	p, ok := params.(dns03.Parameters)
+	resolver, host, port, bootstrap := p.Resolver()
+	if !ok || p.Name() == "" || resolver == "" || host == "" || port == 0 {
+		return nil, false
+	}
+	profile := task.TargetTuple{URL: resolver, Hostname: host, ResolverName: host, TLSServerName: host, Port: port, Scheme: "https"}
 	if bootstrap.IsValid() {
 		profile.BootstrapAddresses = []netip.Addr{bootstrap}
 	}

@@ -310,6 +310,36 @@ func TestPOSTPayloadIsTransient(t *testing.T) {
 	}
 }
 
+// A non-2xx DNS POST ends at its status before the encoding and media-type
+// checks, without reading the body or classifying a Location
+// (GO-SPEC-ISSUE-020). A 2xx response still checks the media type.
+func TestPOSTStatusPrecedesMediaType(t *testing.T) {
+	for _, tc := range []struct {
+		name, raw, outcome, failure, encoding string
+		status                                int
+	}{
+		{"503 html", "HTTP/1.1 503 Service Unavailable\r\nContent-Type: text/html\r\nContent-Length: 13\r\n\r\nbody-canary!!", "expected_response", "", "identity", 503},
+		{"404 dns message", "HTTP/1.1 404 Not Found\r\nContent-Type: application/dns-message\r\nContent-Length: 3\r\n\r\ndns", "expected_response", "", "identity", 404},
+		{"302 location", "HTTP/1.1 302 Found\r\nLocation: https://next.example/dns\r\nContent-Length: 0\r\n\r\n", "expected_response", "", "identity", 302},
+		{"500 gzip", "HTTP/1.1 500 Internal Server Error\r\nContent-Encoding: gzip\r\nContent-Length: 3\r\n\r\nxyz", "expected_response", "", "", 500},
+		{"200 html", "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 3\r\n\r\ndns", "unexpected_content_type", "unexpected_content_type", "identity", 200},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			c := config()
+			c.PostBody = []byte("dns")
+			r, e := run(t, c, tc.raw)
+			o := r.Observations[len(r.Observations)-1]
+			d := terminal(t, r)
+			if r.Outcome != tc.outcome || o.Failure() != tc.failure || d.StatusCode == nil || *d.StatusCode != tc.status || d.ContentEncoding != tc.encoding || d.Redirect != nil || e.checked != 0 || e.opened != 1 {
+				t.Fatalf("%s %s %+v", r.Outcome, o.Failure(), d)
+			}
+			if tc.status != 200 && (d.Body != nil || r.TakeBody() != nil) {
+				t.Fatal("non-2xx body read")
+			}
+		})
+	}
+}
+
 type lateRefusal struct{ scriptedEndpoint }
 
 func (e *lateRefusal) Open(ctx context.Context, u *url.URL) (Stream, []observation.Observation, string, error) {

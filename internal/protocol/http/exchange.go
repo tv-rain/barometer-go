@@ -184,7 +184,9 @@ func Exchange(ctx context.Context, clock Clock, endpoint Endpoint, cfg Config) (
 			failure = ioFailure(e)
 		} else {
 			d.StatusCode = &response.StatusCode
-			if redirectStatus(response.StatusCode) {
+			// A DNS POST never classifies a Location: its non-2xx status is
+			// the terminal HTTP evidence (GO-SPEC-ISSUE-020).
+			if redirectStatus(response.StatusCode) && len(cfg.PostBody) == 0 {
 				class := "invalid"
 				next, class = redirectURL(u, response.Header.Get("Location"))
 				if class == "registered_https" {
