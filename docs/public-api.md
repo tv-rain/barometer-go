@@ -159,7 +159,7 @@ All allocations, input parsing, outstanding handles/delivery records, run worker
 
 ## Validation and Implementation Gates
 
-Run `python3 scripts/check-public-api.py android` and `python3 scripts/check-public-api.py apple` on hosts with the prerequisites in [Mobile Compilation Smoke Checks](mobile-smoke.md). The helper extracts this document's exact signatures, gives each fixture function a panic body, and runs the existing pinned native build/skip-export check in a temporary module. It adds no production Go source or dependency. A passing result means only those declarations bind and compile for the selected target.
+Run `python3 scripts/check-public-api.py android` and `python3 scripts/check-public-api.py apple` on hosts with the prerequisites in [Mobile Native Builds](mobile-build.md). The helper extracts this document's exact signatures, gives each fixture function a panic body, and runs the existing pinned native build/skip-export check in a temporary module. It adds no production Go source or dependency. A passing result means only those declarations bind and compile for the selected target.
 
 Before runtime implementation, separately validate trust adapter byte/generation binding; forged/missing source rejection; atomic replay and admission; concurrent due-run reservation; bounded cancellation/proxy transitions; polling/retransmission/acknowledgement; suspension/expiry/backpressure; failed/interrupted clearing; zero-value clients; and instance/handle invalidation. These are required future cases, not executed conformance evidence in this task. Complete native storage, lifecycle, and host tests before any platform-support claim.
 

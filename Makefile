@@ -1,4 +1,4 @@
-.PHONY: build check format format-check integrity lint mobile-smoke mobile-smoke-android mobile-smoke-apple race test traceability
+.PHONY: build check format format-check integrity lint mobile-smoke mobile-android mobile-apple race test traceability
 
 build:
 	go build ./...
@@ -31,11 +31,13 @@ mobile-smoke:
 	CGO_ENABLED=0 GOOS=android GOARCH=arm64 go build ./...
 	CGO_ENABLED=0 GOOS=ios GOARCH=arm64 go build ./...
 
-mobile-smoke-android:
-	bash scripts/mobile-smoke.sh android
+# Native libraries; output is ignored by Git and is not a release artifact.
+MOBILE_OUT ?= build/mobile
+mobile-android:
+	bash scripts/mobile-build.sh android "$(MOBILE_OUT)"
 
-mobile-smoke-apple:
-	bash scripts/mobile-smoke.sh apple
+mobile-apple:
+	bash scripts/mobile-build.sh apple "$(MOBILE_OUT)"
 
 check: format-check build test race lint integrity mobile-smoke
 

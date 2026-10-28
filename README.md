@@ -89,7 +89,7 @@ The individual commands are:
 
 `make mobile-smoke` is a compiler portability check only. It does not run on a device, build a native adapter, invoke gomobile, validate the future exported API boundary, or establish Android or Apple support.
 
-The separate `make mobile-smoke-android` and `make mobile-smoke-apple` commands generate and compile gomobile bindings for the root package using a smoke-only exported function. They require native SDKs and are not part of `make check`. See [Mobile Compilation Smoke Checks](docs/mobile-smoke.md) for prerequisites, the minimal boundary decision, pinned tooling, negative tests, and evidence limitations. Their temporary artifacts are not release artifacts or platform-support evidence.
+The separate `make mobile-android` and `make mobile-apple` commands bind the production root package with gomobile and write an Android AAR and an Apple XCFramework to `build/mobile/`. They require native SDKs and are not part of `make check`. See [Mobile Native Builds](docs/mobile-build.md) for prerequisites, pinned tooling, negative tests, and evidence limitations. The libraries are compiled only: `Initialize` fails closed without platform adapters, and they are not release artifacts or platform-support evidence.
 
 If a development host is not supported by Go's race detector, run the remaining individual checks locally and rely on the approved CI environment for the race-test result. Do not report the complete `make check` set as passed when the race test was skipped.
 

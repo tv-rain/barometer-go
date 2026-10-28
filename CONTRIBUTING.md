@@ -44,7 +44,7 @@ The complete check also runs unit tests with Go's race detector and checks repos
 
 Add focused tests for new behavior and boundary or hostile-input tests where safety, validation, resource use, cancellation, persistence, or clearing is affected. A change is not complete merely because it compiles.
 
-Changes affecting mobile binding compatibility must also pass the dedicated Android and Apple jobs. See [Mobile Compilation Smoke Checks](docs/mobile-smoke.md) for local commands, SDK requirements, pinned tools, and regression tests for failure detection. Keep the smoke-only export out of production builds.
+Changes affecting mobile binding compatibility must also pass the dedicated Android and Apple jobs. See [Mobile Native Builds](docs/mobile-build.md) for local commands, SDK requirements, pinned tools, and regression tests for failure detection.
 
 ## Review and Handoff
 
