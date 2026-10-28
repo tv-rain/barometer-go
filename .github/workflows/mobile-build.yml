@@ -1,4 +1,4 @@
-name: Mobile compilation smoke
+name: Mobile native build
 
 on:
   push:
@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   bind:
-    name: Bind (${{ matrix.target }})
+    name: Build (${{ matrix.target }})
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     strategy:
@@ -50,9 +50,18 @@ jobs:
         run: |
           xcodebuild -version
           xcrun --sdk iphoneos --show-sdk-version
-      - name: Compile current core boundary
-        run: make mobile-smoke-${{ matrix.target }}
-      - name: Verify smoke failure detection
-        run: python3 scripts/test-mobile-smoke.py ${{ matrix.target }}
+          xcrun --sdk iphonesimulator --show-sdk-version
+      - name: Build native library
+        run: make mobile-${{ matrix.target }}
+      - name: Verify build failure detection
+        run: python3 scripts/test-mobile-build.py ${{ matrix.target }}
       - name: Check tracked files remain unchanged
         run: git diff --exit-code
+      # Compiled only: kept for inspection and later integration work, not a release.
+      - name: Keep native library
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: barometer-${{ matrix.target }}
+          path: build/mobile/
+          if-no-files-found: error
+          retention-days: 30

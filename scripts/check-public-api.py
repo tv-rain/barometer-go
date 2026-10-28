@@ -27,13 +27,13 @@ def main():
         shutil.copy(source / "go.mod", root)
         (root / "api.go").write_text(fixture)
         (root / "scripts").mkdir()
-        shutil.copy(source / "scripts/mobile-smoke.sh", root / "scripts")
+        shutil.copy(source / "scripts/mobile-build.sh", root / "scripts")
         (root / "tools/mobile").mkdir(parents=True)
         for name in ("go.mod", "go.sum", "dependencies.go"):
             shutil.copy(source / "tools/mobile" / name, root / "tools/mobile")
         subprocess.run(["gofmt", "-w", "api.go"], cwd=root, check=True)
         subprocess.run(
-            ["bash", "scripts/mobile-smoke.sh", target], cwd=root, check=True,
+            ["bash", "scripts/mobile-build.sh", target], cwd=root, check=True,
             timeout=600,
         )
         print(f"PASS: documented API signatures compile for {target}; fixture only")

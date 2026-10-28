@@ -32,7 +32,7 @@
 - [`testkit.md`](testkit.md) — bounded negative/boundary fixtures, rejection diagnostics, deterministic time/transport controls, and consumer/evidence boundaries.
 - [`public-api.md`](public-api.md) — defined facade signatures, trusted adapter boundary, lifecycle/result ownership, and isolated native compatibility validation; runtime implementation pending.
 - [`traceability-manifest.md`](traceability-manifest.md) — adoption of the public machine-readable mapping format, claim gates, and current checker/mapping limits.
-- [`mobile-smoke.md`](mobile-smoke.md) — smoke-only boundary decision, Android and Apple native compilation, prerequisites, and failure-detection checks.
+- [`mobile-build.md`](mobile-build.md) — Android and Apple native library builds, prerequisites, kept CI artifacts, and failure-detection checks.
 - [`normative-sources.md`](normative-sources.md) — complete document-level public contract inventory pinned to a reviewed specification revision, with authority and applicability boundaries.
 - [`package-architecture.md`](package-architecture.md) — package ownership, dependency direction, repository boundaries, and rules for introducing implementation packages.
 - [`requirement-references.md`](requirement-references.md) — public requirement IDs in documentation, code, and tests, with explicit baseline and evidence boundaries.

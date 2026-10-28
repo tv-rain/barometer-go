@@ -36,7 +36,7 @@ var implementedAPI = []string{
 }
 
 // productionFiles parses the root package's non-test files that a normal build
-// includes, so the mobile-smoke-only fixture is excluded.
+// includes.
 func productionFiles(t *testing.T) (*token.FileSet, []*ast.File) {
 	t.Helper()
 	paths, err := filepath.Glob("*.go")
