@@ -20,9 +20,9 @@ REFERENCE_REVISION = "f889a381c84a781176024f3fed3a3d4f5c92b241"
 INVENTORY_REVISION = "c06ce6b7b73b8520f35ce10982315fcb4d05615b"
 BASELINES = {
     "cross-cutting.json": ("f889a381c84a781176024f3fed3a3d4f5c92b241",
-                           "d8e7774979c99fcaa687d8287d25623a3e622dcd"),
+                           "249438ee1791cf3a06fa8da82274ac85a8e68199"),
     "measurements.json": ("f889a381c84a781176024f3fed3a3d4f5c92b241",
-                          "d8e7774979c99fcaa687d8287d25623a3e622dcd"),
+                          "249438ee1791cf3a06fa8da82274ac85a8e68199"),
 }
 # Earlier manifests are retained at the immutable commits where they were current, not as
 # committed copies (decision 0012); git history and CI report artifacts hold them.

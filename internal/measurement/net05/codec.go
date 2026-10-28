@@ -24,16 +24,30 @@ func (Parameters) GoString() string                       { return "net05.Parame
 func (p Parameters) Profile() (string, int64)             { return p.id, p.version }
 func (p Parameters) CompositeSteps() []task.PrimitiveStep { return slices.Clone(p.steps) }
 
-// ValidateLimits preserves primitive option bounds against the outer envelope.
-// Summed primitive maxima and profile-version history are intentionally deferred;
-// see the approved limitations in docs/measurement-requirements.md.
+// ValidateLimits preserves primitive option bounds against the outer envelope
+// and rejects a profile whose summed declared maxima exceed it (GO-SPEC-ISSUE-021).
+// The envelope is already capped at the composite limits. Undeclared resources
+// add nothing and stay with the run-time meter; a step without declarations
+// fails closed. Profile-version history remains an approved deferral.
+// requirement-ref: REQ-LIMIT-0020
+// requirement-ref: REQ-NET-05-0026
 func (p Parameters) ValidateLimits(l task.AttemptLimits) bool {
+	var sum task.AttemptLimits
 	for _, s := range p.steps {
 		if b, ok := s.Parameters.(interface{ ValidateLimits(task.AttemptLimits) bool }); ok && !b.ValidateLimits(l) {
 			return false
 		}
+		d, ok := s.Parameters.(interface{ DeclaredMaxima() task.AttemptLimits })
+		if !ok {
+			return false
+		}
+		m := d.DeclaredMaxima()
+		sum.DurationMS += m.DurationMS
+		sum.BytesSent += m.BytesSent
+		sum.BytesReceived += m.BytesReceived
+		sum.Connections += m.Connections
 	}
-	return len(p.steps) >= 1 && len(p.steps) <= 8
+	return len(p.steps) >= 1 && len(p.steps) <= 8 && sum.DurationMS <= l.DurationMS && sum.BytesSent <= l.BytesSent && sum.BytesReceived <= l.BytesReceived && sum.Connections <= l.Connections
 }
 
 // Codec keeps immutable primitive codecs, without importing another measurement

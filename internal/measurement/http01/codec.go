@@ -12,6 +12,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/jsondecode"
 	"github.com/tv-rain/barometer-go/internal/model/observation"
 	"github.com/tv-rain/barometer-go/internal/model/task"
+	httpprotocol "github.com/tv-rain/barometer-go/internal/protocol/http"
 	"github.com/tv-rain/barometer-go/internal/taskdecode"
 )
 
@@ -37,6 +38,14 @@ func (p Parameters) Limits() observation.ProtocolLimits {
 	return observation.ProtocolLimits{MaxBodyBytes: p.body, MaxRedirects: p.redirects, StatusCheck: p.tuple.ExpectedStatus != 0, HeaderChecks: len(p.tuple.HeaderChecks), BodyChecks: len(p.tuple.BodyChecks)}
 }
 func (p Parameters) ValidateLimits(l task.AttemptLimits) bool { return p.body <= l.BytesReceived }
+
+// DeclaredMaxima reports the NET-05 step declaration: one connection and one
+// header block per permitted request, plus the terminal body bound. Redirect
+// bodies and request bytes are not declared.
+func (p Parameters) DeclaredMaxima() task.AttemptLimits {
+	requests := 1 + p.redirects
+	return task.AttemptLimits{Connections: requests, BytesReceived: requests*httpprotocol.MaxHeaderBytes + p.body}
+}
 
 // Codec provides the closed public HTTP-01 input/options shape.
 type Codec struct{}

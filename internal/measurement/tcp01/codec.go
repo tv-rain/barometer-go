@@ -23,6 +23,10 @@ func (p Parameters) Target() (netip.Addr, uint16, bool) {
 	return p.address, p.port, p.port != 0 && task.PublicAddress(p.address) && !p.address.Is4In6()
 }
 
+// DeclaredMaxima reports the NET-05 step declaration: one connection and no
+// application bytes.
+func (Parameters) DeclaredMaxima() task.AttemptLimits { return task.AttemptLimits{Connections: 1} }
+
 // Codec supplies closed descriptors and pure normalization; authority stays
 // with admission. It uses the common strict JSON stages, never a second parser.
 type Codec struct{}

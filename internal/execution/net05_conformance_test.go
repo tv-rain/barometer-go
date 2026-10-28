@@ -31,9 +31,8 @@ import (
 	"github.com/tv-rain/barometer-go/internal/testkit/loopback"
 )
 
-func compositePlan(t *testing.T, steps []string, validated platform.Availability, proxy bool, dial DialerSource) (Plan, *testkit.WaitClock) {
+func compositeProfile(t *testing.T, steps []string) net05.Parameters {
 	t.Helper()
-	clock := testkit.NewWaitClock(time.Now())
 	codec, err := net05.New([]taskdecode.TestCodec{dns01.Codec{}, tcp01.Codec{}, tls01.Codec{}, http01.Codec{}})
 	if err != nil {
 		t.Fatal(err)
@@ -53,6 +52,13 @@ func compositePlan(t *testing.T, steps []string, validated platform.Availability
 	if err != nil {
 		t.Fatal(err)
 	}
+	return params.(net05.Parameters)
+}
+func compositePlan(t *testing.T, steps []string, validated platform.Availability, proxy bool, dial DialerSource) (Plan, *testkit.WaitClock) {
+	t.Helper()
+	clock := testkit.NewWaitClock(time.Now())
+	var params task.Parameters = compositeProfile(t, steps)
+	var err error
 	network := capability.NewNetwork(platform.AccessState{Generation: 1, Type: platform.NetworkWiFi, IPv4: platform.AvailabilityYes, Validated: validated})
 	var src *networkcontext.Source
 	path := "direct"
@@ -101,7 +107,10 @@ func compositePlan(t *testing.T, steps []string, validated platform.Availability
 	return p, clock
 }
 func compositeStep(id, test, input string) string {
-	return fmt.Sprintf(`{"step_id":%q,"test_id":%q,"test_version":"0.1.0","input":%s,"options":{}}`, id, test, input)
+	return compositeStepWith(id, test, input, `{}`)
+}
+func compositeStepWith(id, test, input, options string) string {
+	return fmt.Sprintf(`{"step_id":%q,"test_id":%q,"test_version":"0.1.0","input":%s,"options":%s}`, id, test, input, options)
 }
 func compositeTCP() []string {
 	var s []string
@@ -303,9 +312,99 @@ func TestMNet05Normalization(t *testing.T) {
 	}
 }
 
+// Declared maxima at admission (GO-SPEC-ISSUE-021) and the run-time aggregate
+// connection meter. The 60,000 ms and 65,536-byte sent ceilings cannot be
+// reached from declarations, so only stricter task bounds exercise duration.
+// requirement-ref: REQ-NET-05-0026
 // requirement-ref: REQ-NET-05-0037
 // requirement-ref: REQ-LIMIT-0019
+// requirement-ref: REQ-LIMIT-0020
 func TestMNet05Limits(t *testing.T) {
+	const (
+		dnsTarget = `{"hostname":"example.com","record_type":"A","resolver":{"ip_address":"8.8.8.8"}}`
+		httpURL   = `{"url":"https://8.8.8.8/check","expected_status":200}`
+	)
+	httpStep := func(id string, redirects, body int) string {
+		opt := fmt.Sprintf(`{"max_body_bytes":%d}`, body)
+		if redirects > 0 {
+			opt = fmt.Sprintf(`{"max_body_bytes":%d,"follow_redirects":true,"max_redirects":%d}`, body, redirects)
+		}
+		return compositeStepWith(id, "HTTP-01", httpURL, opt)
+	}
+	for _, tc := range []struct {
+		step string
+		want task.AttemptLimits
+	}{
+		{compositeStep("d", "DNS-01", `{"hostname":"example.com","record_type":"A"}`), task.AttemptLimits{}},
+		{compositeStepWith("d", "DNS-01", dnsTarget, `{"resolver_mode":"direct"}`), task.AttemptLimits{BytesReceived: 4096}},
+		{compositeStepWith("d", "DNS-01", dnsTarget, `{"resolver_mode":"direct","collect_additional_responses":true,"additional_response_window_ms":1000}`), task.AttemptLimits{DurationMS: 1000, BytesReceived: 12288}},
+		{compositeStepWith("d", "DNS-01", dnsTarget, `{"resolver_mode":"direct","transport":"tcp"}`), task.AttemptLimits{Connections: 1, BytesReceived: 65537}},
+		{compositeStep("t", "TCP-01", `{"ip_address":"8.8.8.8","port":443}`), task.AttemptLimits{Connections: 1}},
+		{compositeStep("t", "TLS-01", `{"ip_address":"8.8.8.8","port":443,"server_name":"example.com"}`), task.AttemptLimits{Connections: 1}},
+		{compositeStep("h", "HTTP-01", httpURL), task.AttemptLimits{Connections: 1, BytesReceived: 20480}},
+		{httpStep("h", 2, 65536), task.AttemptLimits{Connections: 3, BytesReceived: 114688}},
+	} {
+		step := compositeProfile(t, []string{tc.step}).CompositeSteps()[0]
+		if got := step.Parameters.(interface{ DeclaredMaxima() task.AttemptLimits }).DeclaredMaxima(); got != tc.want {
+			t.Fatalf("%s declared %+v, want %+v", step.Test.ID, got, tc.want)
+		}
+	}
+	ceiling := task.AttemptLimits{DurationMS: 60000, BytesSent: 65536, BytesReceived: 262144, Connections: 12}
+	var connections, received [3][]string
+	for i, extra := range []string{"", "", compositeStep("t", "TCP-01", `{"ip_address":"8.8.8.8","port":443}`)} {
+		// Four HTTP-01 steps declare 11, 12 and, with one more TCP-01 step, 13 connections.
+		connections[i] = []string{httpStep("h0", 2, 4096), httpStep("h1", 2, 4096), httpStep("h2", 2, 4096), httpStep("h3", min(i+1, 2), 4096)}
+		if extra != "" {
+			connections[i] = append(connections[i], extra)
+		}
+		// 229,376 bytes from two 65,536-byte bodies after two redirects each, plus 32,767 to 32,769.
+		received[i] = []string{httpStep("h0", 2, 65536), httpStep("h1", 2, 65536), httpStep("h2", 0, 16383+i)}
+	}
+	window := func(n int) string {
+		return compositeStepWith(fmt.Sprint("d", n), "DNS-01", dnsTarget, `{"resolver_mode":"direct","collect_additional_responses":true,"additional_response_window_ms":1000}`)
+	}
+	tcp := func(n int) []string {
+		var s []string
+		for i := 0; i < n; i++ {
+			s = append(s, compositeStep(fmt.Sprint("t", i), "TCP-01", `{"ip_address":"8.8.8.8","port":443}`))
+		}
+		return s
+	}
+	for _, tc := range []struct {
+		name   string
+		steps  []string
+		limits func(*task.AttemptLimits, int)
+	}{
+		{"composite-connections", nil, nil},
+		{"composite-received", nil, nil},
+		{"task-connections", tcp(3), func(l *task.AttemptLimits, over int) { l.Connections = 3 - over }},
+		{"task-received", []string{httpStep("h", 0, 4096)}, func(l *task.AttemptLimits, over int) { l.BytesReceived = 20480 - over }},
+		{"task-duration", []string{window(0), window(1), window(2)}, func(l *task.AttemptLimits, over int) { l.DurationMS = 3000 - over }},
+	} {
+		// over is the declared sum minus the applicable limit.
+		for i, over := range []int{-1, 0, 1} {
+			t.Run(fmt.Sprint(tc.name, "/", over), func(t *testing.T) {
+				steps, limits := tc.steps, ceiling
+				switch tc.name {
+				case "composite-connections":
+					steps = connections[i]
+				case "composite-received":
+					steps = received[i]
+				default:
+					tc.limits(&limits, over)
+				}
+				if got := compositeProfile(t, steps).ValidateLimits(limits); got != (over <= 0) {
+					t.Fatalf("declared maxima admitted = %v", got)
+				}
+			})
+		}
+	}
+	// Undeclared sent bytes add nothing; the run-time meter bounds them.
+	sent := ceiling
+	sent.BytesSent = 0
+	if !compositeProfile(t, append(tcp(1), httpStep("h", 0, 4096), window(0))).ValidateLimits(sent) {
+		t.Fatal("undeclared sent bytes counted")
+	}
 	for _, limit := range []int{0, 1, 2, 3, 4} {
 		d := &compositeDial{}
 		p, clock := compositePlan(t, compositeTCP(), platform.AvailabilityYes, false, d)
