@@ -126,8 +126,8 @@ func assertNet05Rejected(t *testing.T, input, options, execution, want string, e
 	}
 }
 
-// Admission coverage; profile history and summed maxima are approved
-// deferrals. Runner evidence is separate in net05_runner_test.go.
+// Admission coverage; profile history is an approved deferral, and summed
+// declared maxima are covered with the limits family. Runner evidence is separate in net05_runner_test.go.
 // requirement-ref: REQ-NET-05-0014
 // requirement-ref: REQ-NET-05-0015
 // requirement-ref: REQ-NET-05-0016
@@ -149,7 +149,8 @@ func TestMNet05Admission(t *testing.T) {
 			for i := 0; i < n; i++ {
 				selected = append(selected, strings.Replace(steps[i%4], `"step_id":"`+[]string{"dns", "tcp", "tls", "http"}[i%4]+`"`, fmt.Sprintf(`"step_id":"s%d"`, i), 1))
 			}
-			data := net05Task("valid-profile", profileInput(selected...), `{}`, "")
+			// Eight steps declare 172,034 received bytes, above the default bound.
+			data := strings.Replace(net05Task("valid-profile", profileInput(selected...), `{}`, ""), `"limits":{}`, `"limits":{"max_bytes_received":262144}`, 1)
 			handle, e := c.AdmitTask(data, h.embedded(t, data))
 			if e != nil || handle == "" {
 				t.Fatalf("valid: %s", codeOf(e))
@@ -337,11 +338,13 @@ func TestMNet05Options(t *testing.T) {
 
 // M-NET-05-LIMITS registered ceilings at admission: 60,000 ms, 12 connections
 // or tunnels, 65,536 bytes sent and 262,144 received, each below, at and
-// above the ceiling with the other limits omitted. Over-budget summed declared
-// maxima are an approved deferral and are not asserted here; actual aggregate
-// use at the ceilings is driven in internal/execution.
+// above the ceiling with the other limits omitted, and over-budget summed
+// declared maxima rejected atomically before contact. Declared-maxima
+// boundaries and actual aggregate use are driven in internal/execution.
+// requirement-ref: REQ-NET-05-0026
 // requirement-ref: REQ-NET-05-0037
 // requirement-ref: REQ-NET-05-0038
+// requirement-ref: REQ-LIMIT-0020
 func TestMNet05RegisteredCeilingAdmission(t *testing.T) {
 	all := profileInput(primitiveSteps()...)
 	for _, tc := range []struct {
@@ -365,6 +368,41 @@ func TestMNet05RegisteredCeilingAdmission(t *testing.T) {
 				}
 			})
 		}
+	}
+	// Summed declared maxima (GO-SPEC-ISSUE-021): the four primitive steps
+	// declare 4 connections and 86,017 received bytes, and four HTTP-01 steps
+	// following two redirects plus one TCP-01 step declare 13 connections.
+	tcp := profileStep("extra", "TCP-01", `{"ip_address":"8.8.8.8","port":443}`, `{}`)
+	var redirecting []string
+	for i := 0; i < 4; i++ {
+		redirecting = append(redirecting, profileStep(fmt.Sprint("h", i), "HTTP-01", httpInput, `{"follow_redirects":true,"max_redirects":2}`))
+	}
+	for _, tc := range []struct {
+		name, input, limits string
+		over                bool
+	}{
+		{"connections-at-task-bound", all, `"max_connections":4`, false},
+		{"connections-over-task-bound", all, `"max_connections":3`, true},
+		{"received-at-task-bound", all, `"max_bytes_received":86017`, false},
+		{"received-over-task-bound", all, `"max_bytes_received":86016`, true},
+		{"connections-at-composite", profileInput(redirecting...), `"max_connections":12,"max_bytes_received":262144`, false},
+		{"connections-over-composite", profileInput(append(redirecting, tcp)...), `"max_connections":12,"max_bytes_received":262144`, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			data := strings.Replace(net05Task("declared", tc.input, `{}`, ""), `"limits":{}`, `"limits":{`+tc.limits+`}`, 1)
+			h, c, d := net05AdmissionClient(t, nil)
+			handle, e := c.AdmitTask(data, h.embedded(t, data))
+			if d.calls.Load() != 0 {
+				t.Fatal("admission contacted transport")
+			}
+			if tc.over {
+				if handle != "" || codeOf(e) != "task_limit_exceeded" || taskHandles(c) != 0 || h.replay.Commits() != 0 || len(c.rt.runs.entries) != 0 {
+					t.Fatalf("over declared bound: %q %s", handle, codeOf(e))
+				}
+			} else if e != nil || handle == "" {
+				t.Fatalf("within declared bound: %s", codeOf(e))
+			}
+		})
 	}
 }
 

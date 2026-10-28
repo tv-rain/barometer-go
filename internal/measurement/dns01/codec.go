@@ -8,6 +8,7 @@ import (
 
 	"github.com/tv-rain/barometer-go/internal/jsondecode"
 	"github.com/tv-rain/barometer-go/internal/model/task"
+	"github.com/tv-rain/barometer-go/internal/protocol/dns"
 	"github.com/tv-rain/barometer-go/internal/taskdecode"
 )
 
@@ -34,6 +35,21 @@ func (p Parameters) Engine() string {
 func (p Parameters) Resolver() (netip.Addr, uint16) { return p.address, p.port }
 
 func (p Parameters) AdditionalResponses() (bool, time.Duration) { return p.collect, p.window }
+
+// DeclaredMaxima reports the NET-05 step declaration: the collection window and
+// up to three retained UDP responses, or one TCP connection and its
+// length-prefixed message. Uncounted system-resolver traffic declares nothing.
+func (p Parameters) DeclaredMaxima() task.AttemptLimits {
+	switch {
+	case p.mode == "system":
+		return task.AttemptLimits{}
+	case p.transport == "tcp":
+		return task.AttemptLimits{Connections: 1, BytesReceived: 2 + dns.MaxTCP}
+	case p.collect:
+		return task.AttemptLimits{DurationMS: int(p.window.Milliseconds()), BytesReceived: 3 * dns.MaxUDP}
+	}
+	return task.AttemptLimits{BytesReceived: dns.MaxUDP}
+}
 
 type Codec struct{}
 

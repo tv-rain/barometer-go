@@ -974,6 +974,24 @@ Status decides first. Any non-2xx DoH response is `http_failure`: its status is 
 
 **Ordering:** public proposal and merge, internal DNS-03 validation alignment, Go reference update, then native and host validation. Closure requires the public merge, internal alignment, the milestone manifest mapping and applicable downstream evidence or non-applicability.
 
+## GO-SPEC-ISSUE-021: NET-05 Declared Primitive Maxima
+
+**Current state:** Open; declared-only rule selected by the project owner on October 28, 2026 under [DEV-687](https://app.clickup.com/t/124kk1zd4vp) and adopted on the DEV-687 branch. The public record [NET-05 Declared Primitive Maxima](https://github.com/tv-rain/barometer-spec/blob/agent/dev-687-net05-declared-maxima/specification-issues/net-05-declared-maxima.md) prepares the wording as REQ-LIMIT-0035, with editorial pointers from REQ-LIMIT-0020 and REQ-NET-05-0026; it is not accepted public behavior until it merges. Go `requirement-ref` comments cite only REQ-LIMIT-0020 and REQ-NET-05-0026 until the reference pin moves to the merged revision. Internal alignment, required reviews and binding and host adoption are pending.
+
+### Identity, Baselines and Finding
+
+- **Reporter:** the Go implementation agent, under the task owner's instruction. **Duplicates:** none; [GO-SPEC-ISSUE-018](#go-spec-issue-018-net-05-profile-bound-inside-the-common-input-bound) covers a different NET-05 admission bound.
+- **Public baseline:** Draft `0.1.0` at [`9b220c436f6e429c971b2b6d82df28c20ab94579`](https://github.com/tv-rain/barometer-spec/tree/9b220c436f6e429c971b2b6d82df28c20ab94579). [REQ-LIMIT-0020](https://github.com/tv-rain/barometer-spec/blob/9b220c436f6e429c971b2b6d82df28c20ab94579/library/registered-limits.md#REQ-LIMIT-0020) and [REQ-NET-05-0026](https://github.com/tv-rain/barometer-spec/blob/9b220c436f6e429c971b2b6d82df28c20ab94579/tests/net-05.md#REQ-NET-05-0026) require the sum of declared primitive maxima to fit the composite limits, but no primitive declares a duration other than the DNS-01 additional-response window or any sent maximum, connections and received bytes are derivable only from resource tables, and no row names the rejection class.
+- **Implementation:** at [`9de36e3`](https://github.com/tv-rain/barometer-go/tree/9de36e35d7471543baf879b1b5d5646d134158fc) the NET-05 codec checked only each primitive's own option bounds against the outer envelope; the run-time meter alone stopped an over-budget profile.
+
+### Selected Rule and Adoption
+
+A step declares only what its primitive's registered limits and normalized `input` and `options` bound: DNS-01 direct UDP declares the collection window and 4,096 received bytes per retained response (one, or three when collecting); direct TCP declares one connection and 65,537 received bytes; the system resolver declares nothing; TCP-01 and TLS-01 declare one connection and no application bytes; HTTP-01 declares one connection per permitted request and 16,384 header bytes per response plus `max_body_bytes`. Undeclared resources add nothing. The per-resource sums must not exceed the task's `execution.limits`, which cannot exceed the composite limits, or the profile is rejected at admission with `task_limit_exceeded` before contact. The rule adds no traffic, field or retained value and only narrows admission.
+
+Each primitive's `Parameters.DeclaredMaxima` reports its row, and `net05.Parameters.ValidateLimits` sums them and fails closed for a step without declarations; `taskdecode` maps the failure to the registered-limit class. Cases are listed under [M-NET-05-LIMITS](measurement-requirements.md#m-net-05-limits). The 60,000 ms and 65,536-byte sent composite limits cannot be reached from declarations: at most eight 1,000 ms DNS-01 windows, and no declared sent bytes.
+
+**Ordering:** public merge, internal NET-05 and registered-limits alignment, the Go branch and reference pin update, then native and host validation. Closure requires the public merge, internal alignment, the milestone manifest mapping and applicable downstream evidence or non-applicability.
+
 ## Signed Remote Task Package Adoption
 
 **Status:** Public contract and internal review alignment are merged; the Go core adopts them in DEV-612 with synthetic evidence only. The cryptographic, safety and host integration reviews were performed by the project maintainer in DEV-615 with no findings, and the remote-delivery gate (DEV-595) is lifted. The interpretation question below is closed by REQ-TRUST-0055, adopted by DEV-624. Binding and host adoption remain open (DEV-455).

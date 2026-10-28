@@ -34,6 +34,10 @@ func (p Parameters) Target() (netip.Addr, uint16, string, bool) {
 // ALPN returns a copy of the offer, in order.
 func (p Parameters) ALPN() []string { return slices.Clone(p.alpn) }
 
+// DeclaredMaxima reports the NET-05 step declaration: one connection and no
+// application bytes, because handshake bytes are not counted.
+func (Parameters) DeclaredMaxima() task.AttemptLimits { return task.AttemptLimits{Connections: 1} }
+
 // Codec supplies closed descriptors and pure normalization; authority stays
 // with admission. It uses the common strict JSON stages, never a second parser.
 type Codec struct{}
