@@ -42,6 +42,7 @@ func (p Parameters) ValidateLimits(l task.AttemptLimits) bool { return p.body <=
 // DeclaredMaxima reports the NET-05 step declaration: one connection and one
 // header block per permitted request, plus the terminal body bound. Redirect
 // bodies and request bytes are not declared.
+// requirement-ref: REQ-LIMIT-0035
 func (p Parameters) DeclaredMaxima() task.AttemptLimits {
 	requests := 1 + p.redirects
 	return task.AttemptLimits{Connections: requests, BytesReceived: requests*httpprotocol.MaxHeaderBytes + p.body}

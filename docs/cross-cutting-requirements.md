@@ -2581,6 +2581,10 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 - [REQ-LIMIT-0019](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0019) → `CC-LIMIT-NET-05-COMPOSITE-LIMITS`.
 - [REQ-LIMIT-0020](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0020) → `CC-LIMIT-NET-05-COMPOSITE-LIMITS`.
 
+<!-- requirement-ref: REQ-LIMIT-0035 -->
+
+- [REQ-LIMIT-0035](https://github.com/tv-rain/barometer-spec/blob/6bd88047a85b3207bbc8ade00a44411bc70567b1/library/registered-limits.md#REQ-LIMIT-0035) → `CC-LIMIT-NET-05-COMPOSITE-LIMITS` (declared primitive maxima, GO-SPEC-ISSUE-021); executed rows in `TestMNet05Limits`, `TestMNet05RegisteredCeilingAdmission` and `TestDeclaredMaximaFailClosed`, mapped at the next manifest update.
+
 ### CC-LIMIT-RESULT-AND-BUNDLE-LIMITS
 
 Public source: `library/registered-limits.md`, section **Result and Bundle Limits**. Intended target: `internal/bundle/bounds.go`. Planned case location: `internal/bundle/cross_cutting_conformance_test.go`, `symbol:TestCcLimitResultAndBundleLimits`.
