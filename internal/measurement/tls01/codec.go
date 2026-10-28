@@ -36,6 +36,7 @@ func (p Parameters) ALPN() []string { return slices.Clone(p.alpn) }
 
 // DeclaredMaxima reports the NET-05 step declaration: one connection and no
 // application bytes, because handshake bytes are not counted.
+// requirement-ref: REQ-LIMIT-0035
 func (Parameters) DeclaredMaxima() task.AttemptLimits { return task.AttemptLimits{Connections: 1} }
 
 // Codec supplies closed descriptors and pure normalization; authority stays

@@ -30,6 +30,7 @@ func (p Parameters) CompositeSteps() []task.PrimitiveStep { return slices.Clone(
 // add nothing and stay with the run-time meter; a step without declarations
 // fails closed. Profile-version history remains an approved deferral.
 // requirement-ref: REQ-LIMIT-0020
+// requirement-ref: REQ-LIMIT-0035
 // requirement-ref: REQ-NET-05-0026
 func (p Parameters) ValidateLimits(l task.AttemptLimits) bool {
 	var sum task.AttemptLimits

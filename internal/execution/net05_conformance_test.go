@@ -319,6 +319,7 @@ func TestMNet05Normalization(t *testing.T) {
 // requirement-ref: REQ-NET-05-0037
 // requirement-ref: REQ-LIMIT-0019
 // requirement-ref: REQ-LIMIT-0020
+// requirement-ref: REQ-LIMIT-0035
 func TestMNet05Limits(t *testing.T) {
 	const (
 		dnsTarget = `{"hostname":"example.com","record_type":"A","resolver":{"ip_address":"8.8.8.8"}}`

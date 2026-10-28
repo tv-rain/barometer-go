@@ -39,6 +39,7 @@ func (p Parameters) AdditionalResponses() (bool, time.Duration) { return p.colle
 // DeclaredMaxima reports the NET-05 step declaration: the collection window and
 // up to three retained UDP responses, or one TCP connection and its
 // length-prefixed message. Uncounted system-resolver traffic declares nothing.
+// requirement-ref: REQ-LIMIT-0035
 func (p Parameters) DeclaredMaxima() task.AttemptLimits {
 	switch {
 	case p.mode == "system":

@@ -345,6 +345,7 @@ func TestMNet05Options(t *testing.T) {
 // requirement-ref: REQ-NET-05-0037
 // requirement-ref: REQ-NET-05-0038
 // requirement-ref: REQ-LIMIT-0020
+// requirement-ref: REQ-LIMIT-0035
 func TestMNet05RegisteredCeilingAdmission(t *testing.T) {
 	all := profileInput(primitiveSteps()...)
 	for _, tc := range []struct {

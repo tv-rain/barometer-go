@@ -25,6 +25,7 @@ func (p Parameters) Target() (netip.Addr, uint16, bool) {
 
 // DeclaredMaxima reports the NET-05 step declaration: one connection and no
 // application bytes.
+// requirement-ref: REQ-LIMIT-0035
 func (Parameters) DeclaredMaxima() task.AttemptLimits { return task.AttemptLimits{Connections: 1} }
 
 // Codec supplies closed descriptors and pure normalization; authority stays
