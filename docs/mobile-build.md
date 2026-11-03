@@ -12,7 +12,7 @@ Run from the repository root with Go 1.26.0 or later compatible Go, Make, and Ba
 
 | Command | Output | Additional requirements |
 |---|---|---|
-| `make mobile-smoke` | None; pure-Go Android ARM64 and iOS ARM64 cross-compilation | None |
+| `make mobile-smoke` | None; pure-Go Android ARM64, ARM and 386 and iOS ARM64 cross-compilation. The 32-bit Android builds only keep the core compiling for the umbrella artifact; they are not supported targets | None |
 | `make mobile-android` | `build/mobile/Barometer.aar` with `arm64-v8a` and `x86_64` libraries | JDK 17, Android SDK platform 35, NDK; `ANDROID_HOME`, `ANDROID_NDK_HOME`, and working Java tools |
 | `make mobile-apple` | `build/mobile/Barometer.xcframework` with iOS device `arm64` and iOS simulator `arm64` and `x86_64` slices | macOS, full Xcode installation, selected developer directory, iPhoneOS and iPhoneSimulator SDKs |
 | `python3 scripts/test-mobile-build.py android` | None; positive and negative Android build fixtures | Python 3 and Android prerequisites above |
