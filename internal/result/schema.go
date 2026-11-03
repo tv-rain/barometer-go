@@ -10,8 +10,8 @@ func obj(f map[string]jsondecode.Field) *jsondecode.Schema {
 }
 func str() *jsondecode.Schema     { return &jsondecode.Schema{Kind: jsondecode.String} }
 func boolean() *jsondecode.Schema { return &jsondecode.Schema{Kind: jsondecode.Boolean} }
-func num(min, max int) *jsondecode.Schema {
-	return &jsondecode.Schema{Kind: jsondecode.Integer, Min: strconv.Itoa(min), Max: strconv.Itoa(max)}
+func num(min, max int64) *jsondecode.Schema {
+	return &jsondecode.Schema{Kind: jsondecode.Integer, Min: strconv.FormatInt(min, 10), Max: strconv.FormatInt(max, 10)}
 }
 func req(s *jsondecode.Schema) jsondecode.Field { return jsondecode.Field{Schema: s, Required: true} }
 func opt(s *jsondecode.Schema) jsondecode.Field { return jsondecode.Field{Schema: s} }
