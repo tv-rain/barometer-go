@@ -2,9 +2,9 @@
 
 ## Decision and Scope
 
-The production root package, including the `Client` facade, is bound with gomobile into an Android AAR and an Apple XCFramework. The root remains the only intended public package, and the build binds it directly rather than a separate example package, so every root export and transitive dependency is covered. No build tag or build-only export is used.
+[Decision 0014](../../docs/decisions/0014-gomobile-facade-and-platform-matrix.md) makes a `barometermobile` facade package the only gomobile-bound package. The facade uses only gomobile-safe types, declares the native adapter callback interfaces, and reaches the root's adapter seam through an internal package, so the root `barometer` package stays the idiomatic Go API and gains no binding exports. The facade does not exist yet. Until the first native adapter task adds it and switches `scripts/mobile-build.sh` to it, the build binds the production root package, including the `Client` facade, into an Android AAR and an Apple XCFramework, so every root export and transitive dependency is covered. No build tag or build-only export is used.
 
-The libraries are compiled only. With no production platform adapters, `Initialize` fails closed, so a host cannot run a measurement through them. Successful compilation establishes only binding and compiler compatibility for the recorded build inputs. It does not establish loading or execution on a device, emulator or simulator, lifecycle behavior, conformance, safety, supported operating-system versions, platform support or readiness for distribution. The generated Java package and Objective-C names are gomobile defaults and are not a reviewed binding surface. Barometer Draft `0.1.0` status is unchanged.
+The libraries are compiled only. With no production platform adapters, `Initialize` fails closed, so a host cannot run a measurement through them. Successful compilation establishes only binding and compiler compatibility for the recorded build inputs. It does not establish loading or execution on a device, emulator or simulator, lifecycle behavior, conformance, safety, supported operating-system versions, platform support or readiness for distribution. The generated Java package and Objective-C names of the root are gomobile defaults and are not a reviewed binding surface. The decision selects the facade's derived names (Java package `barometermobile`, Objective-C prefix `Barometermobile`) to avoid collisions in an umbrella build. Barometer Draft `0.1.0` status is unchanged.
 
 ## Commands and Prerequisites
 
@@ -26,7 +26,7 @@ The Android build uses SDK platform 35 for Java compilation and API 21 for nativ
 "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "ndk;28.2.13676358"
 ```
 
-The Apple build uses deployment target 13.0. CI uses the selected Xcode on `macos-15` and records its version and SDK versions. These API levels and deployment targets are compiler inputs, not promises of minimum supported OS versions. Runner images and Xcode patch versions can change; the build-info file preserves the versions used.
+The Apple build uses deployment target 15.0. CI uses the selected Xcode on `macos-15` and records its version and SDK versions. Android API 21 and iOS 15.0 match the [supported platform matrix](../../docs/decisions/0014-gomobile-facade-and-platform-matrix.md#supported-platform-matrix), but as build inputs they are not support: support for a platform version requires the decision's device validation and recorded evidence. Runner images and Xcode patch versions can change; the build-info file preserves the versions used.
 
 Native builds are separate from `make check`, so the ordinary core validation command still requires no mobile SDK. Both native jobs run on pull requests and pushes to `main` and upload the library and its build-info file as a workflow artifact named `barometer-android` or `barometer-apple`, kept for 30 days. Workflow artifacts are not releases: they are unsigned, unversioned and not published.
 

@@ -10,7 +10,7 @@ case "$target" in
     platform=android/arm64,android/amd64; artifact=Barometer.aar
     flags=(-androidapi=21 -bootclasspath "$ANDROID_HOME/platforms/android-35/android.jar")
     ;;
-  apple) platform=ios,iossimulator; artifact=Barometer.xcframework; flags=(-iosversion=13.0) ;;
+  apple) platform=ios,iossimulator; artifact=Barometer.xcframework; flags=(-iosversion=15.0) ;;
   *) echo 'Usage: bash scripts/mobile-build.sh android|apple [output-directory]' >&2; exit 2 ;;
 esac
 
@@ -85,7 +85,7 @@ if [ -n "$out" ]; then
       echo "xcode: $(xcodebuild -version | paste -sd ' ' -)"
       echo "iphoneos-sdk: $(xcrun --sdk iphoneos --show-sdk-version)"
       echo "iphonesimulator-sdk: $(xcrun --sdk iphonesimulator --show-sdk-version)"
-      echo "ios-deployment-target: 13.0"
+      echo "ios-deployment-target: 15.0"
     fi
     echo "slices:"
     sed 's/^/  /' <<<"$slices"
