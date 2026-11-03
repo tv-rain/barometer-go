@@ -82,7 +82,8 @@ func (Admitted) GoString() string { return "admission.Admitted" }
 
 // Admit runs every admission step. Steps 1 to 9 are Gate. Step 10 checks the
 // replay store and step 11 commits the replay record before the task is
-// returned as admitted, under the instance's admission serialization:
+// returned as admitted, under the instance's admission serialization, which a
+// caller waits for only until its context ends:
 //
 //   - replay state that is unavailable or invalid fails closed with
 //     task_trust_unavailable for remote and embedded tasks alike;
@@ -115,8 +116,12 @@ func (a *Admitter) Admit(ctx context.Context, sourceRef string, presented []byte
 	digest := g.digest
 	now := g.acceptedAt
 
-	a.accept.Lock()
-	defer a.accept.Unlock()
+	select {
+	case a.accept <- struct{}{}:
+	case <-ctx.Done():
+		return Admitted{}, admissionError(task.TrustUnavailable)
+	}
+	defer func() { <-a.accept }()
 	// Step 10: rollback against retained accepted generations, then the key.
 	highest, err := a.replay.HighestGeneration(ctx, now)
 	if err != nil {

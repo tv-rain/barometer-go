@@ -425,6 +425,32 @@ func TestLinkageStorageFailure(t *testing.T) {
 
 }
 
+// A key store that stays locked until the derivation's deadline omits
+// linkage, and the result is still delivered in a bundle: derivation gets
+// only part of the bounded storage operation.
+// requirement-ref: REQ-LINKAGE-0037
+func TestLinkageLockedKeyStoreKeepsResult(t *testing.T) {
+	h, keys := linkedHarness(t, true)
+	c := h.client(t)
+	if err := c.Initialize(rotatingConfig(604800)); err != nil {
+		t.Fatal(err)
+	}
+	keys.Block()
+	completedRun(t, h, c, "locked")
+	b, err := c.NextBundle()
+	if err != nil || len(bundleResults(t, b)) != 1 || bytes.Contains([]byte(b), []byte("linkage")) || len(keys.Messages()) != 1 {
+		t.Fatal("locked key store: linkage emitted or result not delivered")
+	}
+	if c.AcknowledgeBundle(bundleID(t, b)) != nil {
+		t.Fatal("acknowledge failed")
+	}
+	keys.Recover()
+	completedRun(t, h, c, "unlocked")
+	if bundleTop(t, c)["linkage"] == nil {
+		t.Fatal("no linkage after the key store unlocked")
+	}
+}
+
 // The synthetic installation secret held by the test key store never appears,
 // raw or encoded, in any value or error the Client API returns or in
 // library-owned storage; the derived token appears only as the bundle's

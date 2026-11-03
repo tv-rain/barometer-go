@@ -143,7 +143,7 @@ When no run was reserved before a reinitialization, the anchor of a task without
 |---|---|---|
 | Active runs per client | 4, each on one goroutine | Implementation choice; the registered limits set no ceiling |
 | Pending-output check | Free capacity at least the new run's `max_attempts` plus the `max_attempts` of every active run | Backpressure before capacity is exhausted ([Results and Delivery](public-api.md#results-and-delivery)) |
-| Reservation lock | One per generation, held only for calls bounded by the generation context and the lifecycle deadline | Serializes the due check, the ledger write and the run handle |
+| Reservation lock | One per generation, a one-slot semaphore held only for calls bounded by the generation context and the lifecycle deadline; a reservation waits for it only until its own context ends | Serializes the due check, the ledger write and the run handle |
 | CONNECT response head | At most 8,192 bytes, status line and header fields included | The public text requires a bounded exchange ([REQ-PROXY-0017](https://github.com/tv-rain/barometer-spec/blob/5d01879cfd1d47396c780befa2567f7e90439948/library/proxy.md#REQ-PROXY-0017)) and registers no value |
 
 ## Network Conditions and Access Context

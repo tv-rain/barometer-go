@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"errors"
-	"sync"
 	"time"
 
 	"github.com/tv-rain/barometer-go/internal/jsondecode"
@@ -43,8 +42,10 @@ type Admitter struct {
 	decoder    *taskdecode.Decoder
 	policy     task.LocalPolicy
 	replay     persistence.ReplayStore
-	// accept serializes steps 10 and 11 within this instance.
-	accept sync.Mutex
+	// accept serializes steps 10 and 11 within this instance: a one-slot
+	// semaphore a caller waits for only until its context ends, because it is
+	// held across replay-store I/O.
+	accept chan struct{}
 }
 
 // NewAdmitter binds the instance's delivery store, trusted clock, reviewed
@@ -61,7 +62,7 @@ func NewAdmitter(deliveries *DeliveryStore, clock platform.Clock, reg *registry.
 	if err != nil {
 		return nil, ErrAdmitterConfig
 	}
-	return &Admitter{deliveries: deliveries, clock: clock, registry: reg, decoder: decoder, policy: policy, replay: replay}, nil
+	return &Admitter{deliveries: deliveries, clock: clock, registry: reg, decoder: decoder, policy: policy, replay: replay, accept: make(chan struct{}, 1)}, nil
 }
 
 // Gated is the unpublished outcome of the implemented gates: owned values for

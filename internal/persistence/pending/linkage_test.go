@@ -174,6 +174,44 @@ func TestBundleLinkage(t *testing.T) {
 	}
 }
 
+// A derivation that blocks until its context ends, as a locked key store
+// does, gets at most half of the store deadline: linkage is omitted and the
+// result is still stored within the other half, even when the caller's own
+// deadline is the shorter one.
+// requirement-ref: REQ-LINKAGE-0037
+func TestBlockedDerivationKeepsResult(t *testing.T) {
+	const deadline = 200 * time.Millisecond
+	var left []time.Duration
+	blocked := func(ctx context.Context) *model.RotatingLinkage {
+		d, _ := ctx.Deadline()
+		left = append(left, time.Until(d))
+		<-ctx.Done()
+		return projection(20748, 1)
+	}
+	for name, caller := range map[string]time.Duration{"store deadline": time.Minute, "caller deadline": deadline / 2} {
+		t.Run(name, func(t *testing.T) {
+			left = nil
+			r := records.New()
+			p, err := pending.New(r, linkedBuilder(t), blocked, testkit.NewClock(epoch), pending.Limits{}, deadline)
+			if err != nil {
+				t.Fatal(err)
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), caller)
+			defer cancel()
+			if err := p.Put(ctx, value(t)); err != nil {
+				t.Fatal("result not stored:", err)
+			}
+			if len(left) != 1 || left[0] > min(caller, deadline)/2 {
+				t.Fatalf("derivation budget %v", left)
+			}
+			_, b, _, err := p.Next(context.Background())
+			if err != nil || len(linked(t, b).Results) != 1 || bytes.Contains(b, []byte("linkage")) {
+				t.Fatal("blocked derivation: linkage emitted or result lost")
+			}
+		})
+	}
+}
+
 // Linked bundles survive a restart byte for byte, and only the exact linkage
 // form the producer writes is accepted from storage.
 func TestLinkedBundleRestart(t *testing.T) {
