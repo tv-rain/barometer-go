@@ -2,6 +2,7 @@ package barometer
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -150,4 +151,60 @@ func TestStartRunProductionLedgerFaults(t *testing.T) {
 			th = h.admit(t, c, runTask("fault-2", `"starts_at":"`+epoch.Add(time.Hour).Format(time.RFC3339)+`"`, "", false))
 		}
 	})
+}
+
+// heldLedger blocks the first lookup, ignoring its context, until release is
+// closed, as a stuck storage backend would.
+type heldLedger struct {
+	persistence.RunLedger
+	once    sync.Once
+	entered chan struct{}
+	release chan struct{}
+}
+
+func (l *heldLedger) Lookup(ctx context.Context, key persistence.ReplayKey, now time.Time) (persistence.RunRecord, bool, error) {
+	held := false
+	l.once.Do(func() { held = true })
+	if held {
+		close(l.entered)
+		<-l.release
+	}
+	return l.RunLedger.Lookup(ctx, key, now)
+}
+
+// A start waiting for the run reservation while another holds it across a
+// ledger call that ignores its context returns run_not_due when the lifecycle
+// deadline ends. The held start returns once the call does, failing closed
+// because its own deadline has passed, and a later start succeeds.
+func TestStartRunWaiterHonorsDeadline(t *testing.T) {
+	h := runningHarness(t)
+	held := &heldLedger{RunLedger: h.adapters.run.ledger, entered: make(chan struct{}), release: make(chan struct{})}
+	h.adapters.run.ledger = held
+	c := h.initialized(t)
+	first, second := h.admit(t, c, runTask("held-1", "", "", false)), h.admit(t, c, runTask("waiting-1", "", "", false))
+
+	done := make(chan error, 1)
+	go func() {
+		_, err := c.StartRun(first)
+		done <- err
+	}()
+	<-held.entered
+	guard := time.AfterFunc(10*time.Second, func() { close(held.release) })
+	defer guard.Stop()
+
+	if _, err := c.StartRun(second); codeOf(err) != "run_not_due" {
+		t.Fatal("waiting start:", codeOf(err))
+	}
+	if !guard.Stop() {
+		t.Fatal("the waiting start outlived the lifecycle deadline")
+	}
+	close(held.release)
+	if err := <-done; codeOf(err) != "run_not_due" {
+		t.Fatal("held start past its deadline:", codeOf(err))
+	}
+	rh, err := c.StartRun(second)
+	if err != nil {
+		t.Fatal("reservation did not recover:", err)
+	}
+	waitTerminal(t, c, rh)
 }

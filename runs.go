@@ -3,7 +3,6 @@ package barometer
 import (
 	"context"
 	"errors"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -87,19 +86,23 @@ type latestRun struct {
 	handle     string
 }
 
-// runSet holds the reservation state of one generation. mu serializes every
-// reservation with every other one, so the due check, the ledger write and
-// the run handle form one atomic step; it is held only for calls bounded by
-// the generation context and the lifecycle deadline.
+// runSet holds the reservation state of one generation. sem, a one-slot
+// semaphore, serializes every reservation with every other one, so the due
+// check, the ledger write and the run handle form one atomic step. It is held
+// across ledger and platform calls bounded by the generation context and the
+// lifecycle deadline, so a reservation waits for it only until its own
+// context ends.
 type runSet struct {
-	mu        sync.Mutex
+	sem       chan struct{}
 	active    int  // runs whose engine has not returned
 	exclusive bool // an exclusive run is active
 	results   int  // results the active runs may still write, at most
 	latest    map[persistence.ReplayKey]latestRun
 }
 
-func newRunSet() *runSet { return &runSet{latest: make(map[persistence.ReplayKey]latestRun)} }
+func newRunSet() *runSet {
+	return &runSet{sem: make(chan struct{}, 1), latest: make(map[persistence.ReplayKey]latestRun)}
+}
 
 func (s *runSet) String() string   { return "barometer.runSet" }
 func (s *runSet) GoString() string { return "barometer.runSet" }
@@ -196,8 +199,12 @@ func (rt *runtime) reserveRun(ctx, parent context.Context, proxy proxySnapshot, 
 	notDue := fail(runNotDue)
 	c, key, run := a.Candidate(), a.Key(), rt.run
 	s := c.Schedule
-	rt.runSet.mu.Lock()
-	defer rt.runSet.mu.Unlock()
+	select {
+	case rt.runSet.sem <- struct{}{}:
+	case <-ctx.Done():
+		return "", execution.Plan{}, nil, notDue
+	}
+	defer func() { <-rt.runSet.sem }()
 
 	now := run.clock.Now()
 	rec, known, err := run.ledger.Lookup(ctx, key, now)
@@ -319,13 +326,14 @@ func (rt *runtime) addRun(r runRecord) (string, error) {
 func (rt *runtime) execute(plan execution.Plan, r *reserved, release func()) {
 	defer release()
 	defer func() {
-		rt.runSet.mu.Lock()
+		// No context: this waits for at most one reservation in progress.
+		rt.runSet.sem <- struct{}{}
 		rt.runSet.active--
 		rt.runSet.results -= r.results
 		if r.exclusive {
 			rt.runSet.exclusive = false
 		}
-		rt.runSet.mu.Unlock()
+		<-rt.runSet.sem
 		r.cancel(nil)
 		r.status.finish()
 	}()

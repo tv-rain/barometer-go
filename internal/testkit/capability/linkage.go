@@ -21,6 +21,7 @@ type LinkageKeys struct {
 	created  int
 	deletes  int
 	fail     bool
+	block    bool
 	// OnDerive, when set, runs before each derivation without the lock held,
 	// so a test can interleave another operation.
 	OnDerive func()
@@ -32,13 +33,22 @@ func NewLinkageKeys(key [32]byte) *LinkageKeys { return &LinkageKeys{key: key[:]
 
 // Fail makes every later derivation and deletion fail until Recover.
 func (k *LinkageKeys) Fail()    { k.mu.Lock(); k.fail = true; k.mu.Unlock() }
-func (k *LinkageKeys) Recover() { k.mu.Lock(); k.fail = false; k.mu.Unlock() }
+func (k *LinkageKeys) Recover() { k.mu.Lock(); k.fail, k.block = false, false; k.mu.Unlock() }
+
+// Block makes every later derivation wait until its context ends and then
+// fail, as a locked platform key store does, until Recover.
+func (k *LinkageKeys) Block() { k.mu.Lock(); k.block = true; k.mu.Unlock() }
 
 func (k *LinkageKeys) DeriveHMACSHA256(ctx context.Context, message []byte) ([32]byte, error) {
 	if k.OnDerive != nil {
 		k.OnDerive()
 	}
 	k.mu.Lock()
+	if k.block {
+		k.mu.Unlock()
+		<-ctx.Done()
+		k.mu.Lock()
+	}
 	defer k.mu.Unlock()
 	k.messages = append(k.messages, append([]byte(nil), message...))
 	if k.fail || ctx.Err() != nil {

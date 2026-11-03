@@ -328,11 +328,28 @@ func (s *Store) Acknowledge(ctx context.Context, id string) error {
 }
 
 // derive returns the linkage of a new bundle, or nil without a derivation.
+// The derivation gets at most half of the time left before ctx's deadline,
+// so a key store that blocks until its own deadline omits linkage and leaves
+// the other half for storing the result. A derivation that returns after its
+// deadline is discarded.
+// requirement-ref: REQ-LINKAGE-0037
 func (s *Store) derive(ctx context.Context) *model.RotatingLinkage {
 	if s.link == nil {
 		return nil
 	}
-	return s.link(ctx)
+	if deadline, ok := ctx.Deadline(); ok {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, time.Until(deadline)/2)
+		defer cancel()
+	}
+	l := s.link(ctx)
+	if ctx.Err() != nil {
+		if l != nil {
+			clear(l.Token[:])
+		}
+		return nil
+	}
+	return l
 }
 
 // enter acquires the semaphore within the caller's context and the store

@@ -483,3 +483,81 @@ func TestStateStoresOnlyRecordFields(t *testing.T) {
 		t.Fatalf("stored sizes %d %d", len(replay), len(run))
 	}
 }
+
+// heldRecords blocks the first Put, ignoring its context, until release is
+// closed, as a stuck platform backend would.
+type heldRecords struct {
+	*records.Store
+	once    sync.Once
+	entered chan struct{}
+	release chan struct{}
+}
+
+func (h *heldRecords) Put(ctx context.Context, key persistence.RecordKey, value []byte) error {
+	held := false
+	h.once.Do(func() { held = true })
+	if held {
+		close(h.entered)
+		<-h.release
+	}
+	return h.Store.Put(ctx, key, value)
+}
+
+// A caller waiting for State while a backend call ignores its context returns
+// when its own context ends, for every operation; Forget waits for the
+// operation in progress.
+func TestStateWaitingCallerHonorsContext(t *testing.T) {
+	a, b := replayRecord(t, "a", 2, time.Hour), replayRecord(t, "b", 2, time.Hour)
+	r := &heldRecords{Store: records.New(), entered: make(chan struct{}), release: make(chan struct{})}
+	s, err := persistence.OpenState(context.Background(), r, 4, stateNow)
+	if err != nil {
+		t.Fatal("state rejected:", err)
+	}
+	held := make(chan error, 1)
+	go func() {
+		_, _, err := s.Replay().Commit(context.Background(), a, stateNow)
+		held <- err
+	}()
+	<-r.entered
+	guard := time.AfterFunc(10*time.Second, func() { close(r.release) })
+	defer guard.Stop()
+
+	cancelled, cancel := context.WithCancel(context.Background())
+	cancel()
+	for name, op := range map[string]func(context.Context) error{
+		"replay lookup": func(ctx context.Context) error { _, _, err := s.Replay().Lookup(ctx, b.Key, stateNow); return err },
+		"generation":    func(ctx context.Context) error { _, err := s.Replay().HighestGeneration(ctx, stateNow); return err },
+		"commit":        func(ctx context.Context) error { _, _, err := s.Replay().Commit(ctx, b, stateNow); return err },
+		"run lookup":    func(ctx context.Context) error { _, _, err := s.Runs().Lookup(ctx, b.Key, stateNow); return err },
+		"run put":       func(ctx context.Context) error { return s.Runs().Put(ctx, b.Key, runRecord(), stateNow) },
+	} {
+		if err := op(cancelled); !errors.Is(err, persistence.ErrReplayUnavailable) && !errors.Is(err, persistence.ErrRunsUnavailable) {
+			t.Errorf("%s: cancelled waiter reported %v", name, err)
+		}
+		ctx, stop := context.WithTimeout(context.Background(), 20*time.Millisecond)
+		start := time.Now()
+		err := op(ctx)
+		stop()
+		if err == nil || time.Since(start) > 5*time.Second {
+			t.Errorf("%s: waiter outlived its deadline", name)
+		}
+	}
+	forgot := make(chan struct{})
+	go func() { s.Forget(); close(forgot) }()
+	select {
+	case <-forgot:
+		t.Fatal("Forget did not wait for the operation in progress")
+	case <-time.After(20 * time.Millisecond):
+	}
+	if !guard.Stop() {
+		t.Fatal("a waiter held the state until the guard released it")
+	}
+	close(r.release)
+	if err := <-held; err != nil {
+		t.Fatal("held commit failed:", err)
+	}
+	<-forgot
+	if _, _, err := s.Replay().Commit(context.Background(), b, stateNow); err != nil {
+		t.Fatal("state did not recover:", err)
+	}
+}

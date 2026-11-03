@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
-	"sync"
 	"time"
 
 	"github.com/tv-rain/barometer-go/internal/model/task"
@@ -29,8 +28,12 @@ var ErrStateUnavailable = errors.New("persistence: state unavailable")
 // records before replay records, and fails rather than proceeding when a
 // delete fails. A record is retained no longer than RetainUntil; a run record
 // carries the RetainUntil of the replay record of the same key.
+//
+// State is safe for concurrent use. Every operation holds a one-slot
+// semaphore that a caller waits for only until its context ends, so no
+// uninterruptible lock is held across a port call.
 type State struct {
-	mu       sync.Mutex
+	sem      chan struct{}
 	records  Records
 	capacity int
 	replay   map[[RecordNameSize]byte]replayEntry
@@ -52,7 +55,7 @@ func OpenState(ctx context.Context, records Records, capacity int, now time.Time
 	if records == nil || capacity < 1 || capacity > MaxClassRecords || now.IsZero() {
 		return nil, ErrStateUnavailable
 	}
-	s := &State{records: records, capacity: capacity, replay: map[[RecordNameSize]byte]replayEntry{}, runs: map[[RecordNameSize]byte]time.Time{}}
+	s := &State{sem: make(chan struct{}, 1), records: records, capacity: capacity, replay: map[[RecordNameSize]byte]replayEntry{}, runs: map[[RecordNameSize]byte]time.Time{}}
 	keys, err := s.list(ctx, ReplayClass)
 	if err != nil {
 		return nil, ErrStateUnavailable
@@ -106,10 +109,12 @@ func (s *State) Runs() RunLedger { return runView{s} }
 // so a later operation finds no retention, capacity or generation of a
 // cleared record. It writes nothing. Calling it while records remain only
 // loses index entries: a record found later is indexed again on access, but
-// retention and generation reads miss it until State is reopened.
+// retention and generation reads miss it until State is reopened. It has no
+// context, so it waits for an operation in progress, which its own context
+// bounds.
 func (s *State) Forget() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.sem <- struct{}{}
+	defer s.release()
 	clear(s.replay)
 	clear(s.runs)
 }
@@ -126,8 +131,10 @@ func (v runView) Forget()    { v.s.Forget() }
 
 func (v replayView) Lookup(ctx context.Context, key ReplayKey, now time.Time) (ReplayRecord, bool, error) {
 	s := v.s
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	if !s.acquire(ctx) {
+		return ReplayRecord{}, false, ErrReplayUnavailable
+	}
+	defer s.release()
 	if err := s.ready(ctx, now); err != nil {
 		return ReplayRecord{}, false, ErrReplayUnavailable
 	}
@@ -154,8 +161,10 @@ func (v replayView) Lookup(ctx context.Context, key ReplayKey, now time.Time) (R
 
 func (v replayView) HighestGeneration(ctx context.Context, now time.Time) (uint64, error) {
 	s := v.s
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	if !s.acquire(ctx) {
+		return 0, ErrReplayUnavailable
+	}
+	defer s.release()
 	if err := s.ready(ctx, now); err != nil {
 		return 0, ErrReplayUnavailable
 	}
@@ -168,8 +177,10 @@ func (v replayView) HighestGeneration(ctx context.Context, now time.Time) (uint6
 
 func (v replayView) Commit(ctx context.Context, rec ReplayRecord, now time.Time) (ReplayRecord, bool, error) {
 	s := v.s
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	if !s.acquire(ctx) {
+		return ReplayRecord{}, false, ErrReplayUnavailable
+	}
+	defer s.release()
 	if !rec.Valid() {
 		return ReplayRecord{}, false, ErrReplayRecord
 	}
@@ -202,8 +213,10 @@ func (v replayView) Commit(ctx context.Context, rec ReplayRecord, now time.Time)
 
 func (v runView) Lookup(ctx context.Context, key ReplayKey, now time.Time) (RunRecord, bool, error) {
 	s := v.s
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	if !s.acquire(ctx) {
+		return RunRecord{}, false, ErrRunsUnavailable
+	}
+	defer s.release()
 	if err := s.ready(ctx, now); err != nil {
 		return RunRecord{}, false, ErrRunsUnavailable
 	}
@@ -228,8 +241,10 @@ func (v runView) Lookup(ctx context.Context, key ReplayKey, now time.Time) (RunR
 
 func (v runView) Put(ctx context.Context, key ReplayKey, rec RunRecord, now time.Time) error {
 	s := v.s
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	if !s.acquire(ctx) {
+		return ErrRunsUnavailable
+	}
+	defer s.release()
 	if !rec.Valid() {
 		return ErrRunsUnavailable
 	}
@@ -253,6 +268,18 @@ func (v runView) Put(ctx context.Context, key ReplayKey, rec RunRecord, now time
 	}
 	return nil
 }
+
+// acquire takes the semaphore unless ctx ends first.
+func (s *State) acquire(ctx context.Context) bool {
+	select {
+	case s.sem <- struct{}{}:
+		return true
+	case <-ctx.Done():
+		return false
+	}
+}
+
+func (s *State) release() { <-s.sem }
 
 // ready checks cancellation and trusted time, then purges overdue records.
 func (s *State) ready(ctx context.Context, now time.Time) error {
