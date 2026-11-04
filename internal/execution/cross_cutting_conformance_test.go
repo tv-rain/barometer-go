@@ -18,6 +18,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/measurement"
 	"github.com/tv-rain/barometer-go/internal/model/task"
 	"github.com/tv-rain/barometer-go/internal/networkcontext"
+	"github.com/tv-rain/barometer-go/internal/persistence"
 	"github.com/tv-rain/barometer-go/internal/platform"
 	"github.com/tv-rain/barometer-go/internal/taskdecode"
 	"github.com/tv-rain/barometer-go/internal/testkit/loopback"
@@ -928,4 +929,146 @@ func TestCcProxyOverview(t *testing.T) {
 			t.Fatal("the target was dialed outside the proxy")
 		}
 	}
+}
+
+// intervalSchedule is a valid interval schedule anchored at starts_at, with
+// not_after at the 7-day task lifetime.
+func intervalSchedule(maxRuns, interval, jitter int) task.Schedule {
+	starts, ends := task.TimestampFromTime(anchor), task.TimestampFromTime(anchor.Add(7*24*time.Hour))
+	return task.Schedule{StartsAt: &starts, NotAfter: &ends, MaxRuns: &maxRuns, Retry: task.Retry{MaxAttempts: 1},
+		Repeat: task.Repeat{Mode: "interval", IntervalSeconds: &interval, JitterSeconds: &jitter}}
+}
+
+// tryStart applies the run accounting and the start envelope in the order
+// StartRun does: skip to the current occurrence, then require it to be due
+// and eligible, and reserve it only then.
+func tryStart(s task.Schedule, rec persistence.RunRecord, now time.Time, j execution.Jitter) (persistence.RunRecord, bool) {
+	rec = execution.Advance(s, rec, now, j)
+	start := validation.StartContext{Now: now, DueAt: rec.NextDue, CompletedRuns: rec.Runs, LocalZone: time.UTC,
+		Supported: true, ConstraintsSatisfied: true, SafetySatisfied: true}
+	if !execution.Due(s, rec, now) || !validation.RunEligible(s, start) {
+		return rec, false
+	}
+	return execution.Reserve(s, rec, j), true
+}
+
+// CC-SCHEDULE-SCHEDULING-MODEL-REPEAT-INTERVAL-FIELDS: interval and jitter
+// bounds, and due runs on the anchored grid of the maintainer-selected rule
+// for GO-SPEC-ISSUE-011 with injected jitter offsets. Occurrence 0 is due at
+// the anchor without jitter; occurrence k at anchor + k*interval plus an
+// offset capped at jitter; a window-delayed occurrence stays current until
+// the next one and is then skipped without consuming a run; a due time at or
+// after not_after never starts; at most one run starts per occurrence.
+// requirement-ref: REQ-SCHEDULE-0019
+// requirement-ref: REQ-SCHEDULE-0020
+// requirement-ref: REQ-SCHEDULE-0021
+// requirement-ref: REQ-SCHEDULE-0034
+func TestCcScheduleSchedulingModelRepeatIntervalFields(t *testing.T) {
+	t.Run("interval and jitter bounds", func(t *testing.T) {
+		for _, c := range []struct {
+			interval, jitter int
+			valid            bool
+		}{
+			{21600, 300, true}, {604800, 1800, true}, {21599, 300, false}, {604801, 300, false},
+			{21600, 299, false}, {21600, 1800, true}, {21600, 1801, false},
+		} {
+			s := intervalSchedule(2, c.interval, c.jitter)
+			start := validation.StartContext{Now: anchor, DueAt: anchor, Supported: true, ConstraintsSatisfied: true, SafetySatisfied: true}
+			if validation.RunEligible(s, start) != c.valid {
+				t.Fatalf("interval %d jitter %d: want valid %t", c.interval, c.jitter, c.valid)
+			}
+		}
+	})
+	t.Run("occurrence 0 is not jittered", func(t *testing.T) {
+		s := intervalSchedule(4, 21600, 300)
+		rec := execution.NewAccounting(s, anchor.Add(-time.Hour))
+		if _, ok := tryStart(s, rec, anchor.Add(-time.Second), fixedJitter(5*time.Minute)); ok {
+			t.Fatal("started before starts_at")
+		}
+		if _, ok := tryStart(s, rec, anchor, fixedJitter(5*time.Minute)); !ok {
+			t.Fatal("occurrence 0 delayed by jitter")
+		}
+	})
+	t.Run("later occurrences carry the injected offset, capped at jitter", func(t *testing.T) {
+		for offset, want := range map[time.Duration]time.Duration{0: 0, 150 * time.Second: 150 * time.Second, 5 * time.Minute: 5 * time.Minute, time.Hour: 5 * time.Minute} {
+			s := intervalSchedule(4, 21600, 300)
+			rec, _ := tryStart(s, execution.NewAccounting(s, anchor), anchor, fixedJitter(offset))
+			due := anchor.Add(6*time.Hour + want)
+			if _, ok := tryStart(s, rec, due.Add(-time.Second), fixedJitter(offset)); ok {
+				t.Fatalf("offset %v: started before its due time", offset)
+			}
+			if next, ok := tryStart(s, rec, due, fixedJitter(offset)); !ok || next.Runs != 2 || next.Next != 2 {
+				t.Fatalf("offset %v: not started at its due time", offset)
+			}
+		}
+	})
+	t.Run("one run per occurrence", func(t *testing.T) {
+		s := intervalSchedule(4, 21600, 300)
+		rec, _ := tryStart(s, execution.NewAccounting(s, anchor), anchor, fixedJitter(0))
+		if _, ok := tryStart(s, rec, anchor.Add(time.Hour), fixedJitter(0)); ok {
+			t.Fatal("second run in occurrence 0")
+		}
+	})
+	t.Run("window-delayed occurrence stays current, then is skipped", func(t *testing.T) {
+		s := intervalSchedule(4, 21600, 300)
+		// anchor is 12:00 UTC: occurrence 1 at 18:00, occurrence 2 at 00:00.
+		s.Window = &task.TimeWindow{Timezone: "local", Ranges: []task.TimeRange{{Start: 19 * 60, End: 20 * 60}}}
+		rec := execution.NewAccounting(s, anchor)
+		rec.Runs, rec.Next, rec.NextDue = 1, 1, anchor.Add(6*time.Hour)
+		if _, ok := tryStart(s, rec, anchor.Add(6*time.Hour+30*time.Minute), fixedJitter(0)); ok {
+			t.Fatal("started outside the window")
+		}
+		if next, ok := tryStart(s, rec, anchor.Add(7*time.Hour+10*time.Minute), fixedJitter(0)); !ok || next.Runs != 2 {
+			t.Fatal("window-delayed occurrence did not start when the window opened")
+		}
+		// No window minute before occurrence 2 becomes current: occurrence 1 is
+		// skipped and consumes no run; occurrence 2 is never run late either.
+		s.Window.Ranges = []task.TimeRange{{Start: 30, End: 60}}
+		skipped, ok := tryStart(s, rec, anchor.Add(12*time.Hour+40*time.Minute), fixedJitter(0))
+		if !ok || skipped.Runs != 2 || skipped.Next != 3 {
+			t.Fatalf("occurrence 1 not skipped: runs %d next %d", skipped.Runs, skipped.Next)
+		}
+	})
+	t.Run("runs may start close together after a delay", func(t *testing.T) {
+		// Recorded limitation of the selected rule: occurrence 1 starting just
+		// before occurrence 2 becomes current leaves only occurrence 2's
+		// offset between the two runs.
+		s := intervalSchedule(4, 21600, 300)
+		rec := execution.NewAccounting(s, anchor)
+		rec.Runs, rec.Next, rec.NextDue = 1, 1, anchor.Add(6*time.Hour)
+		late := anchor.Add(12*time.Hour - time.Second)
+		rec, ok := tryStart(s, rec, late, fixedJitter(10*time.Second))
+		if !ok {
+			t.Fatal("occurrence 1 not started late in its own interval")
+		}
+		if _, ok := tryStart(s, rec, anchor.Add(12*time.Hour+10*time.Second), fixedJitter(10*time.Second)); !ok {
+			t.Fatal("occurrence 2 not started at its jittered due time")
+		}
+	})
+	t.Run("due time at or after not_after never starts", func(t *testing.T) {
+		s := intervalSchedule(4, 21600, 300)
+		end := task.TimestampFromTime(anchor.Add(12 * time.Hour))
+		s.NotAfter = &end
+		rec, _ := tryStart(s, execution.NewAccounting(s, anchor), anchor, fixedJitter(0))
+		rec, ok := tryStart(s, rec, anchor.Add(6*time.Hour), fixedJitter(0))
+		if !ok {
+			t.Fatal("occurrence 1 before not_after not started")
+		}
+		if _, ok := tryStart(s, rec, anchor.Add(12*time.Hour), fixedJitter(0)); ok {
+			t.Fatal("occurrence 2 at not_after started")
+		}
+	})
+	t.Run("max_runs bounds the schedule", func(t *testing.T) {
+		s := intervalSchedule(3, 21600, 300)
+		rec, runs := execution.NewAccounting(s, anchor), 0
+		for k := range 5 {
+			var ok bool
+			if rec, ok = tryStart(s, rec, anchor.Add(time.Duration(k)*6*time.Hour+5*time.Minute), fixedJitter(5*time.Minute)); ok {
+				runs++
+			}
+		}
+		if runs != 3 || rec.Runs != 3 {
+			t.Fatalf("%d runs for max_runs 3", runs)
+		}
+	})
 }
