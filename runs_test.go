@@ -665,7 +665,7 @@ func TestStartRunDeviceConstraints(t *testing.T) {
 }
 
 // StartRun evaluates transport, VPN and validation conditions against the
-// access context read at reservation (DEV-644). An unsatisfied or
+// access context read at reservation. An unsatisfied or
 // undeterminable condition returns run_not_due before the run exists: the
 // path reads the access context once, and no runner call or result follows.
 // When the platform reports the required values, the same task runs.

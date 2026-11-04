@@ -335,7 +335,7 @@ func TestMixedResultMembershipIsPreserved(t *testing.T) {
 }
 
 // The bundle has no decoder, so its output is checked with the strict shared
-// parser (GO-SPEC-ISSUE-001 producer evidence, DEV-566): it is one complete
+// parser (GO-SPEC-ISSUE-001 producer evidence): it is one complete
 // value of valid UTF-8 with unique decoded names in every object, within the
 // bundle byte bound, with and without linkage and at the largest result size.
 func TestProducedBundleIsStrictJSON(t *testing.T) {

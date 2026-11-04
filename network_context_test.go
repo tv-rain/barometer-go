@@ -15,7 +15,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/testkit/loopback"
 )
 
-// Egress Network Context through the root facade (DEV-647). The endpoints
+// Egress Network Context through the root facade. The endpoints
 // are synthetic HTTPS servers on 127.0.0.1 with certificates from a
 // synthetic CA, reached on the direct path through the routes test seam and
 // on the proxy path through a scripted loopback CONNECT proxy. No real

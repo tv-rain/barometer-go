@@ -26,11 +26,11 @@ const (
 // Client is the opaque lifecycle owner. It has no exported fields. A zero-value
 // Client is uninitialized and usable; do not copy a Client after first use.
 //
-// The current implementation provides the lifecycle shell (DEV-600):
+// The current implementation provides the lifecycle shell:
 // initialization through reviewed internal adapters, bounded handle tables,
-// close and the lifecycle part of clearing, and task admission (DEV-592). Runs
-// (DEV-636, DEV-561), pending bundles (DEV-563) and persistent clearing
-// (DEV-564) and independent proxy-generation changes (DEV-646) followed.
+// close and the lifecycle part of clearing, and task admission. Runs,
+// pending bundles, persistent clearing and independent proxy-generation
+// changes followed.
 type Client struct {
 	mu         sync.Mutex
 	state      state

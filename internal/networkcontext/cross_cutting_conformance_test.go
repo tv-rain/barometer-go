@@ -18,7 +18,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/testkit/capability"
 )
 
-// Access-context family cases (DEV-644). The fake platform network holds
+// Access-context family cases. The fake platform network holds
 // synthetic canaries for every forbidden item beside the access state it
 // reports. The core writes no log. The egress cache holds classifications
 // keyed by generations and path name only, and the endpoint request carries

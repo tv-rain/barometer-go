@@ -18,7 +18,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/validation"
 )
 
-// Runtime conformance family cases (DEV-640). They drive the root facade with
+// Runtime conformance family cases. They drive the root facade with
 // the synthetic run adapters of runs_test.go: an injected clock, scripted
 // consent, device and time-zone capabilities, a test run ledger and a scripted
 // runner registered under the TCP-01 identifier. Where a case plan names a

@@ -16,7 +16,7 @@ import (
 
 // proxyCompatible is a synthetic rule that accepts every parameter value, so
 // a TCP-01-shaped synthetic task may select the proxy path. It is not the
-// production TCP-01 rule (DEV-454).
+// production TCP-01 rule.
 type proxyCompatible struct{}
 
 func (proxyCompatible) Compatible(task.Parameters) bool { return true }

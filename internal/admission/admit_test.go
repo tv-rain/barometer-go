@@ -363,7 +363,7 @@ func TestGateStepClasses(t *testing.T) {
 		{"malformed JSON", []byte(`{"schema_version":`), task.SchemaInvalid},
 		{"invalid UTF-8", append([]byte(baseTask[:len(baseTask)-1]+`,"labels":{"k":"`), 0xff, '"', '}', '}'), task.SchemaInvalid},
 		{"duplicate member", []byte(baseTask[:len(baseTask)-1] + `,"task_id":"synthetic-task"}`), task.SchemaInvalid},
-		// Strict JSON at the admission boundary (GO-SPEC-ISSUE-001, DEV-566):
+		// Strict JSON at the admission boundary (GO-SPEC-ISSUE-001):
 		// names compare after decoding escapes, duplicates are rejected in
 		// nested objects even when values are equal, integers are exact, and
 		// nesting depth is bounded before any later step runs.

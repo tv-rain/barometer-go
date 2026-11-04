@@ -45,7 +45,7 @@ Round trips use each model's intended boundary. Observations, context and result
 
 ## Synthetic Acceptance Evidence
 
-This table combines existing model cases with DEV-483 regressions. It describes model evidence, not execution, admission, platform or field conformance.
+This table combines existing model cases with model-validation regressions. It describes model evidence, not execution, admission, platform or field conformance.
 
 | Model family | Valid, invalid and boundary cases | Round trip, normalization and precedence |
 |---|---|---|
@@ -61,7 +61,7 @@ Validation uses `make check`, `git diff --check`, the public requirement-referen
 
 ## Local Validation Record
 
-On October 16, 2026, the DEV-483 working tree passed `make check`: formatting, host build, unit tests, race detector, static analysis, module integrity and Android/iOS ARM64 pure-Go compilation. `git diff --check` and the public requirement-reference checker also passed. The checker did not assess allocation history, coverage or semantic conformance. No native binding, device, CI, release or field validation was performed.
+On October 16, 2026, the model-validation working tree passed `make check`: formatting, host build, unit tests, race detector, static analysis, module integrity and Android/iOS ARM64 pure-Go compilation. `git diff --check` and the public requirement-reference checker also passed. The checker did not assess allocation history, coverage or semantic conformance. No native binding, device, CI, release or field validation was performed.
 
 All six 15-second fuzz runs with two workers per target passed:
 

@@ -12,7 +12,7 @@ import (
 	recordstore "github.com/tv-rain/barometer-go/internal/testkit/records"
 )
 
-// Synthetic facade cases for persistent clearing (DEV-564) over the
+// Synthetic facade cases for persistent clearing over the
 // production persistence.State and pending store on the fault-injectable
 // record port. They establish no runtime, platform, device-durability or
 // deletion guarantee.

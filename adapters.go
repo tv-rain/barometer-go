@@ -21,7 +21,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/registry"
 )
 
-// Reviewed implementation inputs (DEV-600): the default and maximum time a
+// Reviewed implementation inputs: the default and maximum time a
 // lifecycle transition waits for reserved entry points to finish and for the
 // persistent-clear capability to return. Expiry reports incomplete work and
 // keeps the client blocked; it never enlarges public attempt or cleanup bounds.
@@ -33,7 +33,8 @@ const (
 // adapters is the implementation-internal seam for trusted, reviewed inputs.
 // It has no JSON form and no exported path: only code in this package can bind
 // it, and no production code does yet, so Initialize fails closed. Tests bind
-// synthetic adapters from internal/testkit. Native wiring belongs to DEV-455.
+// synthetic adapters from internal/testkit. Native wiring belongs to the
+// native adapters and bindings work.
 type adapters struct {
 	clock       platform.Clock
 	registry    *registry.Registry // nil selects productionRegistry at bind; tests may inject a synthetic set
@@ -44,14 +45,14 @@ type adapters struct {
 	linkageKeys platform.LinkageKeyStore // optional; absence disables linkage only
 
 	// linkage holds the in-memory linkage epoch state of the client
-	// (DEV-675). bind creates it; each generation derives the linkage of new
+	// bind creates it; each generation derives the linkage of new
 	// bundles through it when initialization enables linkage, and clearing
 	// erases it.
 	linkage *linkage.Source
 
 	// contextApprovals are the reviewed egress classification versions,
 	// country codes and region codes a context endpoint may return
-	// (DEV-647); connection codes come from approvals. Without them every
+	// connection codes come from approvals. Without them every
 	// endpoint response is invalid and egress context stays unavailable.
 	// contextRoots are the trust anchors of context endpoints; nil selects
 	// the system roots, and tests supply a synthetic CA.
@@ -64,17 +65,17 @@ type adapters struct {
 	measurementRoots *x509.CertPool
 
 	// clearStorage deletes Barometer-owned persistent state for the storage
-	// scope (DEV-564). bind derives it from the record port with
+	// scope. bind derives it from the record port with
 	// storageClearer when it is unset; tests may substitute it. Without a
 	// record port it stays nil and ClearMeasurementData returns
 	// clearing_incomplete.
 	clearStorage func(context.Context) error
 
-	// run holds the inputs of run reservation and execution (DEV-636).
+	// run holds the inputs of run reservation and execution.
 	run runAdapters
 
 	// records is the state record port of the storage scope. Each generation
-	// opens a pending.Store over it (DEV-563), which is the engine's output
+	// opens a pending.Store over it, which is the engine's output
 	// and the source of NextBundle; Initialize reads the clearing marker from
 	// it and clearing deletes every record class in it. pendingLimits may
 	// lower the registered pending maxima; zero selects them.
@@ -89,11 +90,11 @@ type adapters struct {
 // run ledger and path seam are required; initialization fails closed without
 // them. The pending-output port is the generation's pending.Store. bind
 // derives the path seam from the network capability and the producer
-// implementation with newNetworkPaths when it is unset (DEV-644); tests may
+// implementation with newNetworkPaths when it is unset; tests may
 // substitute it. Consent, device state and time zone are optional: a task that
 // needs a missing one never runs. The ledger is persistence.State.Runs
-// (DEV-641); native network, consent, device and time-zone capabilities and
-// the implementation identity belong to DEV-455; tests bind synthetic ones.
+// native network, consent, device and time-zone capabilities and the
+// implementation identity belong to the native adapters and bindings work; tests bind synthetic ones.
 type runAdapters struct {
 	// Trusted local policy only. Default requires platform validation for NET-05.
 	// No task field or public facade option can enable unvalidated profiles.
@@ -110,7 +111,7 @@ type runAdapters struct {
 	zone                  platform.TimeZone
 	registry              *registry.Registry // the adapters' registry, set by successor
 
-	// contextCache is the client's in-memory egress cache (DEV-647). bind
+	// contextCache is the client's in-memory egress cache. bind
 	// creates it; each generation's lookup uses its own epoch of it, and
 	// clearing erases it.
 	contextCache *networkcontext.Cache

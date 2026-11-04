@@ -39,7 +39,8 @@ const (
 // carries no task value, so no task selects or changes the answer, and the
 // answer carries no user, account, device or consent-record identifier. Only
 // ConsentValid with a nil error permits an attempt. The shape is interim: the
-// native capability and its binding are a review point of DEV-455.
+// native capability and its binding are a review point of the native adapters and
+// bindings work.
 type Consent interface {
 	Status(context.Context) (ConsentStatus, error)
 }

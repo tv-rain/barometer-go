@@ -24,7 +24,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/validation"
 )
 
-// Runtime conformance family cases on the engine (DEV-640). They use the
+// Runtime conformance family cases on the engine. They use the
 // manual engine clock, the output-port fake and, for budgets, real TCP sockets
 // on 127.0.0.1 through the test-only loopback dialer and exchange servers. They
 // are not registered measurement, runtime, platform or field evidence.
@@ -219,7 +219,7 @@ func TestCcResultExecutionObject(t *testing.T) {
 	})
 }
 
-// Network-condition family cases (DEV-644). Each run uses the production
+// Network-condition family cases. Each run uses the production
 // direct-path context source over the fake platform network and a recording
 // loopback dialer source, so a run that does not start shows no dialer issued
 // and no runner call. Egress Network Context requirements run in
@@ -287,7 +287,7 @@ var ready = platform.AccessState{Generation: 1, Type: platform.NetworkWiFi, VPN:
 // constraints_unsatisfied, with no network operation; unknown never satisfies
 // a condition. The same task runs once the platform reports the values. A
 // required egress context field that no lookup can supply is
-// network_context_unavailable (DEV-647), with no request and no test run.
+// network_context_unavailable, with no request and no test run.
 // requirement-ref: REQ-EXECUTION-0031
 func TestCcExecutionFieldsNetwork(t *testing.T) {
 	cases := []struct {
@@ -448,11 +448,11 @@ func runs(t *testing.T, n task.NetworkRequirements, s platform.AccessState, fail
 	return ran(t, f, r)
 }
 
-// Network path family cases (DEV-645). Proxy runs use the production CONNECT
+// Network path family cases. Proxy runs use the production CONNECT
 // dialer and proxy-path context source against the scripted loopback proxy of
 // internal/testkit/loopback, which relays to loopback target servers. Runners
 // are synthetic; no production TCP-01, TLS-01, HTTP-01 or NET-05 runner
-// exists (DEV-454).
+// exists.
 
 // decodeExecution decodes a TCP-01 task whose execution carries the given
 // members after limits.
@@ -556,8 +556,8 @@ func pathFailures(t *testing.T) {
 // CC-EXECUTION-FIELDS-NETWORK-PATH: omitted network_path is direct and proxy
 // is selected explicitly; each denied proxy precondition and each injected
 // path failure is an explicit state with zero direct fallback. The NET-05 row,
-// one path snapshot across every profile step, needs the NET-05 runner
-// (DEV-454), so the family stays planned; a synthetic runner's streams within
+// one path snapshot across every profile step, needs the NET-05 runner,
+// so the family stays planned; a synthetic runner's streams within
 // one attempt share its snapshot, which TestEveryStreamOpensItsOwnTunnel
 // shows.
 // requirement-ref: REQ-EXECUTION-0006
@@ -888,7 +888,7 @@ func TestCcProxyProxyConfiguration(t *testing.T) {
 // non-HTTP/1.1 reply fails the attempt without direct fallback; a
 // configuration that adds a transport selector, a supported-tests list or a
 // non-loopback host is rejected and the previous one stays active. The
-// DNS-01-over-UDP row needs the DNS-01 codec and proxy rule (DEV-454), so the
+// DNS-01-over-UDP row needs the DNS-01 codec and proxy rule, so the
 // family stays planned; the CONNECT dialer itself refuses a non-stream dial
 // without contact (TestConnectAuthority).
 // requirement-ref: REQ-PROXY-0001

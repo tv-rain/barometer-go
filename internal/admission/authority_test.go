@@ -295,7 +295,7 @@ func TestGateIssuerAuthorization(t *testing.T) {
 		{"label above a dotted namespace", func(p *task.Permissions) { p.LabelNamespaces = []string{"campaign.wave"} }, map[string]any{"labels": map[string]any{"campaign": "a"}}, task.MediumRisk, task.IssuerNotAuthorized},
 		{"composite disabled", func(p *task.Permissions) { p.AllowComposite = false }, map[string]any{"test_id": "NET-05"}, task.MediumRisk, task.IssuerNotAuthorized},
 		// Enablement passes step 7, but composite steps cannot be matched yet,
-		// so step 8 fails closed (DEV-590).
+		// so step 8 fails closed.
 		{"composite enabled", func(*task.Permissions) {}, map[string]any{"test_id": "NET-05"}, task.MediumRisk, task.Unsupported},
 	}
 	for _, c := range cases {
@@ -436,7 +436,7 @@ func TestGateAuthorityPrecedence(t *testing.T) {
 // Admission-time rows of CC-LIMIT-LIMIT-HANDLING: each registered maximum is
 // accepted at the limit and rejected one unit above it with zero network
 // activity, and no task-controlled field raises an effective limit. The
-// NET-05 nine-step row needs the NET-05 codec (DEV-454) and is not covered.
+// NET-05 nine-step row needs the NET-05 codec and is not covered.
 // requirement-ref: REQ-LIMIT-0026
 // requirement-ref: REQ-LIMIT-0030
 func TestGateAdmissionLimitHandling(t *testing.T) {

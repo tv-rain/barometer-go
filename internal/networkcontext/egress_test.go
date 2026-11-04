@@ -19,7 +19,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/testkit/capability"
 )
 
-// Egress acquisition cases (DEV-647) with a scripted fetch: no socket is
+// Egress acquisition cases with a scripted fetch: no socket is
 // opened here. The fetch stands in for the HTTPS request that
 // internal/execution makes through the attempt's path dialer; the request
 // itself, TLS and HTTP validation are exercised against synthetic loopback
