@@ -49,7 +49,7 @@ func TestStalledCallbacksFailAtTheDeadline(t *testing.T) {
 		g.stall.Store(true)
 	}
 	key := persistence.RecordKey{Class: persistence.PendingClass}
-	r := records{n.records}
+	r := newRecords(n.records)
 	expectBounded(t, "Records.Get", func(ctx context.Context) error { _, _, err := r.Get(ctx, key); return err })
 	expectBounded(t, "Records.Put", func(ctx context.Context) error { return r.Put(ctx, key, []byte("v")) })
 	expectBounded(t, "Records.Delete", func(ctx context.Context) error { return r.Delete(ctx, key) })
@@ -64,10 +64,10 @@ func TestStalledCallbacksFailAtTheDeadline(t *testing.T) {
 		return err
 	})
 	expectBounded(t, "LinkageKeys.Derive", func(ctx context.Context) error {
-		_, err := linkageKeys{n.keys}.DeriveHMACSHA256(ctx, []byte("m"))
+		_, err := newLinkageKeys(n.keys).DeriveHMACSHA256(ctx, []byte("m"))
 		return err
 	})
-	expectBounded(t, "LinkageKeys.Delete", func(ctx context.Context) error { return linkageKeys{n.keys}.Delete(ctx) })
+	expectBounded(t, "LinkageKeys.Delete", func(ctx context.Context) error { return newLinkageKeys(n.keys).Delete(ctx) })
 	// A record port failure is the port's fixed error or the context's.
 	ctx, cancel := stalledCtx(t)
 	defer cancel()
@@ -167,7 +167,7 @@ func TestCallbackErrorsAndUnknownValuesAreUnavailable(t *testing.T) {
 		t.Error("an IANA zone did not load from the embedded database")
 	}
 
-	if _, err := (linkageKeys{&nativeKeys{size: 31}}).DeriveHMACSHA256(ctx, nil); err == nil {
+	if _, err := newLinkageKeys(&nativeKeys{size: 31}).DeriveHMACSHA256(ctx, nil); err == nil {
 		t.Error("a short derivation is available")
 	}
 
@@ -184,7 +184,7 @@ func TestCallbackErrorsAndUnknownValuesAreUnavailable(t *testing.T) {
 func TestRecordKeysAndValuesAreChecked(t *testing.T) {
 	ctx := context.Background()
 	n := newNatives()
-	r := records{n.records}
+	r := newRecords(n.records)
 	key := persistence.RecordKey{Class: persistence.RunClass, Name: [32]byte{0xab, 1}}
 	if err := r.Put(ctx, key, []byte("value")); err != nil {
 		t.Fatal(err)

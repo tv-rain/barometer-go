@@ -57,25 +57,79 @@ func millis(d time.Duration) int64 {
 
 // call runs f on its own goroutine with the remaining deadline and stops
 // waiting at that deadline or when ctx ends. A late result is discarded; a
-// panic is a failure.
+// panic is a failure. f is never started once the caller stopped waiting or
+// the deadline passed.
 func call[T any](ctx context.Context, f func(timeoutMillis int64) (T, error)) (T, error) {
+	return dispatch(ctx, nil, f)
+}
+
+// sequencer hands the callbacks of one adapter to native code one at a time,
+// in the order Go issued them. A call starts only after every earlier call
+// returned from native code or was skipped, so a call issued earlier is
+// entered first or never entered.
+type sequencer struct {
+	mu   sync.Mutex
+	tail chan struct{} // closed when the latest issued call is finished
+}
+
+func newSequencer() *sequencer {
+	s := &sequencer{tail: make(chan struct{})}
+	close(s.tail)
+	return s
+}
+
+// enqueue takes the next place in issue order. The caller waits for prev
+// before entering native code and closes mine when finished with it.
+func (s *sequencer) enqueue() (prev <-chan struct{}, mine chan struct{}) {
+	mine = make(chan struct{})
+	s.mu.Lock()
+	prev, s.tail = s.tail, mine
+	s.mu.Unlock()
+	return prev, mine
+}
+
+// Call states shared by a waiting caller and the goroutine that enters f.
+const (
+	callPending int32 = iota
+	callEntered
+	callAbandoned
+)
+
+// dispatch is call, ordered by s when s is not nil. f receives the time left
+// to the caller's deadline when it is entered.
+func dispatch[T any](ctx context.Context, s *sequencer, f func(timeoutMillis int64) (T, error)) (T, error) {
 	var zero T
 	d, err := budget(ctx)
 	if err != nil {
 		return zero, err
 	}
+	deadline := time.Now().Add(d)
+	var prev <-chan struct{}
+	var mine chan struct{}
+	if s != nil {
+		prev, mine = s.enqueue()
+	}
 	type result struct {
 		v   T
 		err error
 	}
+	var state atomic.Int32
 	done := make(chan result, 1)
 	go func() {
+		if s != nil {
+			defer close(mine)
+			<-prev
+		}
+		left := time.Until(deadline)
+		if left <= 0 || ctx.Err() != nil || !state.CompareAndSwap(callPending, callEntered) {
+			return
+		}
 		defer func() {
 			if recover() != nil {
 				done <- result{zero, errCallback}
 			}
 		}()
-		v, err := f(millis(d))
+		v, err := f(millis(left))
 		done <- result{v, err}
 	}()
 	t := time.NewTimer(d)
@@ -84,8 +138,10 @@ func call[T any](ctx context.Context, f func(timeoutMillis int64) (T, error)) (T
 	case r := <-done:
 		return r.v, r.err
 	case <-ctx.Done():
+		state.CompareAndSwap(callPending, callAbandoned)
 		return zero, ctx.Err()
 	case <-t.C:
+		state.CompareAndSwap(callPending, callAbandoned)
 		return zero, errDeadline
 	}
 }
@@ -111,7 +167,14 @@ func decodeKey(s string, class persistence.RecordClass) (persistence.RecordKey, 
 	return k, true
 }
 
-type records struct{ native Records }
+// records orders its callbacks: the native store sees them in issue order,
+// so a call abandoned at its deadline cannot arrive after a later Clear.
+type records struct {
+	native Records
+	seq    *sequencer
+}
+
+func newRecords(native Records) records { return records{native, newSequencer()} }
 
 // recordErr returns ctx's error when it ended, else ErrRecordsUnavailable.
 func recordErr(ctx context.Context) error {
@@ -125,7 +188,7 @@ func (r records) Get(ctx context.Context, key persistence.RecordKey) ([]byte, bo
 	if !key.Class.Valid() {
 		return nil, false, persistence.ErrRecordsUnavailable
 	}
-	v, err := call(ctx, func(ms int64) (*RecordValue, error) { return r.native.Get(encodeKey(key), ms) })
+	v, err := dispatch(ctx, r.seq, func(ms int64) (*RecordValue, error) { return r.native.Get(encodeKey(key), ms) })
 	if err != nil {
 		return nil, false, recordErr(ctx)
 	}
@@ -143,7 +206,7 @@ func (r records) Put(ctx context.Context, key persistence.RecordKey, value []byt
 		return persistence.ErrRecordsUnavailable
 	}
 	value = append([]byte{}, value...)
-	if _, err := call(ctx, func(ms int64) (struct{}, error) { return struct{}{}, r.native.Put(encodeKey(key), value, ms) }); err != nil {
+	if _, err := dispatch(ctx, r.seq, func(ms int64) (struct{}, error) { return struct{}{}, r.native.Put(encodeKey(key), value, ms) }); err != nil {
 		return recordErr(ctx)
 	}
 	return nil
@@ -153,7 +216,7 @@ func (r records) Delete(ctx context.Context, key persistence.RecordKey) error {
 	if !key.Class.Valid() {
 		return persistence.ErrRecordsUnavailable
 	}
-	if _, err := call(ctx, func(ms int64) (struct{}, error) { return struct{}{}, r.native.Delete(encodeKey(key), ms) }); err != nil {
+	if _, err := dispatch(ctx, r.seq, func(ms int64) (struct{}, error) { return struct{}{}, r.native.Delete(encodeKey(key), ms) }); err != nil {
 		return recordErr(ctx)
 	}
 	return nil
@@ -163,7 +226,7 @@ func (r records) List(ctx context.Context, class persistence.RecordClass) ([]per
 	if !class.Valid() {
 		return nil, persistence.ErrRecordsUnavailable
 	}
-	l, err := call(ctx, func(ms int64) (*StringList, error) { return r.native.List(int64(class), ms) })
+	l, err := dispatch(ctx, r.seq, func(ms int64) (*StringList, error) { return r.native.List(int64(class), ms) })
 	if err != nil {
 		return nil, recordErr(ctx)
 	}
@@ -186,12 +249,22 @@ func (r records) List(ctx context.Context, class persistence.RecordClass) ([]per
 
 // ---- Linkage keys
 
-type linkageKeys struct{ native LinkageKeyStore }
+// linkageKeys orders its callbacks like records, so an abandoned derivation,
+// which creates the key on first use, cannot recreate it after a later
+// Delete.
+type linkageKeys struct {
+	native LinkageKeyStore
+	seq    *sequencer
+}
+
+func newLinkageKeys(native LinkageKeyStore) linkageKeys {
+	return linkageKeys{native, newSequencer()}
+}
 
 func (l linkageKeys) DeriveHMACSHA256(ctx context.Context, message []byte) ([32]byte, error) {
 	var out [32]byte
 	message = append([]byte{}, message...)
-	b, err := call(ctx, func(ms int64) ([]byte, error) { return l.native.DeriveHMACSHA256(message, ms) })
+	b, err := dispatch(ctx, l.seq, func(ms int64) ([]byte, error) { return l.native.DeriveHMACSHA256(message, ms) })
 	if err != nil || len(b) != sha256.Size {
 		return out, errCallback
 	}
@@ -200,7 +273,7 @@ func (l linkageKeys) DeriveHMACSHA256(ctx context.Context, message []byte) ([32]
 }
 
 func (l linkageKeys) Delete(ctx context.Context) error {
-	_, err := call(ctx, func(ms int64) (struct{}, error) { return struct{}{}, l.native.Delete(ms) })
+	_, err := dispatch(ctx, l.seq, func(ms int64) (struct{}, error) { return struct{}{}, l.native.Delete(ms) })
 	if err != nil {
 		return errCallback
 	}
