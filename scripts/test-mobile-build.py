@@ -17,8 +17,9 @@ def main():
         (root / "go.mod").write_text(
             "module github.com/tv-rain/barometer-go\n\ngo 1.26.0\n"
         )
-        (root / "compatible.go").write_text(
-            "package barometer\n\nfunc Echo(value string) string { return value }\n"
+        (root / "barometermobile").mkdir()
+        (root / "barometermobile/compatible.go").write_text(
+            "package barometermobile\n\nfunc Echo(value string) string { return value }\n"
         )
         (root / "scripts").mkdir()
         shutil.copy(source / "scripts/mobile-build.sh", root / "scripts")
@@ -41,9 +42,9 @@ def main():
             print(f"PASS: {target}: {label}", flush=True)
 
         check("compatible exported boundary builds")
-        broken = root / "broken.go"
+        broken = root / "barometermobile/broken.go"
         broken.write_text(
-            "package barometer\n\n"
+            "package barometermobile\n\n"
             "func Unsupported() map[string]string { return nil }\n"
         )
         check("skipped unsupported export fails", "unsupported exports were skipped")
@@ -52,7 +53,7 @@ def main():
             "//go:build !android && !ios\n\npackage desktoponly\n"
         )
         broken.write_text(
-            "package barometer\n\n"
+            "package barometermobile\n\n"
             'import _ "github.com/tv-rain/barometer-go/internal/desktoponly"\n'
         )
         check("incompatible dependency fails", "build constraints exclude all Go files")

@@ -1,4 +1,5 @@
-// Package mobile keeps the local core in the smoke tooling dependency graph.
+// Package mobile keeps the local core and its gomobile facade in the native
+// build tooling dependency graph.
 package mobile
 
-import _ "github.com/tv-rain/barometer-go"
+import _ "github.com/tv-rain/barometer-go/barometermobile"

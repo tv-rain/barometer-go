@@ -213,7 +213,24 @@ var importRules = []importRule{
 			return !standardLibrary(imp)
 		},
 	},
+	{
+		// The adapter seam is the only path to the root's unexported bind.
+		name:      "only the root and the gomobile facade import the adapter seam",
+		tests:     true,
+		applies:   func(pkg string) bool { return pkg != modulePath && pkg != mobilePath },
+		forbidden: func(_, imp string) bool { return under(imp, internalPath("seam")) },
+	},
+	{
+		// The native build tooling module keeps the facade in its graph.
+		name:      "no package imports the gomobile facade",
+		tests:     true,
+		applies:   func(pkg string) bool { return pkg != mobilePath && pkg != modulePath+"/tools/mobile" },
+		forbidden: func(_, imp string) bool { return under(imp, mobilePath) },
+	},
 }
+
+// mobilePath is the gomobile facade package of decision 0014.
+const mobilePath = modulePath + "/barometermobile"
 
 func checkImports(files []importFile) []string {
 	var violations []string
@@ -289,7 +306,7 @@ func TestDependencyRules(t *testing.T) {
 	for _, f := range files {
 		seen[f.pkg] = true
 	}
-	for _, want := range []string{modulePath, internalPath("jsondecode"), internalPath("model/task"), internalPath("taskdecode"), internalPath("validation"), internalPath("registry"), internalPath("admission"), internalPath("testkit/conformance"), internalPath("testkit/delivery"), internalPath("persistence"), internalPath("testkit/replay"), internalPath("measurement"), internalPath("execution")} {
+	for _, want := range []string{modulePath, internalPath("jsondecode"), internalPath("model/task"), internalPath("taskdecode"), internalPath("validation"), internalPath("registry"), internalPath("admission"), internalPath("testkit/conformance"), internalPath("testkit/delivery"), internalPath("persistence"), internalPath("testkit/replay"), internalPath("measurement"), internalPath("execution"), internalPath("seam"), internalPath("trustdoc"), mobilePath} {
 		if !seen[want] {
 			t.Fatalf("dependency check did not load %s", want)
 		}
@@ -363,6 +380,11 @@ func TestDependencyRulesRejectForbiddenImports(t *testing.T) {
 		{"network context imports execution", file("networkcontext", false, internalPath("execution")), importRules[16].name},
 		{"network context imports results", file("networkcontext", false, internalPath("result")), importRules[16].name},
 		{"network context imports a platform adapter", file("networkcontext", false, internalPath("platform/android")), importRules[16].name},
+		{"internal package imports the seam", file("admission", false, internalPath("seam")), importRules[17].name},
+		{"internal test imports the seam", file("testkit", true, internalPath("seam")), importRules[17].name},
+		{"facade opens sockets", importFile{path: "synthetic.go", pkg: mobilePath, imports: []string{"net"}}, importRules[15].name},
+		{"root imports the facade", importFile{path: "synthetic.go", pkg: modulePath, imports: []string{mobilePath}}, importRules[18].name},
+		{"internal package imports the facade", file("execution", false, mobilePath), importRules[18].name},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
