@@ -33,11 +33,13 @@ export PATH="$work/bin:$PATH"
 go version
 go list -m golang.org/x/mobile
 
-# Keep generated sources until the skip check, then remove all temporary output.
+# Bind only the barometermobile facade (decision 0014); the root package is not
+# bound. Keep generated sources until the skip check, then remove all
+# temporary output.
 # -trimpath and stripped symbol and debug tables keep build-host paths out of
 # the compiled libraries.
 gomobile bind -work -trimpath -ldflags="-s -w" -target="$platform" "${flags[@]}" \
-  -o "$work/$artifact" github.com/tv-rain/barometer-go
+  -o "$work/$artifact" github.com/tv-rain/barometer-go/barometermobile
 
 # gobind sometimes reports unsupported exports only as comments and exits zero.
 status=0

@@ -1,6 +1,6 @@
 # Public Go API Boundary
 
-**Status:** Defined design; lifecycle, admission, runs, result delivery and dynamic-proxy facade implemented with synthetic adapters; runtime and binding support pending
+**Status:** Defined design; lifecycle, admission, runs, result delivery and dynamic-proxy facade implemented with synthetic adapters; gomobile facade and adapter callback interfaces implemented; native adapters, runtime and binding support pending
 **Specification baseline:** Draft `0.1.0` at `95dfeef1367f4c320bca7c7ae91b13ca7608b37f`
 
 ## Scope and Authority
@@ -22,7 +22,7 @@ The core has no mandatory scheduler, collector, backend, cloud provider, or appl
 
 ## Intended Signatures
 
-The module root remains the sole public package. `Client` is an opaque instance with no exported fields. Its Go wrapper is owned by the native binding; Flutter does not receive a Go object.
+The module root remains the only public Go package; the `barometermobile` facade is a binding surface, not a Go API ([Gomobile Facade](#gomobile-facade)). `Client` is an opaque instance with no exported fields. Its Go wrapper is owned by the native binding; Flutter does not receive a Go object.
 
 <!-- public-api-signatures:start -->
 ```go
@@ -56,7 +56,7 @@ The root package exports `NewClient`, `Initialize`, `Close`, `ClearMeasurementDa
 | Area | Current behavior |
 |---|---|
 | States | Uninitialized, initialized, transitioning, blocked (a transition that did not complete) and closed, following the [Lifecycle](#lifecycle-proxy-changes-and-clearing) table. Transitioning and blocked form its "transitioning or clearing incomplete" row. |
-| Trusted adapters | An unexported seam binds the clock, registry, `task.LocalPolicy` (whose generation is the active one), `admission.DeliveryStore`, `persistence.ReplayStore`, configuration approvals, the optional linkage key store, the reviewed egress classification approvals and the context endpoints' trust roots and the run inputs: the engine clock and jitter source, the `persistence.RunLedger`, the interim direct-path seam and the optional consent, device-state and time-zone capabilities. The pending-output port is not an adapter: the seam binds the `persistence.Records` port that holds pending bundles and optional lower pending limits, and each generation opens its own `pending.Store` over it as the engine's output and the source of `NextBundle`. That port is the storage scope's record port: `Initialize` reads the clearing marker from it, and clearing deletes every record class in it. A missing required run input or record port fails initialization closed. Nothing outside the root package can bind them, and no production code does yet, so `Initialize` fails closed with `not_initialized`. Tests bind synthetic adapters from `internal/testkit`. Native wiring belongs to the native platform integration. Trusted issuer keys are part of `task.LocalPolicy`; there is no separate key, verifier or verdict input. |
+| Trusted adapters | An unexported seam binds the clock, registry, `task.LocalPolicy` (whose generation is the active one), `admission.DeliveryStore`, `persistence.ReplayStore`, configuration approvals, the optional linkage key store, the reviewed egress classification approvals and the context endpoints' trust roots and the run inputs: the engine clock and jitter source, the `persistence.RunLedger`, the interim direct-path seam and the optional consent, device-state and time-zone capabilities. The pending-output port is not an adapter: the seam binds the `persistence.Records` port that holds pending bundles and optional lower pending limits, and each generation opens its own `pending.Store` over it as the engine's output and the source of `NextBundle`. That port is the storage scope's record port: `Initialize` reads the clearing marker from it, and clearing deletes every record class in it. A missing required run input or record port fails initialization closed. Only the root's unexported `bind` installs them. The `barometermobile` facade reaches it through `internal/seam` from native adapter callbacks ([Gomobile Facade](#gomobile-facade)); no other package can. A root client from `NewClient` has no adapters, so its `Initialize` fails closed with `not_initialized`. Root tests bind synthetic adapters from `internal/testkit`. Trusted issuer keys are part of `task.LocalPolicy`; there is no separate key, verifier or verdict input. |
 | `Initialize` | It first reads the clearing marker from the record port: if an earlier clear of the storage scope did not complete, including before a restart, it returns `clearing_incomplete` and the client becomes blocked, so only recovery clearing or `Close` proceed; an unreadable marker returns `not_initialized`. It then requires every mandatory adapter, decodes the closed `proxy`/`network_context`/`result_linkage` container through `internal/config`, prepares it and builds the admitter; only a complete result becomes a new generation. Any of these failures returns `not_initialized` and leaves the client uninitialized; no configuration-specific class is added. An invalid local policy is accepted here and fails each later admission with `task_policy_unavailable`, as `NewAdmitter` already defines. The policy and its target registrations stay immutable for the generation; a valid policy whose generation is below the highest this instance has activated fails with `not_initialized`. |
 | Serialization | Lifecycle calls mark the client transitioning and release the lock before adapter work, so a losing call returns `transition_in_progress` instead of blocking. `AdmitTask`, `StartRun`, `RunState`, `CancelRun`, `NextBundle` and `AcknowledgeBundle` reserve the current generation through an unexported counter; a launched run keeps its reservation until its engine returns. Close, clearing and policy replacement cancel the generation's adapter context, the parent of every run's context, and wait for reservations to finish, up to the lifecycle deadline. Proxy changes instead cancel and drain only the leased proxy contexts, as described below. A cancelled attempt is recorded as `cancelled_by_host` ([Deadlines, Cancellation and Cleanup](execution-models.md#deadlines-cancellation-and-cleanup)). |
 | `SetProxy` / `ClearProxy` | Serialize with lifecycle and policy replacement through the transitioning state. `SetProxy` accepts a standalone closed proxy object, bounded by the configuration decoder's 16,384-byte envelope and trusted connection-code approvals; invalid input returns `proxy_rejected` without changing configuration or cancelling work. A proxy reservation acquires a lease before path planning and retains it through the run's cleanup and result write. A valid change seals the old generation against new reservations, cancels its context with `proxy_reconfigured`, and waits for all its leases using one registered 2,000 ms cleanup budget on the engine clock, also capped by the shorter real-time lifecycle deadline. Success atomically installs a fresh internal generation or clears the proxy. Direct runs keep their contexts and continue; admission, new starts and other facade calls temporarily return `transition_in_progress`. Cleanup expiry returns `cleanup_incomplete`, installs nothing and leaves the client blocked for recovery clearing or close. A cancelled run cannot retry on a new generation; a new run requires a separate host-triggered, schedule-eligible start. Policy replacement preserves the current dynamic configuration. A successful change drops every cached proxy egress context; direct entries are kept. |
@@ -84,7 +84,97 @@ Reviewed implementation inputs:
 | Lifecycle deadline | 5 seconds by default, at most 30 seconds | Bounds the wait for reserved entry points, for the persistent-clear capability and for the trusted adapters during one admission. It reports incomplete work on expiry and cannot enlarge public attempt or cleanup bounds. Admission that exceeds it fails closed with `task_trust_unavailable`. It also bounds each pending-store call, including the engine's result writes. |
 | Pending limits | The registered maxima: 32 bundles and 4,194,304 aggregate bytes | An unexported adapter input may only lower them, to at least one bundle and the bytes of one maximum-size result in its own bundle; tests use it. |
 
-The shell and admission perform no network activity: the root package's production files import no network package, and the transitive dependency closure of `internal/admission` contains none for the host build ([Hostile-Input Evidence](admission.md#hostile-input-evidence)). The root closure contains package `net` only through the path dialers of `internal/execution`. A `network_path: proxy` task runs through the proxy configured at `Initialize`, never through the direct path ([Proxy Path](execution-models.md#proxy-path)). Runs reach the network only through the attempt-scoped dialer that the path seam supplies; `bind` derives the production direct path from a `platform.Network` capability, which reads coarse access context and sends no traffic itself, and `StartRun` evaluates transport, VPN and validation conditions against it ([Network Conditions and Access Context](execution-models.md#network-conditions-and-access-context)). No native network capability, runner, pending record port, run ledger or other capability is bound, so `Initialize` still fails closed in production. They establish no execution, result, bundle, proxy, production policy delivery, persistent-clearing, conformance or platform support, and admission and runs through the facade remain synthetic until reviewed production adapters exist.
+The shell and admission perform no network activity: the root package's production files import no network package, and the transitive dependency closure of `internal/admission` contains none for the host build ([Hostile-Input Evidence](admission.md#hostile-input-evidence)). The root closure contains package `net` only through the path dialers of `internal/execution`. A `network_path: proxy` task runs through the proxy configured at `Initialize`, never through the direct path ([Proxy Path](execution-models.md#proxy-path)). Runs reach the network only through the attempt-scoped dialer that the path seam supplies; `bind` derives the production direct path from a `platform.Network` capability, which reads coarse access context and sends no traffic itself, and `StartRun` evaluates transport, VPN and validation conditions against it ([Network Conditions and Access Context](execution-models.md#network-conditions-and-access-context)). The root `NewClient` binds no capability, so its `Initialize` fails closed; the gomobile facade binds them from native callbacks, and no Android or Apple implementation of those callbacks exists yet. They establish no execution, result, bundle, proxy, production policy delivery, persistent-clearing, conformance or platform support, and admission and runs through the facade remain synthetic until reviewed production adapters exist.
+
+## Gomobile Facade
+
+[Decision 0014](../../docs/decisions/0014-gomobile-facade-and-platform-matrix.md) adds the `barometermobile` package, the only package bound with gomobile ([Mobile Native Builds](mobile-build.md)). It is a binding surface for Barometer-owned Kotlin and Swift code, not a supported Go API: Go integrators use the root package. Only `string`, `[]byte`, `int64`, `bool`, `error`, and interfaces and struct pointers declared in the package cross it. The root gains no export: the facade assembles internal adapters and installs them through `internal/seam`, whose binder the root registers from `init` and which only the root and the facade may import (`TestDependencyRules`). A renamed or changed declaration is a breaking binding change.
+
+<!-- mobile-api-signatures:start -->
+```go
+package barometermobile
+
+type Records interface {
+	Get(key string, timeoutMillis int64) (*RecordValue, error) // nil means absent
+	Put(key string, value []byte, timeoutMillis int64) error
+	Delete(key string, timeoutMillis int64) error
+	List(class int64, timeoutMillis int64) (*StringList, error)
+}
+type LinkageKeyStore interface {
+	DeriveHMACSHA256(message []byte, timeoutMillis int64) ([]byte, error) // exactly 32 bytes
+	Delete(timeoutMillis int64) error
+}
+type Clock interface{ NowUnixMillis(timeoutMillis int64) (int64, error) }
+type Network interface {
+	Access(timeoutMillis int64) (*AccessState, error)
+	Watch(generation int64, observer NetworkObserver) (int64, error)
+	StopWatch(watchID int64)
+}
+type NetworkObserver interface{ Changed() }
+type Consent interface{ Status(timeoutMillis int64) (string, error) }
+type Device interface{ State(timeoutMillis int64) (*DeviceState, error) }
+type TimeZone interface{ Identifier(timeoutMillis int64) (string, error) }
+type SystemResolver interface {
+	LookupNetIP(network string, host string, timeoutMillis int64) (*StringList, error)
+}
+
+type Adapters struct {
+	Records     Records
+	Clock       Clock
+	Network     Network
+	Consent     Consent
+	Device      Device
+	TimeZone    TimeZone
+	Resolver    SystemResolver
+	LinkageKeys LinkageKeyStore
+}
+type RecordValue struct{}
+type StringList struct{}
+type AccessState struct{}
+type DeviceState struct{}
+type Client struct{}
+
+func NewRecordValue(value []byte) *RecordValue
+func NewStringList() *StringList
+func (l *StringList) Add(s string)
+func NewAccessState(generation int64, networkType string, vpn string, ipv4 string, ipv6 string, validated string, captivePortal string) *AccessState
+func NewDeviceState(batteryPercent int64, batteryKnown bool, charging bool, chargingKnown bool) *DeviceState
+func NewClient(adapters *Adapters, trust []byte) (*Client, error)
+func (c *Client) InstallEmbeddedTask(issuerID string, taskJSON []byte) (string, error)
+func (c *Client) InstallRemoteTask(signedPackage []byte) (string, error)
+func (c *Client) Initialize(configJSON string) error
+func (c *Client) AdmitTask(taskJSON string, sourceRef string) (string, error)
+func (c *Client) StartRun(taskHandle string) (string, error)
+func (c *Client) RunState(runHandle string) (string, error)
+func (c *Client) CancelRun(runHandle string) error
+func (c *Client) NextBundle() (string, error)
+func (c *Client) AcknowledgeBundle(bundleID string) error
+func (c *Client) SetProxy(proxyJSON string) error
+func (c *Client) ClearProxy() error
+func (c *Client) ClearMeasurementData() error
+func (c *Client) Close() error
+```
+<!-- mobile-api-signatures:end -->
+
+`TestFacadeSurfaceIsTheReviewedBindingSurface` fails if an export differs from this block or from its reviewed list, if a signature or `Adapters` field uses another type, or if a root lifecycle method is missing; `TestFacadeLifecycleMatchesTheRoot` fails if a lifecycle signature differs from the root's. The skipped-export guard of the native build covers the package.
+
+| Area | Behavior |
+|---|---|
+| Adapters | `Records`, `Clock` and `Network` are required. `Consent`, `Device`, `TimeZone` and `Resolver` are optional: a task that needs a missing capability never runs, and without `Resolver` the system resolver mode uses Go's own resolver. `LinkageKeys` is optional; its absence disables linkage only. The engine clock (`execution.SystemClock`), jitter (`execution.LocalJitter`), production registry, delivery store and the replay and run-ledger state stay in Go. The replay and run-ledger state is a `persistence.LazyState` over `Records` with capacity 1,024 replay records, opened on first use under that call's deadline. |
+| Record keys | `"<class>-<64 lowercase hex digits>"`, the record class (1 replay, 2 run, 3 pending, 4 clearing marker) and the Go-chosen 32-byte digest name. A listed key of another class or form, a list of more than 4,096 entries, or a value above `persistence.MaxRecordValue` is unavailable. |
+| Values | `AccessState`: network type `wifi`, `cellular`, `ethernet` or `other`; VPN `detected` or `not_detected`; IPv4, IPv6, validation and captive portal `yes` or `no`; any other text, and a negative generation, is unknown. `DeviceState`: a battery percentage outside 0 to 100, or one not marked known, is unknown; charging counts only when marked known. Consent is `valid`, `absent` or `ended`; anything else is unavailable. The time zone is an IANA name resolved against the embedded `time/tzdata` database (about 450 KB of library size); an empty name, `Local` or an unknown name is unavailable. A resolver answer must be at most 64 addresses in canonical text without zone; a native resolver error is recorded as DNS-01 `resolver_error`, never as `timeout` or `inconclusive`. A trusted time that is not positive is unavailable. |
+| Deadlines | Each blocking callback runs on its own goroutine and receives `timeoutMillis`: the caller's remaining deadline, rounded up to whole milliseconds, at least 1 and at most 30,000, and 5,000 for a call without a deadline. The facade stops waiting at that deadline or when the caller's context ends and treats the call as failed; a late result is discarded and a panic is a failure. A record write it abandoned is reported as an uncertain write; ordering it behind a later clear or close is the native store's obligation. Any native error is unavailable or unsatisfied, as the core port defines, and its text never crosses back. |
+| Network watch | `Watch` is a registration, bounded by one second. A registration that fails or stalls is treated as an access-network change, so the run observing it fails closed; a late registration is stopped. `Changed` is delivered at most once and never after the watch stopped; `StopWatch` runs without blocking the caller. |
+| Trusted local document | `NewClient` takes the `barometer-trust/1` document: strict JSON decoded by `internal/trustdoc` with the shared decoder, a closed schema with duplicate, unknown and missing members rejected, at most 1 MiB. It holds `policy` (generation, deployment permissions, issuers, target registrations and issuer keys), `configuration_approvals` (endpoints, connection codes, linkage scopes, allow-linkage flag) and `context_approvals` (connection codes, classification versions, country and region codes). Integers are canonical JSON integers, keys standard padded base64 of exactly 32 bytes, timestamps whole UTC seconds as `2006-01-02T15:04:05Z`, addresses canonical text without zone; every model constructor and the configuration and context approval validators then apply. Reviewed native code reads it from the application package (an Android asset or an iOS bundle resource) and passes it to `NewClient`. It is never fetched, never accepted from Dart, task data, signed packages, endpoint responses or collector replies, and is not a remotely delivered format. It has no trust-root field: measurement and context trust roots are the system store. The NET-05 unvalidated-profile flag stays off. Policy replacement is not exposed: a new policy takes effect through `Close` and a new client. |
+| Delivery records | `InstallEmbeddedTask` associates exact task bytes with an issuer for embedded origin, a trust input that only reviewed native code shipping the task supplies. `InstallRemoteTask` binds exact signed package bytes, which carry no authority. Both install into the client's own `admission.DeliveryStore` (64 records, 10-minute lifetime) under the document's policy generation and return the `sourceRef` for `AdmitTask`. |
+| Errors | Lifecycle methods return the root's codes. `NewClient` returns `adapters_invalid` for a missing required adapter or a platform other than Android or iOS, and `trust_invalid` for an invalid document. The install methods return `delivery_rejected`, `delivery_unavailable` (for example trusted time unavailable), `capacity_exceeded` or `client_closed`. A nil `Client` returns `not_initialized`. |
+| Identity | Results carry `library_version` `0.1.0` and `platform` `android` or `ios` from the build target. |
+
+`NewClient` performs no I/O and starts no measurement. gomobile cannot stop other native code in the same process from calling the facade; the trust boundary holds by construction of the Barometer-owned native glue and by review, as decision 0014 records.
+
+### Gomobile Facade Validation Record
+
+Host tests in `barometermobile` implement the callback interfaces in Go as native code would, with synthetic values only. `TestStalledCallbacksFailAtTheDeadline` stalls every blocking callback and requires a failure within the deadline plus a one-second liveness margin; `TestCallbacksReceiveTheRemainingDeadline`, `TestCallbackErrorsAndUnknownValuesAreUnavailable`, `TestRecordKeysAndValuesAreChecked` and `TestWatchFailsClosed` cover the deadline value, unknown values, errors, panics, key forms and the watch rules. `TestInitializeAndLifecycleThroughTheFacade`, `TestInitializeFailsClosedOnStalledStorage`, `TestConstructionPerformsNoIO`, `TestInstallErrorsUseFixedCodes` and `TestStalledConsentNeverPermitsAnAttempt` cover the lifecycle through the facade. `TestTCP01RunsThroughTheFacade` runs TCP-01 with the production registry, codec and runner to a loopback listener through a test-only dialer option that the exported constructor cannot set, and `TestDNS01RunsThroughTheFacade` runs DNS-01 in system resolver mode through the native resolver callback; both read the result from `NextBundle`. `internal/trustdoc` tests decode a complete document and reject malformed, incomplete and out-of-range ones. These are host tests: they establish no loading on a device, emulator or simulator, lifecycle behavior on a platform, conformance or platform support.
 
 ## Trusted Initialization and Admission
 
@@ -95,7 +185,7 @@ Trusted local policy, including its target registrations and trusted issuer keys
 <!-- requirement-ref: REQ-TRUST-0042 -->
 <!-- requirement-ref: REQ-TRUST-0045 -->
 
-`sourceRef` is a transient lookup reference to an adapter-installed delivery record. It is not an authentication assertion, issuer identifier, verification key, signature, policy document, or participant identifier. There is no public registration or minting method for these records.
+`sourceRef` is a transient lookup reference to an adapter-installed delivery record. It is not an authentication assertion, issuer identifier, verification key, signature, policy document, or participant identifier. The root package has no registration or minting method for these records. The gomobile facade's `InstallEmbeddedTask` and `InstallRemoteTask` install them into the facade-owned delivery store; only reviewed native code calls them ([Gomobile Facade](#gomobile-facade)).
 
 For embedded origin, `taskJSON` is the exact serialized task. For remote origin, `taskJSON` is the exact signed remote task package of [REQ-TRUST-0048](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0048), and Barometer verifies it against the trusted issuer keys of the active local policy ([Signed Remote Task Packages](admission.md#signed-remote-task-packages)). The method signature is unchanged; only the meaning of the bytes presented for remote origin changed, and the parameter name is not part of the Go API. The host is a transport for remote origin and does not perform or assert authentication ([REQ-TRUST-0042](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0042)). The reviewed delivery path must:
 
