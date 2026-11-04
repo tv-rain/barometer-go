@@ -365,8 +365,10 @@ func (s *Store) enter(ctx context.Context) (context.Context, func(), error) {
 	return ctx, func() { <-s.sem; cancel() }, nil
 }
 
-// ready loads storage when needed and purges expired bundles. A failed
-// delete keeps the entry and fails the caller; the next operation retries it.
+// ready loads storage when needed and purges expired bundles: retention runs
+// from a bundle's first persisted result (REQ-BUNDLE-0037). A failed delete
+// keeps the entry and fails the caller; the next operation retries it.
+// requirement-ref: REQ-BUNDLE-0037
 func (s *Store) ready(ctx context.Context) error {
 	if ctx.Err() != nil {
 		return ErrUnavailable

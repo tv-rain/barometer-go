@@ -94,8 +94,8 @@ func AccessRequired(n task.NetworkRequirements) bool {
 // registered vocabulary, never satisfies a condition (REQ-EXECUTION-0031):
 // unknown is not not_detected (REQ-EXECUTION-0019), and only the platform's
 // own validated yes satisfies require_validated, with no connectivity check
-// of the library's own (GO-SPEC-ISSUE-013).
-// requirement-ref: REQ-EXECUTION-0016
+// of the library's own (REQ-EXECUTION-0033, GO-SPEC-ISSUE-013).
+// requirement-ref: REQ-EXECUTION-0033
 // requirement-ref: REQ-EXECUTION-0017
 // requirement-ref: REQ-EXECUTION-0018
 // requirement-ref: REQ-EXECUTION-0019

@@ -4,7 +4,7 @@
 
 This planning map identifies shared format and library obligations, intended implementation owners and concrete conformance case families. The linked public text is the oracle; this document neither copies nor changes its normative behavior. A case family is a parameterized suite, and planned families are not conformance. No complete semantic review, implemented requirement, core/platform/field support or release is claimed.
 
-The [manifest](../traceability/cross-cutting.json) is pinned to public Draft `0.1.0` at `830e9564849ebfedaa0860d9f01032574e2b9fa3` and Go `b70cb7fa79da97c0fb5f3dcdd29f415b5b0e1cf3`, which adds REQ-LIMIT-0035, REQ-TRUST-0057 to REQ-TRUST-0059 and REQ-SCHEDULE-0044. It maps all 597 active shared requirements (346 `partial`, 251 `planned`) to the case families below and to `UT.*` unit-test cases; 53 family cases and 293 `UT.*` cases are `passed`, and its evidence records point to the [evidence report](../traceability/evidence/go-unit-b70cb7f.md). Shared-requirement references in the registered measurement, protocol and engine test files are each linked through a listed `UT.*` case, so none remains a location warning. Executed families are listed in [Runtime Case Families](execution-models.md#runtime-case-families) and in each family's Scope line below.
+The [manifest](../traceability/cross-cutting.json) is pinned to public Draft `0.1.0` at `d53765716e9413ba140935009a4c62e1260dff8c` and Go `7376e2a66705dd4b8c55a1fd08120e43db648791`, which adds REQ-SCHEDULE-0045, REQ-BUNDLE-0037 and REQ-EXECUTION-0033 and retires REQ-EXECUTION-0016. It maps all 599 active shared requirements (348 `partial`, 251 `planned`) to the case families below and to `UT.*` unit-test cases; 55 family cases and 293 `UT.*` cases are `passed`, and its evidence records point to the [evidence report](../traceability/evidence/go-unit-7376e2a.md). Shared-requirement references in the registered measurement, protocol and engine test files are each linked through a listed `UT.*` case, so none remains a location warning. Executed families are listed in [Runtime Case Families](execution-models.md#runtime-case-families) and in each family's Scope line below.
 
 Baselines and evidence are updated at the milestone cadence of the coordination [decision 0012](https://github.com/tv-rain/barometer/blob/main/docs/decisions/0012-lean-task-process.md): at the closeout of a sub-epic or on request, not after every task. Between updates, case-plan notes and `requirement-ref` comments may run ahead of the manifest. Earlier mappings are retained at the commits where they were current; `git log -- traceability/cross-cutting.json` lists them, and the [changelog](../CHANGELOG.md) records what each change added.
 
@@ -850,9 +850,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-BUNDLE-0015 -->
 <!-- requirement-ref: REQ-BUNDLE-0016 -->
+<!-- requirement-ref: REQ-BUNDLE-0037 -->
 
 - [REQ-BUNDLE-0015](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0015) → `CC-BUNDLE-CONSTRUCTION-AND-DELIVERY`.
 - [REQ-BUNDLE-0016](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/result-bundle.md#REQ-BUNDLE-0016) → `CC-BUNDLE-CONSTRUCTION-AND-DELIVERY`.
+- [REQ-BUNDLE-0037](https://github.com/tv-rain/barometer-spec/blob/d53765716e9413ba140935009a4c62e1260dff8c/data-formats/result-bundle.md#REQ-BUNDLE-0037) → `CC-BUNDLE-CONSTRUCTION-AND-DELIVERY`; retention from the first persisted result passed in `UT.internal.persistence.pending.TestRetentionBoundary` at Go `7376e2a`; the family stays planned.
 
 ### CC-BUNDLE-VALIDATION
 
@@ -1034,18 +1036,18 @@ Scope: Synthetic core contract cases. Executed with the fake platform network. P
 
 ### CC-EXECUTION-FIELDS-NETWORK-FIELDS
 
-Public source: `data-formats/task-execution.md`, section **Fields / Network / Fields**. Intended target: `internal/execution/attempt.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcExecutionFieldsNetworkFields`.
+Public source: `data-formats/task-execution.md`, section **Fields / Network / Fields**. Intended target: `internal/execution/attempt.go`. Case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcExecutionFieldsNetworkFields`.
 
-Case plan: Iterate allowed_transports [wifi], [cellular] and [wifi, cellular] against fake-platform network_type wifi, cellular, ethernet, other and unknown, and assert the task runs only when the reported type is in the list. Reject a task whose allowed_transports contains a value outside the initial list (wifi, cellular). Iterate vpn_policy any, exclude and require (and the omitted default any) against vpn_state detected, not_detected and unknown and assert run or do-not-run exactly per the public VPN eligibility table. Exercise require_validated true with validated yes, no and unknown, using the fake system method when available and the fake library internal check otherwise, and assert execution only on confirmed validation. Exercise context required_fields and allowed_country_codes with present, missing and non-matching values. Assert every do-not-run case issues no network operation. Requirements: REQ-EXECUTION-0016, REQ-EXECUTION-0017.
+Case plan: Iterate allowed_transports [wifi], [cellular] and [wifi, cellular] against fake-platform network_type wifi, cellular, ethernet, other and unknown, and assert the task runs only when the reported type is in the list. Reject a task whose allowed_transports contains a value outside the initial list (wifi, cellular). Iterate vpn_policy any, exclude and require (and the omitted default any) against vpn_state detected, not_detected and unknown and assert run or do-not-run exactly per the public VPN eligibility table. Exercise require_validated true with validated yes, no and unknown, and assert execution only on the platform's validated yes, with no library connectivity check sent for any value (REQ-EXECUTION-0033). Exercise context required_fields and allowed_country_codes with present, missing and non-matching values. Assert every do-not-run case issues no network operation. Requirements: REQ-EXECUTION-0033, REQ-EXECUTION-0017.
 
-`TestCcExecutionFieldsNetworkFields` runs the allowed-transport, VPN-policy and system-validation rows with the test-only fake platform network; its Network Context rows run in `TestCcExecutionFieldsNetworkFieldsNetworkContextRequirements`; the family stays planned because its library-internal-check row is not executable while [GO-SPEC-ISSUE-013](specification-issues.md#go-spec-issue-013-library-internal-check-for-require_validated) is open.
+`TestCcExecutionFieldsNetworkFields` runs the allowed-transport, VPN-policy and validation rows with the test-only fake platform network, and its Network Context rows run in `TestCcExecutionFieldsNetworkFieldsNetworkContextRequirements`. The library-internal-check row was removed with REQ-EXECUTION-0016 under the accepted disposition of [GO-SPEC-ISSUE-013](specification-issues.md#go-spec-issue-013-library-internal-check-for-require_validated).
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. Passed at Go `7376e2a` on the engine with the test-only fake platform network and synthetic context endpoints ([evidence](../traceability/evidence/go-unit-7376e2a.md#CC-EXECUTION-FIELDS-NETWORK-FIELDS)); partial evidence only, with no native capability or support claim.
 
-<!-- requirement-ref: REQ-EXECUTION-0016 -->
+<!-- requirement-ref: REQ-EXECUTION-0033 -->
 <!-- requirement-ref: REQ-EXECUTION-0017 -->
 
-- [REQ-EXECUTION-0016](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0016) → `CC-EXECUTION-FIELDS-NETWORK-FIELDS`.
+- [REQ-EXECUTION-0033](https://github.com/tv-rain/barometer-spec/blob/d53765716e9413ba140935009a4c62e1260dff8c/data-formats/task-execution.md#REQ-EXECUTION-0033) → `CC-EXECUTION-FIELDS-NETWORK-FIELDS`; replaces the retired REQ-EXECUTION-0016.
 - [REQ-EXECUTION-0017](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-execution.md#REQ-EXECUTION-0017) → `CC-EXECUTION-FIELDS-NETWORK-FIELDS`.
 
 ### CC-EXECUTION-FIELDS-NETWORK-FIELDS-VPN-POLICY
@@ -1904,19 +1906,21 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-SCHEDULE-SCHEDULING-MODEL-REPEAT-INTERVAL-FIELDS
 
-Public source: `data-formats/task-schedule.md`, section **Scheduling Model / Repeat / Interval Fields**. Intended target: `internal/execution/schedule.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcScheduleSchedulingModelRepeatIntervalFields`.
+Public source: `data-formats/task-schedule.md`, section **Scheduling Model / Repeat / Interval Fields**. Intended target: `internal/execution/schedule.go`. Case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcScheduleSchedulingModelRepeatIntervalFields`.
 
-Case plan: Exercise interval/jitter bounds and delayed due runs with injected random offsets; offsets are locally generated per run and stay inside start/expiry/window constraints.
+Case plan: Exercise interval/jitter bounds and delayed due runs with injected random offsets; offsets are locally generated per run and stay inside start/expiry/window constraints. Due times follow the anchored grid of REQ-SCHEDULE-0045: occurrence 0 at the anchor without jitter, a window-delayed occurrence current until the next, skipped occurrences that consume no run, no start at or after not_after, and one run per occurrence.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. Passed at Go `7376e2a` on run accounting and the start envelope with injected jitter ([evidence](../traceability/evidence/go-unit-7376e2a.md#CC-SCHEDULE-SCHEDULING-MODEL-REPEAT-INTERVAL-FIELDS)); partial evidence only, with no native capability or support claim.
 
 <!-- requirement-ref: REQ-SCHEDULE-0019 -->
 <!-- requirement-ref: REQ-SCHEDULE-0020 -->
 <!-- requirement-ref: REQ-SCHEDULE-0021 -->
+<!-- requirement-ref: REQ-SCHEDULE-0045 -->
 
 - [REQ-SCHEDULE-0019](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0019) → `CC-SCHEDULE-SCHEDULING-MODEL-REPEAT-INTERVAL-FIELDS`.
 - [REQ-SCHEDULE-0020](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0020) → `CC-SCHEDULE-SCHEDULING-MODEL-REPEAT-INTERVAL-FIELDS`.
 - [REQ-SCHEDULE-0021](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/task-schedule.md#REQ-SCHEDULE-0021) → `CC-SCHEDULE-SCHEDULING-MODEL-REPEAT-INTERVAL-FIELDS`.
+- [REQ-SCHEDULE-0045](https://github.com/tv-rain/barometer-spec/blob/d53765716e9413ba140935009a4c62e1260dff8c/data-formats/task-schedule.md#REQ-SCHEDULE-0045) → `CC-SCHEDULE-SCHEDULING-MODEL-REPEAT-INTERVAL-FIELDS`; passed in `TestCcScheduleSchedulingModelRepeatIntervalFields` at Go `7376e2a`.
 
 ### CC-SCHEDULE-SCHEDULING-MODEL-RETRY
 

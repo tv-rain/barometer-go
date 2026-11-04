@@ -15,14 +15,14 @@ SPEC_URL = "https://github.com/tv-rain/barometer-spec"
 IMPL_URL = "https://github.com/tv-rain/barometer-go"
 TOOLING_REVISION = "5d01879cfd1d47396c780befa2567f7e90439948"
 # Current source references advance independently of historical evidence/tooling.
-REFERENCE_REVISION = "6bd88047a85b3207bbc8ade00a44411bc70567b1"
+REFERENCE_REVISION = "d53765716e9413ba140935009a4c62e1260dff8c"
 # Independent reviewed inventory; never infer required mappings from the input under test.
 INVENTORY_REVISION = "c06ce6b7b73b8520f35ce10982315fcb4d05615b"
 BASELINES = {
-    "cross-cutting.json": ("830e9564849ebfedaa0860d9f01032574e2b9fa3",
-                           "b70cb7fa79da97c0fb5f3dcdd29f415b5b0e1cf3"),
-    "measurements.json": ("830e9564849ebfedaa0860d9f01032574e2b9fa3",
-                          "b70cb7fa79da97c0fb5f3dcdd29f415b5b0e1cf3"),
+    "cross-cutting.json": ("d53765716e9413ba140935009a4c62e1260dff8c",
+                           "7376e2a66705dd4b8c55a1fd08120e43db648791"),
+    "measurements.json": ("d53765716e9413ba140935009a4c62e1260dff8c",
+                          "7376e2a66705dd4b8c55a1fd08120e43db648791"),
 }
 # Earlier manifests are retained at the immutable commits where they were current, not as
 # committed copies (decision 0012); git history and CI report artifacts hold them.
