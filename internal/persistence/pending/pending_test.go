@@ -266,6 +266,7 @@ func TestOpenBundleIdentifierIsNotAcknowledged(t *testing.T) {
 // seconds and deleted, never returned, at and after it, on access and on
 // opening after a restart.
 // requirement-ref: REQ-LIMIT-0024
+// requirement-ref: REQ-BUNDLE-0037
 func TestRetentionBoundary(t *testing.T) {
 	for _, tc := range []struct {
 		name    string

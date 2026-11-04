@@ -341,11 +341,11 @@ func TestCcExecutionFieldsNetwork(t *testing.T) {
 // CC-EXECUTION-FIELDS-NETWORK-FIELDS: allowed_transports runs only on a
 // listed type; values outside the initial list are rejected at validation;
 // vpn_policy follows the public table; require_validated runs only on the
-// platform's validated yes. The library internal check of REQ-EXECUTION-0016
-// is not implemented (GO-SPEC-ISSUE-013), so the row that would use it is
-// not executed; the Network Context rows run in
+// platform's validated yes, with no library connectivity check: the
+// accepted disposition of GO-SPEC-ISSUE-013 removed it, so that row does not
+// apply. The Network Context rows run in
 // TestCcExecutionFieldsNetworkFieldsNetworkContextRequirements.
-// requirement-ref: REQ-EXECUTION-0016
+// requirement-ref: REQ-EXECUTION-0033
 // requirement-ref: REQ-EXECUTION-0017
 func TestCcExecutionFieldsNetworkFields(t *testing.T) {
 	types := map[platform.NetworkType]string{platform.NetworkWiFi: "wifi", platform.NetworkCellular: "cellular", platform.NetworkEthernet: "ethernet", platform.NetworkOther: "other", platform.NetworkUnknown: "unknown"}
@@ -953,8 +953,8 @@ func tryStart(s task.Schedule, rec persistence.RunRecord, now time.Time, j execu
 }
 
 // CC-SCHEDULE-SCHEDULING-MODEL-REPEAT-INTERVAL-FIELDS: interval and jitter
-// bounds, and due runs on the anchored grid of the maintainer-selected rule
-// for GO-SPEC-ISSUE-011 with injected jitter offsets. Occurrence 0 is due at
+// bounds, and due runs on the anchored grid of REQ-SCHEDULE-0045
+// (GO-SPEC-ISSUE-011) with injected jitter offsets. Occurrence 0 is due at
 // the anchor without jitter; occurrence k at anchor + k*interval plus an
 // offset capped at jitter; a window-delayed occurrence stays current until
 // the next one and is then skipped without consuming a run; a due time at or
@@ -963,6 +963,7 @@ func tryStart(s task.Schedule, rec persistence.RunRecord, now time.Time, j execu
 // requirement-ref: REQ-SCHEDULE-0020
 // requirement-ref: REQ-SCHEDULE-0021
 // requirement-ref: REQ-SCHEDULE-0034
+// requirement-ref: REQ-SCHEDULE-0045
 func TestCcScheduleSchedulingModelRepeatIntervalFields(t *testing.T) {
 	t.Run("interval and jitter bounds", func(t *testing.T) {
 		for _, c := range []struct {

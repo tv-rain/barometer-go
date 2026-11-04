@@ -7,7 +7,8 @@ import (
 	"github.com/tv-rain/barometer-go/internal/persistence"
 )
 
-// Run accounting under the interim due-time rule of GO-SPEC-ISSUE-011. The
+// Run accounting under the anchored due-time grid of REQ-SCHEDULE-0045
+// (GO-SPEC-ISSUE-011). The
 // host directs wakeups; these functions only decide which occurrence a start
 // request may reserve, and never start a run themselves.
 //
@@ -24,6 +25,7 @@ import (
 // requirement-ref: REQ-SCHEDULE-0020
 // requirement-ref: REQ-SCHEDULE-0021
 // requirement-ref: REQ-SCHEDULE-0030
+// requirement-ref: REQ-SCHEDULE-0045
 
 // NewAccounting returns the accounting of a task with no reserved run. A
 // fractional starts_at is rounded up, so the anchor is never before it.
