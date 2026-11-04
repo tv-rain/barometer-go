@@ -25,14 +25,13 @@ const (
 var ErrAdmitterConfig = errors.New("admission: invalid admitter configuration")
 
 // Admitter runs the ordered admission steps of REQ-TRUST-0046 for one client
-// instance. It implements steps 1 to 6 (DEV-586), issuer and policy resolution
+// instance. It implements steps 1 to 6, issuer and policy resolution
 // in step 7 and the input, options and path-authority parts of step 8
-// (DEV-587), target registration matching in step 8 (DEV-588), registry proxy
-// compatibility in step 8 (DEV-599), and effective risk with the consent
-// requirement in step 9 (DEV-589). Tasks that require egress Network Context
+// target registration matching in step 8, registry proxy compatibility in
+// step 8, and effective risk with the consent requirement in step 9. Tasks that require egress Network Context
 // (step 6) or NET-05 composite steps (step 8) are rejected as task_unsupported
-// until those capabilities exist (DEV-590). Admit adds replay (step 10) and
-// acceptance (step 11) through the replay store (DEV-591). Nothing here
+// until those capabilities exist. Admit adds replay (step 10) and
+// acceptance (step 11) through the replay store. Nothing here
 // publishes a handle or performs DNS, Network Context, proxy or measurement
 // activity. It is safe for concurrent use.
 type Admitter struct {

@@ -19,7 +19,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/testkit/capability"
 )
 
-// Synthetic facade cases for rotating result linkage (DEV-675) over the
+// Synthetic facade cases for rotating result linkage over the
 // production pending store, a test-scoped linkage key store and the
 // fault-injectable record port. The key store is not protected storage. No
 // runtime, platform, privacy or deployment evidence; no deployment enables

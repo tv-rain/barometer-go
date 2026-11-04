@@ -118,7 +118,7 @@ def reference_findings(references, manifests, catalog, milestone_ids=None):
     return errors, warnings
 
 
-# DEV-572 case-plan specificity. The public case record has no type field, so a human review case is
+# Case-plan specificity rule. The public case record has no type field, so a human review case is
 # typed by its ID prefix, a fixed opening and labelled fields, and is never automated coverage.
 REVIEW_PREFIX = "RV-"
 REVIEW_OPENING = "Human review case; not automated coverage."

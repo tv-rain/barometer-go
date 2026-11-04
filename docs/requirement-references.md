@@ -28,7 +28,7 @@ Keep a Go `requirement-ref` only where the code implements, or the test asserts,
 
 ## Representative Planned Use
 
-These references target Draft `0.1.0` companion specification changes for DEV-466. They demonstrate lookup and intended ownership only; no implementation, runtime tests, or immutable conformance baseline are established here. The linked `main` URLs become available after the public specification branch is merged. During review, validate against the explicitly supplied companion checkout.
+These references target Draft `0.1.0` companion specification changes that define stable requirement identifiers. They demonstrate lookup and intended ownership only; no implementation, runtime tests, or immutable conformance baseline are established here. The linked `main` URLs become available after the public specification branch is merged. During review, validate against the explicitly supplied companion checkout.
 
 <!-- requirement-ref: REQ-TASK-0001 -->
 
@@ -37,7 +37,7 @@ These references target Draft `0.1.0` companion specification changes for DEV-46
 <!-- requirement-history: REQ-TRUST-0001 -->
 <!-- requirement-ref: REQ-TRUST-0043 -->
 
-REQ-TRUST-0001 was retired at public revision `e97502747c917a16bc2b71337535ff972bbd7d64`; its successor [REQ-TRUST-0043](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0043) belongs with the `internal/admission` owner: refusal of remote tasks when signed package verification fails or cannot be performed, or when trusted policy, time or source context is unavailable. `CC-TRUST-SIGNED-REMOTE-PACKAGES` removes each input independently and verifies fail-closed admission (DEV-612).
+REQ-TRUST-0001 was retired at public revision `e97502747c917a16bc2b71337535ff972bbd7d64`; its successor [REQ-TRUST-0043](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0043) belongs with the `internal/admission` owner: refusal of remote tasks when signed package verification fails or cannot be performed, or when trusted policy, time or source context is unavailable. `CC-TRUST-SIGNED-REMOTE-PACKAGES` removes each input independently and verifies fail-closed admission.
 
 <!-- requirement-ref: REQ-TCP-01-0001 -->
 

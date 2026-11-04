@@ -33,7 +33,7 @@ const (
 	RunClass
 	// PendingClass holds pending Result Bundles, one per record.
 	PendingClass
-	// ClearingClass holds the single clearing-in-progress marker (DEV-564).
+	// ClearingClass holds the single clearing-in-progress marker.
 	ClearingClass
 
 	endClass // not a class; keep last
@@ -54,7 +54,7 @@ type RecordKey struct {
 // and conditional writes belong to the Go stores built on it; an
 // implementation only stores bytes. Values carry no secret, task input,
 // target, label or participant value. One Go store owns a storage scope at a
-// time; enforcing that is the platform backend's (DEV-455).
+// time; enforcing that is the platform backend's.
 //
 // Every method honors cancellation and the context's finite deadline and
 // returns ErrRecordsUnavailable, or the context's error, on any failure.

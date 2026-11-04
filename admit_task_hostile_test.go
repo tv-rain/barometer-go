@@ -42,7 +42,7 @@ func wantRejected(t *testing.T, h *harness, c *Client, th string, err error) {
 }
 
 // The strict JSON rules apply at the public boundary for both reviewed
-// origins (GO-SPEC-ISSUE-001 admission adoption, DEV-566): names compare after
+// origins (GO-SPEC-ISSUE-001 admission adoption): names compare after
 // decoding escapes, duplicate names are rejected in nested objects, integers
 // are exact and the complete-input limit is counted on original bytes.
 func TestAdmitTaskStrictJSON(t *testing.T) {
@@ -99,7 +99,7 @@ func TestAdmitTaskStrictJSON(t *testing.T) {
 }
 
 // The strict JSON rules apply to the signed package envelope at the public
-// boundary (GO-SPEC-ISSUE-001, DEV-566). The host installs the package bytes
+// boundary (GO-SPEC-ISSUE-001). The host installs the package bytes
 // and presents them with their reference; every malformed envelope is
 // task_source_unauthenticated before the task is parsed, and the package
 // limit is counted on the original escaped bytes. Escaped spellings of known

@@ -10,7 +10,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/admission"
 )
 
-// Reviewed implementation inputs (DEV-600). The registered limits set no
+// Reviewed implementation inputs. The registered limits set no
 // ceiling on locally admitted tasks or outstanding runs; these capacities bound
 // the facade tables only. The task table matches admission.MaxDeliveryCapacity,
 // because each admission consumes one adapter-installed delivery record.

@@ -84,7 +84,7 @@ func directHarness(t *testing.T) (*harness, *echoRunner, *loopback.Server) {
 	return h, r, srv
 }
 
-// The production direct path (DEV-644): bind derives it from the network
+// The production direct path: bind derives it from the network
 // capability; a run dials a real loopback socket through a fresh direct
 // dialer inside the metered attempt scope, and its result carries the access
 // context the platform reported with egress unavailable on the direct path.

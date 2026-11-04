@@ -12,7 +12,7 @@ import (
 	recordstore "github.com/tv-rain/barometer-go/internal/testkit/records"
 )
 
-// Synthetic facade cases for NextBundle and AcknowledgeBundle (DEV-563) over
+// Synthetic facade cases for NextBundle and AcknowledgeBundle over
 // the production pending store and the fault-injectable record port. No
 // runtime, platform or durability evidence.
 

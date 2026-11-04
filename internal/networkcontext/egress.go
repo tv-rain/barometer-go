@@ -27,7 +27,7 @@ const (
 	MaxFreshness = 900 * time.Second
 )
 
-// Reviewed implementation inputs (DEV-647): the most bytes of the response
+// Reviewed implementation inputs: the most bytes of the response
 // status line and headers, and the most cache entries kept at once. One
 // access-network generation needs at most a direct and a proxy entry; the
 // rest is slack for a proxy generation that has not yet been forgotten.

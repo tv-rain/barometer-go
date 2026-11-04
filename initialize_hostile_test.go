@@ -60,7 +60,7 @@ func wantNotInitialized(t *testing.T, c *Client, keys *countingKeys, err error) 
 }
 
 // The strict JSON rules apply to the host configuration container at the
-// public boundary (GO-SPEC-ISSUE-001, DEV-566): names compare after decoding
+// public boundary (GO-SPEC-ISSUE-001): names compare after decoding
 // escapes, duplicate names are rejected in every object, integers are exact
 // and the complete-input limit is counted on original bytes. Each rejection
 // leaves the client uninitialized and a later valid Initialize succeeds.

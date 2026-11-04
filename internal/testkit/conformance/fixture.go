@@ -78,7 +78,7 @@ func fixtureSchema() *jsondecode.Schema {
 var caseID = regexp.MustCompile(`^[a-z][a-z0-9-]{0,63}$`)
 
 // This runner pins its initial requirement allowlist to the active public
-// catalog at 05c1364af4f9a604b617fca45f060949b557d265, extended by DEV-582 with
+// catalog at 05c1364af4f9a604b617fca45f060949b557d265, extended at the GO-SPEC-ISSUE-007 adoption with
 // the safety and time-window IDs active at 5a37e82865a08922c4821c7318656286933421e5.
 // IDs identify assertions; their presence alone never establishes coverage of a
 // complete requirement.

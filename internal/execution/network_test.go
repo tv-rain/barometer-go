@@ -100,7 +100,7 @@ func (c changingCapture) Capture(ctx context.Context) (snap networkcontext.Snaps
 	return snap, err
 }
 
-// D1 (DEV-644): an unsatisfied network condition before the first attempt
+// D1: an unsatisfied network condition before the first attempt
 // records not_run with constraints_unsatisfied, because the run was reserved;
 // before a retry it ends the run without a second attempt or result, as an
 // unsatisfied precondition does.

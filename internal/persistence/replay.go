@@ -97,7 +97,7 @@ func (ReplayRecord) GoString() string { return "persistence.ReplayRecord" }
 // non-synchronizing and safe under interruption, and honor cancellation and
 // finite deadlines without background work. Any error, including an unreadable
 // or invalid record, means replay state is unavailable or invalid; it is never
-// treated as an absent record. Clear deletes replay state (DEV-564), and
+// treated as an absent record. Clear deletes replay state, and
 // Forget drops a State index of it.
 type ReplayStore interface {
 	// Lookup returns the retained record for key; ok is false when none exists.

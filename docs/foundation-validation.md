@@ -6,7 +6,7 @@
 
 ## Scope and Authority
 
-The approved [Foundation assessment boundary](https://app.clickup.com/t/86cbb831b) distinguishes reusable test infrastructure and concrete case plans from runtime enforcement and its executable validation. This document records Go-local capabilities and deferred ownership. It does not alter public requirements, close specification findings, promote Draft status, or establish measurement/platform support. Cross-repository status and the assessment package belong to the coordination repository.
+The approved Foundation assessment boundary distinguishes reusable test infrastructure and concrete case plans from runtime enforcement and its executable validation. This document records Go-local capabilities and deferred ownership. It does not alter public requirements, close specification findings, promote Draft status, or establish measurement/platform support. Cross-repository status and the assessment package belong to the coordination repository.
 
 The integrated original Foundation code baseline is [c8e3d21a112d7529d1027972a34cf12855cab7fa](https://github.com/tv-rain/barometer-go/commit/c8e3d21a112d7529d1027972a34cf12855cab7fa). This documentation preparation changes no production code, tests, public schemas or historical manifests/reports. The final preparation commit must be recorded separately in the tracker handoff.
 
@@ -28,13 +28,13 @@ These tasks remain backlog and are not enabled for agent execution. Their implem
 
 | Follow-up | Intended owner and required evidence |
 |---|---|
-| [Deadline and cancellation cleanup](https://app.clickup.com/t/124kk1zc4a9) | Execution/protocol owners: injected timers, active-I/O cancellation, first termination, bounded cleanup and race/leak assertions. Native lifecycle validation remains separately scoped. |
-| [Effective resource budgets](https://app.clickup.com/t/124kk1zc4ab) | Execution/protocol/result/bundle owners: lower-layer byte and connection accounting, buffering/partial failures, retries/composites and integrated output limits. Existing model size tests remain reusable but insufficient alone. |
-| [Retention and pending-result lifecycle](https://app.clickup.com/t/124kk1zc4ac) | Persistence/bundle owners: deterministic expiry, acknowledgement deletion, capacity limits, failed operations, restart/recovery and prevention of late upload. Native durability requires additional platform evidence. |
-| [Measurement-data clearing](https://app.clickup.com/t/124kk1zc4ae) | Lifecycle/persistence/state owners: fault injection for every clearing step, blocking new work, concurrent operations, interruption/recovery, repeated calls, invalidation, no network/new secrets and explicit incomplete deletion. Host-owned copies and OS reset/storage wiring require separate evidence. |
-| [Residual allocation and semantic mapping review](https://app.clickup.com/t/124kk1zc4af) | Public maintainers allocate/disposition residual normative sources; Go owners adopt reviewed mappings and immutable baselines. Inventory/semantic completeness requires review beyond structural checks. |
-| [Downstream strict-JSON adoption](https://app.clickup.com/t/124kk1zc4ag) | Schema, admission, measurement and binding/host consumers: caller-specific adoption and atomic/no-side-effect integration evidence for GO-SPEC-ISSUE-001. |
-| [Runtime observation vocabulary adoption](https://app.clickup.com/t/124kk1zc4aj) | DNS/TLS runtime producer and binding owners: actual protocol/API normalization, result integration and compatibility evidence for GO-SPEC-ISSUE-002. |
+| Deadline and cancellation cleanup | Execution/protocol owners: injected timers, active-I/O cancellation, first termination, bounded cleanup and race/leak assertions. Native lifecycle validation remains separately scoped. |
+| Effective resource budgets | Execution/protocol/result/bundle owners: lower-layer byte and connection accounting, buffering/partial failures, retries/composites and integrated output limits. Existing model size tests remain reusable but insufficient alone. |
+| Retention and pending-result lifecycle | Persistence/bundle owners: deterministic expiry, acknowledgement deletion, capacity limits, failed operations, restart/recovery and prevention of late upload. Native durability requires additional platform evidence. |
+| Measurement-data clearing | Lifecycle/persistence/state owners: fault injection for every clearing step, blocking new work, concurrent operations, interruption/recovery, repeated calls, invalidation, no network/new secrets and explicit incomplete deletion. Host-owned copies and OS reset/storage wiring require separate evidence. |
+| Residual allocation and semantic mapping review | Public maintainers allocate/disposition residual normative sources; Go owners adopt reviewed mappings and immutable baselines. Inventory/semantic completeness requires review beyond structural checks. |
+| Downstream strict-JSON adoption | Schema, admission, measurement and binding/host consumers: caller-specific adoption and atomic/no-side-effect integration evidence for GO-SPEC-ISSUE-001. |
+| Runtime observation vocabulary adoption | DNS/TLS runtime producer and binding owners: actual protocol/API normalization, result integration and compatibility evidence for GO-SPEC-ISSUE-002. |
 
 Native-specific work is linked to the mobile integration epic in the tracker. A Go fixture cannot establish native storage, suspension, routing, permissions, reset or host-owned deletion behavior. Individual assignees remain for workstream planning; role/package ownership and implementation dependencies are recorded in each task.
 
@@ -51,4 +51,4 @@ Preserve historical committed traceability reports. Fresh reports must retain ev
 | Date | Change |
 |---|---|
 | October 16, 2026 | Recorded delivered Foundation tooling, deferred runtime harness ownership and separate-assessment evidence boundaries without changing runtime behavior or historical reports. |
-| October 16, 2026 | Recorded Foundation acceptance after the assessment corrections (DEV-568 to DEV-573). Documentation only; deferred ownership, runtime behavior and support status are unchanged. |
+| October 16, 2026 | Recorded Foundation acceptance after the assessment corrections. Documentation only; deferred ownership, runtime behavior and support status are unchanged. |

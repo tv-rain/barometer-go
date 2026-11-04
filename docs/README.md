@@ -18,12 +18,12 @@
 
 - [`execution-models.md`](execution-models.md) — finite admission errors, pure attempt lifecycle, terminal reasons, retry boundaries and synthetic evidence limits.
 
-- [`measurement-requirements.md`](measurement-requirements.md) — DEV-473 measurement ownership and 108 planned case families at the public PR #7 merge, with immutable manifest/report baselines and explicit evidence gaps.
-- [`cross-cutting-requirements.md`](cross-cutting-requirements.md) — DEV-471 planned shared-contract targets and case families, rebaselined by DEV-568 to the current public baseline, with explicit gaps and maintenance.
+- [`measurement-requirements.md`](measurement-requirements.md) — measurement ownership and 108 planned case families at the public PR #7 merge, with immutable manifest/report baselines and explicit evidence gaps.
+- [`cross-cutting-requirements.md`](cross-cutting-requirements.md) — planned shared-contract targets and case families at the current public baseline, with explicit gaps and maintenance.
 
 - [`conformance-fixtures.md`](conformance-fixtures.md) — versioned Go-local synthetic fixture schema, exact-byte input, fixed context/policy profiles, deterministic runner and evidence limits.
 
-- [`admission.md`](admission.md) — DEV-583 admission design: ordered steps and error classes, consumed capabilities and owners, atomic replay persistence, execution outputs and package-creation checklists for `internal/admission` and `internal/registry`. `internal/registry` exists (DEV-584); `internal/admission` holds the delivery-record seam (DEV-585) and the gates for steps 1 to 6 (DEV-586).
+- [`admission.md`](admission.md) — admission design: ordered steps and error classes, consumed capabilities and owners, atomic replay persistence, execution outputs and package-creation checklists for `internal/admission` and `internal/registry`. `internal/registry` exists; `internal/admission` holds the delivery-record seam and the gates for steps 1 to 6.
 - [`trusted-policy-models.md`](trusted-policy-models.md) — separate trusted source context, exact-byte delivery binding, immutable policy/target models, revocation inputs and pending enforcement boundaries.
 - [`configuration-models.md`](configuration-models.md) — immutable host configuration, strict validation, separate trusted approvals, internal clock/key capabilities and preparation limits.
 - [`task-models.md`](task-models.md) — common task/schedule models, strict decoding, deterministic defaults, timing/eligibility validation, synthetic evidence and remaining admission/runtime work.

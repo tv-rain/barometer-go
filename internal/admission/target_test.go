@@ -20,7 +20,7 @@ import (
 
 // Synthetic test-scoped codecs and target rules under the registered TCP-01,
 // TLS-01, HTTP-01 and DNS-01 IDs. Their input shape and normalization are local
-// fixtures, not the public test schemas or production codecs (DEV-454): each
+// fixtures, not the public test schemas or production codecs: each
 // decodes literal string fields into one typed tuple, lowercases names and
 // writes IP addresses in netip canonical form, keeping IPv4-mapped IPv6 mapped.
 type tupleParameters struct {

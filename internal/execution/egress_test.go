@@ -20,7 +20,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/testkit/loopback"
 )
 
-// Egress Network Context through the engine (DEV-647). The endpoints are
+// Egress Network Context through the engine. The endpoints are
 // synthetic HTTPS servers on 127.0.0.1 with certificates from a synthetic CA;
 // the direct path reaches them through contextendpoint.Routes, which stands
 // in for name resolution, and the proxy path through a scripted loopback
@@ -280,7 +280,7 @@ func TestContextEndpointResponses(t *testing.T) {
 // is network_context_unavailable and an allowlist mismatch
 // constraints_unsatisfied, both without running the test; without a
 // requirement an unavailable context does not block the attempt. Platform
-// suspension during acquisition needs the native lifecycle signal (DEV-455).
+// suspension during acquisition needs the native lifecycle signal.
 // requirement-ref: REQ-CONTEXT-0025
 // requirement-ref: REQ-CONTEXT-0026
 // requirement-ref: REQ-CONTEXT-0027
@@ -444,7 +444,7 @@ func proxyFor(t *testing.T, e *endpointPair, cfg loopback.ProxyConfig) *loopback
 // direct contexts are separate cache entries and each proxy generation is
 // its own key; a proxy that cannot carry the lookup leaves egress
 // unavailable, which blocks only a task that requires it. NET-05 steps
-// sharing one snapshot need the NET-05 runner (DEV-454).
+// sharing one snapshot need the NET-05 runner.
 // requirement-ref: REQ-PROXY-0045
 // requirement-ref: REQ-PROXY-0024
 // requirement-ref: REQ-PROXY-0025

@@ -82,7 +82,8 @@ func (k *linkageKey) erase(context.Context) error {
 // state; clearing takes no key store, derivation or transport. Active
 // attempts and bounded cleanup are the root Client cases
 // (TestLifecycleTransitionsCancelRuns, TestClearRacesEntryPoints); host UI,
-// operating-system reset wiring, native keystores and sentinels are DEV-455.
+// operating-system reset wiring, native keystores and sentinels belong to the
+// native adapters and bindings work.
 // requirement-ref: REQ-LINKAGE-0023
 // requirement-ref: REQ-LINKAGE-0024
 func TestCcLinkageClearDataContract(t *testing.T) {

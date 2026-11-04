@@ -5,8 +5,8 @@
 // checks before it starts work. It owns the record encoding, bounds and
 // retention; the port only stores bytes. It obtains the linkage of a new
 // bundle from the derivation it is given and performs no transport or
-// upload, and it is not a mobile fallback: a platform backend (DEV-455)
-// supplies the port.
+// upload, and it is not a mobile fallback: a platform backend supplies
+// the port.
 package pending
 
 import (

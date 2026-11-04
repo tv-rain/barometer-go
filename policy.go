@@ -8,7 +8,7 @@ import (
 
 // replacePolicy is the only path that changes the active local policy and its
 // target registrations (REQ-TRUST-0029 to REQ-TRUST-0032). It is unexported,
-// like bind: the reviewed host adapter (DEV-455) authenticates and verifies a
+// like bind: the reviewed host adapter authenticates and verifies a
 // policy update before calling it, and no task, collector reply, target,
 // proxy or context endpoint reaches it. It replaces the policy by quiescing
 // the current generation and reinitializing a new one; nothing is updated in

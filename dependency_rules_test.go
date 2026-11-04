@@ -413,11 +413,10 @@ func TestDependencyRulesRejectForbiddenImports(t *testing.T) {
 
 // The admission path cannot reach the network: the complete transitive
 // dependency closure of internal/admission, as built for the host platform,
-// contains no network, TLS, process-execution or plugin package. Since
-// DEV-644 the root package links the direct-path dialer of
-// internal/execution, so its closure contains package net, and since DEV-647
-// crypto/tls for the Network Context endpoint request; since DEV-665 the
-// TLS-01 runner links the bounded handshake of internal/protocol/tls. The
+// contains no network, TLS, process-execution or plugin package. The
+// root package links the direct-path dialer of internal/execution, so its
+// closure contains package net, and crypto/tls for the Network Context
+// endpoint request; the TLS-01 runner links the bounded handshake of internal/protocol/tls. The
 // check then requires that internal/execution and internal/protocol/tls are
 // the only module packages in that closure importing a network or TLS
 // package, and that the closure contains no
@@ -488,7 +487,7 @@ func TestAdmissionHasNoNetworkDependency(t *testing.T) {
 	}
 }
 
-// The clearing path cannot reach the network (DEV-564): persistence.Clear
+// The clearing path cannot reach the network: persistence.Clear
 // and the stores and linkage state it clears live in internal/persistence, whose transitive
 // dependency closure for the host platform contains no network, TLS,
 // process-execution or plugin package. The root package's closure is checked

@@ -27,13 +27,13 @@ var (
 	errNoProxy         = errors.New("barometer: no proxy configured")
 )
 
-// networkPaths is the production path source (DEV-644, DEV-645). At
+// networkPaths is the production path source. At
 // reservation it reads the access context once, through the platform network
 // capability, and binds the run's result decoder to that snapshot's path:
 // direct, or the generation's proxy snapshot. Each attempt then captures its
 // own snapshot, evaluates the task's network conditions against it, acquires
 // its egress context through a dialer of the same path when the host
-// configured egress classification (DEV-647), attaches it to the result, and
+// configured egress classification, attaches it to the result, and
 // dials through a fresh dialer of the selected path inside the metered
 // attempt scope. A proxy task never receives a direct dialer, for its lookup
 // or its measurement. Implementation is the trusted producer identity

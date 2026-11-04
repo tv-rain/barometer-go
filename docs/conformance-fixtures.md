@@ -2,7 +2,7 @@
 
 ## Scope and Authority
 
-DEV-470 adds a Go-local development format and the test-only `internal/testkit/conformance` runner. Format version `1` and adapter `common-task-v1` exercise the existing task decoder with an explicitly synthetic `SYN-01` codec. They do not register a measurement, implement admission or policy enforcement, or create a public task/result/API representation. Other implementations are not required to adopt this format. There is no cross-repository change or merge ordering.
+This document defines a Go-local development format and the test-only `internal/testkit/conformance` runner. Format version `1` and adapter `common-task-v1` exercise the existing task decoder with an explicitly synthetic `SYN-01` codec. They do not register a measurement, implement admission or policy enforcement, or create a public task/result/API representation. Other implementations are not required to adopt this format. There is no cross-repository change or merge ordering.
 
 The public baseline is Draft `0.1.0` at immutable revision [`05c1364af4f9a604b617fca45f060949b557d265`](https://github.com/tv-rain/barometer-spec/commit/05c1364af4f9a604b617fca45f060949b557d265): [runtime JSON decoding](https://github.com/tv-rain/barometer-spec/blob/05c1364af4f9a604b617fca45f060949b557d265/data-formats/json-decoding.md), [common task fields](https://github.com/tv-rain/barometer-spec/blob/05c1364af4f9a604b617fca45f060949b557d265/data-formats/task.md), [schedule](https://github.com/tv-rain/barometer-spec/blob/05c1364af4f9a604b617fca45f060949b557d265/data-formats/task-schedule.md), [execution](https://github.com/tv-rain/barometer-spec/blob/05c1364af4f9a604b617fca45f060949b557d265/data-formats/task-execution.md), and [registered limits](https://github.com/tv-rain/barometer-spec/blob/05c1364af4f9a604b617fca45f060949b557d265/library/registered-limits.md). Public text controls runtime behavior; the fixture wrapper is outside that runtime JSON contract.
 
@@ -17,7 +17,7 @@ Every top-level field below is required:
 | `format_version` | Integer `1`; independent of runtime/specification/module versions. |
 | `case_id` | Unique within the corpus; lowercase letter followed by at most 63 lowercase letters, digits or hyphens. Used as the Go subtest name. |
 | `adapter` | Exact string `common-task-v1`. No latest/compatible fallback. |
-| `requirements` | 1–64 distinct IDs from the pinned allowlist: `REQ-TASK-0001` and `REQ-JSON-0001` through `REQ-JSON-0011`, plus, from DEV-582 at public `5a37e82865a08922c4821c7318656286933421e5`, `REQ-SAFETY-0012`, `REQ-SAFETY-0013`, `REQ-SAFETY-0031`, `REQ-SCHEDULE-0013`, `REQ-SCHEDULE-0014` and `REQ-SCHEDULE-0043`. This is an assertion reference, not complete coverage. |
+| `requirements` | 1–64 distinct IDs from the pinned allowlist: `REQ-TASK-0001` and `REQ-JSON-0001` through `REQ-JSON-0011`, plus, from the GO-SPEC-ISSUE-007 adoption at public `5a37e82865a08922c4821c7318656286933421e5`, `REQ-SAFETY-0012`, `REQ-SAFETY-0013`, `REQ-SAFETY-0031`, `REQ-SCHEDULE-0013`, `REQ-SCHEDULE-0014` and `REQ-SCHEDULE-0043`. This is an assertion reference, not complete coverage. |
 | `task_base64` | Canonical padded standard base64 containing 0–65,537 exact task bytes. Empty/malformed/oversized runtime input can be a negative case. |
 | `trusted_context` | Exact synthetic profile reference `remote-fixed-v1`, defined below. |
 | `local_policy` | Exact synthetic profile reference `synthetic-local-v1`, defined below. |
@@ -31,7 +31,7 @@ The complete fixture is capped at 1 MiB, 16 value levels and 4,096 value nodes. 
 
 ## Synthetic Profiles and Adapter
 
-`remote-fixed-v1` constructs a structurally valid remote `SourceContext` for policy generation `1` and completes it with issuer `synthetic-issuer` and issuance time `2026-10-15T00:00:00Z` through `WithVerifiedPackage`, as admission does after verifying a signed package (DEV-612). The accepted clock is the same fixed instant. No package is signed or verified: these values are set by an isolated test adapter and are not authentication evidence. The runner reads no wall clock, process timezone, secrets or participant data.
+`remote-fixed-v1` constructs a structurally valid remote `SourceContext` for policy generation `1` and completes it with issuer `synthetic-issuer` and issuance time `2026-10-15T00:00:00Z` through `WithVerifiedPackage`, as admission does after verifying a signed package. The accepted clock is the same fixed instant. No package is signed or verified: these values are set by an isolated test adapter and are not authentication evidence. The runner reads no wall clock, process timezone, secrets or participant data.
 
 `synthetic-local-v1` constructs a `LocalPolicy` at generation `1`, with the same issuer and deployment/issuer permissions for synthetic `SYN-01` version `0.1.0`: direct path only, low risk, no registrations, label namespaces, consent requirement or additional opt-ins. Its explicit limits are:
 
@@ -61,7 +61,7 @@ The existing `make test`, race checks and CI discover the runner tests through `
 
 The corpus in [`testdata`](../internal/testkit/conformance/testdata) includes positive default, explicit-false and explicit-limits cases and rejection cases for unknown fields, escaped duplicate names, trailing JSON, unsupported test versions, integer exponent spelling, null options and invalid UTF-8.
 
-DEV-571 adds REQ-JSON-0009/0010 boundary cases at maximum-minus-one, maximum and maximum-plus-one for the task decoder's local parse limits of 65,536 bytes, 128 value levels and 32,768 value nodes:
+The fixtures include REQ-JSON-0009/0010 boundary cases at maximum-minus-one, maximum and maximum-plus-one for the task decoder's local parse limits of 65,536 bytes, 128 value levels and 32,768 value nodes:
 
 | Cases | Below and at the limit | Above the limit |
 |---|---|---|

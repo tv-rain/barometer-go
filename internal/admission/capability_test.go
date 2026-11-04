@@ -14,7 +14,7 @@ const (
 	allowedCodes   = "execution.network.context.allowed_country_codes"
 )
 
-// Egress Network Context acquisition exists since DEV-647, so a valid
+// Egress Network Context acquisition exists, so a valid
 // execution.context requirement is admitted for embedded and remote origin
 // and evaluated at each attempt; an invalid context is still schema_invalid
 // (REQ-EXECUTION-0021). Admission performs no context lookup: the harness's

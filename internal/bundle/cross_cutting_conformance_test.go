@@ -21,7 +21,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/testkit/records"
 )
 
-// CC-LIMIT-RESULT-AND-BUNDLE-LIMITS (DEV-563): every encoded, count and
+// CC-LIMIT-RESULT-AND-BUNDLE-LIMITS: every encoded, count and
 // pending-storage maximum of REQ-LIMIT-0021 at −1, at and +1 where a fixture
 // reaches it, through the bundle producer and the production pending store
 // over the fault-injectable record port. A result that does not fit starts

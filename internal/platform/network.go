@@ -53,7 +53,8 @@ const (
 // platform reports a captive portal on that network; it is read only, never
 // opens or interacts with a portal, and carries no portal URL. It reaches no
 // Network Context: only NET-03 retains it, as its coarse platform_validation.
-// The field is interim; the native signal is a review point of DEV-455.
+// The field is interim; the native signal is a review point of the
+// native adapters and bindings work.
 type AccessState struct {
 	Generation    uint64
 	Type          NetworkType
@@ -76,7 +77,8 @@ type AccessState struct {
 // differs. stop cancels the watch, is idempotent and does not wait for a call
 // in progress. Implementors honor finite deadlines and do no background work
 // beyond delivering a change. The shape is interim: the native capability, its
-// change signal and its binding are a review point of DEV-455.
+// change signal and its binding are a review point of the native adapters and
+// bindings work.
 type Network interface {
 	Access(context.Context) (AccessState, error)
 	Watch(generation uint64, changed func()) (stop func())

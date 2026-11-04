@@ -64,7 +64,7 @@ Keep each change bounded to one coherent, independently reviewable outcome. Prop
 
 Use precise, conservative language in code, tests, and documentation. Draft behavior is not released support, synthetic validation is not field validation, and successful compilation is not platform support.
 
-Keep `docs/` current-state and update traceability manifests only at milestones, as `CONTRIBUTING.md` describes; record task history in the changelog, commits and the tracker.
+Keep `docs/` current-state and update traceability manifests only at milestones, as `CONTRIBUTING.md` describes; record task history in the changelog, commits and the tracker. Repository files, including new changelog entries, must not contain internal tracker task IDs or links; task IDs belong in branch names, commit messages and PRs.
 
 ## Canonical Commands
 

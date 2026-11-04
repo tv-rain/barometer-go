@@ -15,7 +15,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/model/task"
 )
 
-// Reviewed implementation input (DEV-645): the most bytes of a CONNECT
+// Reviewed implementation input: the most bytes of a CONNECT
 // response head, its status line and header fields with their terminating
 // empty line, that the dialer reads. The public text requires a bounded
 // exchange (REQ-PROXY-0017) and registers no value. A longer head fails the

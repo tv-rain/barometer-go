@@ -13,7 +13,7 @@ import (
 // the same exact bytes resolves to the same record, so the same admitted task:
 // its acceptance, expiry and retention are the original ones. It holds no task
 // bytes and has no serialized form. Publishing a handle and scheduling runs
-// belong to the lifecycle and execution owners (DEV-592, DEV-576).
+// belong to the lifecycle and execution owners.
 type Admitted struct {
 	gated      Gated
 	record     persistence.ReplayRecord
@@ -27,7 +27,7 @@ func (a Admitted) Redelivery() bool { return a.redelivery }
 // Identity is the replay identity of an admitted task: its replay key and the
 // digest of the exact accepted bytes. A redelivery of the same bytes has the
 // same identity. It is comparable so that the lifecycle owner can resolve a
-// redelivery to the handle it already published (DEV-592). It has no
+// redelivery to the handle it already published. It has no
 // serialized form and formats as its type name only.
 type Identity struct {
 	key    persistence.ReplayKey

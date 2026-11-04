@@ -17,7 +17,7 @@ import (
 	"github.com/tv-rain/barometer-go/internal/validation"
 )
 
-// Reviewed implementation input (DEV-636): runs active at the same time across
+// Reviewed implementation input: runs active at the same time across
 // all tasks of one client. Each active run uses one goroutine, so this also
 // bounds run workers. The registered limits set no ceiling.
 const maxActiveRuns = 4
@@ -32,9 +32,9 @@ const (
 // pathSource is the seam for the network path of one run, defined from this
 // consumer. It reads the run's access context at reservation and supplies the
 // run's context source, attempt-scoped dialers of the selected path and the
-// result decoder bound to the task. networkPaths is the production source
-// (DEV-644, DEV-645); tests may bind a scripted one. The context source it
-// returns acquires egress through the request's lookup (DEV-647).
+// result decoder bound to the task. networkPaths is the production source;
+// tests may bind a scripted one. The context source it
+// returns acquires egress through the request's lookup.
 type pathSource interface {
 	plan(ctx context.Context, r pathRequest) (pathPlan, error)
 }
