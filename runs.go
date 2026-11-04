@@ -180,6 +180,17 @@ func (c *Client) startRun(taskHandle string) (handle string, err error) {
 	return handle, nil
 }
 
+// expired reports whether ctx ended or its deadline passed. A call that
+// ignores ctx can return after the deadline but before ctx's timer fires, so
+// the deadline is compared with the current time as well.
+func expired(ctx context.Context) bool {
+	if ctx.Err() != nil {
+		return true
+	}
+	dl, ok := ctx.Deadline()
+	return ok && !time.Now().Before(dl)
+}
+
 // reserved is what a launched run releases when its engine returns. ctx is the
 // run's context, a child of its path generation that CancelRun cancels.
 type reserved struct {
@@ -208,7 +219,7 @@ func (rt *runtime) reserveRun(ctx, parent context.Context, proxy proxySnapshot, 
 
 	now := run.clock.Now()
 	rec, known, err := run.ledger.Lookup(ctx, key, now)
-	if err != nil || known && !rec.Valid() {
+	if err != nil || known && !rec.Valid() || expired(ctx) {
 		return "", execution.Plan{}, nil, notDue
 	}
 	if !known {
@@ -285,7 +296,7 @@ func (rt *runtime) reserveRun(ctx, parent context.Context, proxy proxySnapshot, 
 	}()
 	// The run is counted before it can do anything; an uncertain write
 	// loses this occurrence rather than risking an extra run.
-	if run.ledger.Put(ctx, key, execution.Reserve(s, rec, run.jitter), now) != nil {
+	if expired(ctx) || run.ledger.Put(ctx, key, execution.Reserve(s, rec, run.jitter), now) != nil {
 		return "", execution.Plan{}, nil, notDue
 	}
 	if rt.ctx.Err() != nil {
