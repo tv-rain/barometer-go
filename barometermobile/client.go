@@ -82,7 +82,7 @@ func newClient(in *Adapters, trust []byte, o options) (*Client, error) {
 	if err != nil {
 		return nil, errTrust
 	}
-	rec := records{in.Records}
+	rec := newRecords(in.Records)
 	trusted := clock{in.Clock}
 	state, err := persistence.NewLazyState(rec, replayCapacity)
 	if err != nil {
@@ -102,7 +102,7 @@ func newClient(in *Adapters, trust []byte, o options) (*Client, error) {
 	}
 	// Optional adapters stay nil interfaces when absent, never typed nils.
 	if in.LinkageKeys != nil {
-		a.LinkageKeys = linkageKeys{in.LinkageKeys}
+		a.LinkageKeys = newLinkageKeys(in.LinkageKeys)
 	}
 	if in.Consent != nil {
 		a.Consent = consent{in.Consent}
