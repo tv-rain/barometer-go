@@ -708,7 +708,7 @@ Public record and disposition first, then internal task-trust review alignment i
 
 ## GO-SPEC-ISSUE-011: Due Times and Catch-Up for Interval Repetition
 
-**Current state:** Open, raised October 22, 2026 while implementing `StartRun`. The public record [Interval Due Times and Catch-Up](https://github.com/tv-rain/barometer-spec/blob/9804ab34f21863723a94caba0541fd4e64870fce/specification-issues/interval-due-times-catch-up.md) is open with no disposition; public maintainers own the disposition, and a Go follow-up records its adoption. Go implements the conservative interim rule below, as approved by the task owner. See the [public record addendum](#public-record-addendum--october-22-2026).
+**Current state:** Accepted; adoption pending. The project owner selected alternative (a), the anchored grid with skipping, without jittering occurrence 0, on November 4, 2026, matching the interim rule below. The public record [Interval Due Times and Catch-Up](https://github.com/tv-rain/barometer-spec/blob/main/specification-issues/interval-due-times-catch-up.md) prepares REQ-SCHEDULE-0045 with an editorial pointer from REQ-SCHEDULE-0021, merge pending. The safety review of the rule is drafted in the internal registered-limits review and awaits sign-off; it notes that a window-delayed occurrence and the next one can start only that occurrence's jitter offset apart. Go behavior is unchanged. `TestCcScheduleSchedulingModelRepeatIntervalFields` runs the due-time cases of `CC-SCHEDULE-SCHEDULING-MODEL-REPEAT-INTERVAL-FIELDS`; after the merge, the Go reference update adds `requirement-ref` comments for REQ-SCHEDULE-0045 and the milestone mapping records the family. The sections below keep their original wording as historical evidence. See the [public record addendum](#public-record-addendum--october-22-2026).
 
 ### Identity, Baselines and Requirements
 
@@ -752,7 +752,7 @@ The sections above keep their wording as historical evidence, including the stat
 
 ## GO-SPEC-ISSUE-012: Start of Unacknowledged Bundle Retention
 
-**Current state:** Open, raised October 22, 2026 while implementing the pending-result store. No public record exists yet; public maintainers own the disposition. Go implements the conservative interim rule below, which the task owner approved with the pending-store plan.
+**Current state:** Accepted; adoption pending. The project owner selected retention from a bundle's first persisted result on November 4, 2026, matching the interim rule below. The public record [Start of Unacknowledged Bundle Retention](https://github.com/tv-rain/barometer-spec/blob/main/specification-issues/bundle-retention-start.md) is opened with REQ-BUNDLE-0037 and editorial pointers from REQ-BUNDLE-0015 step 8 and REQ-LIMIT-0024, merge pending. The privacy review of the rule is drafted in the internal registered-limits review and awaits sign-off. Go behavior is unchanged, and `TestRetentionBoundary` already covers the retention cases; after the merge, the Go reference update adds `requirement-ref` comments for REQ-BUNDLE-0037. The sections below keep their original wording as historical evidence, including the statement that no public record exists.
 
 ### Identity, Baselines and Requirements
 
@@ -787,7 +787,7 @@ Public record and disposition first, then internal alignment if a retention vali
 
 ## GO-SPEC-ISSUE-013: Library Internal Check for `require_validated`
 
-**Current state:** Open, raised October 23, 2026 while implementing network-condition evaluation. The public record [Library Internal Check for `require_validated`](https://github.com/tv-rain/barometer-spec/blob/32062c4bafcc29f5050ca6b78423f2acaefdde56/specification-issues/require-validated-internal-check.md) is open with no disposition; public maintainers own the disposition, and a Go follow-up records its adoption. Go implements the conservative interim rule below, which the task owner approved with the network-condition plan. See the [public record addendum](#public-record-addendum--october-23-2026).
+**Current state:** Accepted; adoption pending. The project owner selected alternative (a) on November 4, 2026: the library internal-check clause is removed and only the platform's own `validated: yes` satisfies `require_validated`, matching the interim rule below. The public record [Library Internal Check for `require_validated`](https://github.com/tv-rain/barometer-spec/blob/main/specification-issues/require-validated-internal-check.md) prepares REQ-EXECUTION-0033, which replaces the retired REQ-EXECUTION-0016, merge pending. No library check is introduced, so its safety and privacy review does not apply, and no internal validation plan names the check. Go behavior is unchanged. The library-internal-check row of `CC-EXECUTION-FIELDS-NETWORK-FIELDS` does not apply under the accepted rule; after the merge, the Go reference update replaces the REQ-EXECUTION-0016 references with REQ-EXECUTION-0033 and the milestone mapping records the family. The sections below keep their original wording as historical evidence. See the [public record addendum](#public-record-addendum--october-23-2026).
 
 ### Identity, Baselines and Requirements
 
