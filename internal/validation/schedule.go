@@ -15,8 +15,10 @@ type TimingContext struct {
 	Origin     string
 	AcceptedAt time.Time
 	IssuedAt   *time.Time
-	// True only for release-reviewed one-time embedded tasks that the host will
-	// not persist across application updates.
+	// Permits an embedded task with repeat mode none and max_runs 1 to omit
+	// not_after (REQ-LIMIT-0013). The caller sets it only for embedded origin,
+	// whose release review fixes such a task to one run and whose host does
+	// not persist it across application updates.
 	EmbeddedOneTimeException bool
 }
 

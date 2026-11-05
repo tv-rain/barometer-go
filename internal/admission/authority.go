@@ -232,10 +232,8 @@ func narrow(l task.PolicyLimits, c task.Candidate, base time.Time) (task.PolicyL
 		return l, false
 	}
 	l.MaxRuns, l.MaxAttempts = *s.MaxRuns, s.Retry.MaxAttempts
-	if s.NotAfter != nil {
-		if s.NotAfter.AfterTime(base.Add(time.Duration(l.MaxValiditySeconds) * time.Second)) {
-			return l, false
-		}
+	if validityEnd(s, base).AfterTime(base.Add(time.Duration(l.MaxValiditySeconds) * time.Second)) {
+		return l, false
 	}
 	if s.Repeat.Mode == "interval" {
 		i, j := s.Repeat.IntervalSeconds, s.Repeat.JitterSeconds
@@ -251,4 +249,21 @@ func narrow(l task.PolicyLimits, c task.Candidate, base time.Time) (task.PolicyL
 		l.MinRetryDelayMS, l.MaxRetryDelayMS, l.MaxRetryJitterMS = b.InitialDelayMS, b.MaxDelayMS, b.JitterMS
 	}
 	return l, true
+}
+
+// oneTimeValidity is the validity Barometer assigns to an embedded one-time
+// task admitted without not_after under REQ-LIMIT-0013: the registered maximum
+// task lifetime of REQ-LIMIT-0009. It bounds the task's validity against the
+// issuer and local validity ceilings and sets the replay record's expiry, so
+// the record is retained to the REQ-LIMIT-0023 cap.
+const oneTimeValidity = 604800 * time.Second
+
+// validityEnd is the end of a candidate's validity: its not_after, or for an
+// embedded one-time task without one, oneTimeValidity after the whole second
+// of base, the acceptance time.
+func validityEnd(s task.Schedule, base time.Time) task.Timestamp {
+	if s.NotAfter != nil {
+		return *s.NotAfter
+	}
+	return task.TimestampFromTime(base.Truncate(time.Second).Add(oneTimeValidity))
 }

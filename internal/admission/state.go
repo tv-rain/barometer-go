@@ -138,11 +138,9 @@ func (a *Admitter) Admit(ctx context.Context, sourceRef string, presented []byte
 		return redeliver(g, existing, digest)
 	}
 	// Step 11: the record is durable before the task is admitted.
-	notAfter := g.candidate.Schedule.NotAfter
-	if notAfter == nil {
-		return Admitted{}, admissionError(task.TrustUnavailable)
-	}
-	rec, err := persistence.NewReplayRecord(key, digest, g.authority.generation, source.Origin(), *notAfter, now)
+	// An embedded one-time task without not_after has the validity end that
+	// issuer authority was checked against.
+	rec, err := persistence.NewReplayRecord(key, digest, g.authority.generation, source.Origin(), validityEnd(g.candidate.Schedule, now), now)
 	if err != nil {
 		return Admitted{}, admissionError(task.TrustUnavailable)
 	}
