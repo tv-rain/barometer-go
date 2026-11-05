@@ -287,3 +287,41 @@ func TestWatchFailsClosed(t *testing.T) {
 		}
 	}
 }
+
+// stubRecords returns one fixed Get result.
+type stubRecords struct {
+	Records
+	v   *RecordValue
+	err error
+}
+
+func (s stubRecords) Get(string, int64) (*RecordValue, error) { return s.v, s.err }
+
+func TestRecordGetMapsFoundAbsentAndError(t *testing.T) {
+	ctx := context.Background()
+	key := persistence.RecordKey{Class: persistence.ReplayClass}
+	for name, tc := range map[string]struct {
+		native  stubRecords
+		value   string
+		found   bool
+		failure bool
+	}{
+		"found":       {native: stubRecords{v: NewRecordValue([]byte("v"))}, value: "v", found: true},
+		"found empty": {native: stubRecords{v: NewRecordValue(nil)}, found: true},
+		"absent":      {native: stubRecords{v: NewAbsentRecordValue()}},
+		"nil":         {native: stubRecords{}, failure: true},
+		"error":       {native: stubRecords{v: NewAbsentRecordValue(), err: errSynthetic}, failure: true},
+		"oversized":   {native: stubRecords{v: NewRecordValue(make([]byte, persistence.MaxRecordValue+1))}, failure: true},
+	} {
+		v, ok, err := newRecords(tc.native).Get(ctx, key)
+		if tc.failure {
+			if !errors.Is(err, persistence.ErrRecordsUnavailable) || ok || v != nil {
+				t.Errorf("%s: got %q, %v, %v; want ErrRecordsUnavailable", name, v, ok, err)
+			}
+			continue
+		}
+		if err != nil || ok != tc.found || string(v) != tc.value {
+			t.Errorf("%s: got %q, %v, %v", name, v, ok, err)
+		}
+	}
+}

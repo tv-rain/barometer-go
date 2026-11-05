@@ -193,6 +193,9 @@ func (r records) Get(ctx context.Context, key persistence.RecordKey) ([]byte, bo
 		return nil, false, recordErr(ctx)
 	}
 	if v == nil {
+		return nil, false, persistence.ErrRecordsUnavailable
+	}
+	if v.absent {
 		return nil, false, nil
 	}
 	if len(v.value) > persistence.MaxRecordValue {
