@@ -278,6 +278,10 @@ func FuzzResult(f *testing.F) {
 	})
 }
 
+// A DNS-03 http_failure whose terminal exchange retains a non-2xx status and
+// no DNS observation decodes; the same result with a 2xx status is rejected
+// (REQ-DNS-03-0040).
+// requirement-ref: REQ-DNS-03-0040
 func TestDoHNonSuccessResponseAndRedirectBounds(t *testing.T) {
 	b := binding("DNS-03")
 	b.Output.Limits.StatusCheck = false

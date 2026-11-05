@@ -50,7 +50,7 @@ var dnsOutcomes = map[string]string{"resolved": "response", "no_data": "response
 // TLS for the URL hostname, sends one RFC 8484 POST through the shared HTTP
 // exchange with redirects disabled and parses the bounded DNS payload. A
 // non-2xx status is http_failure before the media type is checked and
-// without a DNS parse (GO-SPEC-ISSUE-020). Handshake and record bytes are not
+// without a DNS parse (REQ-DNS-03-0040). Handshake and record bytes are not
 // counted; HTTP framing and the DNS messages are counted on the session's
 // plaintext side (REQ-LIMIT-0034). There is no GET, redirect, alternate
 // endpoint or address, retry or connection reuse.
@@ -67,6 +67,7 @@ var dnsOutcomes = map[string]string{"resolved": "response", "no_data": "response
 // requirement-ref: REQ-DNS-03-0028
 // requirement-ref: REQ-DNS-03-0036
 // requirement-ref: REQ-DNS-03-0037
+// requirement-ref: REQ-DNS-03-0040
 // requirement-ref: REQ-LIMIT-0034
 func (r *Runner) Run(ctx context.Context, in measurement.Input) (measurement.Output, error) {
 	p, ok := in.Parameters.(Parameters)

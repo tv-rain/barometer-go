@@ -104,6 +104,8 @@ func (Gated) GoString() string { return "admission.Gated" }
 // requirement-ref: REQ-TRUST-0047
 // requirement-ref: REQ-TRUST-0010
 // requirement-ref: REQ-TRUST-0012
+// requirement-ref: REQ-TRUST-0058
+// requirement-ref: REQ-TRUST-0059
 // requirement-ref: REQ-LIMIT-0026
 func (a *Admitter) Gate(ctx context.Context, sourceRef string, presented []byte) (Gated, error) {
 	if a == nil {
@@ -186,7 +188,11 @@ func (a *Admitter) Gate(ctx context.Context, sourceRef string, presented []byte)
 	}
 	// Step 8: input and options through the registry-selected codec, proxy
 	// compatibility, the path permitted by issuer and local policy, then every
-	// target tuple and redirect registration (REQ-TRUST-0039).
+	// target tuple and redirect registration (REQ-TRUST-0039). A value above a
+	// registered maximum is task_limit_exceeded (REQ-TRUST-0058), and the first
+	// failing input, options or normalization check decides (REQ-TRUST-0059).
+	// No local option restriction exists, so the task_issuer_not_authorized
+	// class of REQ-TRUST-0057 cannot arise here.
 	if candidate.Parameters, err = envelope.Parameters(); err != nil {
 		return Gated{}, admissionError(fieldClass(err))
 	}

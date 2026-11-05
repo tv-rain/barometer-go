@@ -140,6 +140,7 @@ func assertNet05Rejected(t *testing.T, input, options, execution, want string, e
 // requirement-ref: REQ-NET-05-0023
 // requirement-ref: REQ-NET-05-0024
 // requirement-ref: REQ-NET-05-0025
+// requirement-ref: REQ-LIMIT-0019
 func TestMNet05Admission(t *testing.T) {
 	steps := primitiveSteps()
 	for _, n := range []int{1, 4, 8} {
@@ -191,15 +192,35 @@ func TestMNet05Admission(t *testing.T) {
 	if e := json.Unmarshal([]byte(base), &parsed); e != nil {
 		t.Fatal(e)
 	}
-	for _, n := range []int{49151, 49152, 49153} {
+	sized := func(n int) string {
 		profile := string(parsed["profile"])
-		profile = profile[:len(profile)-1] + strings.Repeat(" ", n-len(profile)) + "}"
-		input := `{"profile":` + profile + `}`
+		return `{"profile":` + profile[:len(profile)-1] + strings.Repeat(" ", n-len(profile)) + "}}"
+	}
+	// Both bounds apply and the stricter decides (REQ-NET-05-0025,
+	// REQ-LIMIT-0019): with the 12-byte wrapper the common 49,152-byte input
+	// bound admits a profile of at most 49,140 bytes.
+	t.Run("largest admissible profile", func(t *testing.T) {
+		h, c, d := net05AdmissionClient(t, nil)
+		input := sized(49140)
+		if len(input) != 49152 {
+			t.Fatalf("input is %d bytes", len(input))
+		}
+		data := net05Task("largest-profile", input, `{}`, "")
+		handle, e := c.AdmitTask(data, h.embedded(t, data))
+		if e != nil || handle == "" {
+			t.Fatalf("49,140-byte profile: %s", codeOf(e))
+		}
+		if h.replay.Commits() != 1 || d.calls.Load() != 0 {
+			t.Fatal("admission side effects")
+		}
+	})
+	for _, n := range []int{49141, 49151, 49152, 49153} {
+		input := sized(n)
 		if n <= 49152 {
 			normalizedProfile(t, input)
 		}
-		// Common input has the same byte ceiling and includes the wrapper;
-		// it can reject before the profile-specific cap is reached.
+		// The codec alone accepts up to 49,152 bytes; the common input bound,
+		// which includes the wrapper, rejects first with the input-bound class.
 		assertNet05Rejected(t, input, `{}`, "", "task_limit_exceeded", nil)
 	}
 }

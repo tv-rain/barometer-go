@@ -311,7 +311,9 @@ func TestPOSTPayloadIsTransient(t *testing.T) {
 
 // A non-2xx DNS POST ends at its status before the encoding and media-type
 // checks, without reading the body or classifying a Location
-// (GO-SPEC-ISSUE-020). A 2xx response still checks the media type.
+// (REQ-DNS-03-0040, GO-SPEC-ISSUE-020). A 2xx response still checks the
+// media type.
+// requirement-ref: REQ-DNS-03-0040
 func TestPOSTStatusPrecedesMediaType(t *testing.T) {
 	for _, tc := range []struct {
 		name, raw, outcome, failure, encoding string

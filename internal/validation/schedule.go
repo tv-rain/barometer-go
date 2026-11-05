@@ -88,6 +88,10 @@ func RetryEligible(s task.Schedule, ctx StartContext, completedAttempts int, rea
 	return false
 }
 
+// startEnvelope matches a minute only inside a strictly increasing range or a
+// range crossing midnight; a range with equal start and end matches no minute,
+// so it permits no run start or retry (REQ-SCHEDULE-0044).
+// requirement-ref: REQ-SCHEDULE-0044
 func startEnvelope(s task.Schedule, ctx StartContext) bool {
 	if !validSchedule(s) || !ctx.Supported || !ctx.ConstraintsSatisfied || !ctx.SafetySatisfied || ctx.Now.IsZero() || ctx.DueAt.IsZero() || ctx.Now.Before(ctx.DueAt) {
 		return false
