@@ -13,7 +13,7 @@ import (
 // failure; redirects remain linked to their own primitive registrations.
 // requirement-ref: REQ-NET-05-0018
 // requirement-ref: REQ-NET-05-0019
-// requirement-ref: REQ-NET-05-0009
+// requirement-ref: REQ-NET-05-0065
 // requirement-ref: REQ-TRUST-0014
 func (a *Admitter) matchComposite(authority *Authority, source task.SourceContext, params task.Parameters, now time.Time, baseline task.Risk) (task.Risk, task.AdmissionCode) {
 	p, ok := params.(task.CompositeParameters)
