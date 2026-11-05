@@ -153,6 +153,7 @@ func TestMNet05StepNegativeOutcomesStayCompleted(t *testing.T) {
 // refused instead of being interpreted best-effort.
 // requirement-ref: REQ-NET-05-0039
 // requirement-ref: REQ-NET-05-0043
+// requirement-ref: REQ-NET-05-0066
 // requirement-ref: REQ-NET-05-0044
 func TestMNet05ReceiverRejectsVersions(t *testing.T) {
 	d := &compositeDial{fail: true}

@@ -120,15 +120,19 @@ func net05HTTPHarness(t *testing.T, raw string, stall bool) (*harness, *httpTran
 
 // M-NET-05-EXECUTION and OUTPUT execute through production admission, runtime,
 // shared DNS/TCP/TLS/HTTP operations, strict result validation and pending output.
+// Validation context comes from the platform only: the run sends exactly the
+// declared steps' traffic, with no NET-03 request, and reports source platform.
 // requirement-ref: REQ-NET-05-0006
 // requirement-ref: REQ-NET-05-0007
-// requirement-ref: REQ-NET-05-0009
+// requirement-ref: REQ-NET-05-0064
+// requirement-ref: REQ-NET-05-0065
+// requirement-ref: REQ-NET-05-0066
 // requirement-ref: REQ-NET-05-0039
 // requirement-ref: REQ-NET-05-0040
 // requirement-ref: REQ-NET-05-0044
 // requirement-ref: REQ-NET-05-0048
 func TestMNet05ExecutionAndOutput(t *testing.T) {
-	h, d, _ := net05HTTPHarness(t, responseHTTP("body-canary"), false)
+	h, d, srv := net05HTTPHarness(t, responseHTTP("body-canary"), false)
 	h.adapters.run.resolver = dnsSystemResolver{func(context.Context, string, string) ([]netip.Addr, error) {
 		return []netip.Addr{netip.MustParseAddr("8.8.8.8")}, nil
 	}}
@@ -143,8 +147,17 @@ func TestMNet05ExecutionAndOutput(t *testing.T) {
 	}
 	// M-NET-05-VERSIONS and OUTPUT: exact step identities, in profile order,
 	// and the platform validation state that authorized the run.
-	if v.Measurement.Validation.State != "validated" {
-		t.Fatalf("network_validation.state: %s", raw)
+	if v.Measurement.Validation.State != "validated" || v.Measurement.Validation.Source != "platform" {
+		t.Fatalf("network_validation: %s", raw)
+	}
+	// REQ-NET-05-0064 to REQ-NET-05-0066: three dials for the TCP-01, TLS-01
+	// and HTTP-01 steps and the single HTTP-01 request; no NET-03 request is
+	// sent to obtain validation context, and no fresh or cached source appears.
+	if reqs := srv.Counts().Requests; len(reqs) != 1 || reqs[0].Target != "/check" {
+		t.Fatalf("requests beyond the declared steps: %+v", reqs)
+	}
+	if strings.Contains(string(raw), `"fresh"`) || strings.Contains(string(raw), `"cached"`) {
+		t.Fatalf("reserved validation source emitted: %s", raw)
 	}
 	for i, want := range []string{"resolved", "connected", "alpn_no_overlap", "expected_response"} {
 		s := v.Measurement.Steps[i]

@@ -28,7 +28,7 @@ func (p Parameters) CompositeSteps() []task.PrimitiveStep { return slices.Clone(
 // and rejects a profile whose summed declared maxima exceed it (GO-SPEC-ISSUE-021).
 // The envelope is already capped at the composite limits. Undeclared resources
 // add nothing and stay with the run-time meter; a step without declarations
-// fails closed. Profile-version history remains an approved deferral.
+// fails closed.
 // requirement-ref: REQ-LIMIT-0020
 // requirement-ref: REQ-LIMIT-0035
 // requirement-ref: REQ-NET-05-0026
@@ -79,8 +79,12 @@ func New(codecs []taskdecode.TestCodec) (Codec, error) {
 // Definition bounds the encoded profile in addition to the common input bound
 // that taskdecode checks first; the stricter decides, so the largest
 // admissible profile is 49,140 bytes (REQ-NET-05-0025, REQ-LIMIT-0019).
+// profile_version is checked only as a positive integer: monotonic increase is
+// the issuer's obligation, and no other task's version is kept or compared
+// (REQ-NET-05-0062, REQ-NET-05-0063).
 // requirement-ref: REQ-NET-05-0014
-// requirement-ref: REQ-NET-05-0015
+// requirement-ref: REQ-NET-05-0062
+// requirement-ref: REQ-NET-05-0063
 // requirement-ref: REQ-NET-05-0016
 // requirement-ref: REQ-NET-05-0022
 // requirement-ref: REQ-NET-05-0024

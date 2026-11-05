@@ -126,10 +126,11 @@ func assertNet05Rejected(t *testing.T, input, options, execution, want string, e
 	}
 }
 
-// Admission coverage; profile history is an approved deferral, and summed
-// declared maxima are covered with the limits family. Runner evidence is separate in net05_runner_test.go.
+// Admission coverage; summed declared maxima are covered with the limits
+// family, and the absence of profile-version history in
+// TestMNet05ProfileVersionWithoutHistory. Runner evidence is separate in net05_runner_test.go.
 // requirement-ref: REQ-NET-05-0014
-// requirement-ref: REQ-NET-05-0015
+// requirement-ref: REQ-NET-05-0062
 // requirement-ref: REQ-NET-05-0016
 // requirement-ref: REQ-NET-05-0017
 // requirement-ref: REQ-NET-05-0018
@@ -222,6 +223,31 @@ func TestMNet05Admission(t *testing.T) {
 		// The codec alone accepts up to 49,152 bytes; the common input bound,
 		// which includes the wrapper, rejects first with the input-bound class.
 		assertNet05Rejected(t, input, `{}`, "", "task_limit_exceeded", nil)
+	}
+}
+
+// M-NET-05-ADMISSION profile-version row: monotonic increase is the issuer's
+// obligation. Barometer validates only a positive integer, keeps no record of
+// other tasks' versions and admits an equal or lower version for the same
+// profile_id, retaining the issuer's value unchanged.
+// requirement-ref: REQ-NET-05-0062
+// requirement-ref: REQ-NET-05-0063
+func TestMNet05ProfileVersionWithoutHistory(t *testing.T) {
+	h, c, d := net05AdmissionClient(t, nil)
+	step := primitiveSteps()[1]
+	versions := []int64{5, 3, 5, 1, 9223372036854775807, 2}
+	for i, version := range versions {
+		input := strings.Replace(profileInput(step), `"profile_version":1`, fmt.Sprintf(`"profile_version":%d`, version), 1)
+		if id, got := normalizedProfile(t, input).Profile(); id != "baseline" || got != version {
+			t.Fatalf("normalized profile = %s/%d; want baseline/%d", id, got, version)
+		}
+		data := net05Task(fmt.Sprintf("profile-version-%d", i), input, `{}`, "")
+		if handle, e := c.AdmitTask(data, h.embedded(t, data)); e != nil || handle == "" {
+			t.Fatalf("profile_version %d after %v: %s", version, versions[:i], codeOf(e))
+		}
+	}
+	if taskHandles(c) != len(versions) || h.replay.Commits() != len(versions) || d.calls.Load() != 0 {
+		t.Fatal("profile-version admission compared tasks or contacted transport")
 	}
 }
 

@@ -18,8 +18,13 @@ type Runner struct {
 	active chan struct{}
 }
 
+// Validation context is the platform's own state, reported with source
+// platform; no NET-03 observation is obtained or reused (REQ-NET-05-0064 to
+// REQ-NET-05-0066).
 // requirement-ref: REQ-NET-05-0006
-// requirement-ref: REQ-NET-05-0009
+// requirement-ref: REQ-NET-05-0064
+// requirement-ref: REQ-NET-05-0065
+// requirement-ref: REQ-NET-05-0066
 // requirement-ref: REQ-NET-05-0037
 // requirement-ref: REQ-NET-05-0040
 // requirement-ref: REQ-NET-05-0045
