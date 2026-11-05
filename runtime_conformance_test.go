@@ -159,7 +159,7 @@ func TestCcScheduleFields(t *testing.T) {
 		}
 	})
 	cases := []struct{ name, schedule, origin, want string }{
-		{"embedded one-time task without not_after", `"repeat":{"mode":"none"},"limits":{"max_runs":1}`, "embedded", "task_schema_invalid"},
+		{"embedded task with two runs without not_after", `"repeat":{"mode":"none"},"limits":{"max_runs":2}`, "embedded", "task_schema_invalid"},
 		{"remote task without not_after", `"repeat":{"mode":"none"}`, "remote", "task_schema_invalid"},
 		{"repeated task without not_after", `"repeat":{"mode":"interval","interval":21600,"jitter":300},"limits":{"max_runs":2}`, "embedded", "task_schema_invalid"},
 		{"starts_at number", `"starts_at":5,` + notAfter, "embedded", "task_schema_invalid"},
@@ -349,12 +349,44 @@ func TestCcScheduleSchedulingModelTimeLimit(t *testing.T) {
 		}
 	})
 	t.Run("embedded one-time task without not_after", func(t *testing.T) {
-		// The facade takes no release-review input, so the exception is not
-		// available through it and the omission fails closed.
+		// Admission carries the embedded one-time exception (REQ-LIMIT-0013):
+		// the task is admitted, runs once, and its replay record takes the
+		// registered maximum lifetime, so it is retained to the cap.
 		h := runningHarness(t)
 		c := h.initialized(t)
-		h.wantAdmission(t, c, "facade", scheduledTask("limit-3", `"repeat":{"mode":"none"},"limits":{"max_runs":1}`, "", false), "task_schema_invalid")
-		// The validator honors the trusted exception only for one run.
+		taskJSON := scheduledTask("limit-3", `"repeat":{"mode":"none"},"limits":{"max_runs":1}`, "", false)
+		th := h.admit(t, c, taskJSON)
+		rec, ok, err := h.replay.Lookup(context.Background(), key("limit-3"), epoch)
+		if err != nil || !ok {
+			t.Fatal("no replay record for the admitted task:", err)
+		}
+		if !rec.ExpiresAt.Equal(epoch.Add(604800*time.Second)) || !rec.RetainUntil.Equal(epoch.Add(691200*time.Second)) {
+			t.Fatalf("replay record expiry %v, retention %v", rec.ExpiresAt, rec.RetainUntil)
+		}
+		first := runToEnd(t, c, th)
+		// An exact redelivery resolves to the same task and creates no run; a
+		// later start returns the one run, or none, never a second run.
+		again := h.admit(t, c, taskJSON)
+		if again != th {
+			t.Fatal("redelivery published a new handle")
+		}
+		h.advance(time.Hour)
+		if rh, err := c.StartRun(again); err == nil && rh != first || err != nil && codeOf(err) != "run_not_due" {
+			t.Fatal("a second run:", rh, codeOf(err))
+		}
+		if got := fullRecords(t, h); len(got) != 1 {
+			t.Fatalf("results = %+v", got)
+		}
+		// Repeating or multi-run tasks, and remote tasks, still require it.
+		h = runningHarness(t)
+		c = h.initialized(t)
+		h.wantAdmission(t, c, "two runs", scheduledTask("limit-4", `"repeat":{"mode":"none"},"limits":{"max_runs":2}`, "", false), "task_schema_invalid")
+		h.wantAdmission(t, c, "repeating", scheduledTask("limit-5", `"repeat":{"mode":"interval","interval":21600,"jitter":300},"limits":{"max_runs":1}`, "", false), "task_schema_invalid")
+		bytes, ref := h.deliver(t, "remote", scheduledTask("limit-6", `"repeat":{"mode":"none"},"limits":{"max_runs":1}`, "", false))
+		if _, err := c.AdmitTask(bytes, ref); codeOf(err) != "task_schema_invalid" {
+			t.Fatal("remote task without not_after:", codeOf(err))
+		}
+		// The validator honors the exception only for one run.
 		one, two := 1, 2
 		s := task.Schedule{Repeat: task.Repeat{Mode: "none"}, MaxRuns: &one, Retry: task.Retry{MaxAttempts: 1}}
 		ctx := validation.TimingContext{Origin: "embedded", AcceptedAt: epoch, EmbeddedOneTimeException: true}
@@ -368,7 +400,7 @@ func TestCcScheduleSchedulingModelTimeLimit(t *testing.T) {
 		ctx.EmbeddedOneTimeException = true
 		s.MaxRuns = &two
 		if validation.ScheduleAt(s, ctx) == nil {
-			t.Fatal("exception accepted for more than one run")
+			t.Fatal("exception accepted for two runs")
 		}
 		ctx.Origin = "remote"
 		issued := epoch

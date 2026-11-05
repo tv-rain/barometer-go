@@ -151,7 +151,14 @@ func TestGateIssuerAndLocalCeilings(t *testing.T) {
 		{"validity", func(p *task.Permissions) { p.Limits.MaxValiditySeconds = 3600 }, []row{
 			{map[string]any{"schedule.not_after": notAfter(3599)}, 0, nil},
 			{map[string]any{"schedule.not_after": notAfter(3600)}, 0, nil},
-			{map[string]any{"schedule.not_after": notAfter(3601)}, task.LimitExceeded, nil}}},
+			{map[string]any{"schedule.not_after": notAfter(3601)}, task.LimitExceeded, nil},
+			// An embedded one-time task without not_after has the registered
+			// maximum lifetime, which this ceiling does not authorize.
+			{map[string]any{"schedule.not_after": nil}, task.LimitExceeded, nil}}},
+		{"validity at the registered maximum", func(p *task.Permissions) { p.Limits.MaxValiditySeconds = 604800 }, []row{
+			{map[string]any{"schedule.not_after": nil}, 0, nil}}},
+		{"validity below the registered maximum", func(p *task.Permissions) { p.Limits.MaxValiditySeconds = 604799 }, []row{
+			{map[string]any{"schedule.not_after": nil}, task.LimitExceeded, nil}}},
 		{"repeat interval minimum", func(p *task.Permissions) { p.Limits.MinRepeatIntervalSeconds = 43200 }, []row{
 			{map[string]any{"schedule.repeat": repeat(43201, 600), "schedule.limits.max_runs": 2}, 0, func(l task.PolicyLimits) bool { return l.MinRepeatIntervalSeconds == 43201 }},
 			{map[string]any{"schedule.repeat": repeat(43200, 600), "schedule.limits.max_runs": 2}, 0, nil},

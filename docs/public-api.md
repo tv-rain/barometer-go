@@ -194,6 +194,13 @@ For embedded origin, `taskJSON` is the exact serialized task. For remote origin,
 2. Install the record through an implementation-internal, instance-owned seam with bounded lifetime and capacity.
 3. Resolve and compare those exact bytes during `AdmitTask`; reject missing, expired, foreign-instance, stale-policy, or mismatched records before any measurement activity. A remote record is single-use: each presentation of a package needs its own reference, and no digest of the package outlives the admission that presented it.
 
+An embedded task may omit `not_after` only under the one-time exception of [REQ-LIMIT-0013](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0013), and admission applies that exception to every embedded source: an embedded task with repeat mode `none` and `max_runs` 1 is admitted without `not_after` ([Admission](admission.md)). The host obligations of the exception remain with the host and its release review, which Barometer cannot check:
+
+- release review fixes each embedded task shipped without `not_after` to one run;
+- the host does not persist such a task across application updates; it ships the task with the application and installs it again from the application bundle. Barometer holds no admitted task across a restart; only its replay record, retained for up to 691,200 seconds after acceptance, survives one.
+
+After that record is purged or cleared, a presentation of the same bytes is admitted as a new task and can run once more.
+
 The native wrapper resolves delivery context internally; Flutter is not asked to supply `sourceRef` or mark arbitrary task bytes authenticated. Ordinary Go callers can present an existing reference, but cannot create authority by choosing its text. Public JSON, labels, endpoint responses, and collector replies cannot populate this registry. References never enter measurement traffic, results, logs, or persistent identifiers. They expire and are invalidated on clearing, close, and policy replacement.
 
 The future adapter must keep registration atomic with respect to exact bytes and policy generation. Random or unguessable references alone are insufficient. Direct Go hosts requiring a delivery integration must use a separately reviewed adapter implementation; this design does not pretend such an adapter currently exists, and no binding accepts a verification key, a signature verdict or an authentication flag ([REQ-TRUST-0045](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0045)). Compromise of a reviewed host/adapter remains the public threat model's residual risk.

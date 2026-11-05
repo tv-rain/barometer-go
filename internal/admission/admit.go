@@ -141,11 +141,17 @@ func (a *Admitter) Gate(ctx context.Context, sourceRef string, presented []byte)
 			return Gated{}, admissionError(task.TrustUnavailable)
 		}
 	}
-	timing := validation.TimingContext{Origin: "embedded", AcceptedAt: now}
+	// Every embedded source carries the one-time exception of REQ-LIMIT-0013:
+	// validation admits an embedded task without not_after only for repeat
+	// mode none and max_runs 1. Release review fixing it to one run, and the
+	// host not persisting it across application updates, are host obligations;
+	// Barometer holds no admitted task across a restart.
+	// requirement-ref: REQ-LIMIT-0013
+	timing := validation.TimingContext{Origin: "embedded", AcceptedAt: now, EmbeddedOneTimeException: true}
 	base := now // validity reference, as in validation.ScheduleAt
 	if issued, ok := source.IssuedAt(); ok {
 		whole := issued.Whole
-		timing.Origin, timing.IssuedAt = "remote", &whole
+		timing.Origin, timing.IssuedAt, timing.EmbeddedOneTimeException = "remote", &whole, false
 		if whole.Before(base) {
 			base = whole
 		}
