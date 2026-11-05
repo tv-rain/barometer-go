@@ -60,7 +60,7 @@ func (r *memRecords) Get(key string, timeoutMillis int64) (*RecordValue, error) 
 	defer r.mu.Unlock()
 	v, ok := r.values[key]
 	if !ok {
-		return nil, nil
+		return NewAbsentRecordValue(), nil
 	}
 	return NewRecordValue(v), nil
 }

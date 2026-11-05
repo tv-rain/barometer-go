@@ -16,7 +16,9 @@ package barometermobile
 // "<class>-<64 lowercase hex digits>", for example "3-ab…", with class 1 to 4;
 // it is safe to use as a file name and names no issuer, task or other value.
 type Records interface {
-	// Get returns the stored value, or nil when the key is known to be absent.
+	// Get returns the stored value, or NewAbsentRecordValue() when the key is
+	// known to be absent. A nil value is unavailable, like an error: Swift
+	// cannot return nil without throwing.
 	Get(key string, timeoutMillis int64) (*RecordValue, error)
 	// Put atomically stores value for key. On error either the earlier value
 	// or value is durable, never a mixture.
@@ -97,13 +99,20 @@ type Adapters struct {
 	LinkageKeys LinkageKeyStore
 }
 
-// RecordValue is one stored record value returned by Records.Get.
-type RecordValue struct{ value []byte }
+// RecordValue is the result of Records.Get: one stored record value, or the
+// known absence of one.
+type RecordValue struct {
+	value  []byte
+	absent bool
+}
 
 // NewRecordValue copies value.
 func NewRecordValue(value []byte) *RecordValue {
 	return &RecordValue{value: append([]byte{}, value...)}
 }
+
+// NewAbsentRecordValue reports that the key is known to be absent.
+func NewAbsentRecordValue() *RecordValue { return &RecordValue{absent: true} }
 
 // maxListEntries bounds a StringList; a longer list is unavailable.
 const maxListEntries = 4096

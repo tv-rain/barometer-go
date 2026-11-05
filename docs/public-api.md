@@ -95,7 +95,7 @@ The shell and admission perform no network activity: the root package's producti
 package barometermobile
 
 type Records interface {
-	Get(key string, timeoutMillis int64) (*RecordValue, error) // nil means absent
+	Get(key string, timeoutMillis int64) (*RecordValue, error) // NewAbsentRecordValue() means absent
 	Put(key string, value []byte, timeoutMillis int64) error
 	Delete(key string, timeoutMillis int64) error
 	List(class int64, timeoutMillis int64) (*StringList, error)
@@ -135,6 +135,7 @@ type DeviceState struct{}
 type Client struct{}
 
 func NewRecordValue(value []byte) *RecordValue
+func NewAbsentRecordValue() *RecordValue
 func NewStringList() *StringList
 func (l *StringList) Add(s string)
 func NewAccessState(generation int64, networkType string, vpn string, ipv4 string, ipv6 string, validated string, captivePortal string) *AccessState
@@ -161,7 +162,7 @@ func (c *Client) Close() error
 | Area | Behavior |
 |---|---|
 | Adapters | `Records`, `Clock` and `Network` are required. `Consent`, `Device`, `TimeZone` and `Resolver` are optional: a task that needs a missing capability never runs, and without `Resolver` the system resolver mode uses Go's own resolver. `LinkageKeys` is optional; its absence disables linkage only. The engine clock (`execution.SystemClock`), jitter (`execution.LocalJitter`), production registry, delivery store and the replay and run-ledger state stay in Go. The replay and run-ledger state is a `persistence.LazyState` over `Records` with capacity 1,024 replay records, opened on first use under that call's deadline. |
-| Record keys | `"<class>-<64 lowercase hex digits>"`, the record class (1 replay, 2 run, 3 pending, 4 clearing marker) and the Go-chosen 32-byte digest name. A listed key of another class or form, a list of more than 4,096 entries, or a value above `persistence.MaxRecordValue` is unavailable. |
+| Record keys | `"<class>-<64 lowercase hex digits>"`, the record class (1 replay, 2 run, 3 pending, 4 clearing marker) and the Go-chosen 32-byte digest name. A listed key of another class or form, a list of more than 4,096 entries, or a value above `persistence.MaxRecordValue` is unavailable. `Get` reports a key known to be absent with a non-nil `NewAbsentRecordValue()`, because Swift imports a nullable object return with an error parameter as a non-optional throwing method and cannot return nil; a nil value is unavailable, like an error, on both platforms. |
 | Values | `AccessState`: network type `wifi`, `cellular`, `ethernet` or `other`; VPN `detected` or `not_detected`; IPv4, IPv6, validation and captive portal `yes` or `no`; any other text, and a negative generation, is unknown. `DeviceState`: a battery percentage outside 0 to 100, or one not marked known, is unknown; charging counts only when marked known. Consent is `valid`, `absent` or `ended`; anything else is unavailable. The time zone is an IANA name resolved against the embedded `time/tzdata` database (about 450 KB of library size); an empty name, `Local` or an unknown name is unavailable. A resolver answer must be at most 64 addresses in canonical text without zone; a native resolver error is recorded as DNS-01 `resolver_error`, never as `timeout` or `inconclusive`. A trusted time that is not positive is unavailable. |
 | Deadlines | Each blocking callback runs on its own goroutine and receives `timeoutMillis`: the time left to the caller's deadline when the call is handed to native code, rounded up to whole milliseconds, at least 1 and at most 30,000, and 5,000 for a call without a deadline. The facade stops waiting at that deadline or when the caller's context ends and treats the call as failed; a late result is discarded and a panic is a failure. A call is never handed over once its caller stopped waiting or its deadline passed. A record write it abandoned is reported as an uncertain write. Ordering is split: the facade hands the `Records` callbacks of one adapter to native code one at a time, in the order Go issued them, so a call issued before a later one, such as a write abandoned before a clear, is entered first or never; the `LinkageKeyStore` callbacks are ordered the same way, so an abandoned derivation cannot recreate the key after a later deletion. The native store still runs calls in the order they arrive, withdraws a call still queued at its deadline, and runs nothing after it is closed. Any native error is unavailable or unsatisfied, as the core port defines, and its text never crosses back. |
 | Network watch | `Watch` is a registration, bounded by one second. A registration that fails or stalls is treated as an access-network change, so the run observing it fails closed; a late registration is stopped. `Changed` is delivered at most once and never after the watch stopped; `StopWatch` runs without blocking the caller. |

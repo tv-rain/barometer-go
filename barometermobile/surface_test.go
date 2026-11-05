@@ -34,6 +34,7 @@ var mobileAPI = []string{
 	"type DeviceState struct",
 	"type Client struct",
 	"func NewRecordValue(value []byte) *RecordValue",
+	"func NewAbsentRecordValue() *RecordValue",
 	"func NewStringList() *StringList",
 	"func (l *StringList) Add(s string)",
 	"func NewAccessState(generation int64, networkType string, vpn string, ipv4 string, ipv6 string, validated string, captivePortal string) *AccessState",
