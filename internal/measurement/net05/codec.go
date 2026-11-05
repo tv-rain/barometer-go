@@ -76,6 +76,9 @@ func New(codecs []taskdecode.TestCodec) (Codec, error) {
 	return Codec{codecs: selected}, nil
 }
 
+// Definition bounds the encoded profile in addition to the common input bound
+// that taskdecode checks first; the stricter decides, so the largest
+// admissible profile is 49,140 bytes (REQ-NET-05-0025, REQ-LIMIT-0019).
 // requirement-ref: REQ-NET-05-0014
 // requirement-ref: REQ-NET-05-0015
 // requirement-ref: REQ-NET-05-0016
@@ -84,6 +87,7 @@ func New(codecs []taskdecode.TestCodec) (Codec, error) {
 // requirement-ref: REQ-NET-05-0025
 // requirement-ref: REQ-NET-05-0028
 // requirement-ref: REQ-NET-05-0029
+// requirement-ref: REQ-LIMIT-0019
 func (Codec) Definition() taskdecode.Definition {
 	str := &jsondecode.Schema{Kind: jsondecode.String}
 	object := func(fields map[string]jsondecode.Field) *jsondecode.Schema {

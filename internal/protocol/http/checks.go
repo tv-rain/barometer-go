@@ -99,6 +99,7 @@ func sensitiveHeader(s string) bool {
 // requirement-ref: REQ-OBS-0030
 // requirement-ref: REQ-OBS-0031
 // requirement-ref: REQ-HTTP-01-0037
+// requirement-ref: REQ-DNS-03-0040
 func evaluate(r *stdhttp.Response, d *observation.HTTPDetails, c Config) ([]byte, string) {
 	failure := ""
 	if c.ExpectedStatus != 0 {

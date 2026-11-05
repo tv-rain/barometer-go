@@ -99,6 +99,7 @@ func (Result) GoString() string    { return "http.Result" }
 // requirement-ref: REQ-LIMIT-0016
 // requirement-ref: REQ-LIMIT-0017
 // requirement-ref: REQ-LIMIT-0018
+// requirement-ref: REQ-DNS-03-0040
 func Exchange(ctx context.Context, clock Clock, endpoint Endpoint, cfg Config) (result Result, cleanup func(), err error) {
 	cleanup = func() {}
 	u, e := validate(cfg)

@@ -73,7 +73,10 @@ func Common(c task.Candidate) (task.Candidate, error) {
 func validSchedule(s task.Schedule) bool { return scheduleErr(s) == nil }
 
 // scheduleErr reports ErrTask, or errTaskLimit for a value above a registered
-// schedule or retry maximum (REQ-LIMIT-0011).
+// schedule or retry maximum (REQ-LIMIT-0011). A range with equal start and end
+// is valid and empty: it covers no minute in the overlap check, and a second
+// identical range is a duplicate (REQ-SCHEDULE-0044).
+// requirement-ref: REQ-SCHEDULE-0044
 func scheduleErr(s task.Schedule) error {
 	if s.StartsAt != nil && s.NotAfter != nil && !s.StartsAt.Before(*s.NotAfter) {
 		return ErrTask

@@ -160,6 +160,13 @@ func (e *Envelope) Fields(timing validation.TimingContext) (task.Candidate, erro
 
 // Parameters validates input and options against the selected test's schemas
 // and normalizes them with its codec (the input and options part of step 8).
+// Input precedes options, and both precede normalization; within an object
+// members are checked in presented order, missing required members after the
+// present ones, and a byte cap before the content it bounds (REQ-TRUST-0059).
+// A value above a registered maximum keeps the registered-limit class
+// (REQ-TRUST-0058).
+// requirement-ref: REQ-TRUST-0058
+// requirement-ref: REQ-TRUST-0059
 func (e *Envelope) Parameters() (task.Parameters, error) {
 	def := e.decoder.definitions[e.codec]
 	input, options := member(e.value, "input"), member(e.value, "options")

@@ -1073,3 +1073,84 @@ func TestCcScheduleSchedulingModelRepeatIntervalFields(t *testing.T) {
 		}
 	})
 }
+
+// CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-EQUAL-ENDPOINTS: a range whose
+// start equals its end is valid and empty (REQ-SCHEDULE-0044,
+// GO-SPEC-ISSUE-014). A window holding only that range permits no run start
+// or retry at any minute of the day; beside a nonempty range, exactly that
+// range's minutes permit both; two identical empty ranges are duplicates.
+// requirement-ref: REQ-SCHEDULE-0044
+func TestCcScheduleSchedulingModelTimeWindowEqualEndpoints(t *testing.T) {
+	day := time.Date(2026, 10, 21, 0, 0, 0, 0, time.UTC)
+	window := func(ranges ...task.TimeRange) *task.TimeWindow {
+		return &task.TimeWindow{Timezone: "local", Ranges: ranges}
+	}
+	schedule := func(w *task.TimeWindow) task.Schedule {
+		one, end := 1, task.TimestampFromTime(day.Add(48*time.Hour))
+		return task.Schedule{NotAfter: &end, MaxRuns: &one, Repeat: task.Repeat{Mode: "none"}, Window: w,
+			Retry: task.Retry{MaxAttempts: 2, On: []task.ExecutionReason{task.InternalError}, Backoff: &task.Backoff{Mode: "fixed", InitialDelayMS: 30000, MaxDelayMS: 30000}}}
+	}
+	admit := func(s task.Schedule) error {
+		_, err := validation.Common(task.Candidate{
+			SchemaVersion: "0.1.0", ID: "synthetic-window", TestID: "SYN-01", TestVersion: "0.1.0", Schedule: s,
+			Execution: task.Execution{NetworkPath: "proxy", Limits: task.AttemptLimits{DurationMS: 1, BytesSent: 1, BytesReceived: 1, Connections: 1}, Network: task.NetworkRequirements{VPNPolicy: "require"}},
+			Safety:    task.Safety{RiskLevel: "low", RequiresConsent: true},
+		})
+		return err
+	}
+	// permitted reports, for every minute of a day, whether a first run may
+	// start and whether a retry of that run may follow.
+	permitted := func(s task.Schedule) (runs, retries [1440]bool) {
+		for m := range 1440 {
+			now := day.Add(time.Duration(m) * time.Minute)
+			start := validation.StartContext{Now: now, DueAt: day, LocalZone: time.UTC, Supported: true, ConstraintsSatisfied: true, SafetySatisfied: true}
+			runs[m] = validation.RunEligible(s, start)
+			start.CompletedRuns = 1
+			retries[m] = validation.RetryEligible(s, start, 1, task.InternalError)
+		}
+		return runs, retries
+	}
+	empty := task.TimeRange{Start: 12 * 60, End: 12 * 60}
+
+	t.Run("without a window every minute permits both", func(t *testing.T) {
+		runs, retries := permitted(schedule(nil))
+		for m := range 1440 {
+			if !runs[m] || !retries[m] {
+				t.Fatalf("minute %d not permitted without a window", m)
+			}
+		}
+	})
+	t.Run("an equal-endpoint range alone permits nothing", func(t *testing.T) {
+		s := schedule(window(empty))
+		if err := admit(s); err != nil {
+			t.Fatal("equal-endpoint range rejected:", err)
+		}
+		runs, retries := permitted(s)
+		for m := range 1440 {
+			if runs[m] || retries[m] {
+				t.Fatalf("minute %d permitted a run %t or retry %t", m, runs[m], retries[m])
+			}
+		}
+	})
+	t.Run("beside a nonempty range exactly its minutes permit", func(t *testing.T) {
+		s := schedule(window(empty, task.TimeRange{Start: 14 * 60, End: 16 * 60}))
+		if err := admit(s); err != nil {
+			t.Fatal("window rejected:", err)
+		}
+		runs, retries := permitted(s)
+		for m := range 1440 {
+			want := m >= 14*60 && m < 16*60
+			if runs[m] != want || retries[m] != want {
+				t.Fatalf("minute %d: run %t retry %t, want %t", m, runs[m], retries[m], want)
+			}
+		}
+	})
+	t.Run("two identical empty ranges are duplicates", func(t *testing.T) {
+		if err := admit(schedule(window(empty, empty))); !errors.Is(err, validation.ErrTask) {
+			t.Fatal("duplicate empty ranges accepted:", err)
+		}
+		if err := admit(schedule(window(empty, task.TimeRange{Start: 6 * 60, End: 6 * 60}))); err != nil {
+			t.Fatal("two distinct empty ranges rejected:", err)
+		}
+	})
+}

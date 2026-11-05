@@ -622,7 +622,7 @@ func TestMDns03ExecutionAndOutput(t *testing.T) {
 // wrapped platform error; the terminal failure stays at its observed stage
 // with prior observations ordered. A non-2xx status is http_failure before
 // the media type and without a DNS parse, and a redirect target is never
-// contacted (GO-SPEC-ISSUE-020).
+// contacted (REQ-DNS-03-0040).
 // requirement-ref: REQ-DNS-03-0007
 // requirement-ref: REQ-DNS-03-0008
 // requirement-ref: REQ-DNS-03-0011
@@ -630,6 +630,7 @@ func TestMDns03ExecutionAndOutput(t *testing.T) {
 // requirement-ref: REQ-DNS-03-0027
 // requirement-ref: REQ-DNS-03-0029
 // requirement-ref: REQ-DNS-03-0032
+// requirement-ref: REQ-DNS-03-0040
 func TestMDns03Normalization(t *testing.T) {
 	f := newDohFixture(t)
 	other, err := loopback.NewTestCA()
