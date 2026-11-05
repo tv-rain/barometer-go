@@ -61,6 +61,18 @@ go mod verify
 
 Run the platform-specific commands on hosts with the corresponding prerequisites; report missing validation explicitly. Before handoff, also run `git diff --check` from the repository root.
 
+## Umbrella Builds
+
+An application can bind `barometermobile` in the same `gomobile bind` command as its own Go packages, producing one library with one gomobile runtime. The facade needs no `-javapkg` or `-prefix` flag there (see above). Such an umbrella build must keep Barometer's build properties:
+
+- Bind only `github.com/tv-rain/barometer-go/barometermobile`, never the root or another package.
+- Pass `-trimpath` and `-iosversion=15.0`, and keep `-androidapi 21` or higher.
+- Require `barometer-go` at a published version or at a pseudo-version of a commit on `main`, never through a local `replace`, which would embed the checkout path in the module build information.
+- Limit the skipped-export guard to the `barometermobile` output (the generated `barometermobile` Java sources and the `Barometermobile.objc.h` header). The other bound packages may already have skipped exports that are not Barometer's.
+- Every Android ABI the umbrella builds must compile, including the 32-bit ABIs that `make mobile-smoke` checks; they remain unsupported.
+
+**Shared module versions.** `barometer-go` and the application's Go packages share modules, such as `golang.org/x/net` and `golang.org/x/sys`, and Go's minimum version selection uses the highest version either side requires. Either side may raise a shared module in its own repository. A raise reaches the umbrella only through a change to the umbrella build that passes the application's own tests at the versions the umbrella then selects. A `barometer-go` raise therefore needs no coordination before it merges here, but it is not in a shipped umbrella library until that umbrella change lands.
+
 ## References
 
 - [gomobile command and native build requirements](https://pkg.go.dev/golang.org/x/mobile/cmd/gomobile).
