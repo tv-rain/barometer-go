@@ -253,6 +253,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Retry the loopback DNS test fixture on a UDP port collision. `ListenDNS` binds UDP on the port number of an ephemeral TCP listener, so when another process already held that UDP port the fixture failed with `bind: address already in use` and the `tcp` subtests of DNS tests such as `TestDns01CNAMEAnswersCauseNoContact` and `TestCcProxyOverviewDNSRow` failed intermittently. The fixture now takes a new TCP port and tries again, up to eight times, closing the listeners of each failed attempt. `TestListenDNSPairRetriesUDPCollision` pre-binds the UDP port of the first attempt and `TestListenDNSPairGivesUpAfterBoundedAttempts` checks the bound. Test fixtures only; no production behavior or test assertion changes.
+
 - Wait for the target accept in the established proxy tunnel cancellation test and remove an unsupported requirement reference from the renewal test (DEV-652). No production behavior changes.
 
 - Delivery resolution decides the step-1 binding before it reads trusted time (DEV-624). An unknown, foreign-instance, stale-generation, invalidated, closed-store or byte-mismatched reference is `task_source_unauthenticated` even when the clock is unavailable; previously it was `task_trust_unavailable`, contrary to the REQ-TRUST-0047 step order. Only a held record that matches the presented bytes is `task_trust_unavailable` without trusted time. Remote records stay single-use and embedded records are not consumed. `TestResolveChecksBindingBeforeTrustedTime` covers the cases.
