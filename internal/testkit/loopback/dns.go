@@ -3,6 +3,7 @@ package loopback
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"sync"
@@ -25,17 +26,17 @@ type DNSServer struct {
 	queries, sent, received int
 }
 
+// dnsListenAttempts bounds how many ephemeral TCP ports ListenDNS tries. The
+// UDP socket must share the TCP port number, and another process may already
+// hold that UDP port, so a collision is retried on a fresh TCP port.
+const dnsListenAttempts = 8
+
 func ListenDNS(reply func([]byte) [][]byte) (*DNSServer, error) {
 	if reply == nil {
 		return nil, errors.New("dns fixture: missing reply")
 	}
-	ln, e := net.Listen("tcp", "127.0.0.1:0")
+	ln, u, e := listenDNSPair(dnsListenAttempts, func() (net.Listener, error) { return net.Listen("tcp", "127.0.0.1:0") })
 	if e != nil {
-		return nil, e
-	}
-	u, e := net.ListenUDP("udp4", &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1), Port: ln.Addr().(*net.TCPAddr).Port})
-	if e != nil {
-		ln.Close()
 		return nil, e
 	}
 	s := &DNSServer{udp: u, tcp: ln, reply: reply, conns: make(map[net.Conn]bool)}
@@ -43,6 +44,26 @@ func ListenDNS(reply func([]byte) [][]byte) (*DNSServer, error) {
 	go s.serveUDP()
 	go s.serveTCP()
 	return s, nil
+}
+
+// listenDNSPair takes a TCP listener from listenTCP and binds UDP on the same
+// loopback port, retrying with a new TCP listener when the UDP bind fails, up
+// to attempts times. Every listener of a failed attempt is closed.
+func listenDNSPair(attempts int, listenTCP func() (net.Listener, error)) (net.Listener, *net.UDPConn, error) {
+	var last error
+	for i := 0; i < attempts; i++ {
+		ln, e := listenTCP()
+		if e != nil {
+			return nil, nil, e
+		}
+		u, e := net.ListenUDP("udp4", &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1), Port: ln.Addr().(*net.TCPAddr).Port})
+		if e == nil {
+			return ln, u, nil
+		}
+		ln.Close()
+		last = e
+	}
+	return nil, nil, fmt.Errorf("dns fixture: no shared TCP and UDP port after %d attempts: %w", attempts, last)
 }
 func (s *DNSServer) Address() string { return s.tcp.Addr().String() }
 func (s *DNSServer) Counts() (queries, sent, received int) {
