@@ -4,7 +4,7 @@
 
 This planning map identifies shared format and library obligations, intended implementation owners and concrete conformance case families. The linked public text is the oracle; this document neither copies nor changes its normative behavior. A case family is a parameterized suite, and planned families are not conformance. No complete semantic review, implemented requirement, core/platform/field support or release is claimed.
 
-The [manifest](../traceability/cross-cutting.json) is pinned to public Draft `0.1.0` at `d53765716e9413ba140935009a4c62e1260dff8c` and Go `7376e2a66705dd4b8c55a1fd08120e43db648791`, which adds REQ-SCHEDULE-0045, REQ-BUNDLE-0037 and REQ-EXECUTION-0033 and retires REQ-EXECUTION-0016. It maps all 599 active shared requirements (348 `partial`, 251 `planned`) to the case families below and to `UT.*` unit-test cases; 55 family cases and 293 `UT.*` cases are `passed`, and its evidence records point to the [evidence report](../traceability/evidence/go-unit-7376e2a.md). Shared-requirement references in the registered measurement, protocol and engine test files are each linked through a listed `UT.*` case, so none remains a location warning. Executed families are listed in [Runtime Case Families](execution-models.md#runtime-case-families) and in each family's Scope line below.
+The [manifest](../traceability/cross-cutting.json) is pinned to public Draft `0.1.0` at `45bc424bd9829f5389b3b4494d0966e10e21da94`, which adds no shared requirement since `d537657`, and Go `5bc13351fbfd36090c7e24122781fd4700d46491`, which adopts the dispositions of GO-SPEC-ISSUE-014, -016 items 1 to 3, -018 and -020. It maps all 599 active shared requirements (349 `partial`, 250 `planned`) to the case families below and to `UT.*` unit-test cases; 56 family cases and 294 `UT.*` cases are `passed`, and its evidence records point to the [evidence report](../traceability/evidence/go-unit-5bc1335.md). Shared-requirement references in the registered measurement, protocol and engine test files are each linked through a listed `UT.*` case, so none remains a location warning. Executed families are listed in [Runtime Case Families](execution-models.md#runtime-case-families) and in each family's Scope line below.
 
 Baselines and evidence are updated at the milestone cadence of the coordination [decision 0012](https://github.com/tv-rain/barometer/blob/main/docs/decisions/0012-lean-task-process.md): at the closeout of a sub-epic or on request, not after every task. Between updates, case-plan notes and `requirement-ref` comments may run ahead of the manifest. Earlier mappings are retained at the commits where they were current; `git log -- traceability/cross-cutting.json` lists them, and the [changelog](../CHANGELOG.md) records what each change added.
 
@@ -1884,13 +1884,13 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-EQUAL-ENDPOINTS
 
-Public source: `data-formats/task-schedule.md`, section **Scheduling Model / Time Window / Range Fields**. Intended target: `internal/execution/schedule.go`. Case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcScheduleSchedulingModelTimeWindowEqualEndpoints`. The case executes every row of the plan; the manifest records it as planned until the next milestone update.
+Public source: `data-formats/task-schedule.md`, section **Scheduling Model / Time Window / Range Fields**. Intended target: `internal/execution/schedule.go`. Case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcScheduleSchedulingModelTimeWindowEqualEndpoints`.
 
 Case plan: Admit a time_window whose only range has equal start and end, such as 12:00 to 12:00, and drive a deterministic clock across a full day: no run start or retry is permitted at any minute. Add a nonempty range beside the empty one and assert that exactly its minutes permit starts. Submit two identical empty ranges and assert rejection as duplicates (REQ-SCHEDULE-0044).
 
-Scope: Synthetic core contract cases. `scheduleErr` and `startEnvelope` treat the range as empty and cite REQ-SCHEDULE-0044 (GO-SPEC-ISSUE-014). No milestone evidence or support claim.
+Scope: Synthetic core contract cases. `scheduleErr` and `startEnvelope` treat the range as empty and cite REQ-SCHEDULE-0044 (GO-SPEC-ISSUE-014). Passed at Go `5bc1335` through schedule validation and run and retry eligibility on a deterministic clock ([evidence](../traceability/evidence/go-unit-5bc1335.md#CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-EQUAL-ENDPOINTS)); partial evidence only, with no native capability or support claim.
 
-- [REQ-SCHEDULE-0044](https://github.com/tv-rain/barometer-spec/blob/830e9564849ebfedaa0860d9f01032574e2b9fa3/data-formats/task-schedule.md#REQ-SCHEDULE-0044) → `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-EQUAL-ENDPOINTS`.
+- [REQ-SCHEDULE-0044](https://github.com/tv-rain/barometer-spec/blob/830e9564849ebfedaa0860d9f01032574e2b9fa3/data-formats/task-schedule.md#REQ-SCHEDULE-0044) → `CC-SCHEDULE-SCHEDULING-MODEL-TIME-WINDOW-EQUAL-ENDPOINTS`; passed in `TestCcScheduleSchedulingModelTimeWindowEqualEndpoints` at Go `5bc1335`.
 
 ### CC-SCHEDULE-SCHEDULING-MODEL-REPEAT
 
@@ -2592,7 +2592,7 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 <!-- requirement-ref: REQ-LIMIT-0019 -->
 <!-- requirement-ref: REQ-LIMIT-0020 -->
 
-- [REQ-LIMIT-0019](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0019) → `CC-LIMIT-NET-05-COMPOSITE-LIMITS`.
+- [REQ-LIMIT-0019](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0019) → `CC-LIMIT-NET-05-COMPOSITE-LIMITS`; the qualified profile bound of [GO-SPEC-ISSUE-018](specification-issues.md#go-spec-issue-018-net-05-profile-bound-inside-the-common-input-bound) passed in `UT.root.TestMNet05Admission` at Go `5bc1335`, with `Codec.Definition` as its existing location; the family stays planned.
 - [REQ-LIMIT-0020](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/registered-limits.md#REQ-LIMIT-0020) → `CC-LIMIT-NET-05-COMPOSITE-LIMITS`.
 
 <!-- requirement-ref: REQ-LIMIT-0035 -->
