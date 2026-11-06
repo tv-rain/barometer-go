@@ -1,12 +1,9 @@
 name: Mobile native build
 
+# Run manually from the Actions tab: when a change touches the native build, the
+# barometermobile facade or tools/mobile, and before an Epic closes.
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:
 
 permissions:
   contents: read

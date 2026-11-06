@@ -30,7 +30,7 @@ The Android build uses SDK platform 35 for Java compilation and API 21 for nativ
 
 The Apple build uses deployment target 15.0. CI uses the selected Xcode on `macos-15` and records its version and SDK versions. Android API 21 and iOS 15.0 match the [supported platform matrix](../../docs/decisions/0014-gomobile-facade-and-platform-matrix.md#supported-platform-matrix), but as build inputs they are not support: support for a platform version requires the decision's device validation and recorded evidence. Runner images and Xcode patch versions can change; the build-info file preserves the versions used.
 
-Native builds are separate from `make check`, so the ordinary core validation command still requires no mobile SDK. Both native jobs run on pull requests and pushes to `main` and upload the library and its build-info file as a workflow artifact named `barometer-android` or `barometer-apple`, kept for 30 days. Workflow artifacts are not releases: they are unsigned, unversioned and not published.
+Native builds are separate from `make check`, so the ordinary core validation command still requires no mobile SDK. Both native jobs run only when started manually (`workflow_dispatch`) from the repository's Actions tab, not on pull requests or pushes: run them when a change touches the native build, the `barometermobile` facade or `tools/mobile`, and before a milestone closes. They upload the library and its build-info file as a workflow artifact named `barometer-android` or `barometer-apple`, kept for 30 days. Workflow artifacts are not releases: they are unsigned, unversioned and not published.
 
 ## Tooling
 
