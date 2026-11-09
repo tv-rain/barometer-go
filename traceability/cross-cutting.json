@@ -7406,8 +7406,8 @@
       "implementation_status": "planned",
       "implementation_locations": [
         {
-          "path": "internal/execution/schedule.go",
-          "selector": "file",
+          "path": "runs.go",
+          "selector": "symbol:runtime.reserveRun",
           "state": "planned"
         }
       ],
@@ -7417,7 +7417,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+      "notes": "Ownership and cases are planned. The platform suspension signal exists after Go baseline 5bc1335: `runtime.reserveRun` in runs.go defers a run that comes due while the platform reports suspension, and TestCcScheduleEnvelope (root) executes every row of CC-SCHEDULE-ENVELOPE with a synthetic platform network. Location and case status move at the next milestone rebaseline. Synthetic core contract cases. No implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-SCHEDULE-0002",
@@ -9234,7 +9234,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial at Go d8e7774 (measurement milestone). Existing code implementing part of this obligation: `Engine.attempt` in internal/execution/run.go, `Snapshot.Acquire` in internal/networkcontext/networkcontext.go. UT.internal.execution.TestNetworkChangeDuringAttempt, UT.internal.execution.TestCcNet05PathContextAndProxyGeneration passed, covering only the aspects recorded in traceability/evidence/go-unit-d8e7774.md. Still planned: CC-CONTEXT-EXECUTION-INTEGRATION. Synthetic loopback fixtures and fake platform ports only. No implemented, runtime, platform or field claim."
+      "notes": "Partial at Go d8e7774 (measurement milestone). Existing code implementing part of this obligation: `Engine.attempt` in internal/execution/run.go, `Snapshot.Acquire` in internal/networkcontext/networkcontext.go. UT.internal.execution.TestNetworkChangeDuringAttempt, UT.internal.execution.TestCcNet05PathContextAndProxyGeneration passed, covering only the aspects recorded in traceability/evidence/go-unit-d8e7774.md. Still planned: CC-CONTEXT-EXECUTION-INTEGRATION; after Go baseline 5bc1335 TestCcContextExecutionIntegration also runs its suspension-during-acquisition row with the platform suspension signal, so every row of the family executes, and its status moves at the next milestone rebaseline. Synthetic loopback fixtures and fake platform ports only. No implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-CONTEXT-0026",
@@ -15814,7 +15814,7 @@
     {
       "id": "CC-SCHEDULE-ENVELOPE",
       "location": {
-        "path": "internal/execution/cross_cutting_conformance_test.go",
+        "path": "runtime_conformance_test.go",
         "selector": "symbol:TestCcScheduleEnvelope",
         "state": "planned"
       },

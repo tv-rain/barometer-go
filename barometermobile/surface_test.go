@@ -37,7 +37,7 @@ var mobileAPI = []string{
 	"func NewAbsentRecordValue() *RecordValue",
 	"func NewStringList() *StringList",
 	"func (l *StringList) Add(s string)",
-	"func NewAccessState(generation int64, networkType string, vpn string, ipv4 string, ipv6 string, validated string, captivePortal string) *AccessState",
+	"func NewAccessState(generation int64, networkType string, vpn string, ipv4 string, ipv6 string, validated string, captivePortal string, suspended string) *AccessState",
 	"func NewDeviceState(batteryPercent int64, batteryKnown bool, charging bool, chargingKnown bool) *DeviceState",
 	"func NewClient(adapters *Adapters, trust []byte) (*Client, error)",
 	"func (c *Client) InstallEmbeddedTask(issuerID string, taskJSON []byte) (string, error)",

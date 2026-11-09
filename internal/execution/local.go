@@ -40,6 +40,9 @@ func (e *Engine) localAttempt(actx context.Context, cancel context.CancelCauseFu
 		if actx.Err() != nil {
 			return stop(pending, stopReason(actx))
 		}
+		if err == nil && snap.Suspended() {
+			return stop(pending, task.PlatformSuspended)
+		}
 		if err != nil || !NetworkConditions(p.Network, snap.Access()) {
 			if n > 1 {
 				return Attempt{}, measurement.Usage{}, result.Value{}, errSkipped
@@ -71,7 +74,13 @@ func (e *Engine) localAttempt(actx context.Context, cancel context.CancelCauseFu
 			}
 			return observation.AccessSnapshot{}, measurement.ErrNetworkState
 		}
-		w := snap.Watch(func() { cancel(errNetworkChanged) })
+		// A reading that reports suspension ends the started attempt with
+		// platform_suspended rather than produce an outcome.
+		if snap.Suspended() {
+			cancel(errSuspended)
+			return observation.AccessSnapshot{}, measurement.ErrRunner
+		}
+		w := watchChange(actx, cancel, snap)
 		mu.Lock()
 		if stopWatch != nil {
 			mu.Unlock()
@@ -140,6 +149,8 @@ func platformValidation(actx context.Context, cancel context.CancelCauseFunc, p 
 			case actx.Err() != nil || ctx.Err() != nil:
 			case rerr != nil:
 				value, err = "unknown", nil
+			case read.Generation() != attempt.Generation() && read.Suspended():
+				cancel(errSuspended)
 			case read.Generation() != attempt.Generation():
 				cancel(errNetworkChanged)
 			default:

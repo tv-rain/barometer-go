@@ -43,6 +43,27 @@ var errDeadline = errors.New("execution: attempt deadline exceeded")
 // change during an attempt.
 var errNetworkChanged = errors.New("execution: access network changed")
 
+// errSuspended is the cancellation cause of an access-network generation
+// change after which the platform reports the application suspended.
+var errSuspended = errors.New("execution: platform suspended")
+
+// changeCause re-reads access after a generation change of snap's network and
+// returns the cause that ends the attempt: errSuspended when the platform now
+// reports suspension, otherwise errNetworkChanged. The read ends with ctx, the
+// attempt context, so it stays inside the attempt deadline and cancellation.
+func changeCause(ctx context.Context, snap networkcontext.Snapshot) error {
+	if snap.SuspendedNow(ctx) {
+		return errSuspended
+	}
+	return errNetworkChanged
+}
+
+// watchChange arms the generation watch of an attempt: a change ends the
+// attempt with platform_suspended or network_changed (changeCause).
+func watchChange(actx context.Context, cancel context.CancelCauseFunc, snap networkcontext.Snapshot) (stop func()) {
+	return snap.Watch(func() { cancel(changeCause(actx, snap)) })
+}
+
 // errSkipped reports a retry that did not start because its network
 // conditions were unsatisfied; it produces no result.
 var errSkipped = errors.New("execution: retry conditions unsatisfied")
@@ -283,6 +304,8 @@ func stopReason(ctx context.Context) task.ExecutionReason {
 		return task.ResourceLimit
 	case errors.Is(cause, errNetworkChanged):
 		return task.NetworkChanged
+	case errors.Is(cause, errSuspended):
+		return task.PlatformSuspended
 	}
 	if reason, ok := pathFailure(context.Cause(ctx)); ok {
 		return reason
@@ -376,6 +399,12 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 		a, v, err := e.stopped(p, pending, stopReason(actx), nil, runID, n, started)
 		return a, measurement.Usage{}, v, err
 	}
+	// No attempt starts while the platform reports the application
+	// suspended; the attempt records platform_suspended before any contact.
+	if err == nil && snap.Suspended() {
+		a, v, err := e.stopped(p, pending, task.PlatformSuspended, nil, runID, n, started)
+		return a, measurement.Usage{}, v, err
+	}
 	// An access condition that cannot be determined or is not met is
 	// constraints_unsatisfied; a retry it prevents is not attempted
 	// (REQ-EXECUTION-0031). Without such a condition, a failed capture
@@ -392,8 +421,10 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 		return a, measurement.Usage{}, v, err
 	}
 	// A generation change from the capture on ends the attempt
-	// (REQ-CONTEXT-0025); its context then records network_changed.
-	stopWatch := snap.Watch(func() { cancel(errNetworkChanged) })
+	// (REQ-CONTEXT-0025): platform_suspended when the platform then reports
+	// suspension, otherwise network_changed. Either way the generation
+	// changed, so its context records network_changed.
+	stopWatch := watchChange(actx, cancel, snap)
 	defer stopWatch()
 	// Egress context is acquired through a dialer of the attempt's own path
 	// inside the attempt's deadline, cancellation and network-change watch
@@ -436,7 +467,7 @@ func (e *Engine) attempt(ctx context.Context, p Plan, runner measurement.Runner,
 		return a, measurement.Usage{}, v, err
 	}
 	contextFor := func(reason task.ExecutionReason) *observation.NetworkContext {
-		if reason == task.NetworkChanged {
+		if reason == task.NetworkChanged || reason == task.PlatformSuspended {
 			return &changed
 		}
 		return &stable

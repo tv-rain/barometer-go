@@ -14,6 +14,7 @@ import (
 	model "github.com/tv-rain/barometer-go/internal/model/result"
 	"github.com/tv-rain/barometer-go/internal/model/task"
 	"github.com/tv-rain/barometer-go/internal/networkcontext"
+	"github.com/tv-rain/barometer-go/internal/platform"
 	"github.com/tv-rain/barometer-go/internal/result"
 	"github.com/tv-rain/barometer-go/internal/testkit"
 	"github.com/tv-rain/barometer-go/internal/testkit/contextendpoint"
@@ -279,8 +280,9 @@ func TestContextEndpointResponses(t *testing.T) {
 // deadline, cancellation and network-change watch; a missing required field
 // is network_context_unavailable and an allowlist mismatch
 // constraints_unsatisfied, both without running the test; without a
-// requirement an unavailable context does not block the attempt. Platform
-// suspension during acquisition needs the native lifecycle signal.
+// requirement an unavailable context does not block the attempt. A platform
+// suspension during acquisition, reported with a new generation, ends the
+// attempt with platform_suspended before the test starts.
 // requirement-ref: REQ-CONTEXT-0025
 // requirement-ref: REQ-CONTEXT-0026
 // requirement-ref: REQ-CONTEXT-0027
@@ -297,6 +299,11 @@ func TestCcContextExecutionIntegration(t *testing.T) {
 			s.Generation = 2
 			f.ctx.net.Set(s)
 		}, "network_changed"},
+		"platform suspension": {func(f *fixture) {
+			s := defaultAccess
+			s.Generation, s.Suspended = 2, platform.AvailabilityYes
+			f.ctx.net.Set(s)
+		}, "platform_suspended"},
 	}
 	for name, tc := range interrupt {
 		t.Run(name, func(t *testing.T) {

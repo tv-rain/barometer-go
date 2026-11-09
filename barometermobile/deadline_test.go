@@ -124,7 +124,7 @@ func TestCallbackErrorsAndUnknownValuesAreUnavailable(t *testing.T) {
 		t.Error("a panicking callback is available")
 	}
 
-	n.network.state = NewAccessState(-3, "satellite", "maybe", "true", "", "YES", "no")
+	n.network.state = NewAccessState(-3, "satellite", "maybe", "true", "", "YES", "no", "SUSPENDED")
 	s, err := network{n.network}.Access(ctx)
 	if err != nil {
 		t.Fatal(err)

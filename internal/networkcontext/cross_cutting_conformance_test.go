@@ -89,9 +89,10 @@ func assertNoCanary(t *testing.T, where string, b []byte) {
 func TestCcContextContextLayersAccessContext(t *testing.T) {
 	want := []string{"ipv4_available", "ipv6_available", "network_changed", "network_type", "validated", "vpn_state"}
 	// The port's reading has only the coarse fields and the generation. The
-	// captive-portal flag is NET-03's platform evidence and never reaches the
-	// access object, which keeps its six registered fields below.
-	if got := stateFields(); !slices.Equal(got, []string{"CaptivePortal", "Generation", "IPv4", "IPv6", "Type", "VPN", "Validated"}) {
+	// captive-portal flag is NET-03's platform evidence and the suspension
+	// state is local execution metadata; neither reaches the access object,
+	// which keeps its six registered fields below.
+	if got := stateFields(); !slices.Equal(got, []string{"CaptivePortal", "Generation", "IPv4", "IPv6", "Suspended", "Type", "VPN", "Validated"}) {
 		t.Fatalf("platform.AccessState fields = %v", got)
 	}
 	n := capability.NewNetwork(platform.AccessState{Generation: 1})

@@ -88,3 +88,57 @@ func TestSnapshotWatch(t *testing.T) {
 		t.Fatal("capability without a stop function reported no change")
 	}
 }
+
+// Suspension is local execution metadata: only a reported yes is suspension,
+// it never reaches the Network Context, and a re-read after a change is
+// suspension only when the platform reports it then. A failed re-read, a zero
+// generation, an unknown state and an ended context are not suspension.
+func TestSnapshotSuspension(t *testing.T) {
+	ctx := context.Background()
+	for v, want := range map[platform.Availability]bool{platform.AvailabilityYes: true, platform.AvailabilityNo: false, platform.AvailabilityUnknown: false, 9: false} {
+		n := capability.NewNetwork(platform.AccessState{Generation: 1, Suspended: v})
+		d, err := networkcontext.NewDirect(n)
+		if err != nil {
+			t.Fatal(err)
+		}
+		snap, err := d.Capture(ctx)
+		if err != nil || snap.Suspended() != want {
+			t.Fatalf("suspended %d: %v %v", v, snap.Suspended(), err)
+		}
+		plain := capability.NewNetwork(platform.AccessState{Generation: 1})
+		p, _ := networkcontext.NewDirect(plain)
+		other, _ := p.Capture(ctx)
+		a, _ := snap.Context(true)
+		b, _ := other.Context(true)
+		if a.Access() != b.Access() {
+			t.Fatal("suspension changed the Network Context")
+		}
+	}
+	if (networkcontext.Snapshot{}).Suspended() || (networkcontext.Snapshot{}).SuspendedNow(ctx) {
+		t.Fatal("an invalid snapshot is suspended")
+	}
+
+	n := capability.NewNetwork(platform.AccessState{Generation: 1})
+	d, _ := networkcontext.NewDirect(n)
+	snap, _ := d.Capture(ctx)
+	if snap.SuspendedNow(ctx) {
+		t.Fatal("an active platform is suspended")
+	}
+	n.Set(platform.AccessState{Generation: 2, Suspended: platform.AvailabilityYes})
+	if !snap.SuspendedNow(ctx) {
+		t.Fatal("a reported suspension was not seen")
+	}
+	ended, cancel := context.WithCancel(ctx)
+	cancel()
+	if snap.SuspendedNow(ended) {
+		t.Fatal("an ended context read suspension")
+	}
+	n.Set(platform.AccessState{Suspended: platform.AvailabilityYes})
+	if snap.SuspendedNow(ctx) {
+		t.Fatal("a zero generation is suspended")
+	}
+	n.Fail()
+	if snap.SuspendedNow(ctx) {
+		t.Fatal("a failed read is suspended")
+	}
+}

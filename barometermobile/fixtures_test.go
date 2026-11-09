@@ -155,7 +155,7 @@ type nativeNetwork struct {
 
 func newNativeNetwork() *nativeNetwork {
 	return &nativeNetwork{gate: newGate(), watchGate: newGate(), observers: map[int64]NetworkObserver{},
-		state: NewAccessState(1, "wifi", "not_detected", "yes", "no", "yes", "no")}
+		state: NewAccessState(1, "wifi", "not_detected", "yes", "no", "yes", "no", "active")}
 }
 
 func (n *nativeNetwork) Access(timeoutMillis int64) (*AccessState, error) {

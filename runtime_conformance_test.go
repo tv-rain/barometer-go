@@ -1469,3 +1469,118 @@ func TestCcExecutionFieldsConcurrency(t *testing.T) {
 		waitTerminal(t, c, re)
 	})
 }
+
+// CC-SCHEDULE-ENVELOPE: scheduled times are eligibility constraints, not
+// exact execution times. The synthetic platform reports the application
+// suspended from T-1h to T+2h, with a new access generation on entry and on
+// resume. No run or attempt starts while suspended, and the run that came due
+// at T is deferred, not missed or failed: StartRun reserves nothing and
+// returns run_not_due, the fixed code for a start that cannot happen now. On
+// resume it starts, and its result records the actual start, not starts_at.
+// A suspension that lasts past not_after leaves no run after resume. No
+// return value carries starts_at: StartRun returns a handle or a fixed code
+// and RunState only "active" or "terminal".
+// requirement-ref: REQ-SCHEDULE-0001
+func TestCcScheduleEnvelope(t *testing.T) {
+	const T = 2 * time.Hour
+	suspended := defaultAccess
+	suspended.Generation, suspended.Suspended = 2, platform.AvailabilityYes
+	resumed := defaultAccess
+	resumed.Generation, resumed.Suspended = 3, platform.AvailabilityNo
+	window := `"starts_at":"` + at(T) + `","not_after":"` + at(T+24*time.Hour) + `"`
+	idle := func(t *testing.T, h *harness, what string) {
+		t.Helper()
+		if h.run.runner.Calls() != 0 || len(h.run.output.Records()) != 0 {
+			t.Fatal("an attempt started or a result was written while suspended:", what)
+		}
+	}
+
+	t.Run("deferred across the due time", func(t *testing.T) {
+		h := runningHarness(t)
+		c := h.initialized(t)
+		th := h.admit(t, c, scheduledTask("envelope-1", window, "", false))
+		h.advance(T - time.Hour)
+		h.run.network.Set(suspended)
+		for _, d := range []time.Duration{time.Hour, time.Second, time.Hour} { // T, T+1s, T+1h+1s
+			h.advance(d)
+			if code := startCode(t, c, th); code != "run_not_due" {
+				t.Fatal("start while suspended:", code)
+			}
+			idle(t, h, "start")
+		}
+		if rec, _ := h.run.ledger.Record(key("envelope-1")); rec.Runs != 0 {
+			t.Fatalf("a deferred run was counted: %+v", rec)
+		}
+		h.advance(time.Hour - time.Second) // T+2h
+		h.run.network.Set(resumed)
+		rh, err := c.StartRun(th)
+		if err != nil {
+			t.Fatal("no run after resume:", codeOf(err))
+		}
+		waitTerminal(t, c, rh)
+		if state, err := c.RunState(rh); err != nil || state != "terminal" {
+			t.Fatalf("run state %q %s", state, codeOf(err))
+		}
+		got := fullRecords(t, h)
+		want := epoch.Add(T + 2*time.Hour).Truncate(time.Minute).Format(time.RFC3339)
+		if len(got) != 1 || got[0].Execution.State != "completed" || got[0].Time.StartedAt != want || got[0].Time.StartedAt == at(T) {
+			t.Fatalf("results %+v, want one completed attempt started at %s", got, want)
+		}
+		if rec, _ := h.run.ledger.Record(key("envelope-1")); rec.Runs != 1 {
+			t.Fatalf("run accounting %+v", rec)
+		}
+	})
+
+	t.Run("an attempt in flight at suspension", func(t *testing.T) {
+		// The attempt the suspension interrupts is incomplete with
+		// platform_suspended; no further attempt starts until resume.
+		h := runningHarness(t)
+		c := h.initialized(t)
+		h.run.runner.holdCalls()
+		th := h.admit(t, c, scheduledTask("envelope-2", window, "", false))
+		h.advance(T)
+		rh, err := c.StartRun(th)
+		if err != nil {
+			t.Fatal(codeOf(err))
+		}
+		<-h.run.runner.started
+		h.run.network.Set(suspended)
+		waitTerminal(t, c, rh)
+		got := fullRecords(t, h)
+		if len(got) != 1 || got[0].Execution.State != "incomplete" || got[0].Execution.Reason != "platform_suspended" {
+			t.Fatalf("results %+v", got)
+		}
+	})
+
+	t.Run("suspended past not_after", func(t *testing.T) {
+		h := runningHarness(t)
+		c := h.initialized(t)
+		th := h.admit(t, c, scheduledTask("envelope-3", window, "", false))
+		h.advance(T - time.Hour)
+		h.run.network.Set(suspended)
+		h.advance(time.Hour)
+		if code := startCode(t, c, th); code != "run_not_due" {
+			t.Fatal("start while suspended:", code)
+		}
+		h.advance(24*time.Hour + time.Second) // after not_after
+		h.run.network.Set(resumed)
+		if code := startCode(t, c, th); code != "run_not_due" {
+			t.Fatal("a run started after not_after:", code)
+		}
+		idle(t, h, "after not_after")
+	})
+
+	t.Run("unknown suspension state", func(t *testing.T) {
+		// A platform that does not report the signal does not block a run.
+		h := runningHarness(t)
+		c := h.initialized(t)
+		th := h.admit(t, c, scheduledTask("envelope-4", window, "", false))
+		h.advance(T)
+		unknown := defaultAccess
+		unknown.Generation = 2
+		h.run.network.Set(unknown)
+		if code := startCode(t, c, th); code != "ok" {
+			t.Fatal("unknown suspension blocked the run:", code)
+		}
+	})
+}

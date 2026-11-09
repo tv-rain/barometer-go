@@ -129,3 +129,111 @@ func TestNetworkConditionsBeforeEachAttempt(t *testing.T) {
 	rep, err = f.engine.Run(f.run, f.plan)
 	f.expect(t, rep, err, nil, []want{{"not_run", "internal_error", ""}}, nil)
 }
+
+// A platform suspension, reported through the access state with a new
+// generation, ends an attempt with platform_suspended in each stage: not_run
+// without context when the attempt's own capture reports it or it arrives
+// before the test starts, incomplete with network_changed true after the
+// test starts, and no change to a completed attempt whose outcome came first.
+// No attempt starts while suspended: a retry that comes due before resume is
+// not_run with platform_suspended, and one after resume runs. An unknown
+// suspension state does not block execution.
+// requirement-ref: REQ-CONTEXT-0025
+// requirement-ref: REQ-RESULT-0051
+// requirement-ref: REQ-RESULT-0052
+func TestPlatformSuspensionDuringAttempt(t *testing.T) {
+	suspended := defaultAccess
+	suspended.Generation, suspended.Suspended = 2, platform.AvailabilityYes
+	resumed := defaultAccess
+	resumed.Generation, resumed.Suspended = 3, platform.AvailabilityNo
+	t.Run("at the attempt's capture", func(t *testing.T) {
+		f := newFixture(t, schedule(1), connected(t))
+		f.ctx.net.Set(suspended)
+		rep, err := f.engine.Run(f.run, f.plan)
+		f.expect(t, rep, err, nil, []want{{"not_run", "platform_suspended", ""}}, nil)
+		if f.runner.Calls() != 0 || len(f.dialers.Issued()) != 0 || f.ctx.net.Watching() != 0 {
+			t.Fatal("a suspended attempt started")
+		}
+	})
+	cases := []struct {
+		name  string
+		begin bool // the runner starts the test before the suspension
+		after bool // the suspension arrives after the outcome
+		want  want
+	}{
+		{"before the test starts", false, false, want{"not_run", "platform_suspended", ""}},
+		{"after the test starts", true, false, want{"incomplete", "platform_suspended", ""}},
+		{"after the outcome", true, true, completedConnected},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newFixture(t, schedule(1))
+			r := runnerFunc(func(ctx context.Context, in measurement.Input) (measurement.Output, error) {
+				if tc.begin {
+					in.Start()
+				}
+				if tc.after {
+					return connected(t).out, nil
+				}
+				f.ctx.net.Set(suspended)
+				<-ctx.Done()
+				return measurement.Output{}, ctx.Err()
+			})
+			o := <-f.start(t, f.run, r)
+			if tc.after {
+				f.ctx.net.Set(suspended)
+			}
+			f.expect(t, o.rep, o.err, nil, []want{tc.want}, nil)
+			if rec := f.records(t)[0]; rec.Execution.State != "not_run" {
+				access, _ := accessOf(t, rec)
+				if access["network_changed"] != (tc.want.state == "incomplete") {
+					t.Fatalf("context %s", rec.NetworkContext)
+				}
+				if _, leaked := access["suspended"]; leaked {
+					t.Fatalf("suspension reached the context: %s", rec.NetworkContext)
+				}
+			}
+			if f.ctx.net.Watching() != 0 {
+				t.Fatal("watch outlived the attempt")
+			}
+		})
+	}
+	retry := func(t *testing.T, resume bool) *fixture {
+		f := newFixture(t, schedule(2, task.PlatformSuspended))
+		calls := 0
+		r := runnerFunc(func(ctx context.Context, in measurement.Input) (measurement.Output, error) {
+			calls++
+			if calls > 1 {
+				in.Start()
+				return connected(t).out, nil
+			}
+			in.Start()
+			f.ctx.net.Set(suspended)
+			<-ctx.Done()
+			if resume {
+				f.ctx.net.Set(resumed)
+			}
+			return measurement.Output{}, ctx.Err()
+		})
+		o := <-f.start(t, f.run, r)
+		second := want{"not_run", "platform_suspended", ""}
+		if resume {
+			second = completedConnected
+		}
+		f.expect(t, o.rep, o.err, nil, []want{{"incomplete", "platform_suspended", ""}, second}, []time.Duration{35 * time.Second})
+		if calls != map[bool]int{false: 1, true: 2}[resume] {
+			t.Fatalf("runner calls = %d", calls)
+		}
+		return f
+	}
+	t.Run("retry after resume", func(t *testing.T) { retry(t, true) })
+	t.Run("retry while still suspended", func(t *testing.T) { retry(t, false) })
+	t.Run("unknown suspension state", func(t *testing.T) {
+		f := newFixture(t, schedule(1), connected(t))
+		unknown := defaultAccess
+		unknown.Suspended = platform.AvailabilityUnknown
+		f.ctx.net.Set(unknown)
+		rep, err := f.engine.Run(f.run, f.plan)
+		f.expect(t, rep, err, nil, []want{completedConnected}, nil)
+	})
+}

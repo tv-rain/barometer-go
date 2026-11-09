@@ -234,3 +234,69 @@ func (n *blockingNetwork) Access(ctx context.Context) (platform.AccessState, err
 	<-ctx.Done()
 	return platform.AccessState{}, ctx.Err()
 }
+
+// A platform suspension reported through the access state ends a NET-01
+// attempt with platform_suspended and never an outcome: on the gate read of
+// stated access conditions it is not_run; on the test's own read, or as a
+// generation change while the read is in flight, the test has started and it
+// is incomplete. One after the outcome is recorded leaves the outcome.
+// requirement-ref: REQ-NET-01-0027
+// requirement-ref: REQ-RESULT-0051
+func TestNet01PlatformSuspension(t *testing.T) {
+	active := platform.AccessState{Generation: 1, Type: platform.NetworkWiFi, IPv4: platform.AvailabilityYes}
+	suspended := active
+	suspended.Generation, suspended.Suspended = 2, platform.AvailabilityYes
+	for _, tc := range []struct {
+		name       string
+		start      platform.AccessState
+		conditions bool
+		change     string // "", "during read" or "after outcome"
+		phase      Phase
+	}{
+		{"gate read", suspended, true, "", NotRun},
+		{"test read", suspended, false, "", Incomplete},
+		{"during read", active, false, "during read", Incomplete},
+		{"after outcome", active, false, "after outcome", Completed},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			network := capability.NewNetwork(tc.start)
+			source, err := networkcontext.NewDirect(network)
+			if err != nil {
+				t.Fatal(err)
+			}
+			none := func() {}
+			suspend := func() { network.Set(suspended) }
+			capture := net01Capture{source, none, none}
+			var runner measurement.Runner = net01.Runner{}
+			switch tc.change {
+			case "during read":
+				capture.after = suspend
+			case "after outcome":
+				runner = net01Runner{suspend}
+			}
+			dials := 0
+			p := net01Plan(t, network, capture, &dials)
+			if tc.conditions {
+				p.Network.AllowedTransports = []string{"wifi"}
+			}
+			attempt, _, value, err := (&Engine{clock: testkit.NewWaitClock(time.Now())}).attempt(context.Background(), p, runner, "AQEBAQEBAQEBAQEBAQEBAQ", 1)
+			if err != nil {
+				t.Fatal(err)
+			}
+			v := value.View()
+			if attempt.Phase() != tc.phase {
+				t.Fatalf("phase %v, want %v", attempt.Phase(), tc.phase)
+			}
+			if tc.phase == Completed {
+				if attempt.Reason() != "" || v.Measurement == nil || v.Measurement.Access == nil {
+					t.Fatal("suspension after the outcome replaced it")
+				}
+			} else if attempt.Reason() != task.PlatformSuspended || v.Measurement != nil {
+				t.Fatalf("reason %q, measurement %v", attempt.Reason(), v.Measurement)
+			}
+			if network.Watching() != 0 || dials != 0 {
+				t.Fatal("watch leaked or path used")
+			}
+		})
+	}
+}

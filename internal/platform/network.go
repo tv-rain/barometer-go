@@ -55,6 +55,13 @@ const (
 // Network Context: only NET-03 retains it, as its coarse platform_validation.
 // The field is interim; the native signal is a review point of the
 // native adapters and bindings work.
+//
+// Suspended is whether the platform reports that mobile lifecycle or
+// operating-system policy has suspended the application's execution. Entering
+// or leaving suspension advances Generation, so a watch on the earlier
+// generation fires. AvailabilityUnknown does not block execution; only
+// AvailabilityYes does. What suspension means on a platform is the adapter's
+// definition, not the core's.
 type AccessState struct {
 	Generation    uint64
 	Type          NetworkType
@@ -63,6 +70,7 @@ type AccessState struct {
 	IPv6          Availability
 	Validated     Availability
 	CaptivePortal Availability
+	Suspended     Availability
 }
 
 // Network reports coarse access context for execution constraints and
@@ -76,7 +84,10 @@ type AccessState struct {
 // access-network generation is no longer generation, immediately if it already
 // differs. stop cancels the watch, is idempotent and does not wait for a call
 // in progress. Implementors honor finite deadlines and do no background work
-// beyond delivering a change. The shape is interim: the native capability, its
+// beyond delivering a change. After a change the core may call Access again,
+// from the goroutine that delivered it, to learn whether the new generation is
+// a suspension; changed must therefore not be called while holding a lock that
+// Access needs. The shape is interim: the native capability, its
 // change signal and its binding are a review point of the native adapters and
 // bindings work.
 type Network interface {
