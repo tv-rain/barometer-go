@@ -2,6 +2,7 @@ package admission_test
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"reflect"
 	"slices"
@@ -54,6 +55,15 @@ func permissive() task.PolicyInput {
 		Issuers: []task.IssuerPermissions{{IssuerID: "embedded-issuer", Permissions: permissions()}, {IssuerID: "remote-issuer", Permissions: permissions()}},
 		Targets: []task.TargetRegistration{registration("reg-a"), registration("reg-b")},
 		Keys:    []task.TrustedKey{signer().Key(keyNotBefore, keyNotAfter), otherSigner().Key(keyNotBefore, keyNotAfter)}}
+}
+
+// reviewed lists the exact task bytes of issuer as release-reviewed
+// (REQ-LIMIT-0013).
+func reviewed(in task.PolicyInput, issuer string, tasks ...[]byte) task.PolicyInput {
+	for _, b := range tasks {
+		in.ReleaseReviewed = append(in.ReleaseReviewed, task.ReleaseReviewedTask{IssuerID: issuer, TaskSHA256: sha256.Sum256(b)})
+	}
+	return in
 }
 
 func mustPolicy(t testing.TB, in task.PolicyInput) task.LocalPolicy {
@@ -184,8 +194,9 @@ func TestGateIssuerAndLocalCeilings(t *testing.T) {
 		for _, side := range []string{"issuer", "local"} {
 			for i, r := range c.rows {
 				name := fmt.Sprintf("%s %s row %d", side, c.name, i)
-				h := newHarnessWith(t, mustPolicy(t, narrowed(side, c.edit)))
-				g, err := h.embedded(t, taskWith(r.task))
+				b := taskWith(r.task)
+				h := newHarnessWith(t, mustPolicy(t, reviewed(narrowed(side, c.edit), "embedded-issuer", b)))
+				g, err := h.embedded(t, b)
 				expect(t, name, err, r.want)
 				if r.want != 0 && h.normalize.Load() != 0 {
 					t.Errorf("%s: codec reached after step 7 failed", name)

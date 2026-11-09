@@ -198,6 +198,7 @@ type runtime struct {
 	bundles    *pending.Store
 	proxies    *proxyState
 	egress     *networkcontext.Lookup // nil without network_context
+	local      localRestrictions
 
 	// ctx bounds adapter calls made for this generation. invalidate cancels
 	// it, so a transition does not wait on a stalled trusted adapter.
@@ -284,13 +285,24 @@ func successor(a *adapters, init *config.Initialization, policy task.LocalPolicy
 	// A new generation never reads the cache entries of an earlier one,
 	// including across reinitialization and policy replacement
 	// (REQ-CONTEXT-0009, REQ-CONTEXT-0023).
+	local := restrictionsOf(policy)
 	var egress *networkcontext.Lookup
-	if e, ok := init.Configuration().NetworkContext(); ok && !a.rootsUnavailable {
+	e, ok := init.Configuration().NetworkContext()
+	endpoints := []string{e.PrimaryEndpoint, e.FallbackEndpoint}
+	if ok && local.restrictContext {
+		// Local Network Context eligibility only removes endpoints and paths
+		// (REQ-EXECUTION-0023): the lookup keeps the configured endpoints it
+		// lists, in order, and none when it lists none.
+		endpoints = local.context.Narrow(endpoints...)
+		ok = len(endpoints) > 0
+		endpoints = append(endpoints, "")
+	}
+	if ok && !a.rootsUnavailable {
 		if a.run.contextCache == nil {
 			return nil
 		}
 		a.run.contextCache.Clear()
-		egress, err = networkcontext.NewLookup(networkcontext.Endpoints{Primary: e.PrimaryEndpoint, Fallback: e.FallbackEndpoint},
+		egress, err = networkcontext.NewLookup(networkcontext.Endpoints{Primary: endpoints[0], Fallback: endpoints[1]},
 			a.contextApprovals, a.contextRoots, a.run.clock, a.run.contextCache)
 		if err != nil {
 			return nil
@@ -305,8 +317,36 @@ func successor(a *adapters, init *config.Initialization, policy task.LocalPolicy
 	return &runtime{init: init, admitter: admitter, tasks: newTaskTable(),
 		runs:   newHandleTable[runRecord](runHandlePrefix, runHandleCapacity),
 		runSet: newRunSet(), run: run, engine: engine, bundles: store,
-		proxies: newProxyState(ctx, proxy, configured, 1), egress: egress,
+		proxies: newProxyState(ctx, proxy, configured, 1), egress: egress, local: local,
 		ctx: ctx, cancel: cancel, deadline: a.lifecycleDeadline()}
+}
+
+// localRestrictions are the local policy inputs that restrict runs of a
+// generation beyond a task's own values: device constraints for every
+// attempt, and Network Context eligibility. They come only from the bound
+// trusted policy and can never widen a task's authority.
+type localRestrictions struct {
+	device          task.DeviceConstraints
+	restrictContext bool
+	context         task.ContextEligibility
+}
+
+func restrictionsOf(p task.LocalPolicy) localRestrictions {
+	c, ok := p.ContextEligibility()
+	return localRestrictions{device: p.Device(), restrictContext: ok, context: c}
+}
+
+// egressFor returns the generation's context lookup for a run on the named
+// network path, or nil when there is none or local policy does not permit
+// acquisition on that path. Without a lookup the attempt's egress context is
+// unavailable: a task requiring a context field records
+// network_context_unavailable, and one without requirements runs with egress
+// unavailable (REQ-EXECUTION-0024, REQ-CONTEXT-0028).
+func (r *runtime) egressFor(path string) *networkcontext.Lookup {
+	if r.local.restrictContext && !r.local.context.Permits(path) {
+		return nil
+	}
+	return r.egress
 }
 
 // absent also treats typed nil values in an interface as missing.

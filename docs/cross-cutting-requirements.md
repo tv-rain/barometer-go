@@ -1072,7 +1072,7 @@ Public source: `data-formats/task-execution.md`, section **Fields / Network / Fi
 
 Case plan: Exercise required_fields/allowlists, missing/invalid/unknown context, optional context failure and stricter policy. Count requests to prove no endpoint/path override by tasks.
 
-Scope: Planned as a whole. `TestCcExecutionFieldsNetworkFieldsNetworkContextRequirements` and `TestCcContextExecutionIntegration` cover required fields and allowlists, missing, unknown and unavailable context, optional context failure and request counts showing that tasks cannot override endpoints or paths. The stricter-local-policy row needs local-policy context eligibility, which the local policy model does not define. Mixed-family evidence is not promoted. No support claim.
+Scope: Planned as a whole until the next milestone rebaseline. `TestCcExecutionFieldsNetworkFieldsNetworkContextRequirements` and `TestCcContextExecutionIntegration` cover required fields and allowlists, missing, unknown and unavailable context, optional context failure and request counts showing that tasks cannot override endpoints or paths. `TestLocalPolicyContextEligibility` (root) covers the stricter-local-policy row: local policy that forbids acquisition, permits no configured endpoint, narrows it to one endpoint or excludes the run's path contacts no other endpoint, runs a task without requirements with egress unavailable and records `network_context_unavailable` for a task that requires a field. Mixed-family evidence is not promoted. No support claim.
 
 <!-- requirement-ref: REQ-EXECUTION-0021 -->
 <!-- requirement-ref: REQ-EXECUTION-0022 -->
@@ -1086,11 +1086,11 @@ Scope: Planned as a whole. `TestCcExecutionFieldsNetworkFieldsNetworkContextRequ
 
 ### CC-EXECUTION-FIELDS-DEVICE-FIELDS
 
-Public source: `data-formats/task-execution.md`, section **Fields / Device / Fields**. Intended target: `internal/execution/attempt.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcExecutionFieldsDeviceFields`.
+Public source: `data-formats/task-execution.md`, section **Fields / Device / Fields**. Intended target: `internal/execution/gates.go`, `symbol:Gates.device`. Case location: `local_restrictions_test.go`, `symbol:TestCcExecutionFieldsDeviceFields`.
 
 Case plan: Exercise battery/charging constraints using synthetic platform state, with local policy stricter than task values.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. `TestCcExecutionFieldsDeviceFields` runs every row through `Client.StartRun` with synthetic device state: task battery and charging constraints, local constraints without task values, the higher minimum and either charging requirement winning, unknown, unavailable and absent device state never satisfying a local constraint, and the local constraint before a retry. The manifest status moves at the next milestone rebaseline. No support claim.
 
 <!-- requirement-ref: REQ-EXECUTION-0025 -->
 <!-- requirement-ref: REQ-EXECUTION-0026 -->
@@ -2533,11 +2533,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-LIMIT-SCHEDULE-AND-RETRY-LIMITS
 
-Public source: `library/registered-limits.md`, section **Schedule and Retry Limits**. Intended target: `internal/validation/schedule.go`. Planned case location: `internal/validation/cross_cutting_conformance_test.go`, `symbol:TestCcLimitScheduleAndRetryLimits`.
+Public source: `library/registered-limits.md`, section **Schedule and Retry Limits**. Intended target: `internal/validation/schedule.go`. Case location: `runtime_conformance_test.go`, `symbol:TestCcLimitScheduleAndRetryLimits`.
 
 Case plan: Parameterize every bound/default, issuance skew and trusted-time absence, embedded one-time exception and forbidden measurement-outcome retries.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. Its release-review rows run through `Client.AdmitTask`: only an embedded one-time task that local policy lists as release-reviewed by issuer and exact-bytes digest may omit `not_after`; an unlisted task, other bytes of a listed task, a listing for another issuer, a listed task with two runs, a remote task with listed bytes and any task under a policy without a list are `task_schema_invalid`. Host non-persistence across application updates stays a host obligation. No support claim.
 
 <!-- requirement-ref: REQ-LIMIT-0009 -->
 <!-- requirement-ref: REQ-LIMIT-0010 -->

@@ -4709,7 +4709,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. Milestone update at Go d788a80: `ContextConditions` in internal/execution/gates.go implements part of this obligation; CC-EXECUTION-FIELDS-NETWORK-FIELDS-NETWORK-CONTEXT-REQUIREMENTS stays planned. Synthetic adapters and loopback endpoints only. No implemented, runtime, platform or field claim."
+      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. Milestone update at Go d788a80: `ContextConditions` in internal/execution/gates.go implements part of this obligation; CC-EXECUTION-FIELDS-NETWORK-FIELDS-NETWORK-CONTEXT-REQUIREMENTS stays planned. Synthetic adapters and loopback endpoints only. No implemented, runtime, platform or field claim. After Go baseline 5bc1335 local Network Context eligibility in the trusted policy (`runtime.egressFor` and `successor` in the root package) may forbid acquisition or narrow it to listed configured endpoints and paths, and TestLocalPolicyContextEligibility (root) executes the stricter-local-policy row; the family status moves at the next milestone rebaseline."
     },
     {
       "id": "REQ-EXECUTION-0024",
@@ -4734,8 +4734,8 @@
       "implementation_status": "planned",
       "implementation_locations": [
         {
-          "path": "internal/execution/attempt.go",
-          "selector": "file",
+          "path": "internal/execution/gates.go",
+          "selector": "symbol:Gates.device",
           "state": "planned"
         }
       ],
@@ -4745,15 +4745,15 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+      "notes": "Ownership and cases are planned. After Go baseline 5bc1335 `Gates.device` in internal/execution/gates.go applies the task's device constraints together with the local policy's DeviceConstraints, the stricter value winning, and TestCcExecutionFieldsDeviceFields (root, local_restrictions_test.go) executes every row of CC-EXECUTION-FIELDS-DEVICE-FIELDS with synthetic device state. Location and case status move at the next milestone rebaseline. Synthetic core contract cases. No implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-EXECUTION-0026",
       "implementation_status": "planned",
       "implementation_locations": [
         {
-          "path": "internal/execution/attempt.go",
-          "selector": "file",
+          "path": "internal/execution/gates.go",
+          "selector": "symbol:Gates.device",
           "state": "planned"
         }
       ],
@@ -4763,7 +4763,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases."
+      "notes": "Ownership and cases are planned. After Go baseline 5bc1335 `Gates.device` in internal/execution/gates.go applies the task's device constraints together with the local policy's DeviceConstraints, the stricter value winning, and TestCcExecutionFieldsDeviceFields (root, local_restrictions_test.go) executes every row of CC-EXECUTION-FIELDS-DEVICE-FIELDS with synthetic device state. Location and case status move at the next milestone rebaseline. Synthetic core contract cases. No implemented, runtime, platform or field claim."
     },
     {
       "id": "REQ-EXECUTION-0027",
@@ -10903,7 +10903,7 @@
       "issue_ids": [],
       "review_evidence_ids": [],
       "support": [],
-      "notes": "Partial: `ScheduleAt` in internal/validation/schedule.go implement part of this obligation at Go 8507f3d. CC-LIMIT-SCHEDULE-AND-RETRY-LIMITS was executed and passed at Go 8507f3d, covering only the aspects recorded in traceability/evidence/go-unit-8507f3d.md; earlier statements that it stays planned are superseded. Synthetic adapters and runners; no implemented, runtime, platform or field claim. Earlier: Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. At Go 5bc1335 `Admitter.Gate` in internal/admission/admit.go carries the exception for every embedded source: an embedded task with repeat mode none and max_runs 1 is admitted without not_after and takes the registered maximum lifetime, as CC-SCHEDULE-SCHEDULING-MODEL-TIME-LIMIT asserts through Client (traceability/evidence/go-unit-5bc1335.md). Release review fixing such a task to one run and the host not persisting it across application updates remain host obligations."
+      "notes": "Partial: `ScheduleAt` in internal/validation/schedule.go implement part of this obligation at Go 8507f3d. CC-LIMIT-SCHEDULE-AND-RETRY-LIMITS was executed and passed at Go 8507f3d, covering only the aspects recorded in traceability/evidence/go-unit-8507f3d.md; earlier statements that it stays planned are superseded. Synthetic adapters and runners; no implemented, runtime, platform or field claim. Earlier: Ownership and cases are planned. Existing related code is not complete reviewed coverage. Synthetic core contract cases. At Go 5bc1335 `Admitter.Gate` in internal/admission/admit.go carried the exception for every embedded source (traceability/evidence/go-unit-5bc1335.md). After that baseline it carries it only for an embedded task that the active local policy lists as release-reviewed by issuer and exact-bytes digest; an unlisted embedded task without not_after is task_schema_invalid, and the release-review rows of TestCcLimitScheduleAndRetryLimits assert that through Client. The listing records release review fixing the task to one run; the host not persisting it across application updates remains a host obligation. Evidence moves at the next milestone rebaseline."
     },
     {
       "id": "REQ-LIMIT-0014",
@@ -15348,7 +15348,7 @@
     {
       "id": "CC-EXECUTION-FIELDS-DEVICE-FIELDS",
       "location": {
-        "path": "internal/execution/cross_cutting_conformance_test.go",
+        "path": "local_restrictions_test.go",
         "selector": "symbol:TestCcExecutionFieldsDeviceFields",
         "state": "planned"
       },

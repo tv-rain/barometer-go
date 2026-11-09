@@ -141,13 +141,17 @@ func (a *Admitter) Gate(ctx context.Context, sourceRef string, presented []byte)
 			return Gated{}, admissionError(task.TrustUnavailable)
 		}
 	}
-	// Every embedded source carries the one-time exception of REQ-LIMIT-0013:
-	// validation admits an embedded task without not_after only for repeat
-	// mode none and max_runs 1. Release review fixing it to one run, and the
-	// host not persisting it across application updates, are host obligations;
+	// The one-time exception of REQ-LIMIT-0013 holds only for an embedded
+	// task that the active local policy lists as release-reviewed, by its
+	// issuer and the digest of its exact bytes; validation then admits it
+	// without not_after only for repeat mode none and max_runs 1. Without a
+	// listing an omitted not_after is task_schema_invalid. The host not
+	// persisting the task across application updates is a host obligation;
 	// Barometer holds no admitted task across a restart.
 	// requirement-ref: REQ-LIMIT-0013
-	timing := validation.TimingContext{Origin: "embedded", AcceptedAt: now, EmbeddedOneTimeException: true}
+	digest := sha256.Sum256(exactTask)
+	reviewed := source.Origin() == task.Embedded && a.policy.ReleaseReviewed(source.IssuerID(), digest)
+	timing := validation.TimingContext{Origin: "embedded", AcceptedAt: now, EmbeddedOneTimeException: reviewed}
 	base := now // validity reference, as in validation.ScheduleAt
 	if issued, ok := source.IssuedAt(); ok {
 		whole := issued.Whole
@@ -230,7 +234,7 @@ func (a *Admitter) Gate(ctx context.Context, sourceRef string, presented []byte)
 	if class = authority.evaluateRisk(a.policy, baseline, candidate.Safety.RiskLevel); class != 0 {
 		return Gated{}, admissionError(class)
 	}
-	return Gated{source: source, digest: sha256.Sum256(exactTask), acceptedAt: now, entry: entry, candidate: candidate, authority: authority}, nil
+	return Gated{source: source, digest: digest, acceptedAt: now, entry: entry, candidate: candidate, authority: authority}, nil
 }
 
 // fieldClass maps a decoding or validation failure to its public class. A value
