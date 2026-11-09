@@ -29,6 +29,10 @@ type Gates struct {
 	ConsentRequired bool
 	Consent         platform.Consent // queried only when ConsentRequired
 	Device          platform.Device  // queried only for a device requirement
+	// LocalDevice holds the local policy's device constraints, which apply
+	// to every attempt with the task's own; the stricter value wins
+	// (REQ-EXECUTION-0026).
+	LocalDevice task.DeviceConstraints
 }
 
 // Satisfied applies the fail-closed rule to each condition.
@@ -121,9 +125,15 @@ func NetworkConditions(n task.NetworkRequirements, a observation.Access) bool {
 	return !n.RequireValidated || a.Validated == "yes"
 }
 
+// device evaluates the effective device constraint: the higher of the task's
+// and the local minimum battery percent, and charging when either requires
+// it. An unknown or unavailable state never satisfies a constraint, and no
+// local value can relax the task's.
+// requirement-ref: REQ-EXECUTION-0025
+// requirement-ref: REQ-EXECUTION-0026
 func (g Gates) device(ctx context.Context) bool {
-	d := g.Execution.Device
-	if d.MinimumBatteryPercent == nil && !d.ChargingOnly {
+	minimum, charging := effectiveDevice(g.Execution.Device, g.LocalDevice)
+	if minimum == nil && !charging {
 		return true
 	}
 	if g.Device == nil {
@@ -133,10 +143,18 @@ func (g Gates) device(ctx context.Context) bool {
 	if err != nil {
 		return false
 	}
-	if d.MinimumBatteryPercent != nil && (!s.BatteryKnown || s.BatteryPercent < *d.MinimumBatteryPercent) {
+	if minimum != nil && (!s.BatteryKnown || s.BatteryPercent < *minimum) {
 		return false
 	}
-	return !d.ChargingOnly || s.ChargingKnown && s.Charging
+	return !charging || s.ChargingKnown && s.Charging
+}
+
+func effectiveDevice(t task.DeviceRequirements, l task.DeviceConstraints) (*int, bool) {
+	minimum := t.MinimumBatteryPercent
+	if l.MinimumBatteryPercent != nil && (minimum == nil || *l.MinimumBatteryPercent > *minimum) {
+		minimum = l.MinimumBatteryPercent
+	}
+	return minimum, t.ChargingOnly || l.ChargingOnly
 }
 
 func (g Gates) consent(ctx context.Context) bool {

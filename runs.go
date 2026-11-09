@@ -249,7 +249,7 @@ func (rt *runtime) reserveRun(ctx, parent context.Context, proxy proxySnapshot, 
 			start.LocalZone = loc
 		}
 	}
-	gates := execution.Gates{Execution: c.Execution, ConsentRequired: a.ConsentRequired(), Consent: run.consent, Device: run.device}
+	gates := execution.Gates{Execution: c.Execution, ConsentRequired: a.ConsentRequired(), Consent: run.consent, Device: run.device, LocalDevice: rt.local.device}
 	if !execution.Due(s, rec, now) || !validation.RunEligible(s, start) || !gates.Satisfied(ctx) {
 		return "", execution.Plan{}, nil, notDue
 	}
@@ -265,7 +265,7 @@ func (rt *runtime) reserveRun(ctx, parent context.Context, proxy proxySnapshot, 
 		return "", execution.Plan{}, nil, notDue
 	}
 	path, err := run.paths.plan(ctx, pathRequest{TaskID: c.ID, Test: a.Test(), Parameters: c.Parameters, MaxAttempts: attempts, MaxDurationMS: a.AttemptLimits().DurationMS,
-		NetworkPath: c.Execution.NetworkPath, Proxy: proxy, Egress: rt.egress, RequireCompositeValidation: !run.net05AllowUnvalidated})
+		NetworkPath: c.Execution.NetworkPath, Proxy: proxy, Egress: rt.egressFor(c.Execution.NetworkPath), RequireCompositeValidation: !run.net05AllowUnvalidated})
 	if err != nil || path.Result == nil || path.Context == nil || path.Dialers == nil {
 		return "", execution.Plan{}, nil, notDue
 	}

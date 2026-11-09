@@ -2,6 +2,7 @@ package barometer
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -349,12 +350,13 @@ func TestCcScheduleSchedulingModelTimeLimit(t *testing.T) {
 		}
 	})
 	t.Run("embedded one-time task without not_after", func(t *testing.T) {
-		// Admission carries the embedded one-time exception (REQ-LIMIT-0013):
-		// the task is admitted, runs once, and its replay record takes the
-		// registered maximum lifetime, so it is retained to the cap.
-		h := runningHarness(t)
-		c := h.initialized(t)
+		// Admission carries the embedded one-time exception (REQ-LIMIT-0013)
+		// for a release-reviewed task: it is admitted, runs once, and its
+		// replay record takes the registered maximum lifetime, so it is
+		// retained to the cap.
 		taskJSON := scheduledTask("limit-3", `"repeat":{"mode":"none"},"limits":{"max_runs":1}`, "", false)
+		h := reviewedHarness(t, taskJSON)
+		c := h.initialized(t)
 		th := h.admit(t, c, taskJSON)
 		rec, ok, err := h.replay.Lookup(context.Background(), key("limit-3"), epoch)
 		if err != nil || !ok {
@@ -1224,6 +1226,39 @@ func TestCcLimitScheduleAndRetryLimits(t *testing.T) {
 		}
 		if s.NotAfter = &over; validation.ScheduleAt(s, ctx) == nil {
 			t.Fatal("embedded repeating task beyond one week accepted")
+		}
+	})
+	t.Run("release review fixes the one-time task", func(t *testing.T) {
+		// Through Client: only the embedded task that local policy lists by
+		// issuer and exact-bytes digest may omit not_after, and the listing
+		// relaxes no other rule (REQ-LIMIT-0013).
+		listed := scheduledTask("review-1", `"repeat":{"mode":"none"},"limits":{"max_runs":1}`, "", false)
+		unlisted := scheduledTask("review-2", `"repeat":{"mode":"none"},"limits":{"max_runs":1}`, "", false)
+		twoRuns := scheduledTask("review-3", `"repeat":{"mode":"none"},"limits":{"max_runs":2}`, "", false)
+		h := reviewedHarness(t, listed, twoRuns)
+		c := h.initialized(t)
+		h.wantAdmission(t, c, "listed", listed, "ok")
+		h.wantAdmission(t, c, "unlisted", unlisted, "task_schema_invalid")
+		h.wantAdmission(t, c, "other bytes of the listed task", strings.Replace(listed, `"task_id":`, `"task_id": `, 1), "task_schema_invalid")
+		h.wantAdmission(t, c, "listed with two runs", twoRuns, "task_schema_invalid")
+		bytes, ref := h.deliver(t, "remote", listed)
+		if _, err := c.AdmitTask(bytes, ref); codeOf(err) != "task_schema_invalid" {
+			t.Fatal("remote task with listed bytes:", codeOf(err))
+		}
+		// Without a listing no embedded task has the exception.
+		h = runningHarness(t)
+		c = h.initialized(t)
+		h.wantAdmission(t, c, "no listing", listed, "task_schema_invalid")
+	})
+}
+
+// reviewedHarness is runningHarness whose local policy lists the exact
+// embedded task bytes as release-reviewed (REQ-LIMIT-0013).
+func reviewedHarness(t *testing.T, tasks ...string) *harness {
+	t.Helper()
+	return customHarness(t, nil, func(in *task.PolicyInput) {
+		for _, b := range tasks {
+			in.ReleaseReviewed = append(in.ReleaseReviewed, task.ReleaseReviewedTask{IssuerID: "embedded-issuer", TaskSHA256: sha256.Sum256([]byte(b))})
 		}
 	})
 }

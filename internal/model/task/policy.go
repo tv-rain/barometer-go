@@ -159,6 +159,14 @@ type PolicyInput struct {
 	// Keys are the trusted issuer keys for signed remote task packages
 	// (REQ-TRUST-0051). A policy without keys admits no remote task.
 	Keys []TrustedKey
+	// ReleaseReviewed lists the embedded tasks that may use the one-time
+	// exception of REQ-LIMIT-0013. An absent list grants it to no task.
+	ReleaseReviewed []ReleaseReviewedTask
+	// Device holds local device constraints stricter than a task's.
+	Device DeviceConstraints
+	// Context, when set, restricts Network Context acquisition; nil leaves
+	// it to the host configuration.
+	Context *ContextEligibility
 }
 
 // LocalPolicy owns a complete immutable snapshot. Constructors check structural
@@ -194,7 +202,7 @@ func NewLocalPolicy(in PolicyInput) (LocalPolicy, error) {
 	if !references(in.Permissions, targets) {
 		return LocalPolicy{}, ErrTrustModel
 	}
-	if !validKeys(in.Keys, issuers) {
+	if !validKeys(in.Keys, issuers) || !validReleaseReviewed(in.ReleaseReviewed, issuers) || !in.Device.valid() || in.Context != nil && !in.Context.valid() {
 		return LocalPolicy{}, ErrTrustModel
 	}
 	for _, t := range in.Targets {
@@ -427,6 +435,7 @@ func copyPolicy(in PolicyInput) PolicyInput {
 	in.Issuers = slices.Clone(in.Issuers)
 	in.Targets = slices.Clone(in.Targets)
 	in.Keys = slices.Clone(in.Keys)
+	copyLocalInputs(&in)
 	for n := range in.Issuers {
 		in.Issuers[n].Permissions = copyPermissions(in.Issuers[n].Permissions)
 	}

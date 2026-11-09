@@ -421,7 +421,10 @@ func TestGateStepClasses(t *testing.T) {
 		{"codec rejection", taskWith(map[string]any{"input.subject": "reject-me"}), task.SchemaInvalid},
 	}
 	for _, c := range cases {
-		h := newHarness(t)
+		// Release review lists every case's exact bytes, so a listing never
+		// relaxes another rule; the release-review rows are in
+		// TestGateReleaseReviewedOneTimeException.
+		h := newHarnessWith(t, mustPolicy(t, reviewed(permissive(), "embedded-issuer", c.task)))
 		_, err := h.embedded(t, c.task)
 		expect(t, c.name, err, c.want)
 		if late := strings.HasPrefix(c.name, "input missing") || c.name == "unknown option" || c.name == "codec rejection"; c.want != 0 && !late && h.normalize.Load() != 0 {

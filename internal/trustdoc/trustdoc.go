@@ -1,7 +1,10 @@
 // Package trustdoc decodes the trusted local document that reviewed,
 // Barometer-owned native code installs through the gomobile facade: the local
 // policy with its issuer keys, target registrations and generation, the
-// configuration approvals and the egress-classification approvals.
+// configuration approvals and the egress-classification approvals. The policy
+// also carries the optional local restriction inputs: the release-reviewed
+// embedded one-time tasks, local device constraints and local Network Context
+// eligibility.
 //
 // The document is a local deployment input, packaged with the application and
 // read by the native glue. It is never a remotely delivered format: no task,
@@ -13,7 +16,9 @@
 package trustdoc
 
 import (
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"math"
 	"net/netip"
@@ -124,6 +129,11 @@ var documentSchema = object(map[string]jsondecode.Field{
 		"issuers":     req(list(object(map[string]jsondecode.Field{"issuer_id": req(text()), "permissions": req(permissionsSchema)}), maxEntries)),
 		"targets":     req(list(targetSchema, maxEntries)),
 		"keys":        req(list(keySchema, task.MaxPolicyKeys)),
+		// The local restriction inputs are optional; an absent member
+		// restricts nothing and lists no release-reviewed task.
+		"release_reviewed_tasks": opt(list(object(map[string]jsondecode.Field{"issuer_id": req(text()), "task_sha256": req(text())}), task.MaxReleaseReviewedTasks)),
+		"device":                 opt(object(map[string]jsondecode.Field{"minimum_battery_percent": opt(integer(0, 100)), "charging_only": req(flag())})),
+		"network_context":        opt(object(map[string]jsondecode.Field{"paths": req(pathsSchema), "endpoints": req(list(text(), task.MaxContextEndpoints))})),
 	})),
 	"configuration_approvals": req(object(map[string]jsondecode.Field{
 		"endpoints": req(list(text(), maxApprovals)), "connection_codes": req(list(text(), maxApprovals)),
@@ -161,6 +171,19 @@ func Decode(b []byte) (doc Document, err error) {
 	}
 	for _, e := range d.elements(p, "keys") {
 		in.Keys = append(in.Keys, d.key(e))
+	}
+	for _, e := range d.elements(p, "release_reviewed_tasks") {
+		in.ReleaseReviewed = append(in.ReleaseReviewed, task.ReleaseReviewedTask{IssuerID: d.text(e, "issuer_id"), TaskSHA256: d.digest(d.text(e, "task_sha256"))})
+	}
+	if dv, ok := p.Lookup("device"); ok {
+		in.Device.ChargingOnly = d.flag(dv, "charging_only")
+		if _, ok := dv.Lookup("minimum_battery_percent"); ok {
+			n := d.int(dv, "minimum_battery_percent")
+			in.Device.MinimumBatteryPercent = &n
+		}
+	}
+	if nc, ok := p.Lookup("network_context"); ok {
+		in.Context = &task.ContextEligibility{Paths: d.paths(d.member(nc, "paths")), Endpoints: d.texts(nc, "endpoints")}
 	}
 	a := d.member(v, "configuration_approvals")
 	approvals := config.Approvals{Endpoints: d.texts(a, "endpoints"), ConnectionCodes: d.texts(a, "connection_codes"),
@@ -363,6 +386,18 @@ func (d *decoder) target(v *jsondecode.Value) task.TargetRegistration {
 		Tuple: tuple, Paths: d.paths(d.member(v, "paths")), BaselineRisk: d.risk(d.text(v, "baseline_risk"), true),
 		Owner: d.text(v, "owner"), Purpose: d.text(v, "purpose"), ReviewGeneration: d.uint(v, "review_generation"),
 		ExpiresAt: d.timestamp(d.text(v, "expires_at")), RedirectIDs: d.texts(v, "redirect_ids")}
+}
+
+// digest decodes a SHA-256 digest as exactly 64 lowercase hexadecimal digits.
+func (d *decoder) digest(s string) [sha256.Size]byte {
+	var out [sha256.Size]byte
+	raw, err := hex.DecodeString(s)
+	if err != nil || len(raw) != sha256.Size || hex.EncodeToString(raw) != s {
+		d.bad = true
+		return out
+	}
+	copy(out[:], raw)
+	return out
 }
 
 // key decodes a public key as standard padded base64 of exactly 32 bytes.
