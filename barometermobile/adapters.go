@@ -50,7 +50,10 @@ type Network interface {
 	Access(timeoutMillis int64) (*AccessState, error)
 	// Watch arranges for observer.Changed to be called once, from any thread,
 	// when the access-network generation is no longer generation,
-	// immediately if it already differs. It must return promptly.
+	// immediately if it already differs. It must return promptly. Changed
+	// calls Access and waits for it, to learn whether the change is a
+	// suspension, so native code must not call Changed while holding a lock
+	// that Access needs.
 	Watch(generation int64, observer NetworkObserver) (int64, error)
 	// StopWatch cancels a watch. It is idempotent and does not wait for a
 	// Changed call in progress.
@@ -139,17 +142,20 @@ func (l *StringList) Add(s string) {
 // interface name, address, DNS server, Wi-Fi or cell identifier, SIM,
 // subscriber, carrier or location.
 type AccessState struct {
-	generation                                   int64
-	networkType, vpn, ipv4, ipv6, validated, cpo string
+	generation                                              int64
+	networkType, vpn, ipv4, ipv6, validated, cpo, suspended string
 }
 
 // NewAccessState builds a reading. generation identifies the access network
 // and changes whenever it changes; zero means unknown. networkType is "wifi",
 // "cellular", "ethernet" or "other"; vpn is "detected" or "not_detected"; ipv4,
-// ipv6, validated and captivePortal are "yes" or "no". Any other value, and
-// a negative generation, is unknown.
-func NewAccessState(generation int64, networkType string, vpn string, ipv4 string, ipv6 string, validated string, captivePortal string) *AccessState {
-	return &AccessState{generation: generation, networkType: networkType, vpn: vpn, ipv4: ipv4, ipv6: ipv6, validated: validated, cpo: captivePortal}
+// ipv6, validated and captivePortal are "yes" or "no"; suspended is
+// "suspended" when mobile lifecycle or operating-system policy has suspended
+// the application's execution and "active" when it has not. Any other value,
+// and a negative generation, is unknown; an unknown suspension state does not
+// block execution. Entering or leaving suspension must advance the generation.
+func NewAccessState(generation int64, networkType string, vpn string, ipv4 string, ipv6 string, validated string, captivePortal string, suspended string) *AccessState {
+	return &AccessState{generation: generation, networkType: networkType, vpn: vpn, ipv4: ipv4, ipv6: ipv6, validated: validated, cpo: captivePortal, suspended: suspended}
 }
 
 // DeviceState is a coarse device snapshot.

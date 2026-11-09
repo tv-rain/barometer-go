@@ -93,7 +93,7 @@ func (p *networkPaths) bind(ctx context.Context, r pathRequest, src *networkcont
 	if err != nil {
 		return pathPlan{}, errPathUnavailable
 	}
-	return pathPlan{Implementation: p.implementation, Access: snap.Access(), Result: d, Context: src, Dialers: dialers}, nil
+	return pathPlan{Implementation: p.implementation, Access: snap.Access(), Suspended: snap.Suspended(), Result: d, Context: src, Dialers: dialers}, nil
 }
 
 // unconfigured plans a proxy run without a configured proxy. Its attempts
@@ -110,7 +110,7 @@ func (p *networkPaths) unconfigured(ctx context.Context, r pathRequest) (pathPla
 	if err != nil {
 		return pathPlan{}, errPathUnavailable
 	}
-	return pathPlan{Implementation: p.implementation, Access: snap.Access(), Result: d, Context: noProxy{}, Dialers: noProxy{}}, nil
+	return pathPlan{Implementation: p.implementation, Access: snap.Access(), Suspended: snap.Suspended(), Result: d, Context: noProxy{}, Dialers: noProxy{}}, nil
 }
 
 func (p *networkPaths) decoder(r pathRequest, cd *observation.ContextDecoder, path observation.Path, generation uint64) (*result.Decoder, error) {

@@ -1768,11 +1768,11 @@ Scope: Synthetic core contract cases. No execution evidence or support claim.
 
 ### CC-SCHEDULE-ENVELOPE
 
-Public source: `data-formats/task-schedule.md`, section **Envelope**. Intended target: `internal/execution/schedule.go`. Planned case location: `internal/execution/cross_cutting_conformance_test.go`, `symbol:TestCcScheduleEnvelope`.
+Public source: `data-formats/task-schedule.md`, section **Envelope**. Intended target: `runs.go`, `symbol:runtime.reserveRun`. Case location: `runtime_conformance_test.go`, `symbol:TestCcScheduleEnvelope`.
 
 Case plan: Drive the scheduler with a deterministic clock and a fake platform that can report the application as suspended. Admit a NET-01 task with `starts_at` T and `not_after` T+24h. Keep the fake platform suspended from T-1h to T+2h and assert no attempt starts during suspension and the run is not marked failed or missed at T. On resume at T+2h assert the run becomes eligible and its attempt starts after T+2h, and assert the result `started_at` reflects the actual start, not `starts_at`. Repeat with suspension lasting until after `not_after` and assert no run or attempt starts after resume. Assert no API return value or status describes `starts_at` as a guaranteed or exact execution time. Requirements: REQ-SCHEDULE-0001.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim.
+Scope: Synthetic core contract cases. `TestCcScheduleEnvelope` runs every row through `Client.StartRun` with a synthetic platform network that reports suspension and a new generation on entry and resume; the synthetic TCP-01 runner stands in for NET-01 as the vehicle of the schedule rule. A deferred start returns `run_not_due` and reserves nothing; `RunState` returns only `active` or `terminal`. The manifest status moves at the next milestone rebaseline. No support claim.
 
 <!-- requirement-ref: REQ-SCHEDULE-0001 -->
 
@@ -2182,7 +2182,7 @@ Public source: `library/network-context.md`, section **Execution Integration**. 
 
 Case plan: Inject cancellation/deadline/suspension/network changes during acquisition; distinguish missing required context, allowlist mismatch and optional egress failure. Requirements: REQ-CONTEXT-0025, REQ-CONTEXT-0026, REQ-CONTEXT-0027, REQ-CONTEXT-0028.
 
-Scope: Planned as a whole. `TestCcContextExecutionIntegration` covers host cancellation, the attempt deadline and a network change during acquisition, a missing required field, an allowlist mismatch, an unknown country, optional egress failure and retries. Its former admission rejection row and the REQ-TRUST-0036 mapping were removed because egress acquisition exists and admission admits these tasks (`UT.internal.admission.TestGateAdmitsEgressContextRequirements`). The suspension-during-acquisition row needs a native platform suspension signal. Mixed-family evidence is not promoted. No support claim.
+Scope: Planned as a whole until the next milestone rebaseline. `TestCcContextExecutionIntegration` covers host cancellation, the attempt deadline, a network change and a platform suspension during acquisition, a missing required field, an allowlist mismatch, an unknown country, optional egress failure and retries. Its former admission rejection row and the REQ-TRUST-0036 mapping were removed because egress acquisition exists and admission admits these tasks (`UT.internal.admission.TestGateAdmitsEgressContextRequirements`). The suspension row uses the platform suspension signal of the access state with a synthetic platform network; native adapters do not report it yet. Mixed-family evidence is not promoted. No support claim.
 
 <!-- requirement-ref: REQ-CONTEXT-0025 -->
 <!-- requirement-ref: REQ-CONTEXT-0026 -->

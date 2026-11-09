@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/tv-rain/barometer-go/internal/measurement"
+	"github.com/tv-rain/barometer-go/internal/platform"
 )
 
 func runTask(id, test, input, options string) string {
@@ -332,4 +333,65 @@ func TestStalledConsentNeverPermitsAnAttempt(t *testing.T) {
 	if b, err := c.NextBundle(); err != nil || b != "" {
 		t.Fatal("a result was produced:", b)
 	}
+}
+
+// The suspension value maps to the core port: "suspended" and "active" are
+// known, anything else is unknown and does not block execution. A run that
+// comes due while native code reports suspension is deferred with
+// run_not_due and reserves nothing; after resume, which advances the
+// generation, the same task starts.
+func TestAccessStateSuspension(t *testing.T) {
+	n := newNatives()
+	ctx := context.Background()
+	for v, want := range map[string]platform.Availability{"suspended": platform.AvailabilityYes, "active": platform.AvailabilityNo,
+		"unknown": platform.AvailabilityUnknown, "": platform.AvailabilityUnknown, "SUSPENDED": platform.AvailabilityUnknown, "yes": platform.AvailabilityUnknown} {
+		n.network.mu.Lock()
+		n.network.state = NewAccessState(1, "wifi", "not_detected", "yes", "no", "yes", "no", v)
+		n.network.mu.Unlock()
+		s, err := network{n.network}.Access(ctx)
+		if err != nil || s.Suspended != want {
+			t.Errorf("suspension %q: %v %v", v, s.Suspended, err)
+		}
+	}
+
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer l.Close()
+	go func() {
+		if conn, err := l.Accept(); err == nil {
+			conn.Close()
+		}
+	}()
+	c := newTestClient(t, n, trustDocument("TCP-01", tcpTarget), options{directDialers: loopbackDialer{addr: l.Addr().String(), want: "8.8.8.8:443"}})
+	if err := c.Initialize(`{}`); err != nil {
+		t.Fatal(code(err))
+	}
+	taskJSON := runTask("tcp-suspended", "TCP-01", `{"ip_address":"8.8.8.8","port":443}`, `{}`)
+	ref, err := c.InstallEmbeddedTask("embedded-issuer", []byte(taskJSON))
+	if err != nil {
+		t.Fatal("install:", code(err))
+	}
+	th, err := c.AdmitTask(taskJSON, ref)
+	if err != nil {
+		t.Fatal("admit:", code(err))
+	}
+	n.network.mu.Lock()
+	n.network.state = NewAccessState(2, "wifi", "not_detected", "yes", "no", "yes", "no", "suspended")
+	n.network.mu.Unlock()
+	if rh, err := c.StartRun(th); err == nil || code(err) != "run_not_due" || rh != "" {
+		t.Fatalf("a run started while suspended: %q %s", rh, code(err))
+	}
+	if raw, err := c.NextBundle(); err == nil && raw != "" {
+		t.Fatalf("a suspended start wrote a result: %s", raw)
+	}
+	n.network.mu.Lock()
+	n.network.state = NewAccessState(3, "wifi", "not_detected", "yes", "no", "yes", "no", "active")
+	n.network.mu.Unlock()
+	rh, err := c.StartRun(th)
+	if err != nil {
+		t.Fatal("no run after resume:", code(err))
+	}
+	waitTerminal(t, c, rh)
 }

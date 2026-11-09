@@ -333,13 +333,25 @@ func availability(s string) platform.Availability {
 	return platform.AvailabilityUnknown
 }
 
+// suspension maps the native suspension state; any other value is unknown,
+// which does not block execution.
+func suspension(s string) platform.Availability {
+	switch s {
+	case "suspended":
+		return platform.AvailabilityYes
+	case "active":
+		return platform.AvailabilityNo
+	}
+	return platform.AvailabilityUnknown
+}
+
 func (n network) Access(ctx context.Context) (platform.AccessState, error) {
 	a, err := call(ctx, n.native.Access)
 	if err != nil || a == nil {
 		return platform.AccessState{}, errCallback
 	}
 	s := platform.AccessState{Type: networkType(a.networkType), VPN: vpnState(a.vpn), IPv4: availability(a.ipv4),
-		IPv6: availability(a.ipv6), Validated: availability(a.validated), CaptivePortal: availability(a.cpo)}
+		IPv6: availability(a.ipv6), Validated: availability(a.validated), CaptivePortal: availability(a.cpo), Suspended: suspension(a.suspended)}
 	if a.generation > 0 {
 		s.Generation = uint64(a.generation)
 	}

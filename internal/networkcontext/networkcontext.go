@@ -129,7 +129,8 @@ func (d *Source) Capture(ctx context.Context) (Snapshot, error) {
 	if err != nil {
 		return Snapshot{}, ErrUnavailable
 	}
-	snap := Snapshot{valid: true, network: d.network, source: d, access: Normalize(s), validation: PlatformValidation(s), path: path, generation: s.Generation}
+	snap := Snapshot{valid: true, network: d.network, source: d, access: Normalize(s), validation: PlatformValidation(s), path: path, generation: s.Generation,
+		suspended: s.Suspended == platform.AvailabilityYes}
 	if snap.bind(egressWire{Status: "unavailable", LookupSource: "none"}) != nil {
 		return Snapshot{}, ErrUnavailable
 	}
@@ -189,6 +190,7 @@ type Snapshot struct {
 	validation string
 	path       observation.Path
 	generation uint64
+	suspended  bool
 	contexts   [2]observation.NetworkContext // stable, then changed
 }
 
@@ -209,6 +211,24 @@ func (s Snapshot) Path() observation.Path { return s.path }
 
 // Generation is the access-network generation the snapshot was read in.
 func (s Snapshot) Generation() uint64 { return s.generation }
+
+// Suspended reports whether the platform reported the application suspended
+// in this reading. An unknown suspension state is not suspension. It is local
+// execution metadata: no Network Context or result field carries it.
+func (s Snapshot) Suspended() bool { return s.valid && s.suspended }
+
+// SuspendedNow reads the access state again, after the snapshot's generation
+// changed, and reports whether the platform now reports the application
+// suspended. A failed read, a zero generation and an unknown state are not
+// suspension, so the change stays a network change. The read sends no traffic
+// and ends with ctx.
+func (s Snapshot) SuspendedNow(ctx context.Context) bool {
+	if !s.valid || ctx.Err() != nil {
+		return false
+	}
+	a, err := s.network.Access(ctx)
+	return err == nil && ctx.Err() == nil && a.Generation != 0 && a.Suspended == platform.AvailabilityYes
+}
 
 // bind builds the stable and changed contexts of the snapshot with egress e on
 // the snapshot's path, with its connection_code on the proxy path.

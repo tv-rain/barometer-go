@@ -14,8 +14,10 @@ import (
 	model "github.com/tv-rain/barometer-go/internal/model/result"
 	"github.com/tv-rain/barometer-go/internal/model/task"
 	"github.com/tv-rain/barometer-go/internal/networkcontext"
+	"github.com/tv-rain/barometer-go/internal/platform"
 	"github.com/tv-rain/barometer-go/internal/result"
 	"github.com/tv-rain/barometer-go/internal/testkit"
+	"github.com/tv-rain/barometer-go/internal/testkit/capability"
 	"github.com/tv-rain/barometer-go/internal/testkit/loopback"
 )
 
@@ -278,5 +280,38 @@ func TestNet03AllTerminationBoundaries(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+// NET-03's platform read in a later generation that reports suspension ends
+// the attempt with platform_suspended; one that does not stays
+// network_changed (REQ-NET-03-0029).
+// requirement-ref: REQ-NET-03-0029
+func TestNet03ReadSeesSuspension(t *testing.T) {
+	for _, tc := range []struct {
+		suspended platform.Availability
+		want      task.ExecutionReason
+	}{{platform.AvailabilityYes, task.PlatformSuspended}, {platform.AvailabilityUnknown, task.NetworkChanged}} {
+		network := capability.NewNetwork(platform.AccessState{Generation: 1, Type: platform.NetworkWiFi})
+		source, err := networkcontext.NewDirect(network)
+		if err != nil {
+			t.Fatal(err)
+		}
+		snap, err := source.Capture(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+		actx, cancel := context.WithCancelCause(context.Background())
+		s := newScope(actx, nil, task.AttemptLimits{}, cancel)
+		network.Set(platform.AccessState{Generation: 2, Type: platform.NetworkWiFi, Suspended: tc.suspended})
+		read := platformValidation(actx, cancel, Plan{Context: source}, snap, s)
+		if v, err := read(actx); err == nil || v != "" {
+			t.Fatalf("read in another generation returned %q", v)
+		}
+		if got := stopReason(actx); got != tc.want {
+			t.Fatalf("reason %q, want %q", got, tc.want)
+		}
+		s.close()
+		cancel(nil)
 	}
 }

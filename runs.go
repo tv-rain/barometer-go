@@ -57,6 +57,7 @@ type pathRequest struct {
 type pathPlan struct {
 	Implementation model.Implementation
 	Access         observation.Access
+	Suspended      bool // the platform reported the application suspended
 	Result         *result.Decoder
 	Context        execution.ContextSource
 	Dialers        execution.DialerSource
@@ -204,6 +205,7 @@ type reserved struct {
 // reserveRun applies every start check in order and, only when all pass,
 // records the run in the ledger before the run exists. It returns a nil
 // reservation with the earlier handle for a repeated start.
+// requirement-ref: REQ-SCHEDULE-0001
 // requirement-ref: REQ-SCHEDULE-0034
 // requirement-ref: REQ-EXECUTION-0027
 func (rt *runtime) reserveRun(ctx, parent context.Context, proxy proxySnapshot, taskHandle string, a admission.Admitted) (string, execution.Plan, *reserved, error) {
@@ -274,7 +276,11 @@ func (rt *runtime) reserveRun(ctx, parent context.Context, proxy proxySnapshot, 
 		entry, _ := run.registry.Lookup(a.Test())
 		check = proxyCheck{configured: proxy.configured(), permitted: a.Paths().Proxy, rule: entry.Proxy, targets: entry.Targets, parameters: c.Parameters}
 	}
-	if !execution.NetworkConditions(c.Execution.Network, path.Access) {
+	// A run that comes due while the platform reports the application
+	// suspended is deferred, not missed or failed: nothing is reserved, and
+	// the host may start it after resume while it is still eligible
+	// (REQ-SCHEDULE-0001).
+	if path.Suspended || !execution.NetworkConditions(c.Execution.Network, path.Access) {
 		return "", execution.Plan{}, nil, notDue
 	}
 
