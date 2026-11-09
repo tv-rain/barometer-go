@@ -28,7 +28,8 @@ var ErrUnavailable = errors.New("seam: adapter binding unavailable")
 
 // Adapters are the trusted inputs the facade assembles. Optional capabilities
 // are nil when absent; an interface field never holds a typed nil. Trust roots
-// are not carried: the root selects the system store.
+// are not carried: the root selects them with its build-time platform loader,
+// the reviewed Android root set on Android and Go's system roots elsewhere.
 type Adapters struct {
 	Clock       platform.Clock
 	Records     persistence.Records

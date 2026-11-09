@@ -192,7 +192,7 @@ func TestMNet01Admission(t *testing.T) {
 		}
 	})
 	t.Run("not a NET-05 step", func(t *testing.T) {
-		reg, err := productionRegistry(nil)
+		reg, err := productionRegistry(nil, true)
 		if err != nil {
 			t.Fatal(err)
 		}

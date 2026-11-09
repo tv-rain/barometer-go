@@ -9,11 +9,11 @@ import (
 )
 
 func TestProductionRegistryContainsOnlyDeliveredMeasurements(t *testing.T) {
-	first, err := productionRegistry(nil)
+	first, err := productionRegistry(nil, true)
 	if err != nil || first == nil {
-		t.Fatalf("productionRegistry(nil) = %v, %v", first, err)
+		t.Fatalf("productionRegistry(nil, true) = %v, %v", first, err)
 	}
-	second, err := productionRegistry(nil)
+	second, err := productionRegistry(nil, true)
 	if err != nil || second == nil || first == second {
 		t.Fatal("production registries must be instance-owned")
 	}
