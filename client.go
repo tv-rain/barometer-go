@@ -117,7 +117,7 @@ func (c *Client) bind(a adapters) error {
 	}
 	if a.registry == nil {
 		var err error
-		a.registry, err = productionRegistry(a.measurementRoots)
+		a.registry, err = productionRegistry(a.measurementRoots, !a.rootsUnavailable)
 		if err != nil {
 			return fail(notInitialized)
 		}

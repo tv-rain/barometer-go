@@ -19,7 +19,11 @@ import (
 
 // productionRegistry assembles only delivered measurements, per client
 // generation. Presence is not released, platform, or field-validated support.
-// roots are TLS-01's trust anchors; nil selects the system roots.
+// roots are the TLS trust anchors; nil selects the system roots. Without tls
+// the platform has no root set (decision 0016): the list holds only DNS-01,
+// TCP-01 and NET-01, and every test that verifies a certificate (TLS-01,
+// HTTP-01, NET-03, DNS-04, DNS-03 and the composite NET-05) is absent, so its
+// tasks reject as task_unsupported before any contact.
 // requirement-ref: REQ-TCP-01-0023
 // requirement-ref: REQ-TCP-01-0031
 // requirement-ref: REQ-TLS-01-0024
@@ -33,9 +37,14 @@ import (
 // requirement-ref: REQ-DNS-04-0039
 // requirement-ref: REQ-DNS-03-0033
 // requirement-ref: REQ-DNS-03-0039
-func productionRegistry(roots *x509.CertPool) (*registry.Registry, error) {
-	entries := []registry.Entry{{Test: task.TestVersion{ID: "DNS-01", Version: "0.1.0"}, Codec: dnsmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: dns01Targets{}, Proxy: dnsmeasurement.ProxyRule{}, Runner: &dnsmeasurement.Runner{}, Step: true}, {Test: task.TestVersion{ID: "TCP-01", Version: "0.1.0"}, Codec: tcpmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: tcp01Targets{}, Proxy: tcpmeasurement.ProxyRule{}, Runner: &tcpmeasurement.Runner{}, Step: true},
-		{Test: task.TestVersion{ID: "TLS-01", Version: "0.1.0"}, Codec: tlsmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: tls01Targets{}, Proxy: tlsmeasurement.ProxyRule{}, Runner: &tlsmeasurement.Runner{Roots: roots}, Step: true}, {Test: task.TestVersion{ID: "HTTP-01", Version: "0.1.0"}, Codec: httpmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: http01Targets{}, Proxy: httpmeasurement.ProxyRule{}, Runner: &httpmeasurement.Runner{Roots: roots}, Step: true}}
+func productionRegistry(roots *x509.CertPool, tls bool) (*registry.Registry, error) {
+	entries := []registry.Entry{{Test: task.TestVersion{ID: "DNS-01", Version: "0.1.0"}, Codec: dnsmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: dns01Targets{}, Proxy: dnsmeasurement.ProxyRule{}, Runner: &dnsmeasurement.Runner{}, Step: true}, {Test: task.TestVersion{ID: "TCP-01", Version: "0.1.0"}, Codec: tcpmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: tcp01Targets{}, Proxy: tcpmeasurement.ProxyRule{}, Runner: &tcpmeasurement.Runner{}, Step: true}}
+	net01Entry := registry.Entry{Test: task.TestVersion{ID: "NET-01", Version: "0.1.0"}, Codec: net01.Codec{}, BaselineRisk: task.LowRisk, Targets: registry.NoTargets{}, Proxy: registry.NoProxy{}, Runner: net01.Runner{}}
+	if !tls {
+		return registry.New(append(entries, net01Entry))
+	}
+	entries = append(entries,
+		registry.Entry{Test: task.TestVersion{ID: "TLS-01", Version: "0.1.0"}, Codec: tlsmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: tls01Targets{}, Proxy: tlsmeasurement.ProxyRule{}, Runner: &tlsmeasurement.Runner{Roots: roots}, Step: true}, registry.Entry{Test: task.TestVersion{ID: "HTTP-01", Version: "0.1.0"}, Codec: httpmeasurement.Codec{}, BaselineRisk: task.LowRisk, Targets: http01Targets{}, Proxy: httpmeasurement.ProxyRule{}, Runner: &httpmeasurement.Runner{Roots: roots}, Step: true})
 	primitives, err := registry.New(entries)
 	if err != nil {
 		return nil, err
@@ -47,7 +56,7 @@ func productionRegistry(roots *x509.CertPool) (*registry.Registry, error) {
 	rules := net05Rules{primitives: primitives}
 	// NET-01 has no remote target and is rejected on the proxy path
 	// (REQ-PROXY-0026); it is not a NET-05 step.
-	entries = append(entries, registry.Entry{Test: task.TestVersion{ID: "NET-01", Version: "0.1.0"}, Codec: net01.Codec{}, BaselineRisk: task.LowRisk, Targets: registry.NoTargets{}, Proxy: registry.NoProxy{}, Runner: net01.Runner{}})
+	entries = append(entries, net01Entry)
 	// NET-03 combines platform state with one endpoint request and has no
 	// proxy path semantics (REQ-PROXY-0044); it is not a NET-05 step.
 	entries = append(entries, registry.Entry{Test: task.TestVersion{ID: "NET-03", Version: "0.1.0"}, Codec: net03.Codec{}, BaselineRisk: task.LowRisk, Targets: net03Targets{}, Proxy: registry.NoProxy{}, Runner: &net03.Runner{Roots: roots}})

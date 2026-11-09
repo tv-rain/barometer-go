@@ -64,6 +64,12 @@ type adapters struct {
 	// and tests supply a synthetic CA.
 	measurementRoots *x509.CertPool
 
+	// rootsUnavailable reports that the platform has no loadable root set
+	// (decision 0016). bind then registers no TLS-dependent measurement and
+	// each generation leaves egress context unavailable, so no TLS
+	// verification falls back to Go's default roots.
+	rootsUnavailable bool
+
 	// clearStorage deletes Barometer-owned persistent state for the storage
 	// scope. bind derives it from the record port with
 	// storageClearer when it is unset; tests may substitute it. Without a
@@ -279,7 +285,7 @@ func successor(a *adapters, init *config.Initialization, policy task.LocalPolicy
 	// including across reinitialization and policy replacement
 	// (REQ-CONTEXT-0009, REQ-CONTEXT-0023).
 	var egress *networkcontext.Lookup
-	if e, ok := init.Configuration().NetworkContext(); ok {
+	if e, ok := init.Configuration().NetworkContext(); ok && !a.rootsUnavailable {
 		if a.run.contextCache == nil {
 			return nil
 		}

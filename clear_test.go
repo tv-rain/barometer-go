@@ -383,6 +383,7 @@ func TestClearingCoversEveryAdapter(t *testing.T) {
 		"contextApprovals": "exempt: reviewed egress classification approvals",
 		"contextRoots":     "exempt: context endpoint trust anchors",
 		"measurementRoots": "exempt: TLS-01 trust anchors",
+		"rootsUnavailable": "exempt: platform root-set availability flag",
 		"linkageKeys":      "cleared: eraser deletes the protected key",
 		"linkage":          "cleared: eraser drops the in-memory linkage epoch state",
 		"clearStorage":     "the clearing capability itself",

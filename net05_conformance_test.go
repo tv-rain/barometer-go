@@ -36,7 +36,7 @@ func net05Task(id, input, options, execution string) string {
 }
 func normalizedProfile(t *testing.T, input string) net05.Parameters {
 	t.Helper()
-	r, e := productionRegistry(nil)
+	r, e := productionRegistry(nil, true)
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -73,7 +73,7 @@ func net05AdmissionHarness(t *testing.T, edit func(*task.PolicyInput)) (*harness
 	template := in.Targets[0]
 	in.Targets = nil
 	var ids []string
-	r, _ := productionRegistry(nil)
+	r, _ := productionRegistry(nil, true)
 	for _, step := range normalizedProfile(t, profileInput(primitiveSteps()...)).CompositeSteps() {
 		e, _ := r.Lookup(step.Test)
 		targets, ok := e.Targets.Targets(step.Parameters)
@@ -490,7 +490,7 @@ func TestMNet05Versions(t *testing.T) {
 }
 
 func TestMNet05CodecBoundsAndComposition(t *testing.T) {
-	r, _ := productionRegistry(nil)
+	r, _ := productionRegistry(nil, true)
 	entry, _ := r.Lookup(net05Test)
 	rules := entry.Targets.(net05Rules)
 	if targets, ok := rules.Targets(net05.Parameters{}); ok || targets != nil || rules.Compatible(net05.Parameters{}) {
@@ -536,7 +536,7 @@ func TestMNet05CodecBoundsAndComposition(t *testing.T) {
 func TestMNet05PrimitiveRiskAndMissingCapability(t *testing.T) {
 	for _, missing := range []bool{false, true} {
 		h, _ := net05AdmissionHarness(t, func(in *task.PolicyInput) { in.Permissions.MaxRisk = task.MediumRisk })
-		original, _ := productionRegistry(nil)
+		original, _ := productionRegistry(nil, true)
 		var entries []registry.Entry
 		for _, id := range []string{"DNS-01", "TCP-01", "TLS-01", "HTTP-01", "NET-05"} {
 			e, _ := original.Lookup(task.TestVersion{ID: id, Version: "0.1.0"})
