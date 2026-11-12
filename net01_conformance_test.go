@@ -823,3 +823,39 @@ func TestMNet01Interpretation(t *testing.T) {
 		t.Error("availability description lost its platform-reported qualifier")
 	}
 }
+
+// M-NET-01-PRECONDITIONS: the portable gates. The platform port offers only
+// coarse access state and its change watch; it has no accessor for interface
+// addresses, SSIDs, BSSIDs, subscriber identifiers or location, so no gate
+// can reach one. Which native APIs and permissions the adapters use is
+// RV-M-NET-01-PRECONDITIONS and native validation.
+// requirement-ref: REQ-NET-01-0017
+// requirement-ref: REQ-NET-01-0018
+// requirement-ref: REQ-NET-01-0019
+// requirement-ref: REQ-NET-01-0020
+func TestMNet01Preconditions(t *testing.T) {
+	f := net01SafetyFixture(t)
+	preconditionGates(t, f)
+	t.Run("network-state API absent", func(t *testing.T) {
+		// Absent at reservation: deferred with no result.
+		f.wantGate(t, "API absent at reservation", f.task("no-api"), nil, func(h *harness) {
+			n := &net01Network{Network: h.run.network}
+			n.script = func(context.Context, int) (platform.AccessState, error, bool) {
+				return platform.AccessState{}, platform.ErrNetworkUnavailable, true
+			}
+			h.adapters.run.network = n
+		}, gateWant{code: "run_not_due"})
+		// Absent at the test's own read: the platform_unavailable outcome.
+		t.Run("at the test's read", TestMNet01Normalization)
+	})
+	t.Run("only the network-state capability", func(t *testing.T) {
+		h, n, d := net01Harness(t)
+		h.run.consent.Set(platform.ConsentAbsent)
+		c := h.initialized(t)
+		defer c.Close()
+		net01Result(t, tcpRaw(t, h, c, net01Task("capabilities")), "completed", "", "snapshot", true)
+		if d.calls.Load() != 0 || h.run.consent.Calls() != 0 || h.run.device.Calls() != 0 || n.Reads() == 0 {
+			t.Fatal("NET-01 used a capability other than network state")
+		}
+	})
+}

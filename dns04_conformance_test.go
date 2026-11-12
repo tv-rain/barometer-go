@@ -1087,3 +1087,23 @@ func TestMDns04Interpretation(t *testing.T) {
 		"does not establish intentional blocking", "not a conclusion about censor intent", "alone does not exclude resolver, authoritative dns, certificate or routing outage",
 		"port-specific firewall behavior unrelated to censorship")
 }
+
+// M-DNS-04-PRECONDITIONS: the portable gates, rejection before any bootstrap
+// lookup, connection or query. The resolver profile is the local
+// registration. No anomaly-triggered path exists: the test runs only when the
+// deployment enables it. The deployment review is RV-M-DNS-04-PRECONDITIONS.
+// requirement-ref: REQ-DNS-04-0018
+// requirement-ref: REQ-DNS-04-0019
+// requirement-ref: REQ-DNS-04-0020
+// requirement-ref: REQ-DNS-04-0021
+// requirement-ref: REQ-DNS-04-0022
+func TestMDns04Preconditions(t *testing.T) {
+	f := dns04SafetyFixture(t)
+	preconditionGates(t, f)
+	t.Run("resolver and query not reviewed", func(t *testing.T) {
+		f.unregistered(t, strings.Replace(f.task("query"), "query.example", "unreviewed.example", 1),
+			strings.Replace(f.task("resolver"), "dot.resolver.example", "other.resolver.example", 1),
+			strings.Replace(f.task("port"), `"port":853`, `"port":8853`, 1))
+	})
+	t.Run("not enabled by the deployment", f.notEnabled)
+}
