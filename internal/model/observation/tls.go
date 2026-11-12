@@ -100,6 +100,7 @@ func NegotiatedTLSVersion(version uint16, exposed bool) (string, bool) {
 }
 
 // requirement-ref: REQ-OBS-0049
+// requirement-ref: REQ-OBS-0052
 func NegotiatedALPN(protocol string, exposed bool) (string, bool) {
 	if !exposed || protocol == "" {
 		return "", false

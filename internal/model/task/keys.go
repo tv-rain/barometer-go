@@ -15,9 +15,11 @@ const (
 
 // TrustedKey is one trusted issuer key record (REQ-TRUST-0051). It enters
 // Barometer only inside the trusted local policy loaded at initialization;
-// tasks, packages and other delivered content cannot add or change it.
+// tasks, packages and other delivered content cannot add or change it
+// (REQ-TRUST-0060).
 // NotBefore and NotAfter are whole UTC seconds, in the fixed format of a
 // package issued_at.
+// requirement-ref: REQ-TRUST-0060
 type TrustedKey struct {
 	trustedOnly
 	KeyID               string
@@ -49,6 +51,7 @@ func keyTime(t Timestamp) bool { return t.Fraction == "" && trustTimestamp(t) }
 
 // validKeys checks the key records of one policy against its issuers and the
 // registered count limits.
+// requirement-ref: REQ-TRUST-0060
 func validKeys(keys []TrustedKey, issuers map[string]bool) bool {
 	if len(keys) > MaxPolicyKeys {
 		return false

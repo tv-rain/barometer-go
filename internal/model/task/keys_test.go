@@ -34,6 +34,7 @@ func keyedPolicy() task.PolicyInput {
 
 // requirement-ref: REQ-TRUST-0051
 // requirement-ref: REQ-LIMIT-0032
+// requirement-ref: REQ-TRUST-0060
 func TestPolicyCarriesBoundedTrustedKeys(t *testing.T) {
 	in := keyedPolicy()
 	p, err := task.NewLocalPolicy(in)
@@ -100,6 +101,7 @@ func manyIssuers(n int) task.PolicyInput {
 // fixed error and no partial snapshot.
 // requirement-ref: REQ-TRUST-0051
 // requirement-ref: REQ-LIMIT-0032
+// requirement-ref: REQ-TRUST-0060
 func TestPolicyRejectsMalformedOrAmbiguousKeys(t *testing.T) {
 	second := func(p *task.PolicyInput, k task.TrustedKey) { p.Keys = append(p.Keys, k) }
 	cases := map[string]func(*task.PolicyInput){

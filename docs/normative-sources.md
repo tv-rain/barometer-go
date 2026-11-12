@@ -87,6 +87,33 @@ Each test document supplies its own inputs, options, preconditions, resource bou
 | Go [package architecture](package-architecture.md), [requirement guidance](requirement-references.md), release/contribution documents, this inventory, and [specification issues](specification-issues.md) | Implementation ownership, process, navigation, and findings. They do not redefine the public contract. Planned packages and proposed resolutions are not implemented behavior. |
 | ClickUp task descriptions and evidence | Work coordination and acceptance evidence; cannot override a public specification or accepted decision. |
 
+## Residual Source Dispositions
+
+The residual review covers the 18 sources that both traceability manifests list as `unallocated_sources`, at public Draft `0.1.0` revision [`da7517c`](https://github.com/tv-rain/barometer-spec/tree/da7517c07af7008f432b8e7bf4c4db41b87bd696). Each unmarked block with a normative signal or a table was read, and both cross-cutting sources were read in full. Classes: **allocated** (a new public ID), **covered** (already carried by an allocated unit, often as its coupled qualifier), **informative** (explanation, example or rationale), **external** (owned outside the Go library) and **issue** (settled through a public specification issue).
+
+| Public source | Disposition |
+|---|---|
+| `data-formats/task.md` | No unmarked residual. |
+| `data-formats/task-input.md` | Informative introduction, examples and delegation to the Output schema; the safety lead-in is covered by the `REQ-INPUT-*` target-safety units. |
+| `data-formats/task-options.md` | Issue: the execution-precedence paragraph on inconsistent timeouts is informative and admission does not reject on that ground alone ([GO-SPEC-ISSUE-024](specification-issues.md#go-spec-issue-024-options-and-execution-limit-consistency-at-admission)); REQ-OPTIONS-0016 bounds execution. |
+| `data-formats/task-labels.md` | Informative examples and expected-rejection captions. |
+| `data-formats/task-safety.md` | Informative introduction and example. |
+| `data-formats/task-schedule.md` | The timing caveat is covered by REQ-SCHEDULE-0001; otherwise informative. |
+| `data-formats/task-execution.md` | Informative cross-references; the obligations are REQ-EXECUTION-0022, REQ-EXECUTION-0023 and `REQ-CONTEXT-*`. |
+| `data-formats/measurement-observations.md` | Allocated: [REQ-OBS-0052](https://github.com/tv-rain/barometer-spec/blob/da7517c07af7008f432b8e7bf4c4db41b87bd696/data-formats/measurement-observations.md#REQ-OBS-0052), retained negotiated ALPN. The paragraphs after REQ-OBS-0046 and REQ-OBS-0050 are covered as their coupled qualifiers, with minimization also under REQ-OBS-0045. |
+| `data-formats/measurement-result.md` | No unmarked residual. |
+| `data-formats/network-context.md` | No unmarked residual. |
+| `data-formats/result-bundle.md` | No unmarked residual; the marked collector items are allocated and externally owned. |
+| `library/task-trust.md` | Allocated: [REQ-TRUST-0060](https://github.com/tv-rain/barometer-spec/blob/da7517c07af7008f432b8e7bf4c4db41b87bd696/library/task-trust.md#REQ-TRUST-0060), trusted-key policy validation and immutability against delivered content. Text after REQ-TRUST-0036, -0044, -0050, -0052 and -0059 is covered as coupled qualifiers of those procedures; Overview and Residual Risks are informative. |
+| `library/proxy.md` | Informative compatibility basis and known limitations; the obligations are REQ-PROXY-0043 to REQ-PROXY-0045. |
+| `library/network-context.md` | The proxy-acquisition sentence and the physical-location caveat are covered by REQ-PROXY-0045 and REQ-CONTEXT-0006; otherwise informative. |
+| `library/registered-limits.md` | Key-limit rationale informative; byte-counting definitions covered by REQ-LIMIT-0034 and NET-05 sum admission by REQ-LIMIT-0035. |
+| `library/result-linkage.md` | Informative known limitations; the unique-user reporting clause is external (analysis and publication). |
+| `threat-model.md` | No IDs. Purpose, assets, adversaries, boundaries, residual exposure and residual risks are informative. Safety objectives and mitigations are covered by the allocated trust, proxy, limit, schedule, result, linkage and bundle families. Required assumptions, the deployment-completion sentence, derived-analysis method and review triggers are external (issuers, hosts, endpoints, collectors, analysis, specification governance); the fail-closed sentence is covered by REQ-TRUST-0052 and the context and `not_run` units. Abuse cases: issue, settled as a validation checklist over existing IDs ([GO-SPEC-ISSUE-025](specification-issues.md#go-spec-issue-025-status-of-the-threat-models-abuse-cases)), cross-referenced in the [cross-cutting plan](cross-cutting-requirements.md#threat-model-abuse-cases). |
+| `measurement-limitations.md` | No IDs. Interpretation boundary, missingness reporting, sampling, scope, repetition, controls, attribution, cross-platform comparison, analyst inference and publication are external (analysis and publication) or informative. Library-side rules are covered: state separation by REQ-RESULT-0021, REQ-RESULT-0051 and REQ-RESULT-0052; retry semantics by the schedule retry units; proxy comparison by REQ-PROXY-0043 to REQ-PROXY-0045 and REQ-TRUST-0039; unknown or hidden detail by REQ-OBS-0045 to REQ-OBS-0050; context by REQ-CONTEXT-0006; test-specific limitations by the allocated test units. Review and change requirements are external (specification governance). |
+
+The manifests keep all 18 sources in `unallocated_sources` until the next milestone update (coordination decision 0012), which can remove every source except where a later public change adds unmarked obligations. No disposition establishes implementation or conformance.
+
 ## Completeness, Issues, and Maintenance
 
 The inventory covers every contract file in the selected public revision's `data-formats/` and `library/` directories, all nine registered initial tests, and the two cross-cutting public contracts. Directory indexes and local link targets were checked for additional sources. No missing contract file was found in that source-discovery scope. The partial requirement catalog was not used as a completeness filter.

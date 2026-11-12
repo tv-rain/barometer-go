@@ -42,7 +42,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           repository: tv-rain/barometer-spec
-          ref: 45bc424bd9829f5389b3b4494d0966e10e21da94
+          ref: da7517c07af7008f432b8e7bf4c4db41b87bd696
           path: .ci/public-spec
           fetch-depth: 0
           persist-credentials: false

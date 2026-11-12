@@ -155,6 +155,7 @@ func TestDNSCollectionAndAnswerBoundaries(t *testing.T) {
 // requirement-ref: REQ-OBS-0047
 // requirement-ref: REQ-OBS-0048
 // requirement-ref: REQ-OBS-0049
+// requirement-ref: REQ-OBS-0052
 // requirement-ref: REQ-OBS-0050
 func TestAcceptedProducerMappings(t *testing.T) {
 	for code, failure := range map[string]string{"FORMERR": "inconclusive", "SERVFAIL": "servfail", "NXDOMAIN": "nxdomain", "NOTIMP": "inconclusive", "REFUSED": "refused", "OTHER": "inconclusive"} {
