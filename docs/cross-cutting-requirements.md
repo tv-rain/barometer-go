@@ -4,7 +4,7 @@
 
 This planning map identifies shared format and library obligations, intended implementation owners and concrete conformance case families. The linked public text is the oracle; this document neither copies nor changes its normative behavior. A case family is a parameterized suite, and planned families are not conformance. No complete semantic review, implemented requirement, core/platform/field support or release is claimed.
 
-The [manifest](../traceability/cross-cutting.json) is pinned to public Draft `0.1.0` at `45bc424bd9829f5389b3b4494d0966e10e21da94`, which adds no shared requirement since `d537657`, and Go `5bc13351fbfd36090c7e24122781fd4700d46491`, which adopts the dispositions of GO-SPEC-ISSUE-014, -016 items 1 to 3, -018 and -020. It maps all 599 active shared requirements (349 `partial`, 250 `planned`) to the case families below and to `UT.*` unit-test cases; 56 family cases and 294 `UT.*` cases are `passed`, and its evidence records point to the [evidence report](../traceability/evidence/go-unit-5bc1335.md). Shared-requirement references in the registered measurement, protocol and engine test files are each linked through a listed `UT.*` case, so none remains a location warning. Executed families are listed in [Runtime Case Families](execution-models.md#runtime-case-families) and in each family's Scope line below.
+The [manifest](../traceability/cross-cutting.json) is pinned to public Draft `0.1.0` at `45bc424bd9829f5389b3b4494d0966e10e21da94`, which adds no shared requirement since `d537657`, and Go `5bc13351fbfd36090c7e24122781fd4700d46491`, which adopts the dispositions of GO-SPEC-ISSUE-014, -016 items 1 to 3, -018 and -020. It maps all 599 active shared requirements (349 `partial`, 250 `planned`) to the case families below and to `UT.*` unit-test cases; 56 family cases and 294 `UT.*` cases are `passed`, and its evidence records point to the [evidence report](../traceability/evidence/go-unit-5bc1335.md). Shared-requirement references in the registered measurement, protocol and engine test files are each linked through a listed `UT.*` case, so none remains a location warning. Executed families are listed in [Runtime Case Families](execution-models.md#runtime-case-families) and in each family's Scope line below. The current reference pin, public `da7517c07af7008f432b8e7bf4c4db41b87bd696`, adds REQ-OBS-0052 and REQ-TRUST-0060 from the residual source review; this plan maps them, and the manifest maps them at the next milestone update.
 
 Baselines and evidence are updated at the milestone cadence of the coordination [decision 0012](https://github.com/tv-rain/barometer/blob/main/docs/decisions/0012-lean-task-process.md): at the closeout of a sub-epic or on request, not after every task. Between updates, case-plan notes and `requirement-ref` comments may run ahead of the manifest. Earlier mappings are retained at the commits where they were current; `git log -- traceability/cross-cutting.json` lists them, and the [changelog](../CHANGELOG.md) records what each change added.
 
@@ -16,7 +16,7 @@ The step-8 input and options notes adopt public `12062471875bbfbc55eafc94dc5a7ea
 
 Public PR #8 resolved the [vocabulary finding](specification-issues.md#go-spec-issue-002-missing-registered-observation-vocabularies) by retiring REQ-OBS-0011 and REQ-OBS-0021 in favor of REQ-OBS-0042 and REQ-OBS-0043, and adding REQ-OBS-0044 to REQ-OBS-0051. The successors take over their predecessors' case families; the new requirements use six `CC-OBS-VOCAB-*` families. The retired IDs keep `requirement-history` comments and links to the original PR #6 baseline only. They are not current obligations, and no prior claim is rewritten to a successor. Mapping these requirements establishes no runtime vocabulary adoption evidence; GO-SPEC-ISSUE-002 remains open for that downstream evidence.
 
-The 16 format/library sources plus shared JSON decoding are in scope. Registered test-specific schemas/runners, the full threat-model and measurement-limitations inventories, implementation of these cases, native adapters, host and collector software, and field validation remain outside this mapping task. Their applicability is preserved as report gaps, not silently treated as covered. The [normative source inventory](normative-sources.md) supplies the wider source boundary; this map also includes the subsequently adopted JSON contract.
+The 16 format/library sources plus shared JSON decoding are in scope. Registered test-specific schemas/runners, implementation of these cases, native adapters, host and collector software, and field validation remain outside this mapping task. Their applicability is preserved as report gaps, not silently treated as covered. The [normative source inventory](normative-sources.md) supplies the wider source boundary; this map also includes the subsequently adopted JSON contract. The residual review of all 18 shared, threat-model and measurement-limitations sources is recorded in the inventory's [residual source dispositions](normative-sources.md#residual-source-dispositions); the threat model's abuse cases are cross-referenced below.
 
 Portable Go owns its package targets. Native storage and binding obligations map to planned native validation contracts in this repository, consumed by future Android/Apple adapter work; these documents cannot implement platform behavior. Host, collector and public authoring obligations map to planned integration/review records. Mixed core/integration case families must retain both scopes; Go tests alone cannot close them. Synthetic requests and canary values are local fixtures, not measurements or participant data.
 
@@ -25,6 +25,27 @@ Unresolved contract findings use [Specification Issues](specification-issues.md)
 Public prerequisite ordering is satisfied: PR #6 merged the approved allocation head `9dbd72af37205a08484435cb561a168ac7b1876b` as merge commit `47d75925b3829fccfb6954b545c15f695375b76f`, and PR #8 merged approved head `5869bc314c877e2ccd3426b82aadcd9c92414f02` as `a944ed6c389fec9f0d089f0044ead6fe845328b1`. Between those baselines, the shared catalog changes only by the REQ-OBS retirements and additions above. Later public changes require renewed source/catalog review and current requirement references and case-plan notes. Update immutable manifest baselines and evidence reports at the milestone cadence above; retain earlier mappings at their original commits rather than copying them or presenting old evidence as current. Keep partial coverage while wider source, test-specific or semantic inventory gaps remain.
 
 Before any future implemented claim, replace planned locations with actual symbols/cases, execute the complete applicable suites at the selected baselines, attach sanitized immutable conformance and completeness-review evidence, and resolve affected specification issues. Platform and field claims require their separately scoped evidence. Do not promote statuses based on compilation or case-plan presence.
+
+## Threat-Model Abuse Cases
+
+The public [threat model](https://github.com/tv-rain/barometer-spec/blob/da7517c07af7008f432b8e7bf4c4db41b87bd696/threat-model.md#abuse-cases-that-must-be-tested) declares its abuse cases a validation checklist whose runtime obligations are allocated to existing requirement IDs ([GO-SPEC-ISSUE-025](specification-issues.md#go-spec-issue-025-status-of-the-threat-models-abuse-cases)). The table records which mapped IDs and case families exercise each case. It is a semantic applicability cross-reference, not additional evidence: the same IDs and cases count once, under their own families, and a case listed here is executed only when its family is.
+
+| Abuse case | Existing IDs | Go case families | Owner outside Go |
+|---|---|---|---|
+| Remote task without a signed package, or with a host-asserted authentication flag or issuer | REQ-TRUST-0041 to REQ-TRUST-0044, REQ-TRUST-0052 | `CC-TRUST-ACCEPTED-TASK-ORIGINS`, `CC-TRUST-SIGNED-REMOTE-PACKAGES` | None |
+| Altered task byte, issuer, issuance time or key identifier, or a non-canonical signature | REQ-TRUST-0048 to REQ-TRUST-0050, REQ-TRUST-0052 | `CC-TRUST-SIGNED-REMOTE-PACKAGES` | None |
+| Unknown key, another issuer's key, or a key outside its validity | REQ-TRUST-0052, REQ-TRUST-0055, REQ-TRUST-0060 | `CC-TRUST-SIGNED-REMOTE-PACKAGES`, `CC-TRUST-KEY-ROTATION`, `CC-TRUST-KEY-POLICY-INTEGRITY` | Issuer key custody |
+| Oversized, malformed or padded package, or an unknown or duplicate member | REQ-TRUST-0048, REQ-LIMIT-0032 | `CC-TRUST-SIGNED-REMOTE-PACKAGES` | None |
+| Exact redelivery, then the same issuer and `task_id` with different bytes | REQ-TRUST-0020 to REQ-TRUST-0024, REQ-SCHEDULE-0041 | `CC-TRUST-TASK-IDENTIFIER-RULES`, `CC-TRUST-REPLAY-DUPLICATE-AND-ROLLBACK-HANDLING`, `CC-SCHEDULE-VALIDATION` | None |
+| Repeating task without expiry, above the run count, below the interval or without jitter | REQ-SCHEDULE-0039, REQ-LIMIT-0009, REQ-LIMIT-0011, REQ-LIMIT-0012 | `CC-SCHEDULE-VALIDATION`, `CC-LIMIT-SCHEDULE-AND-RETRY-LIMITS` | None |
+| Lower risk or consent requirement than the registered test | REQ-SAFETY-0020 to REQ-SAFETY-0027 | `CC-SAFETY-USER-CONSENT`, `CC-SAFETY-EFFECTIVE-RISK`, `CC-SAFETY-SAFETY-EVALUATION` | Host consent provider |
+| Unique participant, account, device or linkage-derived value in `task_id`, labels, targets or scheduling | REQ-TRUST-0019, REQ-TRUST-0026 to REQ-TRUST-0028, REQ-LABEL-0018 to REQ-LABEL-0023 | `CC-TRUST-TASK-IDENTIFIER-RULES`, `CC-TRUST-TARGETED-DELIVERY`, `CC-LABEL-PRIVACY-AND-SAFETY` | Issuer delivery selection |
+| Redirect to a prohibited address, or a target that changes between validation and connection | REQ-INPUT-0016 to REQ-INPUT-0018, REQ-PROXY-0043, REQ-PROXY-0044 | `CC-INPUT-TARGET-SAFETY`, `CC-PROXY-HTTP-CONNECT-BEHAVIOR`, `CC-PROXY-INITIAL-TEST-COMPATIBILITY` | None |
+| Proxy lost or replaced by a new generation during execution | REQ-PROXY-0011 to REQ-PROXY-0016, REQ-PROXY-0028 to REQ-PROXY-0030 | `CC-PROXY-LIFECYCLE-AND-RENEWAL`, `CC-PROXY-EXECUTION-STATES` | Host proxy configuration |
+| DNS, HTTP, context or proxy response at every registered size and time boundary | REQ-LIMIT-0014 to REQ-LIMIT-0018, REQ-LIMIT-0023, REQ-LIMIT-0026 to REQ-LIMIT-0031 | `CC-LIMIT-DNS-LIMITS`, `CC-LIMIT-HTTP-AND-VALIDATION-LIMITS`, `CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`, `CC-LIMIT-LIMIT-HANDLING` | None |
+| Network change during each stage and during a NET-05 profile | REQ-CONTEXT-0017 to REQ-CONTEXT-0019, REQ-PROXY-0028 to REQ-PROXY-0030 | `CC-CONTEXT-PATH-CONSISTENCY`, `CC-PROXY-EXECUTION-STATES` | Platform network adapters |
+| Data clearing interrupted after result deletion and after key deletion | REQ-LINKAGE-0023 to REQ-LINKAGE-0026 | `CC-LINKAGE-CLEAR-DATA-CONTRACT` (Go rows), `CC-LINKAGE-CLEAR-DATA-CONTRACT-HOST` | Binding and host |
+| Collector receives linkage with account authentication, source IP, precise time or rare context | REQ-LINKAGE-0040 to REQ-LINKAGE-0042 | `CC-LINKAGE-INGESTION-SEPARATION` (review case only) | Collector operator |
 
 ## Source Allocation Summary
 
@@ -302,7 +323,7 @@ Public source: `data-formats/measurement-observations.md`, section **Registered 
 
 Case plan: Map negotiated 0x0303/0x0304/other versions and http/1.1, h2, dot and other negotiated ALPN; absent fields when nothing reliable was negotiated; ignore record-layer/offered versions; never copy unregistered identifiers or let coarse markers override failures.
 
-Scope: Synthetic core contract cases. No execution evidence or support claim. REQ-OBS-0049 also maps to `CC-OBS-VOCAB-TLS-OFFERED-ALPN` for offered-identifier admission.
+Scope: Synthetic core contract cases. No execution evidence or support claim. REQ-OBS-0049 also maps to `CC-OBS-VOCAB-TLS-OFFERED-ALPN` for offered-identifier admission. The retained negotiated ALPN paragraph that trails REQ-OBS-0049 is allocated as REQ-OBS-0052 and maps to `CC-OBS-VOCAB-TLS-RETAINED-ALPN`; the REQ-OBS-0049 mapping here is kept.
 
 <!-- requirement-ref: REQ-OBS-0048 -->
 <!-- requirement-ref: REQ-OBS-0049 -->
@@ -321,6 +342,18 @@ Scope: Synthetic core contract cases. No execution evidence or support claim. Th
 <!-- requirement-ref: REQ-OBS-0049 -->
 
 - [REQ-OBS-0049](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/data-formats/measurement-observations.md#REQ-OBS-0049) → `CC-OBS-VOCAB-TLS-OFFERED-ALPN`.
+
+### CC-OBS-VOCAB-TLS-RETAINED-ALPN
+
+Public source: `data-formats/measurement-observations.md`, section **Registered Normalized Vocabularies / TLS Negotiated Properties**. Targets: `internal/model/observation/tls.go` (`symbol:NegotiatedALPN`) and `internal/protocol/tls/handshake.go` (`symbol:Handshake`). Planned case location: `internal/result/cross_cutting_conformance_test.go`, `symbol:TestCcObsVocabTlsRetainedAlpn`.
+
+Case plan: Complete loopback TLS handshakes whose server selects http/1.1, h2 and dot, an exposed unregistered identifier, and no protocol, plus a platform adapter that hides the negotiated value; assert the retained alpn is the exact identifier, unknown, absent and absent respectively. Have the server select an identifier the client did not offer and assert the handshake reports its registered failure with no succeeded observation carrying alpn. Seed the unregistered identifier as a canary and assert it appears in no observation field, result field or diagnostic.
+
+Scope: Synthetic core contract cases. Executed rows already exist in `TestRuntimeTLSNegotiatedVocabularies`, `TestRuntimeTLSRejectsUnofferedALPN`, `TestMTls01Normalization` and `TestAcceptedProducerMappings`; the family is mapped at the next manifest update. No execution evidence or support claim.
+
+<!-- requirement-ref: REQ-OBS-0052 -->
+
+- [REQ-OBS-0052](https://github.com/tv-rain/barometer-spec/blob/da7517c07af7008f432b8e7bf4c4db41b87bd696/data-formats/measurement-observations.md#REQ-OBS-0052) → `CC-OBS-VOCAB-TLS-RETAINED-ALPN` (allocated in the residual review, previously unmarked text after REQ-OBS-0049).
 
 ### CC-OBS-VOCAB-TLS-PEER-ALERT
 
@@ -3208,6 +3241,18 @@ Scope: Synthetic core contract cases. Passed at Go `e663afe` and re-executed at 
 - [REQ-TRUST-0051](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0051) → `CC-TRUST-KEY-ROTATION`.
 - [REQ-TRUST-0054](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/library/task-trust.md#REQ-TRUST-0054) → `CC-TRUST-KEY-ROTATION`.
 - [REQ-TRUST-0055](https://github.com/tv-rain/barometer-spec/blob/4743b636f29feb1f0f8d042866d04ccda3532938/library/task-trust.md#REQ-TRUST-0055) → `CC-TRUST-KEY-ROTATION`.
+
+### CC-TRUST-KEY-POLICY-INTEGRITY
+
+Public source: `library/task-trust.md`, section **Signed Remote Task Packages**. Targets: `internal/model/task/keys.go` (`symbol:validKeys`, `symbol:TrustedKey`) through `task.NewLocalPolicy`. Planned case location: `policy_test.go`, `symbol:TestCcTrustKeyPolicyIntegrity`.
+
+Case plan: Build policies with 32 keys and with four keys of one issuer and assert each activates; add a 33rd key, a fifth key of that issuer, and one malformed record among valid ones, and assert each whole policy fails validation and the previously active policy and its key set stay unchanged. Present a signed package with an added keys member, a task carrying a key-shaped label or input value, and an AcknowledgeBundle call, the only collector-derived input, whose identifier carries an encoded key, then present a package signed with that key and assert it is rejected as task_source_unauthenticated and the active key set is unchanged.
+
+Scope: Synthetic core contract cases. Executed rows for the count limits and whole-policy rejection already exist in `TestPolicyCarriesBoundedTrustedKeys` and `TestPolicyRejectsMalformedOrAmbiguousKeys`; the delivered-content rows are not written, and the family is mapped at the next manifest update. No execution evidence or support claim.
+
+<!-- requirement-ref: REQ-TRUST-0060 -->
+
+- [REQ-TRUST-0060](https://github.com/tv-rain/barometer-spec/blob/da7517c07af7008f432b8e7bf4c4db41b87bd696/library/task-trust.md#REQ-TRUST-0060) → `CC-TRUST-KEY-POLICY-INTEGRITY` (allocated in the residual review, previously unmarked text after REQ-TRUST-0051).
 
 ### CC-JSON-UNIT-0001
 

@@ -73,6 +73,7 @@ func (s *Session) Close() error                { return s.conn.Close() }
 // requirement-ref: REQ-OBS-0043
 // requirement-ref: REQ-OBS-0048
 // requirement-ref: REQ-OBS-0049
+// requirement-ref: REQ-OBS-0052
 // requirement-ref: REQ-OBS-0050
 func Handshake(ctx context.Context, clock Clock, family string, raw Stream, cfg Config) (*Session, observation.Observation, error) {
 	if raw == nil {

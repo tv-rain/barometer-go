@@ -1052,6 +1052,36 @@ The runner reads the platform's current validation and captive-portal state as t
 
 **Ordering:** public merge, internal NET-05 alignment, the Go reference update and cases, then native and host validation. Closure requires the milestone manifest mapping of REQ-NET-05-0064 to REQ-NET-05-0066 and applicable binding and host evidence or non-applicability.
 
+## GO-SPEC-ISSUE-024: Options and Execution-Limit Consistency at Admission
+
+**Current state:** Accepted and settled with no behavior change. The project owner selected alternative (a) on November 12, 2026: the execution-precedence paragraph on inconsistent option timeouts is informative, admission does not reject a task on that ground alone, and [REQ-OPTIONS-0016](https://github.com/tv-rain/barometer-spec/blob/da7517c07af7008f432b8e7bf4c4db41b87bd696/data-formats/task-options.md#REQ-OPTIONS-0016) bounds the attempt at run time. The editorial wording and the public record [Options and Execution-Limit Consistency at Admission](https://github.com/tv-rain/barometer-spec/blob/da7517c07af7008f432b8e7bf4c4db41b87bd696/specification-issues/options-execution-consistency.md) merged through [public PR #49](https://github.com/tv-rain/barometer-spec/pull/49) at [`da7517c`](https://github.com/tv-rain/barometer-spec/tree/da7517c07af7008f432b8e7bf4c4db41b87bd696), retaining Draft `0.1.0`; no ID is allocated or retired. No internal plan cites the paragraph, so no internal alignment applies. Go already admits such a task and stops the attempt at the execution deadline, so no code changes; the run-time rows stay with the planned `CC-OPTIONS-EXECUTION-PRECEDENCE` family.
+
+### Identity, Baselines and Finding
+
+- **Reporter:** the Go implementation agent, under the task owner's instruction, from the residual review of the manifests' unallocated sources. **Duplicates:** none; related to [GO-SPEC-ISSUE-010](#go-spec-issue-010-admission-class-for-step-8-input-and-options-failures), which names the step-8 classes.
+- **Public baseline:** Draft `0.1.0` at [`45bc424`](https://github.com/tv-rain/barometer-spec/blob/45bc424bd9829f5389b3b4494d0966e10e21da94/data-formats/task-options.md#execution-precedence). The unmarked paragraph after REQ-OPTIONS-0016 said clearly inconsistent tasks "should be rejected" and such a timeout is "normally invalid", without a required outcome, a closed list of combinations or an admission class.
+- **Implementation:** at [`c1ed38f`](https://github.com/tv-rain/barometer-go/tree/c1ed38fbb7a5ea9dd2dd3b0000eda2b95e981874) admission applies no cross-field option and limit check; the outer attempt deadline bounds execution.
+
+### Selected Rule and Adoption
+
+A task whose option timeout exceeds `execution.limits.max_duration_ms`, and that is otherwise valid, is admitted; its attempt stops at the execution deadline, and that interruption is not a protocol outcome (REQ-OPTIONS-0017). Rejected: (b) a normative step-8 rejection with `task_schema_invalid` and a closed list of option and limit pairs, and (c) per-test consistency rules. The rule adds no admission surface, traffic or field.
+
+**Known limitation:** an issuer that sets an unreachable option timeout gets an attempt cut short by the deadline rather than an early rejection. This is the specified behavior.
+
+## GO-SPEC-ISSUE-025: Status of the Threat Model's Abuse Cases
+
+**Current state:** Accepted and settled with no behavior change. The project owner selected alternative (a) on November 12, 2026: the threat model's "Abuse Cases That Must Be Tested" section is a validation checklist whose runtime obligations are allocated to existing requirement IDs, and implementations show coverage through those IDs. One status sentence and the public record [Status of the Threat Model's Abuse Cases](https://github.com/tv-rain/barometer-spec/blob/da7517c07af7008f432b8e7bf4c4db41b87bd696/specification-issues/threat-model-abuse-case-status.md) merged through [public PR #49](https://github.com/tv-rain/barometer-spec/pull/49) at [`da7517c`](https://github.com/tv-rain/barometer-spec/tree/da7517c07af7008f432b8e7bf4c4db41b87bd696), retaining Draft `0.1.0`; no namespace or ID is allocated. No internal plan treats the section as allocated, so no internal alignment applies. The [cross-cutting plan](cross-cutting-requirements.md#threat-model-abuse-cases) maps each case to the existing IDs and families and names the owners outside Go.
+
+### Identity, Baselines and Finding
+
+- **Reporter:** the Go implementation agent, under the task owner's instruction, from the residual review of the manifests' unallocated sources. **Duplicates:** none.
+- **Public baseline:** Draft `0.1.0` at [`45bc424`](https://github.com/tv-rain/barometer-spec/blob/45bc424bd9829f5389b3b4494d0966e10e21da94/threat-model.md#abuse-cases-that-must-be-tested). The 14 cases said they "must be tested" but carried no namespace or IDs, while the requirement convention says checklists do not become normative by tagging; two cases fall partly to the binding, host and collector.
+- **Implementation:** at [`c1ed38f`](https://github.com/tv-rain/barometer-go/tree/c1ed38fbb7a5ea9dd2dd3b0000eda2b95e981874) the underlying IDs are mapped to case families; no abuse-case-specific record existed.
+
+### Selected Rule and Adoption
+
+Each abuse case is shown through the existing IDs and families in the cross-reference; they count once, under their own families, and are not independent evidence. Rejected: (b) a new namespace with one ID per case, and (c) IDs for the library-side cases only. Interrupted clearing on the host side, and collector co-retention of linkage, remain with the binding, host and collector owners.
+
 ## Binding Adoption of Findings
 
 **Status:** Binding adoption is recorded for GO-SPEC-ISSUE-004, -005, -007, -008, -009, -011 to -014, -016 and -017 to -023 in the Flutter plugin ([`barometer-flutter` at 646637e3055b8bd6cd759a04e8c849af933821b8](https://github.com/tv-rain/barometer-flutter/commit/646637e3055b8bd6cd759a04e8c849af933821b8)): its Dart API, its Kotlin and Swift native glue and the `barometermobile` facade calls they make, with the native library at Go `7f5d7de7ada4709c1b2a4fdebbb4fb9b013ef918`. Each finding keeps the public baseline its own record cites. The Go core, the facade and the channel contract are unchanged. No host application integrates the bindings yet, so host-application adoption has nothing to adopt and remains open for each finding where a host could apply it.

@@ -128,6 +128,7 @@ func TestRuntimeDNSVocabularies(t *testing.T) {
 // requirement-ref: REQ-OBS-0043
 // requirement-ref: REQ-OBS-0048
 // requirement-ref: REQ-OBS-0049
+// requirement-ref: REQ-OBS-0052
 func TestRuntimeTLSNegotiatedVocabularies(t *testing.T) {
 	f := newTLSFixture(t)
 	for _, version := range []struct {
@@ -231,6 +232,7 @@ func TestRuntimeTLSPeerAlertVocabularies(t *testing.T) {
 // A peer's unoffered selection is rejected by crypto/tls before any successful
 // negotiation; it must not become a successful observation with alpn: unknown.
 // requirement-ref: REQ-OBS-0049
+// requirement-ref: REQ-OBS-0052
 func TestRuntimeTLSRejectsUnofferedALPN(t *testing.T) {
 	// Verify the hostile fixture actually reaches the ALPN validation branch.
 	server, err := loopback.ListenTLS(loopback.TLSConfig{Mode: loopback.TLSUnofferedALPN})
