@@ -1333,3 +1333,23 @@ func TestMDns03Interpretation(t *testing.T) {
 		"attributed only to the directly observed stage", "answers carry no on-device asn, organization, geolocation, reputation or verdict enrichment",
 		"stale or incorrect registered resolver configuration")
 }
+
+// M-DNS-03-PRECONDITIONS: the portable gates, rejection before any bootstrap
+// lookup, connection or query. The resolver profile is the local registration;
+// nothing is downloaded. No anomaly-triggered path exists: the test runs only
+// when the deployment enables it. The deployment review is RV-M-DNS-03-PRECONDITIONS.
+// requirement-ref: REQ-DNS-03-0018
+// requirement-ref: REQ-DNS-03-0019
+// requirement-ref: REQ-DNS-03-0020
+// requirement-ref: REQ-DNS-03-0021
+// requirement-ref: REQ-DNS-03-0022
+func TestMDns03Preconditions(t *testing.T) {
+	f := dns03SafetyFixture(t)
+	preconditionGates(t, f)
+	t.Run("resolver and query not reviewed", func(t *testing.T) {
+		f.unregistered(t, strings.Replace(f.task("query"), "query.example", "unreviewed.example", 1),
+			strings.Replace(f.task("resolver"), "doh.resolver.example", "other.resolver.example", 1),
+			strings.Replace(f.task("bootstrap"), `"bootstrap_ip":"8.8.8.8"`, `"bootstrap_ip":"8.8.4.4"`, 1))
+	})
+	t.Run("not enabled by the deployment", f.notEnabled)
+}

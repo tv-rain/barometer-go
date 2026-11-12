@@ -879,3 +879,84 @@ func TestMNet05Interpretation(t *testing.T) {
 		"international transit failure, routing isolation, congestion or packet loss", "captive portal, subscription state, vpn, enterprise policy or local firewall",
 		"stale inline profile definitions or changed endpoint behavior", "address-family-specific failure or mobile-network handover")
 }
+
+// M-NET-05-PRECONDITIONS: the portable gates, rejection before any profile
+// step starts. No anomaly-triggered path exists: NET-05 runs only when issuer
+// and deployment both enable composite execution. The traffic-pattern
+// criterion is RV-M-NET-05-PRECONDITIONS; the portable part is that profiles
+// are bounded to eight declared steps and never overlap (M-NET-05-SAFETY).
+// requirement-ref: REQ-NET-05-0031
+// requirement-ref: REQ-NET-05-0032
+// requirement-ref: REQ-NET-05-0033
+// requirement-ref: REQ-NET-05-0034
+// requirement-ref: REQ-NET-05-0035
+// requirement-ref: REQ-NET-05-0036
+func TestMNet05Preconditions(t *testing.T) {
+	f := net05SafetyFixture(t)
+	preconditionGates(t, f)
+	t.Run("untrusted task source", func(t *testing.T) {
+		s := net05Serve(t)
+		c := s.h.initialized(t)
+		defer c.Close()
+		data := f.task("untrusted")
+		ref, err := s.h.deliveries.InstallEmbedded(context.Background(), "untrusted-issuer", 2, []byte(data))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if th, err := c.AdmitTask(data, ref); th != "" || err == nil || s.d.calls.Load()+s.lookups.Load() != 0 {
+			t.Fatal("profile from an untrusted issuer admitted")
+		}
+	})
+	t.Run("target fails local evaluation", TestMNet05AtomicTargetAndProxyRules)
+	t.Run("not enabled by the deployment", f.notEnabled)
+	t.Run("validation context unavailable", TestMNet05PlatformValidationGate)
+	t.Run("envelope fit", TestMNet05RegisteredCeilingAdmission)
+	t.Run("host policy withdrawn after step 1", func(t *testing.T) {
+		s := net05Serve(t)
+		entered := make(chan struct{}, 4)
+		inner := s.d.dial
+		s.d.dial = func(ctx context.Context, n, a string) (measurement.Conn, error) {
+			entered <- struct{}{}
+			<-ctx.Done()
+			return inner(ctx, n, a)
+		}
+		c := s.h.initialized(t)
+		defer c.Close()
+		rh, err := c.StartRun(s.h.admit(t, c, f.task("withdrawn")))
+		if err != nil {
+			t.Fatal(codeOf(err))
+		}
+		select {
+		case <-entered:
+		case <-time.After(5 * time.Second):
+			t.Fatal("step 2 did not start")
+		}
+		if s.lookups.Load() != 1 {
+			t.Fatal("step 1 did not complete before step 2")
+		}
+		in := policyInputOf(t, s.h.adapters.policy)
+		in.Generation = 3
+		in.Permissions.Tests = []task.TestVersion{{ID: "SYN-01", Version: "0.1.0"}}
+		in.Permissions.RegistrationIDs, in.Permissions.AllowComposite = nil, false
+		next, err := task.NewLocalPolicy(in)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := c.replacePolicy(next); err != nil {
+			t.Fatal(codeOf(err))
+		}
+		if _, err := c.RunState(rh); err == nil {
+			waitTerminal(t, c, rh)
+		}
+		if s.d.calls.Load() != 1 || len(s.srv.Counts().Requests) != 0 {
+			t.Fatalf("steps started after withdrawal: %d dials", s.d.calls.Load())
+		}
+		records := s.h.run.output.Records()
+		if len(records) != 1 {
+			t.Fatalf("%d results", len(records))
+		}
+		if state, reason := executionOf(t, records[0]); state != "incomplete" || reason != "cancelled_by_host" {
+			t.Fatalf("withdrawn profile: %s %s", state, reason)
+		}
+	})
+}

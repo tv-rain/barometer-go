@@ -1091,3 +1091,33 @@ func TestMTcp01Interpretation(t *testing.T) {
 		"performs no dns resolution", "does not establish intentional filtering", "is not definitive proof of censorship",
 		"incorrect or stale target configuration", "independent measurements from comparable times and network contexts")
 }
+
+// M-TCP-01-PRECONDITIONS: the portable gates, rejection before contact. The
+// platform routing part of REQ-TCP-01-0020 is native validation.
+// requirement-ref: REQ-TCP-01-0017
+// requirement-ref: REQ-TCP-01-0018
+// requirement-ref: REQ-TCP-01-0019
+// requirement-ref: REQ-TCP-01-0020
+// requirement-ref: REQ-TCP-01-0021
+func TestMTcp01Preconditions(t *testing.T) {
+	f := tcp01SafetyFixture(t)
+	preconditionGates(t, f)
+	t.Run("address family unsupported", func(t *testing.T) {
+		for _, a := range []platform.Availability{platform.AvailabilityNo, platform.AvailabilityUnknown} {
+			h, d := tcpProductionHarness(t)
+			s := defaultAccess
+			s.IPv4 = a
+			h.run.network.Set(s)
+			c := h.initialized(t)
+			tcpResult(t, tcpRaw(t, h, c, tcpTask("family")), "incomplete", "constraints_unsatisfied", "")
+			_ = c.Close()
+			if d.calls.Load() != 0 {
+				t.Fatal("unsupported family dialed")
+			}
+		}
+	})
+	t.Run("address and port not approved", func(t *testing.T) {
+		f.unregistered(t, strings.Replace(tcpTask("port"), `"port":443`, `"port":444`, 1), strings.Replace(tcpTask("address"), `"8.8.8.8"`, `"8.8.4.4"`, 1))
+	})
+	t.Run("generation change before the outcome", TestMTcp01Termination)
+}

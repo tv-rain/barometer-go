@@ -1017,3 +1017,33 @@ func TestMTls01Interpretation(t *testing.T) {
 		"does not establish http or application-content availability", "does not compare different sni values", "does not exclude a stale address-to-name mapping",
 		"expired certificate or incorrect device time", "server-side rate limiting or overload")
 }
+
+// M-TLS-01-PRECONDITIONS: the portable gates, rejection before any TCP
+// connection or ClientHello. A registration has no client-authentication,
+// credential or sensitive-name marking: a target needing any of them is not
+// registered, and the client holds no client certificate or credential
+// (M-TLS-01-SAFETY); the review of that registration is RV-M-TLS-01-PRECONDITIONS.
+// requirement-ref: REQ-TLS-01-0018
+// requirement-ref: REQ-TLS-01-0019
+// requirement-ref: REQ-TLS-01-0020
+// requirement-ref: REQ-TLS-01-0021
+// requirement-ref: REQ-TLS-01-0022
+func TestMTls01Preconditions(t *testing.T) {
+	f := tls01SafetyFixture(t)
+	preconditionGates(t, f)
+	t.Run("not registered for publicly authenticated TLS", func(t *testing.T) {
+		// A TCP-01 registration of the same address and port does not
+		// register the TLS tuple, nor does another server name or ALPN offer.
+		f2 := f
+		f2.start = func(t *testing.T) (*harness, func() int32) {
+			h, count := f.start(t)
+			editPolicy(t, h, func(in *task.PolicyInput) {
+				in.Targets[0].Tuple = task.TargetTuple{Address: netip.MustParseAddr(tcpPublic), Port: 443, Scheme: "tcp"}
+			})
+			return h, count
+		}
+		f2.unregistered(t, tlsTask("tcp-registration"))
+		f.unregistered(t, strings.Replace(tlsTask("name"), tlsServerName, "sensitive.example", 1), strings.Replace(tlsTask("alpn"), tlsOptions, `{"alpn_protocols":["h2"]}`, 1))
+	})
+	t.Run("all preconditions met", TestMTls01ExecutionAndOutput)
+}

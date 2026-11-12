@@ -10,6 +10,7 @@ import (
 	"net/netip"
 	"slices"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -1392,4 +1393,43 @@ func TestMDns01Interpretation(t *testing.T) {
 		"it cannot establish which response was injected or correct", "is not shown to be reachable", "answers are not compared with authoritative data in the run",
 		"not proof that either resolver is correct or that censorship occurred", "nxdomain or an empty answer is not a successful address resolution",
 		"answers carry no asn, organization, geolocation, reputation or verdict enrichment", "a legitimate resolver retransmission or anycast change")
+}
+
+// M-DNS-01-PRECONDITIONS: the portable gates, rejection before any lookup or
+// resolver contact. Host review of the name's ownership and what a native
+// resolver binding exposes beyond one lookup are host and native validation.
+// requirement-ref: REQ-DNS-01-0027
+// requirement-ref: REQ-DNS-01-0028
+// requirement-ref: REQ-DNS-01-0029
+// requirement-ref: REQ-DNS-01-0030
+// requirement-ref: REQ-DNS-01-0031
+// requirement-ref: REQ-DNS-01-0032
+func TestMDns01Preconditions(t *testing.T) {
+	f := dns01SafetyFixture(t)
+	preconditionGates(t, f)
+	t.Run("name and resolver not registered", func(t *testing.T) {
+		f.unregistered(t, strings.Replace(dnsTask("name", "udp"), "example.org", "unreviewed.example", 1), strings.Replace(dnsTask("resolver", "udp"), "8.8.8.8", "8.8.4.4", 1))
+	})
+	t.Run("only the narrow per-name lookup", func(t *testing.T) {
+		// The system engine reaches the platform only through the per-name
+		// lookup port, once, with the admitted name; no cache, history or
+		// other resolver activity is read. Whether a native binding of that
+		// port exposes more is native validation.
+		h, _ := dnsHarness(t, "system")
+		var names []string
+		var mu sync.Mutex
+		h.adapters.run.resolver = dnsSystemResolver{func(_ context.Context, family, name string) ([]netip.Addr, error) {
+			mu.Lock()
+			names = append(names, family+" "+name)
+			mu.Unlock()
+			return []netip.Addr{netip.MustParseAddr("9.9.9.9")}, nil
+		}}
+		c := h.initialized(t)
+		defer c.Close()
+		tcpRaw(t, h, c, dnsTask("narrow", "system"))
+		if len(names) != 1 || names[0] != "ip4 example.org." {
+			t.Fatalf("resolver calls %v", names)
+		}
+	})
+	t.Run("explicit collection bounds", TestMDns01CollectionOrderAndBounds)
 }

@@ -954,3 +954,37 @@ func TestMHttp01Interpretation(t *testing.T) {
 		"does not browse or render a page", "does not authenticate, submit user data or execute scripts", "does not establish a block page, intentional manipulation or blocking",
 		"are not an exact on-wire limit", "legitimate redirect-chain changes")
 }
+
+// M-HTTP-01-PRECONDITIONS: the portable gates, rejection before any DNS, TCP,
+// TLS or HTTP activity. A registration has no small-response marking: the
+// registration is itself the reviewer's record that the endpoint suits bounded
+// measurement (RV-M-HTTP-01-PRECONDITIONS), and the body bound holds whatever
+// the endpoint returns. The library's own HTTP stack attaches no credential,
+// cookie or identifying header, so the cannot-be-disabled case does not arise
+// in the portable core (M-HTTP-01-SAFETY records the requests it sends).
+// requirement-ref: REQ-HTTP-01-0026
+// requirement-ref: REQ-HTTP-01-0027
+// requirement-ref: REQ-HTTP-01-0028
+// requirement-ref: REQ-HTTP-01-0029
+// requirement-ref: REQ-HTTP-01-0030
+// requirement-ref: REQ-HTTP-01-0031
+func TestMHttp01Preconditions(t *testing.T) {
+	f := http01SafetyFixture(t)
+	preconditionGates(t, f)
+	t.Run("URL or expected response not registered", func(t *testing.T) {
+		f.unregistered(t, httpTask("url", strings.Replace(httpInput, "/check", "/other", 1), `{}`),
+			httpTask("status", strings.Replace(httpInput, "200", "204", 1), `{}`),
+			httpTask("header-check", strings.Replace(httpInput, `}`, `,"header_checks":[{"name":"content-type","equals":"text/plain"}]}`, 1), `{}`),
+			httpTask("body-check", strings.Replace(httpInput, `}`, `,"body_checks":[{"type":"contains","value":"ok"}]}`, 1), `{}`))
+	})
+	t.Run("registration not current", func(t *testing.T) {
+		code, contacts := f.admitCode(t, f.task("expired"), func(in *task.PolicyInput) {
+			in.Targets[0].ExpiresAt = task.TimestampFromTime(epoch)
+		})
+		if code == "ok" || contacts != 0 {
+			t.Fatalf("expired registration admitted: %s", code)
+		}
+	})
+	t.Run("redirect target not registered", TestMHttp01Redirects)
+	t.Run("bounded response", TestMHttp01Limits)
+}

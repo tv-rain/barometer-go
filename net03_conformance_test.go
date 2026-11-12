@@ -952,3 +952,33 @@ func TestMNet03Interpretation(t *testing.T) {
 		"does not establish that arbitrary or general internet destinations are reachable", "does not identify the operator or the purpose of an intercepting page",
 		"are not evidence of censorship", "does not override or confirm it", "a transient network change may split the observations")
 }
+
+// M-NET-03-PRECONDITIONS: the portable gates, rejection before the request.
+// The library has no captive-portal flow: it never opens, displays or submits
+// a portal page, and a portal response is classified and discarded
+// (M-NET-03-MINIMIZATION). Whether a native platform validation path can
+// trigger such a flow is RV-M-NET-03-PRECONDITIONS and native validation.
+// requirement-ref: REQ-NET-03-0017
+// requirement-ref: REQ-NET-03-0018
+// requirement-ref: REQ-NET-03-0019
+// requirement-ref: REQ-NET-03-0020
+func TestMNet03Preconditions(t *testing.T) {
+	f := net03SafetyFixture(t)
+	preconditionGates(t, f)
+	t.Run("validation profile not registered", func(t *testing.T) {
+		f.unregistered(t, net03Task("url", strings.Replace(net03Input, "/check", "/other", 1), `{}`), net03Task("status", strings.Replace(net03Input, "200", "204", 1), `{}`),
+			net03Task("digest", strings.Replace(net03Input, `}`, `,"expected_body_sha256":"`+net03Digest+`"}`, 1), `{}`))
+	})
+	t.Run("all preconditions met", func(t *testing.T) {
+		for _, state := range []string{"validated", "captive_portal"} {
+			h, d, srv, _, other := net03Harness(t, net03Input, responseHTTP("ok"), state, false, false)
+			c := h.initialized(t)
+			tcpRaw(t, h, c, f.task("one-request"))
+			_ = c.Close()
+			if len(srv.Counts().Requests) != 1 || d.calls.Load() != 1 || other.Load() != 0 {
+				t.Fatalf("platform %s: not exactly one request", state)
+			}
+		}
+	})
+	t.Run("portal flow data", TestMNet03Minimization)
+}
