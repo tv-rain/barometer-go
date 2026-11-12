@@ -28,7 +28,7 @@ Requirements: REQ-LINKAGE-0018 to REQ-LINKAGE-0022.
 
 ### RV-CC-LINKAGE-GO-CORE-AND-MOBILE-BINDING-ARCHITECTURE
 
-Human review case; not automated coverage. The reviewer role, reviewed artifact and checklist are in the [case plan](../cross-cutting-requirements.md#cc-linkage-go-core-and-mobile-binding-architecture). Open: no review evidence record exists.
+Human review case; not automated coverage. The reviewer role, reviewed artifact and checklist are in the [case plan](../cross-cutting-requirements.md#cc-linkage-go-core-and-mobile-binding-architecture). Open: no review evidence record exists. Reviewer role: a mobile binding architecture reviewer, independent of the binding implementer. Reviewed artifact: the Go core, the gomobile export surface, the Android and Apple binding source and the Flutter package API at a revision designated for review. Blocker: no such revision has been designated and reviewed, and the release-configuration and Dart-with-linkage rows above have not run. The case stays `planned` and cannot change status before the review-record format decision of [Typed Review Cases](../traceability-manifest.md#typed-review-cases).
 
 ## CC-LINKAGE-CLEAR-DATA-CONTRACT-HOST
 
@@ -84,4 +84,4 @@ Requirements: REQ-LINKAGE-0032 to REQ-LINKAGE-0036. `LinkageKeysTests` and the c
 
 ### RV-CC-LINKAGE-APPLE-PLATFORM-STORAGE
 
-Human review case; not automated coverage. The reviewer role, reviewed artifact and checklist are in the [case plan](../cross-cutting-requirements.md#cc-linkage-apple-platform-storage). Open: no review evidence record exists. The Apple validation record documents the attribute choice and the sentinel; whether a restored container can be distinguished from the original installation is not yet documented for any OS version.
+Human review case; not automated coverage. The reviewer role, reviewed artifact and checklist are in the [case plan](../cross-cutting-requirements.md#cc-linkage-apple-platform-storage). Open: no review evidence record exists. Reviewer role: an Apple platform storage reviewer, independent of the binding implementer. Reviewed artifact: the Apple binding storage design notes and device-validation results across the tested OS versions. Blocker: the backup, restore, migration and iCloud Keychain rows above have not run, and no binding revision has been designated and reviewed. The case stays `planned` and cannot change status before the review-record format decision. The Apple validation record documents the attribute choice and the sentinel; whether a restored container can be distinguished from the original installation is not yet documented for any OS version.
