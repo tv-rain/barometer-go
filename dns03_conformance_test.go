@@ -6,10 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"golang.org/x/net/dns/dnsmessage"
 	"net"
 	"net/netip"
 	"slices"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"syscall"
 	"testing"
@@ -83,15 +85,17 @@ func dohPolicy(t *testing.T, h *harness, input string) {
 // dohTransport maps the checked resolver authority to the loopback server and
 // fails any other destination; lookups counts system bootstrap requests.
 type dohTransport struct {
-	calls   atomic.Int32
-	lookups atomic.Int32
-	dial    func(context.Context) (measurement.Conn, error)
+	// authorities, when set, replace the fixed resolver authority.
+	authorities []string
+	calls       atomic.Int32
+	lookups     atomic.Int32
+	dial        func(context.Context) (measurement.Conn, error)
 }
 
 func (d *dohTransport) Dialer(int) (measurement.Dialer, error) { return d, nil }
 func (d *dohTransport) DialContext(ctx context.Context, network, address string) (measurement.Conn, error) {
 	d.calls.Add(1)
-	if !strings.HasPrefix(network, "tcp") || address != dohAuthority {
+	if !strings.HasPrefix(network, "tcp") || len(d.authorities) == 0 && address != dohAuthority || len(d.authorities) > 0 && !slices.Contains(d.authorities, address) {
 		return nil, errors.New("CANARY-RAW-ERROR")
 	}
 	return d.dial(ctx)
@@ -1059,4 +1063,273 @@ func TestMDns03Versions(t *testing.T) {
 			t.Fatalf("invalid output %d accepted: %s", i, data)
 		}
 	}
+}
+
+const (
+	dohCanaryName  = "canary-doh-121.example"
+	dohCanaryInput = `{"resolver_url":"https://canary-doh-121.example/canary-dohpath-122","hostname":"canary-dohq-123.example","record_type":"A","bootstrap_ip":"8.8.4.4"}`
+	dohCanarySys   = `{"resolver_url":"https://canary-doh-121.example/canary-dohpath-122","hostname":"canary-dohq-123.example","record_type":"A"}`
+)
+
+// dohCanaries are the REQ-DNS-03-0029 items; the scripted bootstrap resolver
+// returns the canary resolver address, distinct from the canary bootstrap_ip.
+var dohCanaries = canarySet{
+	{"resolver_url path", "canary-dohpath-122"}, {"resolver hostname", dohCanaryName}, {"resolver address", "8.8.4.5"}, {"bootstrap_ip", "8.8.4.4"},
+	{"query hostname", "canary-dohq-123.example"}, {"query identifier", "48879"}, {"DNS authority record", "canary-authority-74.example"},
+	{"DNS additional record", "canary-additional-75.example"}, {"DNS additional address", "203.0.113.75"}, {"raw DNS message pattern", "CANARY-RAWDNS-BYTES"}, {"answer TTL", "86413"},
+	{"HTTP header name", "x-canary-doh-124"}, {"HTTP header value", "canary-dohval-125"}, {"Set-Cookie value", "canary-dohcookie-126"}, {"Content-Type value", "application/canary-ctype-127"},
+	{"HTTP body beyond the DNS message", "CANARY-TRAILING-BODY"}, {"HTTP status text", "CANARY-DOH-REASON"},
+	{"certificate subject and issuer", loopback.CertificateCanary}, {"leaf serial number", "424242"}, {"issuer serial number", "91337"},
+	{"raw transport error", "CANARY-RAW-ERROR"}, {"raw x509 error", "x509:"}, {"raw TLS error", "tls: "},
+}
+
+func dohCanaryHTTP(status int, contentType string, body []byte) []byte {
+	head := fmt.Sprintf("HTTP/1.1 %d CANARY-DOH-REASON\r\nX-Canary-Doh-124: canary-dohval-125\r\nSet-Cookie: canary-dohcookie-126=1\r\nContent-Type: %s\r\nContent-Length: %d\r\n\r\n", status, contentType, len(body))
+	return append([]byte(head), body...)
+}
+
+var dohAllowed = []string{"outcome", "observations[].type", "observations[].status", "observations[].duration_ms", "observations[].failure",
+	"observations[].details.engine", "observations[].details.address_family", "observations[].details.query_type", "observations[].details.response_limit_reached",
+	"observations[].details.responses[].arrival_index", "observations[].details.responses[].arrival_offset_ms", "observations[].details.responses[].rcode",
+	"observations[].details.responses[].answers[].type", "observations[].details.responses[].answers[].value",
+	"observations[].details.tls_version", "observations[].details.alpn", "observations[].details.certificate_validation", "observations[].details.alert",
+	"observations[].details.protocol", "observations[].details.status_code", "observations[].details.body.bytes_processed", "observations[].details.body.truncated",
+	"observations[].details.content_encoding"}
+
+type dohCanaryCase struct {
+	name, input, outcome string
+	reply                func([]byte) []byte
+	tlsServer            *loopback.TLSConfig
+	dial                 error
+	lookup               error
+	cancel               bool
+}
+
+func dohCanaryCases(t *testing.T, f dohFixture) []dohCanaryCase {
+	other, err := loopback.NewTestCA()
+	if err != nil {
+		t.Fatal(err)
+	}
+	untrusted, err := other.Issue(dohCanaryName, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dns := func(code dnsmessage.RCode, id uint16, answers ...string) func([]byte) []byte {
+		return func(q []byte) []byte {
+			return dohCanaryHTTP(200, "application/dns-message", dnsCanaryResponse(q, id, code, answers...))
+		}
+	}
+	return []dohCanaryCase{
+		{name: "response with bootstrap_ip", input: dohCanaryInput, outcome: "response", reply: dns(dnsmessage.RCodeSuccess, 0, "9.9.9.9", "9.9.9.9", "1.1.1.1")},
+		{name: "response with system bootstrap", input: dohCanarySys, outcome: "response", reply: dns(dnsmessage.RCodeSuccess, 0, "9.9.9.9")},
+		{name: "bootstrap_failure", input: dohCanarySys, outcome: "bootstrap_failure", lookup: &net.DNSError{IsNotFound: true, Err: "CANARY-RAW-ERROR", Name: dohCanaryName, Server: "127.0.0.1:53"}},
+		{name: "tcp_failure", input: dohCanaryInput, outcome: "tcp_failure", dial: fmt.Errorf("CANARY-RAW-ERROR 8.8.4.4:443: %w", syscall.ECONNREFUSED)},
+		{name: "tls_failure", input: dohCanaryInput, outcome: "tls_failure", tlsServer: &loopback.TLSConfig{Certificate: untrusted}},
+		{name: "http_failure", input: dohCanaryInput, outcome: "http_failure", reply: func(q []byte) []byte {
+			return dohCanaryHTTP(503, "text/html", append(dnsCanaryResponse(q, 0, dnsmessage.RCodeSuccess), "CANARY-TRAILING-BODY"...))
+		}},
+		{name: "unexpected_content_type", input: dohCanaryInput, outcome: "unexpected_content_type", reply: func(q []byte) []byte {
+			return dohCanaryHTTP(200, "application/canary-ctype-127", dnsCanaryResponse(q, 0, dnsmessage.RCodeSuccess, "9.9.9.9"))
+		}},
+		{name: "dns_nxdomain", input: dohCanaryInput, outcome: "dns_nxdomain", reply: dns(dnsmessage.RCodeNameError, 0)},
+		{name: "dns_servfail", input: dohCanaryInput, outcome: "dns_servfail", reply: dns(dnsmessage.RCodeServerFailure, 0)},
+		{name: "dns_refused", input: dohCanarySys, outcome: "dns_refused", reply: dns(dnsmessage.RCodeRefused, 0)},
+		{name: "malformed_dns_response", input: dohCanaryInput, outcome: "malformed_dns_response", reply: func(q []byte) []byte {
+			return dohCanaryHTTP(200, "application/dns-message", append(dnsCanaryResponse(q, 0, dnsmessage.RCodeSuccess, "9.9.9.9"), "CANARY-TRAILING-BODY"...))
+		}},
+		{name: "query_mismatch", input: dohCanaryInput, outcome: "query_mismatch", reply: dns(dnsmessage.RCodeSuccess, 48879, "9.9.9.9")},
+		{name: "timeout", input: dohCanaryInput, outcome: "timeout", dial: fmt.Errorf("CANARY-RAW-ERROR 8.8.4.4:443: %w", syscall.ETIMEDOUT)},
+		{name: "inconclusive", input: dohCanaryInput, outcome: "inconclusive", reply: dns(dnsmessage.RCodeNotImplemented, 0)},
+		{name: "incomplete", input: dohCanaryInput, cancel: true},
+	}
+}
+
+// dohCanaryRun runs one DNS-03 path against the canary resolver profile and
+// returns its surfaces and the canaries of the raw DNS messages it carried.
+func dohCanaryRun(t *testing.T, f dohFixture, id string, tc dohCanaryCase) (*surfaces, canarySet) {
+	t.Helper()
+	h, d := dohHarness(t, f, tc.input)
+	d.authorities = []string{"8.8.4.4:443", "8.8.4.5:443"}
+	h.adapters.run.resolver = dnsSystemResolver{func(_ context.Context, _, name string) ([]netip.Addr, error) {
+		if tc.lookup != nil {
+			return nil, tc.lookup
+		}
+		if name != dohCanaryName {
+			return nil, errors.New("synthetic: unexpected name")
+		}
+		return []netip.Addr{netip.MustParseAddr("8.8.4.5")}, nil
+	}}
+	var mu sync.Mutex
+	var messages canarySet
+	var srv *loopback.HTTPServer
+	switch {
+	case tc.reply != nil || tc.cancel:
+		cfg := f.cert
+		cfg.DoH = func(q []byte) []byte {
+			mu.Lock()
+			messages = append(messages, binaryCanaries(fmt.Sprint("raw DNS query ", len(messages)), q)...)
+			mu.Unlock()
+			if tc.cancel {
+				return nil
+			}
+			r := tc.reply(q)
+			mu.Lock()
+			messages = append(messages, binaryCanaries(fmt.Sprint("raw HTTP response ", len(messages)), r)...)
+			mu.Unlock()
+			return r
+		}
+		cfg.Stall = tc.cancel
+		srv = dohServe(t, d, cfg)
+	case tc.tlsServer != nil:
+		dohServeTLS(t, d, *tc.tlsServer)
+	case tc.dial != nil:
+		d.dial = func(context.Context) (measurement.Conn, error) { return nil, tc.dial }
+	}
+	c := h.initialized(t)
+	defer c.Close()
+	s := &surfaces{}
+	rh, err := c.StartRun(h.admit(t, c, dohTask(id, tc.input, `{}`)))
+	if err != nil {
+		t.Fatal(codeOf(err))
+	}
+	if tc.cancel {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := srv.Wait(ctx, func(c loopback.HTTPCounts) bool { return len(c.Requests) == 1 }); err != nil {
+			t.Fatal(err)
+		}
+		if err := c.CancelRun(rh); err != nil {
+			t.Fatal(codeOf(err))
+		}
+	}
+	waitTerminal(t, c, rh)
+	_, err = c.RunState(rh)
+	s.err(err)
+	s.collect(h, c)
+	rejectedClean(t, h, c, dohCanaries, withUnknownInput(dohTask("rejected", tc.input, `{}`), dohCanaries))
+	if len(s.results) != 1 {
+		t.Fatal("not one result")
+	}
+	var r struct {
+		Execution   struct{ State string }
+		Measurement *struct{ Outcome string }
+	}
+	_ = json.Unmarshal(s.results[0], &r)
+	if tc.cancel && (r.Execution.State != "incomplete" || r.Measurement != nil) || !tc.cancel && (r.Measurement == nil || r.Measurement.Outcome != tc.outcome) {
+		t.Fatalf("%s: unexpected outcome", tc.name)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	return s, slices.Clone(messages)
+}
+
+// M-DNS-03-MINIMIZATION: canaries for every REQ-DNS-03-0029 item over the
+// success path with and without bootstrap_ip, each failure class and an
+// incomplete termination; only the registered observation fields remain and
+// retained answers are bounded, deduplicated A values without TTLs.
+// requirement-ref: REQ-DNS-03-0029
+func TestMDns03Minimization(t *testing.T) {
+	dohCanaries.unique(t)
+	f := newDohFixture(t)
+	cert, err := f.ca.Issue(dohCanaryName, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.cert.Certificate = cert
+	for _, tc := range dohCanaryCases(t, f) {
+		t.Run(tc.name, func(t *testing.T) {
+			s, messages := dohCanaryRun(t, f, "minimization", tc)
+			if tc.reply != nil && len(messages) == 0 {
+				t.Fatal("no message canaries")
+			}
+			s.check(t, append(slices.Clone(dohCanaries), messages...))
+			m := minimized(t, s.results[0], dohAllowed)
+			if tc.name == "response with bootstrap_ip" {
+				obs := m["observations"].([]any)
+				answers := obs[len(obs)-1].(map[string]any)["details"].(map[string]any)["responses"].([]any)[0].(map[string]any)["answers"].([]any)
+				if len(answers) != 2 || answers[0].(map[string]any)["value"] != "9.9.9.9" || answers[1].(map[string]any)["value"] != "1.1.1.1" {
+					t.Fatal("answers not bounded, deduplicated and ordered")
+				}
+			}
+		})
+	}
+	t.Run("injected fields", func(t *testing.T) {
+		s, _ := dohCanaryRun(t, f, "minimization", dohCanaryCases(t, f)[0])
+		obs := func(v map[string]any, i int) map[string]any {
+			o := v["measurement"].(map[string]any)["observations"].([]any)
+			return o[(i+len(o))%len(o)].(map[string]any)
+		}
+		var inject []func(map[string]any)
+		for _, field := range []string{"resolver_url", "hostname", "ip_address", "bootstrap_ip", "query_id", "ttl", "message", "headers", "content_type", "cookie", "certificate", "error"} {
+			inject = append(inject, func(v map[string]any) { obs(v, -1)["details"].(map[string]any)[field] = "synthetic" },
+				func(v map[string]any) { obs(v, -2)["details"].(map[string]any)[field] = "synthetic" },
+				func(v map[string]any) {
+					obs(v, -1)["details"].(map[string]any)["responses"].([]any)[0].(map[string]any)["answers"].([]any)[0].(map[string]any)[field] = 86413
+				})
+		}
+		d := primitiveDecoder(t, "minimization", measurementOutput(dohTest, dohParams(t, dohCanaryInput, `{}`)))
+		assertRejected(t, d, s.results[0], inject...)
+	})
+}
+
+// M-DNS-03-INTERPRETATION: the shared prohibited-claims check with the
+// DNS-03 claims over every outcome, including a response whose answers
+// differ from a synthetic system answer set, and each failure attributed to
+// the observed stage by observation order and the terminal observation.
+// requirement-ref: REQ-DNS-03-0001
+// requirement-ref: REQ-DNS-03-0002
+// requirement-ref: REQ-DNS-03-0003
+// requirement-ref: REQ-DNS-03-0030
+// requirement-ref: REQ-DNS-03-0031
+// requirement-ref: REQ-DNS-03-0032
+func TestMDns03Interpretation(t *testing.T) {
+	f := newDohFixture(t)
+	cert, err := f.ca.Issue(dohCanaryName, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.cert.Certificate = cert
+	stage := map[string]string{"bootstrap_failure": "dns_query", "tcp_failure": "tcp_connect", "timeout": "tcp_connect", "tls_failure": "tls_handshake", "http_failure": "http_exchange",
+		"unexpected_content_type": "http_exchange", "dns_nxdomain": "dns_query", "dns_servfail": "dns_query", "dns_refused": "dns_query", "malformed_dns_response": "dns_query",
+		"query_mismatch": "dns_query", "inconclusive": "dns_query"}
+	var raws [][]byte
+	for _, tc := range dohCanaryCases(t, f) {
+		s, _ := dohCanaryRun(t, f, "interpretation", tc)
+		raws = append(raws, s.results...)
+		var r struct {
+			Measurement *struct {
+				Observations []struct{ Type, Status string }
+			}
+		}
+		_ = json.Unmarshal(s.results[0], &r)
+		if want, ok := stage[tc.outcome]; ok {
+			obs := r.Measurement.Observations
+			last := obs[len(obs)-1]
+			if last.Type != want {
+				t.Errorf("%s attributed to %s", tc.outcome, last.Type)
+			}
+			for _, o := range obs[:len(obs)-1] {
+				if o.Status != "succeeded" {
+					t.Errorf("%s: a failure before the terminal stage", tc.outcome)
+				}
+			}
+		}
+	}
+	// The DoH answer 9.9.9.9 differs from the synthetic system answer set
+	// {1.0.0.1}; the result carries no comparison, interference or
+	// correctness field either way.
+	d := primitiveDecoder(t, "interpretation", measurementOutput(dohTest, dohParams(t, dohCanaryInput, `{}`)))
+	interpretation(t, "DNS-03", d, raws[0], raws, []string{"response", "bootstrap_failure", "tcp_failure", "tls_failure", "http_failure", "unexpected_content_type",
+		"dns_nxdomain", "dns_servfail", "dns_refused", "malformed_dns_response", "query_mismatch", "timeout", "inconclusive"}, claims(
+		"DNS-03 configures DoH for the device or host", `\b(dns-03|the test|doh test)\b[^.]*\bconfigur\w*\b[^.]*\b(device|host application|operating system)\b`,
+		"DoH result is authoritative or correct", `\b(doh|dns-03)\b[^.]*\b(answer|result|response)s?\b[^.]*\b(is|are)\s+(authoritative|correct)\b`,
+		"difference from system DNS establishes interference", `\bdifferen\w*\b[^.]*\bsystem dns\b[^.]*\b(establish\w*|indicat\w*|shows?|proves?|means?)\b[^.]*\binterfer\w*`,
+		"stage failure is DoH blocking", `\b(bootstrap|tcp|tls|http|dns)\s+failure\b[^.]*\b(is|indicates?|means?|establish\w*)\b[^.]*\b(doh blocking|blocking|censorship)\b`,
+		"answers enriched", `\banswers?\b[^.]*\b(enrich\w*|annotat\w*)\b[^.]*\b(asn|organization|geolocation|reputation|verdict)`,
+	),
+		"establishes whether each observed bootstrap, tcp, tls, http and dns stage completed for the configured resolver and query",
+		"does not configure doh for the device or the host application", "a doh answer is not authoritative or correct",
+		"a difference from system dns does not establish interference", "is not summarized as doh blocking or censorship",
+		"attributed only to the directly observed stage", "answers carry no on-device asn, organization, geolocation, reputation or verdict enrichment",
+		"stale or incorrect registered resolver configuration")
 }

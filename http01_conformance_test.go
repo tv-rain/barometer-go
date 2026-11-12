@@ -2,7 +2,10 @@ package barometer
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/netip"
@@ -744,4 +747,210 @@ func TestMHttp01ProxyAdmission(t *testing.T) {
 		}
 		_ = c.Close()
 	}
+}
+
+const httpCanaryHost = "canary-host-81.example"
+const httpCanaryBody = "canary-prefix-87 canary-contains-86 CANARY-BODY-BYTES canary-suffix-88"
+const httpCanaryLocation = "https://canary-user-97:canary-pass-98@canary-loc-99.example/canary-locpath-100?canary-locq=101#canary-frag-102"
+const httpCanaryNext = "https://" + httpCanaryHost + "/canary-next-103?canary-nq=104"
+
+func httpDigest(body string) string {
+	s := sha256.Sum256([]byte(body))
+	return hex.EncodeToString(s[:])
+}
+
+// httpCanaryInput carries canaries in the URL host, path and query, in every
+// body check kind and in a header check name and value.
+var httpCanaryInput = `{"url":"https://` + httpCanaryHost + `/canary-path-82?canary-query=83","expected_status":200,` +
+	`"body_checks":[{"type":"contains","value":"canary-contains-86"},{"type":"prefix","value":"canary-prefix-87"},{"type":"suffix","value":"canary-suffix-88"},{"type":"sha256","value":"` + httpDigest(httpCanaryBody) + `"}],` +
+	`"header_checks":[{"name":"x-canary-name-89","type":"equals","value":"canary-hdrcheck-90"}]}`
+
+// httpCanaries are the REQ-HTTP-01-0039 items. Requests carry only the
+// library's fixed headers, whose one task-derived value is the Host header
+// holding the canary hostname. The library keeps no response cache, so no
+// cached body exists to carry a canary.
+var httpCanaries = canarySet{
+	{"requested hostname and Host header", httpCanaryHost}, {"URL path", "canary-path-82"}, {"URL query", "canary-query=83"}, {"resolved address", "8.8.4.4"},
+	{"header check name", "x-canary-name-89"}, {"header check value", "canary-hdrcheck-90"}, {"response header name", "x-canary-resp-91"}, {"response header value", "canary-respvalue-92"},
+	{"response body", "CANARY-BODY-BYTES"}, {"expected body digest", httpDigest(httpCanaryBody)}, {"observed body digest", httpDigest("CANARY-BODY-BYTES-B")},
+	{"contains string", "canary-contains-86"}, {"prefix string", "canary-prefix-87"}, {"suffix string", "canary-suffix-88"},
+	{"Set-Cookie value", "canary-cookie-93"}, {"WWW-Authenticate realm", "canary-realm-94"}, {"WWW-Authenticate credential", "canary-credential-95"},
+	{"redirect userinfo user", "canary-user-97"}, {"redirect userinfo password", "canary-pass-98"}, {"redirect host", "canary-loc-99.example"},
+	{"redirect path", "canary-locpath-100"}, {"redirect query", "canary-locq=101"}, {"redirect fragment", "canary-frag-102"},
+	{"registered redirect path", "canary-next-103"}, {"registered redirect query", "canary-nq=104"},
+	{"certificate subject and issuer", loopback.CertificateCanary}, {"leaf serial number", "424242"}, {"issuer serial number", "91337"},
+	{"raw transport error", "CANARY-RAW-ERROR"}, {"raw x509 error", "x509:"}, {"raw TLS error", "tls: "}, {"raw HTTP status text", "CANARY-REASON-PHRASE"},
+}
+
+func httpCanaryResponse(status, extra, body string) string {
+	return fmt.Sprintf("HTTP/1.1 %s CANARY-REASON-PHRASE\r\nX-Canary-Resp-91: canary-respvalue-92\r\nSet-Cookie: canary-cookie-93=1; Path=/canary-path-82\r\n"+
+		"WWW-Authenticate: Basic realm=\"canary-realm-94\", credential=\"canary-credential-95\"\r\n%sContent-Length: %d\r\n\r\n%s", status, extra, len(body), body)
+}
+
+var httpAllowed = []string{"outcome", "observations[].type", "observations[].status", "observations[].duration_ms", "observations[].failure",
+	"observations[].details.engine", "observations[].details.query_type", "observations[].details.responses[].arrival_index", "observations[].details.responses[].arrival_offset_ms",
+	"observations[].details.responses[].rcode", "observations[].details.responses[].answers[].type", "observations[].details.responses[].answers[].value",
+	"observations[].details.address_family", "observations[].details.tls_version", "observations[].details.alpn", "observations[].details.certificate_validation", "observations[].details.alert",
+	"observations[].details.protocol", "observations[].details.status_code", "observations[].details.redirect.followed_count", "observations[].details.redirect.terminal_location_class",
+	"observations[].details.body.bytes_processed", "observations[].details.body.truncated", "observations[].details.checks[].kind", "observations[].details.checks[].index",
+	"observations[].details.checks[].matched", "observations[].details.content_encoding"}
+
+type httpCanaryCase struct {
+	name, outcome, raw, options string
+	dnsErr, dialErr             error
+	untrusted                   bool
+	redirects                   []string
+}
+
+func httpCanaryCases() []httpCanaryCase {
+	ok := httpCanaryResponse("200", "X-Canary-Name-89: canary-hdrcheck-90\r\n", httpCanaryBody)
+	follow := `{"follow_redirects":true,"max_redirects":1}`
+	return []httpCanaryCase{
+		{name: "expected_response", outcome: "expected_response", raw: ok},
+		{name: "redirect_observed", outcome: "redirect_observed", raw: httpCanaryResponse("302", "Location: "+httpCanaryLocation+"\r\n", "CANARY-BODY-BYTES")},
+		{name: "redirect_rejected", outcome: "redirect_rejected", options: follow, raw: httpCanaryResponse("302", "Location: "+httpCanaryLocation+"\r\n", "CANARY-BODY-BYTES")},
+		{name: "redirect_limit_reached", outcome: "redirect_limit_reached", options: follow, redirects: []string{httpCanaryNext, httpCanaryNext},
+			raw: httpCanaryResponse("302", "Location: "+httpCanaryNext+"\r\n", "CANARY-BODY-BYTES")},
+		{name: "unexpected_status", outcome: "unexpected_status", raw: httpCanaryResponse("503", "", "CANARY-BODY-BYTES")},
+		{name: "header_check_failed", outcome: "header_check_failed", raw: httpCanaryResponse("200", "X-Canary-Name-89: canary-respvalue-92\r\n", httpCanaryBody)},
+		{name: "body_check_failed", outcome: "body_check_failed", raw: httpCanaryResponse("200", "X-Canary-Name-89: canary-hdrcheck-90\r\n", "CANARY-BODY-BYTES-B")},
+		{name: "body_limit_reached", outcome: "body_limit_reached", options: `{"max_body_bytes":20}`, raw: ok},
+		{name: "unsupported_content_encoding", outcome: "unsupported_content_encoding", raw: httpCanaryResponse("200", "Content-Encoding: gzip\r\n", "CANARY-BODY-BYTES")},
+		{name: "dns_failure", outcome: "dns_failure", dnsErr: &net.DNSError{IsTimeout: true, Err: "CANARY-RAW-ERROR", Name: httpCanaryHost, Server: "8.8.4.4:53"}},
+		{name: "tcp_failure", outcome: "tcp_failure", dialErr: fmt.Errorf("CANARY-RAW-ERROR 8.8.4.4:443: %w", syscall.ECONNREFUSED)},
+		{name: "tls_failure", outcome: "tls_failure", untrusted: true, raw: ok},
+	}
+}
+
+// httpCanaryRun runs one HTTP-01 path to the canary URL, resolved by the
+// scripted system resolver to the canary address, and returns its surfaces.
+func httpCanaryRun(t *testing.T, id string, tc httpCanaryCase) *surfaces {
+	t.Helper()
+	raw := tc.raw
+	if raw == "" {
+		raw = httpCanaryResponse("200", "", "")
+	}
+	h, d, srv := httpHarness(t, httpCanaryInput, raw, false)
+	httpPolicy(t, h, httpCanaryInput, tc.redirects...)
+	if tc.untrusted {
+		h.adapters.measurementRoots = nil
+	}
+	h.adapters.run.resolver = dnsSystemResolver{func(_ context.Context, _, name string) ([]netip.Addr, error) {
+		if name != httpCanaryHost {
+			return nil, errors.New("synthetic: unexpected name")
+		}
+		if tc.dnsErr != nil {
+			return nil, tc.dnsErr
+		}
+		return []netip.Addr{netip.MustParseAddr("8.8.4.4")}, nil
+	}}
+	d.dial = func(ctx context.Context, _, a string) (measurement.Conn, error) {
+		if a != "8.8.4.4:443" {
+			return nil, errors.New("synthetic: unexpected destination")
+		}
+		if tc.dialErr != nil {
+			return nil, tc.dialErr
+		}
+		var nd net.Dialer
+		return nd.DialContext(ctx, "tcp", srv.Address())
+	}
+	c := h.initialized(t)
+	defer c.Close()
+	options := tc.options
+	if options == "" {
+		options = `{}`
+	}
+	s := &surfaces{}
+	rh, err := c.StartRun(h.admit(t, c, httpTask(id, httpCanaryInput, options)))
+	if err != nil {
+		t.Fatal(codeOf(err))
+	}
+	waitTerminal(t, c, rh)
+	_, err = c.RunState(rh)
+	s.err(err)
+	s.collect(h, c)
+	rejectedClean(t, h, c, httpCanaries, withUnknownInput(httpTask("rejected", httpCanaryInput, `{}`), httpCanaries))
+	if len(s.results) != 1 {
+		t.Fatal("not one result")
+	}
+	checkHTTP(t, s.results[0], "completed", "", tc.outcome)
+	return s
+}
+
+func httpDecoder(t *testing.T, id string) *result.Decoder {
+	t.Helper()
+	return primitiveDecoder(t, id, result.Output{Test: model.Test{ID: "HTTP-01", Version: "0.1.0", ResultVersion: "0.1.0"}, Limits: httpParams(t, httpCanaryInput, `{}`).Limits(), HTTPS: true})
+}
+
+// M-HTTP-01-MINIMIZATION: canaries for every REQ-HTTP-01-0039 item over the
+// listed outcome paths, including the DNS, TCP and TLS failures; only the
+// registered observation fields remain.
+// requirement-ref: REQ-HTTP-01-0039
+func TestMHttp01Minimization(t *testing.T) {
+	httpCanaries.unique(t)
+	for _, tc := range httpCanaryCases() {
+		t.Run(tc.name, func(t *testing.T) {
+			s := httpCanaryRun(t, "minimization", tc)
+			s.check(t, httpCanaries)
+			minimized(t, s.results[0], httpAllowed)
+		})
+	}
+	t.Run("injected fields", func(t *testing.T) {
+		s := httpCanaryRun(t, "minimization", httpCanaryCases()[0])
+		last := func(v map[string]any) map[string]any {
+			o := v["measurement"].(map[string]any)["observations"].([]any)
+			return o[len(o)-1].(map[string]any)
+		}
+		var inject []func(map[string]any)
+		for _, field := range []string{"url", "hostname", "path", "query", "location", "address", "headers", "header", "body", "digest", "sha256", "value", "cookie", "credential", "certificate", "error"} {
+			inject = append(inject, func(v map[string]any) { last(v)["details"].(map[string]any)[field] = "synthetic" },
+				func(v map[string]any) {
+					last(v)["details"].(map[string]any)["body"].(map[string]any)[field] = "synthetic"
+				},
+				func(v map[string]any) {
+					last(v)["details"].(map[string]any)["checks"].([]any)[0].(map[string]any)[field] = "synthetic"
+				},
+				func(v map[string]any) { last(v)[field] = "synthetic" })
+		}
+		assertRejected(t, httpDecoder(t, "minimization"), s.results[0], inject...)
+	})
+}
+
+// M-HTTP-01-INTERPRETATION: the shared prohibited-claims check with the
+// HTTP-01 claims over results of every reachable registered outcome. The
+// result has only outcome and observations.
+// requirement-ref: REQ-HTTP-01-0001
+// requirement-ref: REQ-HTTP-01-0002
+// requirement-ref: REQ-HTTP-01-0003
+// requirement-ref: REQ-HTTP-01-0040
+// requirement-ref: REQ-HTTP-01-0041
+// requirement-ref: REQ-HTTP-01-0042
+// requirement-ref: REQ-HTTP-01-0043
+func TestMHttp01Interpretation(t *testing.T) {
+	var raws [][]byte
+	for _, tc := range httpCanaryCases() {
+		raws = append(raws, httpCanaryRun(t, "interpretation", tc).results...)
+	}
+	for _, raw := range raws {
+		var r struct{ Measurement map[string]json.RawMessage }
+		_ = json.Unmarshal(raw, &r)
+		for k := range r.Measurement {
+			if k != "outcome" && k != "observations" {
+				t.Errorf("HTTP-01 measurement member %s", k)
+			}
+		}
+	}
+	interpretation(t, "HTTP-01", httpDecoder(t, "interpretation"), raws[0], raws, []string{"expected_response", "redirect_observed", "redirect_rejected", "redirect_limit_reached",
+		"unexpected_status", "header_check_failed", "body_check_failed", "body_limit_reached", "unsupported_content_encoding", "dns_failure", "tcp_failure", "tls_failure",
+		"protocol_error", "timeout", "inconclusive"}, claims(
+		"HTTP-01 browsed or rendered a page", `\bhttp-01\b[^.]*\b(brows\w*|render\w*)\b`,
+		"HTTP-01 authenticated, submitted data or ran scripts", `\bhttp-01\b[^.]*\b(authenticat\w*|submit\w*|execut\w* scripts?|runs? scripts?)\b`,
+		"outcome establishes a block page or manipulation", `\b(unexpected_status|unexpected status|redirect_observed|redirect_rejected|header_check_failed|body_check_failed)\b[^.]*\b(establish\w*|indicat\w*|shows?|proves?|means?)\b[^.]*\b(block\w*|manipulat\w*|censor\w*)`,
+		"block page", `\bblock[- ]page\b[^.]*\b(detected|identified|found|observed)\b`,
+		"body limit is an exact on-wire limit", `\b(bytes_processed|max_body_bytes)\b[^.]*\b(is|are)\s+(an\s+)?exact\s+on-wire\b`,
+		"result excludes other causes", `\bhttp-01\b[^.]*\bresult\b[^.]*\bexclud\w*`,
+	),
+		"whether the configured endpoint or an approved terminal redirect target responded", "whether its bounded status, header and body checks matched",
+		"does not browse or render a page", "does not authenticate, submit user data or execute scripts", "does not establish a block page, intentional manipulation or blocking",
+		"are not an exact on-wire limit", "legitimate redirect-chain changes")
 }
