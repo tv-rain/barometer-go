@@ -909,3 +909,185 @@ func TestMTcp01EquivalentRunsSerialize(t *testing.T) {
 		tcpResult(t, raw, "completed", "", "connection_refused")
 	}
 }
+
+// tcpCanaries are the REQ-TCP-01-0027 items. The destination is the
+// configured synthetic address and port; the others reach the runner only
+// through the scripted transport: in the socket error it returns and in the
+// connection it hands back.
+var tcpCanaries = canarySet{
+	{"socket error string", "CANARY-SOCKERR-TEXT"}, {"socket error number", "91337"},
+	{"destination address", "8.8.4.4"}, {"destination port", "47391"},
+	{"local address", "CANARY-LOCAL-ADDR"}, {"local port", "51873"},
+	{"TCP flags", "CANARY-TCP-FLAGS"}, {"packet count", "73191"},
+	{"payload data", "CANARY-PAYLOAD-BYTES"}, {"retry metadata", "CANARY-RETRY-META"},
+}
+
+// tcpCanaryError is a socket error whose text carries every transport canary.
+func tcpCanaryError(err error) error {
+	return fmt.Errorf("CANARY-SOCKERR-TEXT errno 91337 local CANARY-LOCAL-ADDR:51873 flags CANARY-TCP-FLAGS packets 73191 payload CANARY-PAYLOAD-BYTES retry CANARY-RETRY-META: %w", err)
+}
+
+// tcpCanaryConn is a connected socket that exposes the canaries to any
+// caller that reads, prints or inspects it.
+type tcpCanaryConn struct{ tcpClosingConn }
+
+func (tcpCanaryConn) String() string { return "CANARY-LOCAL-ADDR:51873 CANARY-TCP-FLAGS 73191" }
+func (tcpCanaryConn) Read(p []byte) (int, error) {
+	return copy(p, "CANARY-PAYLOAD-BYTES"), errors.New("CANARY-RETRY-META")
+}
+func (tcpCanaryConn) LocalAddr() net.Addr {
+	return &net.TCPAddr{IP: net.ParseIP("192.0.2.1"), Port: 51873, Zone: "CANARY-LOCAL-ADDR"}
+}
+
+func tcpCanaryHarness(t *testing.T) (*harness, *tcpTransport) {
+	t.Helper()
+	h, d := tcpProductionHarness(t)
+	p := synPolicyInput(2, "reg-a", func(p *task.Permissions) { p.Tests = []task.TestVersion{tcp01}; p.AllowUnknownRisk = true })
+	p.Targets[0].Test = tcp01
+	p.Targets[0].Tuple = task.TargetTuple{Address: netip.MustParseAddr("8.8.4.4"), Port: 47391, Scheme: "tcp"}
+	var err error
+	if h.adapters.policy, err = task.NewLocalPolicy(p); err != nil {
+		t.Fatal(err)
+	}
+	d.authority = "8.8.4.4:47391"
+	return h, d
+}
+
+func tcpCanaryTask(id string) string {
+	return strings.Replace(runTask(id, "", "", false), `"input":{}`, `"input":{"ip_address":"8.8.4.4","port":47391}`, 1)
+}
+
+var tcpAllowed = []string{"outcome", "observations[].type", "observations[].status", "observations[].duration_ms", "observations[].failure", "observations[].details.address_family"}
+
+// tcpScenario runs one TCP-01 path with a scripted dial and returns its
+// surfaces. A nil interrupt lets the run end on its own.
+func tcpScenario(t *testing.T, id string, dial func(context.Context) (measurement.Conn, error), interrupt func(*harness, *Client, string)) *surfaces {
+	t.Helper()
+	h, d := tcpCanaryHarness(t)
+	entered := make(chan struct{}, 1)
+	d.dial = func(ctx context.Context) (measurement.Conn, error) {
+		entered <- struct{}{}
+		return dial(ctx)
+	}
+	c := h.initialized(t)
+	defer c.Close()
+	s := &surfaces{}
+	rh, err := c.StartRun(h.admit(t, c, tcpCanaryTask(id)))
+	if err != nil {
+		t.Fatal(codeOf(err))
+	}
+	if interrupt != nil {
+		<-entered
+		interrupt(h, c, rh)
+	}
+	waitTerminal(t, c, rh)
+	_, err = c.RunState(rh)
+	s.err(err)
+	s.collect(h, c)
+	rejectedClean(t, h, c, tcpCanaries, withUnknownInput(tcpCanaryTask("rejected"), tcpCanaries))
+	return s
+}
+
+// M-TCP-01-MINIMIZATION: one unique canary per REQ-TCP-01-0027 item, every
+// outcome path and the incomplete paths; only the registered fields remain.
+// requirement-ref: REQ-TCP-01-0027
+func TestMTcp01Minimization(t *testing.T) {
+	tcpCanaries.unique(t)
+	blocked := func(ctx context.Context) (measurement.Conn, error) {
+		<-ctx.Done()
+		return nil, tcpCanaryError(ctx.Err())
+	}
+	cases := []struct {
+		name, outcome string
+		dial          func(context.Context) (measurement.Conn, error)
+		interrupt     func(*harness, *Client, string)
+	}{
+		{"connected", "connected", func(context.Context) (measurement.Conn, error) { return &tcpCanaryConn{}, nil }, nil},
+		{"incomplete network_changed", "", blocked, func(h *harness, _ *Client, _ string) {
+			a := defaultAccess
+			a.Generation++
+			h.run.network.Set(a)
+		}},
+		{"incomplete cancelled_by_host", "", blocked, func(_ *harness, c *Client, rh string) {
+			if err := c.CancelRun(rh); err != nil {
+				t.Fatal(codeOf(err))
+			}
+		}},
+	}
+	for _, f := range []struct {
+		outcome string
+		err     error
+	}{{"timeout", syscall.ETIMEDOUT}, {"connection_refused", syscall.ECONNREFUSED}, {"connection_reset", syscall.ECONNRESET}, {"network_unreachable", syscall.ENETUNREACH},
+		{"address_unreachable", syscall.EHOSTUNREACH}, {"permission_denied", syscall.EACCES}, {"socket_error", syscall.EINVAL}, {"inconclusive", errors.New("CANARY-SOCKERR-TEXT")}} {
+		cases = append(cases, struct {
+			name, outcome string
+			dial          func(context.Context) (measurement.Conn, error)
+			interrupt     func(*harness, *Client, string)
+		}{f.outcome, f.outcome, func(context.Context) (measurement.Conn, error) { return nil, tcpCanaryError(f.err) }, nil})
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := tcpScenario(t, "minimization", tc.dial, tc.interrupt)
+			s.check(t, tcpCanaries)
+			if len(s.results) != 1 {
+				t.Fatal("not one result")
+			}
+			m := minimized(t, s.results[0], tcpAllowed)
+			if tc.outcome == "" {
+				if m != nil {
+					t.Fatal("interrupted run retained a measurement")
+				}
+				return
+			}
+			tcpResult(t, s.results[0], "completed", "", tc.outcome)
+		})
+	}
+	t.Run("injected fields", func(t *testing.T) {
+		s := tcpScenario(t, "minimization", func(context.Context) (measurement.Conn, error) { return nil, tcpCanaryError(syscall.ECONNREFUSED) }, nil)
+		obs := func(v map[string]any) map[string]any {
+			return v["measurement"].(map[string]any)["observations"].([]any)[0].(map[string]any)
+		}
+		assertRejected(t, primitiveDecoder(t, "minimization", result.Output{Test: model.Test{ID: "TCP-01", Version: "0.1.0", ResultVersion: "0.1.0"}}), s.results[0],
+			func(v map[string]any) { obs(v)["details"].(map[string]any)["port"] = 47391 },
+			func(v map[string]any) { obs(v)["details"].(map[string]any)["local_address"] = "CANARY-LOCAL-ADDR" },
+			func(v map[string]any) { obs(v)["error"] = "CANARY-SOCKERR-TEXT" },
+			func(v map[string]any) { obs(v)["retries"] = 1 },
+			func(v map[string]any) { v["measurement"].(map[string]any)["destination"] = "8.8.4.4" },
+			func(v map[string]any) { v["measurement"].(map[string]any)["payload"] = "CANARY-PAYLOAD-BYTES" },
+			func(v map[string]any) { obs(v)["duration_ms"] = 375 },
+		)
+	})
+}
+
+// M-TCP-01-INTERPRETATION: the shared prohibited-claims check with the
+// TCP-01 claims, over results of every outcome.
+// requirement-ref: REQ-TCP-01-0002
+// requirement-ref: REQ-TCP-01-0003
+// requirement-ref: REQ-TCP-01-0004
+// requirement-ref: REQ-TCP-01-0028
+// requirement-ref: REQ-TCP-01-0029
+// requirement-ref: REQ-TCP-01-0030
+func TestMTcp01Interpretation(t *testing.T) {
+	outcomes := []string{"connected", "timeout", "connection_refused", "connection_reset", "network_unreachable", "address_unreachable", "permission_denied", "socket_error", "inconclusive"}
+	errs := []error{nil, syscall.ETIMEDOUT, syscall.ECONNREFUSED, syscall.ECONNRESET, syscall.ENETUNREACH, syscall.EHOSTUNREACH, syscall.EACCES, syscall.EINVAL, errors.New("synthetic")}
+	var raws [][]byte
+	for i, err := range errs {
+		s := tcpScenario(t, "interpretation", func(context.Context) (measurement.Conn, error) {
+			if err == nil {
+				return &tcpClosingConn{}, nil
+			}
+			return nil, err
+		}, nil)
+		tcpResult(t, s.results[0], "completed", "", outcomes[i])
+		raws = append(raws, s.results...)
+	}
+	d := primitiveDecoder(t, "interpretation", result.Output{Test: model.Test{ID: "TCP-01", Version: "0.1.0", ResultVersion: "0.1.0"}})
+	interpretation(t, "TCP-01", d, raws[0], raws, outcomes, claims(
+		"TCP-01 performed or measured DNS", `\btcp-01\b[^.]*\b(resolves?|performs?|measures?)\b[^.]*\bdns\b`,
+		"TCP-01 shows application usability", `\btcp-01\b[^.]*\b(tls|http|application)\b[^.]*\b(usable|unusable|available|unavailable)\b`,
+		"timeout or reset establishes filtering", `\b(timeout|reset|refus\w*)\b[^.]*\b(establish\w*|indicat\w*|shows?|proves?|means?)\b[^.]*\b(filter\w*|block\w*|censor\w*)`,
+	),
+		"establishes only whether a tcp connection to the configured address and port completed or produced a particular observable socket outcome",
+		"performs no dns resolution", "does not establish intentional filtering", "is not definitive proof of censorship",
+		"incorrect or stale target configuration", "independent measurements from comparable times and network contexts")
+}

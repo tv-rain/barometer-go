@@ -1,11 +1,23 @@
 package barometer
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/tv-rain/barometer-go/internal/measurement"
+	"github.com/tv-rain/barometer-go/internal/model/observation"
+	model "github.com/tv-rain/barometer-go/internal/model/result"
+	"github.com/tv-rain/barometer-go/internal/platform"
+	"github.com/tv-rain/barometer-go/internal/result"
+	"github.com/tv-rain/barometer-go/internal/testkit/loopback"
+	"golang.org/x/net/dns/dnsmessage"
+	"net"
+	"net/netip"
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tv-rain/barometer-go/internal/jsondecode"
 	"github.com/tv-rain/barometer-go/internal/measurement/net05"
@@ -565,4 +577,305 @@ func TestMNet05PrimitiveRiskAndMissingCapability(t *testing.T) {
 			t.Fatalf("primitive admission = %q, %s; want %s", handle, codeOf(err), want)
 		}
 	}
+}
+
+// net05CanarySteps is a synthetic profile of DNS-01, TCP-01, TLS-01 and
+// HTTP-01 steps whose inputs and options carry canaries: a canary hostname,
+// a canary target address and port, a canary server name, a canary HTTPS URL
+// path and a canary step option value. The second DNS step's system lookup
+// fails with the canary platform error. The first DNS step queries a direct
+// resolver whose scripted response carries the DNS-01 message canaries.
+func net05CanarySteps() []string {
+	return []string{
+		profileStep("dns", "DNS-01", `{"hostname":"canary-n5host-151.example","record_type":"A","resolver":{"ip_address":"8.8.4.4"}}`, `{"resolver_mode":"direct","transport":"tcp"}`),
+		profileStep("dns-fail", "DNS-01", `{"hostname":"canary-n5fail-156.example","record_type":"A"}`, `{}`),
+		profileStep("tcp", "TCP-01", `{"ip_address":"8.8.4.4","port":47391}`, `{}`),
+		profileStep("tls", "TLS-01", `{"ip_address":"8.8.4.4","port":8443,"server_name":"canary-n5sni-152.example"}`, `{}`),
+		profileStep("http", "HTTP-01", `{"url":"https://8.8.4.4/canary-n5path-153","expected_status":200}`, `{"max_body_bytes":40961}`),
+	}
+}
+
+// net05Canaries are the REQ-NET-05-0048 items. The outer task carries
+// schedule and labels canaries; its safety declaration has only registered
+// enumerated members, so the check proves no safety member is copied.
+var net05Canaries = canarySet{
+	{"outer schedule", "07:13:29"}, {"outer labels key", "canary-label-key-154"}, {"outer labels value", "canary-label-value-155"},
+	{"step target hostname", "canary-n5host-151.example"}, {"failing step hostname", "canary-n5fail-156.example"}, {"step target URL path", "canary-n5path-153"},
+	{"step target address", "8.8.4.4"}, {"step target port", "47391"}, {"TLS step server name", "canary-n5sni-152.example"}, {"profile option value", "40961"},
+	{"response body", "CANARY-N5BODY"}, {"response header value", "canary-n5hval-157"}, {"certificate subject and issuer", loopback.CertificateCanary},
+	{"leaf serial number", "424242"}, {"issuer serial number", "91337"}, {"platform error", "CANARY-N5-PLATFORM-ERROR"},
+	{"raw TCP error", "CANARY-N5-SOCKERR"}, {"DNS answer TTL", "86413"}, {"DNS authority record", "canary-authority-74.example"},
+	{"DNS additional record", "canary-additional-75.example"}, {"raw DNS message pattern", "CANARY-RAWDNS-BYTES"}, {"combined restriction verdict", "broad_restriction_suspected"}, {"allowlist verdict", "allowlist_detected"},
+}
+
+func net05CanaryTask(id, execution string) string {
+	s := net05Task(id, profileInput(net05CanarySteps()...), `{}`, execution)
+	s = strings.Replace(s, `"schedule":{`, `"schedule":{"starts_at":"2026-10-19T07:13:29Z",`, 1)
+	return strings.Replace(s, `"safety":{`, `"labels":{"canary-label-key-154":"canary-label-value-155"},"safety":{`, 1)
+}
+
+// net05CanaryHarness registers exactly the canary profile's targets and
+// routes each checked authority to its scripted endpoint.
+func net05CanaryHarness(t *testing.T, stall bool) (*harness, *httpTransport, *loopback.HTTPServer) {
+	t.Helper()
+	h := runningHarness(t)
+	h.adapters.registry = nil
+	h.adapters.run.paths = nil
+	in := synPolicyInput(2, "reg-a", func(p *task.Permissions) {
+		p.AllowComposite, p.AllowMediumRisk, p.MaxRisk = true, true, task.HighRisk
+		p.Tests = []task.TestVersion{net05Test, {ID: "DNS-01", Version: "0.1.0"}, {ID: "TCP-01", Version: "0.1.0"}, {ID: "TLS-01", Version: "0.1.0"}, {ID: "HTTP-01", Version: "0.1.0"}}
+	})
+	template := in.Targets[0]
+	in.Targets = nil
+	var ids []string
+	r, _ := productionRegistry(nil, true)
+	for _, step := range normalizedProfile(t, profileInput(net05CanarySteps()...)).CompositeSteps() {
+		e, _ := r.Lookup(step.Test)
+		targets, ok := e.Targets.Targets(step.Parameters)
+		if !ok {
+			t.Fatal("targets")
+		}
+		for _, target := range targets {
+			reg := template.Clone()
+			reg.ID, reg.Test, reg.Role, reg.Tuple = fmt.Sprint("target-", len(ids)), step.Test, target.Role, target.Tuple
+			in.Targets = append(in.Targets, reg)
+			ids = append(ids, reg.ID)
+		}
+	}
+	in.Permissions.RegistrationIDs = slices.Clone(ids)
+	in.Permissions.LabelNamespaces = []string{"canary-label-key-154"}
+	for i := range in.Issuers {
+		in.Issuers[i].Permissions.RegistrationIDs = slices.Clone(ids)
+		in.Issuers[i].Permissions.LabelNamespaces = []string{"canary-label-key-154"}
+	}
+	var err error
+	if h.adapters.policy, err = task.NewLocalPolicy(in); err != nil {
+		t.Fatal(err)
+	}
+	ca, err := loopback.NewTestCA()
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := func(name string, cfg loopback.HTTPConfig) *loopback.HTTPServer {
+		cert, err := ca.Issue(name, false)
+		if err != nil {
+			t.Fatal(err)
+		}
+		cfg.Certificate = cert
+		srv, err := loopback.ListenHTTP(cfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { _ = srv.Close() })
+		return srv
+	}
+	tlsSrv := server("canary-n5sni-152.example", loopback.HTTPConfig{})
+	body := "CANARY-N5BODY"
+	httpSrv := server("8.8.4.4", loopback.HTTPConfig{Stall: stall, Raw: []byte(fmt.Sprintf("HTTP/1.1 200 OK\r\nX-Canary-N5: canary-n5hval-157\r\nContent-Length: %d\r\n\r\n%s", len(body), body))})
+	h.adapters.measurementRoots = ca.Pool()
+	dnsSrv, err := loopback.ListenDNS(func(q []byte) [][]byte { return [][]byte{dnsCanaryResponse(q, 0, dnsmessage.RCodeSuccess, "1.1.1.1")} })
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { dnsSrv.Close() })
+	h.adapters.run.resolver = dnsSystemResolver{func(_ context.Context, _, name string) ([]netip.Addr, error) {
+		return nil, errors.New("CANARY-N5-PLATFORM-ERROR " + name)
+	}}
+	d := &httpTransport{dial: func(ctx context.Context, network, address string) (measurement.Conn, error) {
+		var nd net.Dialer
+		switch address {
+		case "8.8.4.4:53":
+			return nd.DialContext(ctx, network, dnsSrv.Address())
+		case "8.8.4.4:47391":
+			return &tcpCanaryConn{}, nil
+		case "8.8.4.4:8443":
+			return nd.DialContext(ctx, "tcp", tlsSrv.Address())
+		case "8.8.4.4:443":
+			return nd.DialContext(ctx, "tcp", httpSrv.Address())
+		}
+		return nil, errors.New("CANARY-N5-SOCKERR unexpected destination")
+	}}
+	h.adapters.run.directDialers = d
+	readyComposite(h)
+	return h, d, httpSrv
+}
+
+var net05Allowed = func() []string {
+	out := []string{"outcome", "observations", "profile.profile_id", "profile.profile_version", "network_validation.state", "network_validation.source",
+		"steps[].step_id", "steps[].test.id", "steps[].test.version", "steps[].test.result_version", "steps[].state", "stopped_before_step"}
+	seen := map[string]bool{}
+	for _, set := range [][]string{tcpAllowed, tlsAllowed, dnsAllowed, httpAllowed} {
+		for _, p := range set {
+			if !seen[p] {
+				seen[p] = true
+				out = append(out, "steps[].measurement."+p)
+			}
+		}
+	}
+	return out
+}()
+
+type net05Run struct {
+	s   *surfaces
+	m   map[string]any
+	raw []byte
+}
+
+// net05CanaryRun runs the canary profile once. validated sets the platform
+// validation state; cancel interrupts the run while the HTTP step's server
+// holds its response.
+func net05CanaryRun(t *testing.T, id string, validated platform.Availability, cancel bool) net05Run {
+	t.Helper()
+	h, _, srv := net05CanaryHarness(t, cancel)
+	a := defaultAccess
+	a.Validated = validated
+	h.run.network.Set(a)
+	c := h.initialized(t)
+	defer c.Close()
+	s := &surfaces{}
+	rh, err := c.StartRun(h.admit(t, c, net05CanaryTask(id, "")))
+	if err != nil {
+		t.Fatal(codeOf(err))
+	}
+	if cancel {
+		ctx, stop := context.WithTimeout(context.Background(), 5*time.Second)
+		defer stop()
+		if err := srv.Wait(ctx, func(c loopback.HTTPCounts) bool { return len(c.Requests) == 1 }); err != nil {
+			t.Fatal(err)
+		}
+		if err := c.CancelRun(rh); err != nil {
+			t.Fatal(codeOf(err))
+		}
+	}
+	waitTerminal(t, c, rh)
+	_, err = c.RunState(rh)
+	s.err(err)
+	s.collect(h, c)
+	rejectedClean(t, h, c, net05Canaries, withUnknownInput(net05CanaryTask("rejected", ""), net05Canaries))
+	if len(s.results) != 1 {
+		t.Fatal("not one result")
+	}
+	var r map[string]any
+	if json.Unmarshal(s.results[0], &r) != nil {
+		t.Fatal("result is not JSON")
+	}
+	m, _ := r["measurement"].(map[string]any)
+	return net05Run{s, m, s.results[0]}
+}
+
+// net05Decoder is the strict decoder of the canary profile's results.
+func net05Decoder(t *testing.T, id string) *result.Decoder {
+	t.Helper()
+	p := normalizedProfile(t, profileInput(net05CanarySteps()...))
+	plan := &result.ProfilePlan{ID: "baseline", Version: 1}
+	for _, s := range p.CompositeSteps() {
+		plan.Steps = append(plan.Steps, result.StepPlan{ID: s.ID, Output: measurementOutput(s.Test, s.Parameters)})
+	}
+	cd, _ := observation.NewContextDecoder(result.Contract, observation.ContextApprovals{})
+	path, _ := observation.NewPath(1, 0, "direct", "")
+	d, err := result.New(result.Binding{TaskID: id, Output: result.Output{Test: model.Test{ID: "NET-05", Version: "0.1.0", ResultVersion: "0.1.0"}}, MaxAttempts: 1, MaxDurationMS: 60000,
+		Implementation: implementation, ContextDecoder: cd, Path: path, AccessGeneration: 1, Profile: plan})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return d
+}
+
+// M-NET-05-MINIMIZATION: one canary per REQ-NET-05-0048 item through a
+// synthetic DNS-01, TCP-01, TLS-01 and HTTP-01 profile. Only the registered
+// NET-05 and primitive fields remain; the DNS-01 answer is retained only in
+// the DNS answers path; no outer envelope member, per-step Network Context or
+// combined verdict is copied; an injected extra field is rejected.
+// requirement-ref: REQ-NET-05-0048
+func TestMNet05Minimization(t *testing.T) {
+	net05Canaries.unique(t)
+	run := net05CanaryRun(t, "minimization", platform.AvailabilityYes, false)
+	run.s.check(t, net05Canaries)
+	m := minimized(t, run.raw, net05Allowed)
+	if m == nil || m["outcome"] != "completed" {
+		t.Fatalf("outcome %v", m["outcome"])
+	}
+	steps := m["steps"].([]any)
+	want := []string{"resolved", "resolver_error", "connected", "handshake_succeeded", "expected_response"}
+	for i, s := range steps {
+		step := s.(map[string]any)
+		if got := step["measurement"].(map[string]any)["outcome"]; got != want[i] {
+			t.Fatalf("step %d outcome %v", i, got)
+		}
+	}
+	if strings.Count(string(run.raw), "1.1.1.1") != 1 || !strings.Contains(string(run.raw), `"answers":[{"type":"A","value":"1.1.1.1"}]`) {
+		t.Fatalf("the DNS answer is retained outside the DNS answers path: %s", run.raw)
+	}
+	for _, member := range []string{`"schedule"`, `"execution":{"state"`, `"safety"`, `"labels"`, `"risk_level"`, `"requires_user_consent"`, `"input"`, `"options"`} {
+		if n := strings.Count(string(run.raw), member); member == `"execution":{"state"` && n > 1 || member != `"execution":{"state"` && n != 0 {
+			t.Errorf("result copies %s", member)
+		}
+	}
+	if strings.Count(string(run.raw), `"network_context"`) > 1 {
+		t.Error("per-step Network Context")
+	}
+	t.Run("incomplete", func(t *testing.T) {
+		r := net05CanaryRun(t, "minimization", platform.AvailabilityYes, true)
+		r.s.check(t, net05Canaries)
+		minimized(t, r.raw, net05Allowed)
+	})
+	t.Run("injected fields", func(t *testing.T) {
+		step := func(v map[string]any, i int) map[string]any {
+			return v["measurement"].(map[string]any)["steps"].([]any)[i].(map[string]any)
+		}
+		var inject []func(map[string]any)
+		for _, field := range []string{"schedule", "execution", "safety", "labels", "network_context", "input", "options", "target", "url", "error", "broad_restriction_suspected", "allowlist_detected", "classification"} {
+			inject = append(inject, func(v map[string]any) { v["measurement"].(map[string]any)[field] = map[string]any{} },
+				func(v map[string]any) { step(v, 0)[field] = map[string]any{} },
+				func(v map[string]any) { step(v, 4)["measurement"].(map[string]any)[field] = "synthetic" },
+				func(v map[string]any) {
+					v["measurement"].(map[string]any)["profile"].(map[string]any)[field] = "synthetic"
+				})
+		}
+		inject = append(inject, func(v map[string]any) { v["measurement"].(map[string]any)["outcome"] = "broad_restriction_suspected" },
+			func(v map[string]any) { v["measurement"].(map[string]any)["outcome"] = "allowlist_detected" })
+		assertRejected(t, net05Decoder(t, "minimization"), run.raw, inject...)
+	})
+}
+
+// M-NET-05-INTERPRETATION: the shared prohibited-claims check with the
+// NET-05 claims over completed, incomplete, network_not_validated and
+// inconclusive runs. The completed run includes a primitive negative outcome
+// and the outcome stays completed, never a combined classification.
+// requirement-ref: REQ-NET-05-0001
+// requirement-ref: REQ-NET-05-0002
+// requirement-ref: REQ-NET-05-0003
+// requirement-ref: REQ-NET-05-0004
+// requirement-ref: REQ-NET-05-0049
+// requirement-ref: REQ-NET-05-0050
+// requirement-ref: REQ-NET-05-0051
+// requirement-ref: REQ-NET-05-0052
+func TestMNet05Interpretation(t *testing.T) {
+	var raws [][]byte
+	for _, tc := range []struct {
+		validated platform.Availability
+		cancel    bool
+		outcome   string
+	}{{platform.AvailabilityYes, false, "completed"}, {platform.AvailabilityYes, true, ""}, {platform.AvailabilityNo, false, "network_not_validated"}, {platform.AvailabilityUnknown, false, "inconclusive"}} {
+		r := net05CanaryRun(t, "interpretation", tc.validated, tc.cancel)
+		if tc.outcome != "" && (r.m == nil || r.m["outcome"] != tc.outcome) {
+			t.Fatalf("outcome %v, want %s", r.m, tc.outcome)
+		}
+		raws = append(raws, r.raw)
+	}
+	interpretation(t, "NET-05", net05Decoder(t, "interpretation"), raws[0], raws, []string{"completed", "network_not_validated", "incomplete", "inconclusive"}, claims(
+		"NET-05 proves an allowlist or identifies its operator", `\bnet-05\b[^.]*\b(proves?|establish\w*|identif\w*|detects?)\b[^.]*\b(allowlist|operat\w*)`,
+		"combined results classified as restriction", `\b(combined|correlated)\s+results?\b[^.]*\b(is|are)\s+(classified|a)\b[^.]*\b(broad restriction|allowlist|censorship event)`,
+		"profile tests sensitive lists", `\bprofiles?\b[^.]*\btests?\b[^.]*\b(sensitive|political|circumvention|broad public website)`,
+		"NET-05 replaces other analysis", `\bnet-05\b[^.]*\breplaces?\b[^.]*\b(outage|captive-portal|routing|reference)`,
+		"correlation establishes intent with certainty", `\bcorrelat\w*\b[^.]*\b(establish\w*|proves?)\b[^.]*\b(intent|policy)\b[^.]*\bcertain`,
+		"external datasets are ground truth", `\bexternal datasets?\b[^.]*\b(is|are)\s+ground truth`,
+	),
+		"establishes only the ordered primitive results the inline profile produced on one network generation",
+		"does not prove that an allowlist policy exists or identify who operates it", "does not classify the combined results as a broad restriction, allowlist or censorship event",
+		"is not for sensitive, political, circumvention or broad public website lists", "does not replace outage, captive-portal, routing or independent reference analysis",
+		"is outside net-05 version `0.1.0`", "cannot establish censor intent or policy with certainty", "external datasets are supporting reference signals, not ground truth",
+		"simultaneous outage or misconfiguration affecting external profile targets", "shared hidden cdn, dns, routing or certificate dependencies",
+		"international transit failure, routing isolation, congestion or packet loss", "captive portal, subscription state, vpn, enterprise policy or local firewall",
+		"stale inline profile definitions or changed endpoint behavior", "address-family-specific failure or mobile-network handover")
 }

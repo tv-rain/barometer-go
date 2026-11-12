@@ -18,6 +18,7 @@
 
 - [`execution-models.md`](execution-models.md) — finite admission errors, pure attempt lifecycle, terminal reasons, retry boundaries and synthetic evidence limits.
 
+- [`measurement-interpretation.md`](measurement-interpretation.md) — interpretation limits of the nine measurements that ship with the implementation: what one execution establishes, what it does not, alternative explanations and the evidence needed for stronger interpretation.
 - [`measurement-requirements.md`](measurement-requirements.md) — measurement ownership and 108 planned case families at the public PR #7 merge, with immutable manifest/report baselines and explicit evidence gaps.
 - [`cross-cutting-requirements.md`](cross-cutting-requirements.md) — planned shared-contract targets and case families at the current public baseline, with explicit gaps and maintenance.
 

@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"golang.org/x/net/dns/dnsmessage"
 	"net"
 	"net/netip"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -39,9 +41,11 @@ func dnsTask(id, mode string) string {
 }
 
 type dnsTransport struct {
-	calls atomic.Int32
-	reads atomic.Int32
-	dial  func(context.Context, string) (measurement.Conn, error)
+	// authority, when set, is the only accepted resolver authority.
+	authority string
+	calls     atomic.Int32
+	reads     atomic.Int32
+	dial      func(context.Context, string) (measurement.Conn, error)
 	// beforeRead, when set, runs before each datagram read with the count of
 	// datagrams already read; tests use it to advance the clock between replies.
 	beforeRead func(read int32)
@@ -50,7 +54,7 @@ type dnsTransport struct {
 func (d *dnsTransport) Dialer(int) (measurement.Dialer, error) { return d, nil }
 func (d *dnsTransport) DialContext(ctx context.Context, network, address string) (measurement.Conn, error) {
 	d.calls.Add(1)
-	if address != "8.8.8.8:53" && address != "1.1.1.1:53" || network != "udp" && network != "tcp" {
+	if d.authority != "" && address != d.authority || d.authority == "" && address != "8.8.8.8:53" && address != "1.1.1.1:53" || network != "udp" && network != "tcp" {
 		return nil, errors.New("synthetic unexpected destination")
 	}
 	c, e := d.dial(ctx, network)
@@ -1129,4 +1133,263 @@ func TestDns01RechecksBothRegistrationExpiries(t *testing.T) {
 			}
 		})
 	}
+}
+
+const dnsCanaryName = "canary-qname-73.example"
+
+// dnsCanaries are the REQ-DNS-01-0040 items. The synthetic local policy
+// approves only the canary query name and the canary resolver address and
+// port; the scripted responses carry the others.
+var dnsCanaries = canarySet{
+	{"queried hostname", dnsCanaryName}, {"direct resolver address", "8.8.4.4"}, {"direct resolver port", "5399"},
+	{"system resolver list", "CANARY-SYSRESOLVER-LIST"}, {"system search domain", "canary-search-76.example"},
+	{"query identifier", "48879"}, {"raw DNS message pattern", "CANARY-RAWDNS-BYTES"},
+	{"authority record", "canary-authority-74.example"}, {"additional record", "canary-additional-75.example"}, {"additional record address", "203.0.113.75"},
+	{"answer TTL", "86413"}, {"answer ASN", "CANARY-ASN-64512"}, {"answer organization", "CANARY-ORG-NAME"},
+	{"local socket address", "127.0.0.1"}, {"platform error text", "CANARY-PLATFORM-DNS-ERROR"},
+}
+
+// dnsCanaryResponse answers q with the given code and A answers, every answer
+// carrying the canary TTL, plus canary authority and additional records and
+// a TXT record holding the raw-message and offered enrichment canaries. A
+// nonzero id replaces the query identifier.
+func dnsCanaryResponse(q []byte, id uint16, code dnsmessage.RCode, answers ...string) []byte {
+	var p dnsmessage.Parser
+	h, err := p.Start(q)
+	if err != nil {
+		return nil
+	}
+	question, err := p.Question()
+	if err != nil {
+		return nil
+	}
+	if id != 0 {
+		h.ID = id
+	}
+	b := dnsmessage.NewBuilder(nil, dnsmessage.Header{ID: h.ID, Response: true, RecursionDesired: true, RecursionAvailable: true, RCode: code})
+	must := func(err error) {
+		if err != nil {
+			panic("synthetic DNS response")
+		}
+	}
+	must(b.StartQuestions())
+	must(b.Question(question))
+	must(b.StartAnswers())
+	for _, a := range answers {
+		ip := netip.MustParseAddr(a).As4()
+		must(b.AResource(dnsmessage.ResourceHeader{Name: question.Name, Class: dnsmessage.ClassINET, TTL: 86413}, dnsmessage.AResource{A: ip}))
+	}
+	must(b.StartAuthorities())
+	must(b.NSResource(dnsmessage.ResourceHeader{Name: question.Name, Class: dnsmessage.ClassINET, TTL: 86413}, dnsmessage.NSResource{NS: dnsmessage.MustNewName("canary-authority-74.example.")}))
+	must(b.StartAdditionals())
+	must(b.AResource(dnsmessage.ResourceHeader{Name: dnsmessage.MustNewName("canary-additional-75.example."), Class: dnsmessage.ClassINET, TTL: 86413}, dnsmessage.AResource{A: netip.MustParseAddr("203.0.113.75").As4()}))
+	must(b.TXTResource(dnsmessage.ResourceHeader{Name: question.Name, Class: dnsmessage.ClassINET, TTL: 86413}, dnsmessage.TXTResource{TXT: []string{"CANARY-RAWDNS-BYTES", "CANARY-ASN-64512", "CANARY-ORG-NAME"}}))
+	out, err := b.Finish()
+	must(err)
+	return out
+}
+
+func dnsCanaryHarness(t *testing.T, mode string) (*harness, *dnsTransport) {
+	t.Helper()
+	h, d := dnsHarness(t, mode)
+	p := synPolicyInput(2, "reg-a", func(p *task.Permissions) {
+		p.Tests = []task.TestVersion{dnsTest}
+		p.RegistrationIDs = []string{"reg-a"}
+		if mode != "system" {
+			p.RegistrationIDs = append(p.RegistrationIDs, "resolver-a")
+		}
+		p.AllowUnknownRisk = true
+	})
+	p.Targets[0].Test = dnsTest
+	p.Targets[0].Tuple = task.TargetTuple{Hostname: dnsCanaryName}
+	if mode != "system" {
+		r := p.Targets[0]
+		r.ID, r.Role = "resolver-a", task.ResolverTarget
+		r.Tuple = task.TargetTuple{Address: netip.MustParseAddr("8.8.4.4"), Port: 5399, Scheme: mode}
+		p.Targets = append(p.Targets, r)
+	}
+	var err error
+	if h.adapters.policy, err = task.NewLocalPolicy(p); err != nil {
+		t.Fatal(err)
+	}
+	d.authority = "8.8.4.4:5399"
+	return h, d
+}
+
+func dnsCanaryTask(id, mode string) string {
+	s := strings.Replace(dnsTask(id, mode), `"example.org"`, `"`+dnsCanaryName+`"`, 1)
+	return strings.Replace(s, `"resolver":{"ip_address":"8.8.8.8"}`, `"resolver":{"ip_address":"8.8.4.4","port":5399}`, 1)
+}
+
+var dnsAllowed = []string{"outcome", "observations[].type", "observations[].status", "observations[].duration_ms", "observations[].failure",
+	"observations[].details.engine", "observations[].details.address_family", "observations[].details.query_type", "observations[].details.response_limit_reached",
+	"observations[].details.responses[].arrival_index", "observations[].details.responses[].arrival_offset_ms", "observations[].details.responses[].rcode",
+	"observations[].details.responses[].answers[].type", "observations[].details.responses[].answers[].value"}
+
+const dnsCollect = `"transport":"udp","collect_additional_responses":true,"additional_response_window_ms":500`
+
+type dnsCanaryCase struct {
+	name, mode, outcome string
+	collect             bool
+	reply               func([]byte) [][]byte
+	system              func(context.Context, string, string) ([]netip.Addr, error)
+	answers             [][]string // retained answers per response
+}
+
+// dnsCanaryRun runs one DNS-01 path against the canary policy and returns its
+// surfaces and decoded envelope.
+func dnsCanaryRun(t *testing.T, id string, tc dnsCanaryCase) (*surfaces, dnsEnvelope) {
+	t.Helper()
+	h, d := dnsCanaryHarness(t, tc.mode)
+	if tc.system != nil {
+		h.adapters.run.resolver = dnsSystemResolver{tc.system}
+	} else {
+		dnsLoopback(t, d, tc.reply)
+	}
+	c := h.initialized(t)
+	defer c.Close()
+	data := dnsCanaryTask(id, tc.mode)
+	if tc.collect {
+		data = strings.Replace(data, `"transport":"udp"`, dnsCollect, 1)
+	}
+	s := &surfaces{}
+	rh, err := c.StartRun(h.admit(t, c, data))
+	if err != nil {
+		t.Fatal(codeOf(err))
+	}
+	if tc.collect && tc.outcome == "conflicting_responses" {
+		waitDNSReads(t, d, h.run.clock, 500*time.Millisecond)
+	}
+	waitTerminal(t, c, rh)
+	_, err = c.RunState(rh)
+	s.err(err)
+	s.collect(h, c)
+	rejectedClean(t, h, c, dnsCanaries, withUnknownInput(dnsCanaryTask("rejected", tc.mode), dnsCanaries))
+	if len(s.results) != 1 {
+		t.Fatal("not one result")
+	}
+	return s, dnsResult(t, s.results[0], "completed", "", tc.outcome)
+}
+
+func dnsCanaryCases() []dnsCanaryCase {
+	answer := func(q []byte) []byte {
+		return dnsCanaryResponse(q, 0, dnsmessage.RCodeSuccess, "1.1.1.1", "1.1.1.1", "9.9.9.9")
+	}
+	other := func(q []byte) []byte { return dnsCanaryResponse(q, 0, dnsmessage.RCodeSuccess, "1.0.0.1") }
+	systemErr := &net.DNSError{Err: "CANARY-PLATFORM-DNS-ERROR CANARY-SYSRESOLVER-LIST canary-search-76.example", Name: dnsCanaryName + ".canary-search-76.example", Server: "127.0.0.1:53"}
+	return []dnsCanaryCase{
+		{name: "udp resolved", mode: "udp", outcome: "resolved", reply: func(q []byte) [][]byte { return [][]byte{answer(q)} }, answers: [][]string{{"1.1.1.1", "9.9.9.9"}}},
+		{name: "tcp resolved", mode: "tcp", outcome: "resolved", reply: func(q []byte) [][]byte { return [][]byte{answer(q)} }, answers: [][]string{{"1.1.1.1", "9.9.9.9"}}},
+		{name: "nxdomain", mode: "udp", outcome: "nxdomain", reply: func(q []byte) [][]byte { return [][]byte{dnsCanaryResponse(q, 0, dnsmessage.RCodeNameError)} }, answers: [][]string{nil}},
+		{name: "servfail", mode: "udp", outcome: "servfail", reply: func(q []byte) [][]byte { return [][]byte{dnsCanaryResponse(q, 0, dnsmessage.RCodeServerFailure)} }, answers: [][]string{nil}},
+		{name: "malformed_response", mode: "udp", outcome: "malformed_response", reply: func(q []byte) [][]byte {
+			return [][]byte{append(append([]byte{}, q[:2]...), []byte("\x81\x80CANARY-RAWDNS-BYTES canary-authority-74.example 86413")...)}
+		}},
+		{name: "query_mismatch", mode: "tcp", outcome: "query_mismatch", reply: func(q []byte) [][]byte {
+			return [][]byte{dnsCanaryResponse(q, 48879, dnsmessage.RCodeSuccess, "1.1.1.1")}
+		}},
+		{name: "conflicting_responses", mode: "udp", outcome: "conflicting_responses", collect: true, reply: func(q []byte) [][]byte { return [][]byte{answer(q), other(q)} },
+			answers: [][]string{{"1.1.1.1", "9.9.9.9"}, {"1.0.0.1"}}},
+		{name: "response_limit_reached", mode: "udp", outcome: "response_limit_reached", collect: true, reply: func(q []byte) [][]byte { return [][]byte{answer(q), answer(q), answer(q), other(q)} },
+			answers: [][]string{{"1.1.1.1", "9.9.9.9"}, {"1.1.1.1", "9.9.9.9"}, {"1.1.1.1", "9.9.9.9"}}},
+		{name: "system resolved", mode: "system", outcome: "resolved", system: func(context.Context, string, string) ([]netip.Addr, error) {
+			return []netip.Addr{netip.MustParseAddr("1.1.1.1")}, nil
+		}},
+		{name: "system platform error", mode: "system", outcome: "resolver_error", system: func(context.Context, string, string) ([]netip.Addr, error) { return nil, systemErr }},
+	}
+}
+
+// M-DNS-01-MINIMIZATION: canaries for every REQ-DNS-01-0040 item over system,
+// direct UDP and direct TCP mode and each listed outcome path. Only the
+// registered dns_query details remain, and retained answers are the bounded
+// normalized A values of the scripted responses, deduplicated in
+// first-occurrence order. No enrichment source exists in the library, so the
+// ASN and organization canaries are offered inside the scripted response.
+// requirement-ref: REQ-DNS-01-0040
+func TestMDns01Minimization(t *testing.T) {
+	dnsCanaries.unique(t)
+	for _, tc := range dnsCanaryCases() {
+		t.Run(tc.name, func(t *testing.T) {
+			s, r := dnsCanaryRun(t, "minimization", tc)
+			s.check(t, dnsCanaries)
+			minimized(t, s.results[0], dnsAllowed)
+			if tc.answers == nil {
+				return
+			}
+			got := r.Measurement.Observations[0].Details.Responses
+			if len(got) != len(tc.answers) {
+				t.Fatalf("responses %d", len(got))
+			}
+			for i, want := range tc.answers {
+				var values []string
+				for _, a := range got[i].Answers {
+					if a.Type != "A" {
+						t.Fatal("answer type")
+					}
+					values = append(values, a.Value)
+				}
+				if !slices.Equal(values, want) {
+					t.Fatalf("response %d answers %v", i, values)
+				}
+			}
+		})
+	}
+	t.Run("injected fields", func(t *testing.T) {
+		s, _ := dnsCanaryRun(t, "minimization", dnsCanaryCases()[0])
+		obs := func(v map[string]any) map[string]any {
+			return v["measurement"].(map[string]any)["observations"].([]any)[0].(map[string]any)
+		}
+		response := func(v map[string]any) map[string]any {
+			return obs(v)["details"].(map[string]any)["responses"].([]any)[0].(map[string]any)
+		}
+		answer := func(v map[string]any) map[string]any { return response(v)["answers"].([]any)[0].(map[string]any) }
+		var inject []func(map[string]any)
+		for _, field := range []string{"hostname", "resolver", "ip_address", "port", "query_id", "ttl", "authority", "additional", "asn", "organization", "local_address", "error", "raw"} {
+			inject = append(inject, func(v map[string]any) { obs(v)["details"].(map[string]any)[field] = "synthetic" },
+				func(v map[string]any) { response(v)[field] = "synthetic" }, func(v map[string]any) { answer(v)[field] = 86413 })
+		}
+		inject = append(inject, func(v map[string]any) {
+			response(v)["answers"] = append(response(v)["answers"].([]any), map[string]any{"type": "A", "value": "1.1.1.1"})
+		}, func(v map[string]any) { answer(v)["type"] = "TXT"; answer(v)["value"] = "CANARY-RAWDNS-BYTES" })
+		d := primitiveDecoder(t, "minimization", result.Output{Test: model.Test{ID: "DNS-01", Version: "0.1.0", ResultVersion: "0.1.0"}, DNSMode: "udp", QueryType: "A", Limits: observation.ProtocolLimits{RetainDNSAnswers: true}})
+		assertRejected(t, d, s.results[0], inject...)
+	})
+}
+
+// M-DNS-01-INTERPRETATION: the shared prohibited-claims check with the
+// DNS-01 claims over resolved, nxdomain, no_data, conflicting_responses and
+// response_limit_reached results; answers carry only type and value.
+// requirement-ref: REQ-DNS-01-0001
+// requirement-ref: REQ-DNS-01-0002
+// requirement-ref: REQ-DNS-01-0003
+// requirement-ref: REQ-DNS-01-0004
+// requirement-ref: REQ-DNS-01-0041
+// requirement-ref: REQ-DNS-01-0042
+// requirement-ref: REQ-DNS-01-0043
+// requirement-ref: REQ-DNS-01-0044
+func TestMDns01Interpretation(t *testing.T) {
+	var raws [][]byte
+	cases := dnsCanaryCases()
+	for _, tc := range append(cases[:8:8], dnsCanaryCase{name: "no_data", mode: "udp", outcome: "no_data", reply: func(q []byte) [][]byte { return [][]byte{dnsCanaryResponse(q, 0, dnsmessage.RCodeSuccess)} }}) {
+		if tc.name == "malformed_response" || tc.name == "query_mismatch" || tc.name == "servfail" {
+			continue
+		}
+		s, _ := dnsCanaryRun(t, "interpretation", tc)
+		raws = append(raws, s.results...)
+	}
+	d := primitiveDecoder(t, "interpretation", result.Output{Test: model.Test{ID: "DNS-01", Version: "0.1.0", ResultVersion: "0.1.0"}, DNSMode: "udp", QueryType: "A", Limits: observation.ProtocolLimits{RetainDNSAnswers: true}})
+	interpretation(t, "DNS-01", d, raws[0], raws, []string{"resolved", "no_data", "nxdomain", "servfail", "refused", "timeout", "malformed_response", "query_mismatch",
+		"conflicting_responses", "response_limit_reached", "resolver_error", "inconclusive"}, claims(
+		"unexpected answer introduced intentionally", `\b(answer|response)s?\b[^.]*\b(was|were|is|are)\s+(intentionally|deliberately)\s+(introduced|injected|inserted)`,
+		"returned address is reachable", `\b(returned|answer)\w*\s+address\w*\b[^.]*\b(is|are)\s+reachable\b`,
+		"answers compared with authoritative ground truth", `\b(compar\w*|checked|verified)\b[^.]*\bauthoritative\b[^.]*\b(ground truth|data|answers?)\b`,
+		"response labelled spoofed, injected, legitimate or authoritative", `\b(first|later|second|this)\s+response\b[^.]*\b(is|was)\s+(spoofed|injected|legitimate|authoritative)\b`,
+		"a differing resolver is correct", `\b(either|one|the)\s+(differing\s+)?resolver\b[^.]*\b(is|was)\s+correct\b`,
+		"nxdomain or empty answer is a successful resolution", `\b(nxdomain|empty answer|no_data)\b[^.]*\b(is|counts as)\s+(a\s+)?success\w*\b`,
+		"answers enriched", `\banswers?\b[^.]*\b(enrich\w*|annotat\w*)\b[^.]*\b(asn|organization|geolocation|reputation|verdict)`,
+	),
+		"establishes only the result exposed by the selected resolver path for the configured name, record type, time and network generation",
+		"it cannot establish which response was injected or correct", "is not shown to be reachable", "answers are not compared with authoritative data in the run",
+		"not proof that either resolver is correct or that censorship occurred", "nxdomain or an empty answer is not a successful address resolution",
+		"answers carry no asn, organization, geolocation, reputation or verdict enrichment", "a legitimate resolver retransmission or anycast change")
 }

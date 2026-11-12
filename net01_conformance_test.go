@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"slices"
 	"strings"
 	"sync"
@@ -604,5 +605,221 @@ func TestMNet01Versions(t *testing.T) {
 		if _, err := decoder.Decode(data); err == nil {
 			t.Fatal("invalid output accepted", string(data))
 		}
+	}
+}
+
+// net01Canaries are the REQ-NET-01-0028 items. The platform port has a field
+// only for the network generation, so the fake reports a canary generation;
+// every other item reaches the core only through a scripted platform failure
+// whose text, wrapped platform object and description carry the canaries, and
+// the fake's withheld platform values (capability.Canaries) stay beside it.
+var net01Canaries = func() canarySet {
+	cs := canarySet{
+		{"interface name", "CANARY-IFNAME-wlan9"}, {"interface index", "CANARY-IFINDEX-4471"}, {"local address", "CANARY-LOCALADDR-10.9.8.7"},
+		{"public address", "CANARY-PUBLICADDR-203.0.113.91"}, {"route", "CANARY-ROUTE-default-via"}, {"DNS configuration", "CANARY-DNSCONF-search.example"},
+		{"SSID", "CANARY-SSID-homenet"}, {"BSSID", "CANARY-BSSID-02:00:5e"}, {"Wi-Fi scan data", "CANARY-WIFISCAN-neighbors"}, {"cell identifier", "CANARY-CELLID-25099"},
+		{"SIM data", "CANARY-SIM-ICCID"}, {"subscriber data", "CANARY-SUBSCRIBER-IMSI"}, {"carrier name", "CANARY-CARRIER-NAME"}, {"signal strength", "CANARY-SIGNAL-dBm"},
+		{"VPN application identity", "CANARY-VPNAPP-bundle"}, {"network generation", "8675309"}, {"platform object description", "CANARY-PLATFORM-OBJECT"},
+		{"raw platform error text", "CANARY-RAW-PLATFORM-ERROR"},
+	}
+	for i, v := range capability.Canaries {
+		cs = append(cs, canary{fmt.Sprint("withheld platform value ", i), v})
+	}
+	return cs
+}()
+
+// net01PlatformObject is a platform object whose description and error text
+// carry the canaries.
+type net01PlatformObject struct{ wrapped error }
+
+func (o net01PlatformObject) Error() string {
+	var b strings.Builder
+	for _, c := range net01Canaries {
+		b.WriteString(c.value + " ")
+	}
+	return b.String()
+}
+func (o net01PlatformObject) String() string { return "CANARY-PLATFORM-OBJECT " + o.Error() }
+func (o net01PlatformObject) Unwrap() error  { return o.wrapped }
+
+var net01Allowed = []string{"outcome", "observations", "access.network_type", "access.vpn_state", "access.ipv4_available", "access.ipv6_available", "access.validated", "access.network_changed"}
+
+// net01Scenario runs one NET-01 path whose attempt read is scripted and
+// returns its surfaces; interrupt, when set, runs while that read blocks.
+func net01Scenario(t *testing.T, id string, generation uint64, read func(context.Context) (platform.AccessState, error), interrupt func(*harness, *net01Network, *Client, string)) *surfaces {
+	t.Helper()
+	h, n, d := net01Harness(t)
+	start := defaultAccess
+	start.Generation = generation
+	n.Set(start)
+	entered := make(chan struct{}, 1)
+	n.script = func(ctx context.Context, i int) (platform.AccessState, error, bool) {
+		if i != 2 {
+			return platform.AccessState{}, nil, false
+		}
+		entered <- struct{}{}
+		s, err := read(ctx)
+		return s, err, true
+	}
+	c := h.initialized(t)
+	defer c.Close()
+	s := &surfaces{}
+	rh, err := c.StartRun(h.admit(t, c, net01Task(id)))
+	if err != nil {
+		t.Fatal(codeOf(err))
+	}
+	if interrupt != nil {
+		<-entered
+		interrupt(h, n, c, rh)
+	}
+	waitTerminal(t, c, rh)
+	_, err = c.RunState(rh)
+	s.err(err)
+	s.collect(h, c)
+	rejectedClean(t, h, c, net01Canaries, withUnknownInput(net01Task("rejected"), net01Canaries))
+	if d.calls.Load() != 0 {
+		t.Fatal("NET-01 used a transport")
+	}
+	return s
+}
+
+// M-NET-01-MINIMIZATION: canaries for every REQ-NET-01-0028 item over the
+// snapshot, platform_unavailable, platform_error and incomplete paths; only
+// outcome, the empty observations and the enumerated access fields remain.
+// The inconclusive row is the recorded NORMALIZATION disposition: the runner
+// never emits it, so the result boundary's conditional rule is checked with a
+// synthetic inconclusive result instead.
+// requirement-ref: REQ-NET-01-0028
+func TestMNet01Minimization(t *testing.T) {
+	net01Canaries.unique(t)
+	canaryState := func(context.Context) (platform.AccessState, error) {
+		s := defaultAccess
+		s.Generation = 8675309
+		s.VPN, s.IPv6, s.Validated = platform.VPNDetected, platform.AvailabilityNo, platform.AvailabilityYes
+		return s, nil
+	}
+	changed := make(chan struct{})
+	values := map[string][]string{"network_type": {"wifi", "cellular", "ethernet", "other", "unknown"}, "vpn_state": {"detected", "not_detected", "unknown"},
+		"ipv4_available": {"yes", "no", "unknown"}, "ipv6_available": {"yes", "no", "unknown"}, "validated": {"yes", "no", "unknown"}}
+	for _, tc := range []struct {
+		name, state, reason, outcome string
+		read                         func(context.Context) (platform.AccessState, error)
+		interrupt                    func(*harness, *net01Network, *Client, string)
+	}{
+		{"snapshot", "completed", "", "snapshot", canaryState, nil},
+		{"platform_error", "completed", "", "platform_error", func(context.Context) (platform.AccessState, error) {
+			return platform.AccessState{}, net01PlatformObject{errors.New("CANARY-RAW-PLATFORM-ERROR")}
+		}, nil},
+		{"platform_unavailable", "completed", "", "platform_unavailable", func(context.Context) (platform.AccessState, error) {
+			return platform.AccessState{}, net01PlatformObject{platform.ErrNetworkUnavailable}
+		}, nil},
+		{"incomplete network_changed", "incomplete", "network_changed", "", func(context.Context) (platform.AccessState, error) {
+			<-changed
+			return canaryState(context.Background())
+		}, func(_ *harness, n *net01Network, _ *Client, _ string) {
+			a := defaultAccess
+			a.Generation = 8675310
+			n.Set(a)
+			close(changed)
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s := net01Scenario(t, "minimization", 8675309, tc.read, tc.interrupt)
+			s.check(t, net01Canaries)
+			if len(s.results) != 1 {
+				t.Fatal("not one result")
+			}
+			m := minimized(t, s.results[0], net01Allowed, "network_context")
+			a := net01Result(t, s.results[0], tc.state, tc.reason, tc.outcome, tc.outcome == "snapshot")
+			if (m == nil) != (tc.outcome == "") {
+				t.Fatal("measurement presence")
+			}
+			for k, v := range a {
+				if k != "network_changed" && !slices.Contains(values[k], v.(string)) {
+					t.Errorf("access %s outside its enumeration", k)
+				}
+			}
+		})
+	}
+	t.Run("injected fields", func(t *testing.T) {
+		s := net01Scenario(t, "minimization", 1, func(context.Context) (platform.AccessState, error) { return defaultAccess, nil }, nil)
+		d := primitiveDecoder(t, "minimization", result.Output{Test: model.Test{ID: "NET-01", Version: "0.1.0", ResultVersion: "0.1.0"}})
+		access := func(v map[string]any) map[string]any {
+			return v["measurement"].(map[string]any)["access"].(map[string]any)
+		}
+		var inject []func(map[string]any)
+		for _, c := range net01Canaries {
+			inject = append(inject, func(v map[string]any) { access(v)[c.item] = c.value }, func(v map[string]any) { v["measurement"].(map[string]any)[c.item] = c.value })
+		}
+		inject = append(inject,
+			func(v map[string]any) { v["measurement"].(map[string]any)["inconclusive"] = true },
+			func(v map[string]any) { v["measurement"].(map[string]any)["egress"] = map[string]any{} },
+			func(v map[string]any) { v["network_context"] = map[string]any{} },
+			func(v map[string]any) {
+				v["measurement"].(map[string]any)["observations"] = []any{"CANARY-ROUTE-default-via"}
+			},
+		)
+		// The canary generation is input only; this sample runs at the
+		// decoder's generation.
+		assertRejected(t, d, s.results[0], inject...)
+	})
+}
+
+// M-NET-01-INTERPRETATION: the shared prohibited-claims check with the
+// NET-01 claims and the qualifiers that availability values are
+// platform-reported and not proven reachability.
+// requirement-ref: REQ-NET-01-0001
+// requirement-ref: REQ-NET-01-0002
+// requirement-ref: REQ-NET-01-0003
+// requirement-ref: REQ-NET-01-0004
+// requirement-ref: REQ-NET-01-0029
+// requirement-ref: REQ-NET-01-0030
+// requirement-ref: REQ-NET-01-0031
+func TestMNet01Interpretation(t *testing.T) {
+	var raws [][]byte
+	for _, read := range []func(context.Context) (platform.AccessState, error){
+		func(context.Context) (platform.AccessState, error) { return defaultAccess, nil },
+		func(context.Context) (platform.AccessState, error) {
+			return platform.AccessState{Generation: 1, Type: platform.NetworkCellular, VPN: platform.VPNDetected, IPv4: platform.AvailabilityYes, IPv6: platform.AvailabilityYes, Validated: platform.AvailabilityYes}, nil
+		},
+		func(context.Context) (platform.AccessState, error) {
+			return platform.AccessState{}, errors.New("synthetic")
+		},
+		func(context.Context) (platform.AccessState, error) {
+			return platform.AccessState{}, platform.ErrNetworkUnavailable
+		},
+	} {
+		raws = append(raws, net01Scenario(t, "interpretation", 1, read, nil).results...)
+	}
+	for _, raw := range raws {
+		var r map[string]any
+		_ = json.Unmarshal(raw, &r)
+		var keys []string
+		for k := range r["measurement"].(map[string]any) {
+			keys = append(keys, k)
+		}
+		for _, k := range keys {
+			if !slices.Contains([]string{"outcome", "observations", "access"}, k) {
+				t.Errorf("NET-01 measurement member %s", k)
+			}
+		}
+	}
+	d := primitiveDecoder(t, "interpretation", result.Output{Test: model.Test{ID: "NET-01", Version: "0.1.0", ResultVersion: "0.1.0"}})
+	interpretation(t, "NET-01", d, raws[0], raws, []string{"snapshot", "platform_unavailable", "platform_error", "inconclusive"}, claims(
+		"the Internet is reachable", `\b(internet|destinations?)\b[^.]*\b(is|are)\s+reachable\b`,
+		"availability establishes reachability", `\b(validated|ipv4_available|ipv6_available|availability)\b[^.]*\b(establish\w*|proves?|means?|shows?|confirms?)\b[^.]*\breachab`,
+		"NET-01 identifies operator, subscriber, device or location", `\bnet-01\b[^.]*\b(identif\w*|reveals?)\b[^.]*\b(operator|subscriber|device|physical location)\b`,
+		"NET-01 derives country, region, ASN, provider or public address", `\bnet-01\b[^.]*\b(derives?|determines?|infers?|reports?)\b[^.]*\b(country|region|asn|provider|mobile operator|public ip)`,
+		"vpn detected establishes VPN routing", `\bvpn\w*\b[^.]*\bdetected\b[^.]*\b(establish\w*|proves?|means?|shows?)\b[^.]*\brout`,
+	),
+		"are platform-reported and are not proven reachability", "does not establish that the internet is reachable",
+		"does not establish that traffic is routed through a vpn", "does not identify a network operator, subscriber, device or physical location",
+		"country, region, asn, provider, mobile operator and public ip address are not derived from net-01", "a single result is not definitive proof of censorship",
+		"operating-system validation state may be stale", "repeated snapshots after a reported network change")
+	// The Go field description of the availability values keeps the
+	// platform-reported qualifier.
+	src, err := os.ReadFile("internal/platform/network.go")
+	if err != nil || !strings.Contains(string(src), "Availability is a coarse platform-reported yes/no") {
+		t.Error("availability description lost its platform-reported qualifier")
 	}
 }

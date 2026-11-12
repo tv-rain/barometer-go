@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/netip"
@@ -735,4 +736,219 @@ func TestMNet03Termination(t *testing.T) {
 			}
 		})
 	}
+}
+
+const net03CanaryHost = "canary-v-131.example"
+const net03CanaryBody = "CANARY-VBODY-134"
+
+var net03CanaryInput = `{"url":"https://` + net03CanaryHost + `/canary-vpath-132?canary-vq=133","expected_status":200,"expected_body_sha256":"` + httpDigest(net03CanaryBody) + `"}`
+
+// net03CanarySet holds the REQ-NET-03-0030 items. The platform validation port
+// reports only coarse validation and captive-portal flags; it has no field
+// for a portal URL or an interface, so those canaries stay withheld beside
+// the fake (as capability.Canaries are) and the check proves none appears.
+var net03CanarySet = func() canarySet {
+	cs := canarySet{
+		{"validation URL host", net03CanaryHost}, {"validation URL path", "canary-vpath-132"}, {"validation URL query", "canary-vq=133"}, {"resolved validation address", "8.8.4.4"},
+		{"redirect Location host", "canary-portal-135.example"}, {"redirect Location path", "canary-ppath-136"}, {"redirect Location query", "canary-pq=137"}, {"redirect Location fragment", "canary-pfrag-138"},
+		{"response body", net03CanaryBody}, {"expected body digest", httpDigest(net03CanaryBody)}, {"observed body digest", httpDigest(net03CanaryBody + "-B")},
+		{"response header name", "x-canary-vhdr-140"}, {"response header value", "canary-vhval-141"}, {"Set-Cookie value", "canary-vcookie-142"}, {"authentication state", "canary-authstate-139"},
+		{"platform portal URL", "https://canary-platform-portal-143.example/login"}, {"platform interface name", "canary-if-v144"}, {"platform interface index", "CANARY-IFINDEX-145"},
+		{"certificate subject and issuer", loopback.CertificateCanary}, {"leaf serial number", "424242"}, {"issuer serial number", "91337"},
+		{"raw DNS error", "CANARY-RAW-DNS-ERROR"}, {"raw TCP error", "CANARY-RAW-TCP-ERROR"}, {"raw TLS error", "tls: "}, {"raw x509 error", "x509:"}, {"raw HTTP status text", "CANARY-VREASON"},
+	}
+	for i, v := range capability.Canaries {
+		cs = append(cs, canary{fmt.Sprint("withheld platform value ", i), v})
+	}
+	return cs
+}()
+
+func net03CanaryResponse(status int, extra, body string) string {
+	return fmt.Sprintf("HTTP/1.1 %d CANARY-VREASON\r\nX-Canary-VHdr-140: canary-vhval-141\r\nSet-Cookie: canary-vcookie-142=1\r\nAuthentication-Info: canary-authstate-139\r\n%sContent-Length: %d\r\n\r\n%s", status, extra, len(body), body)
+}
+
+var net03Allowed = []string{"outcome", "platform_validation", "response_class", "observations[].type", "observations[].status", "observations[].duration_ms", "observations[].failure",
+	"observations[].details.engine", "observations[].details.query_type", "observations[].details.responses[].arrival_index", "observations[].details.responses[].arrival_offset_ms",
+	"observations[].details.responses[].rcode", "observations[].details.responses[].answers[].type", "observations[].details.responses[].answers[].value",
+	"observations[].details.address_family", "observations[].details.tls_version", "observations[].details.alpn", "observations[].details.certificate_validation", "observations[].details.alert",
+	"observations[].details.protocol", "observations[].details.status_code", "observations[].details.redirect.followed_count", "observations[].details.redirect.terminal_location_class",
+	"observations[].details.body.bytes_processed", "observations[].details.body.truncated", "observations[].details.checks[].kind", "observations[].details.checks[].index",
+	"observations[].details.checks[].matched", "observations[].details.content_encoding"}
+
+type net03CanaryCase struct {
+	name, platform, outcome, class, raw string
+	dnsErr, dialErr                     error
+	untrusted, cancel                   bool
+}
+
+func net03CanaryCases() []net03CanaryCase {
+	location := "Location: https://canary-portal-135.example/canary-ppath-136?canary-pq=137#canary-pfrag-138\r\n"
+	return []net03CanaryCase{
+		{name: "validated", platform: "validated", outcome: "validated", class: "expected", raw: net03CanaryResponse(200, "", net03CanaryBody)},
+		{name: "redirect", platform: "validated", outcome: "captive_portal_suspected", class: "redirect", raw: net03CanaryResponse(302, location, net03CanaryBody)},
+		{name: "content_mismatch", platform: "validated", outcome: "captive_portal_suspected", class: "content_mismatch", raw: net03CanaryResponse(200, "", net03CanaryBody+"-B")},
+		{name: "unexpected", platform: "captive_portal", outcome: "unexpected_response", class: "unexpected", raw: net03CanaryResponse(503, "", net03CanaryBody)},
+		{name: "dns_failure", platform: "unknown", outcome: "dns_failure", dnsErr: &net.DNSError{IsNotFound: true, Err: "CANARY-RAW-DNS-ERROR", Name: net03CanaryHost, Server: "127.0.0.1:53"}},
+		{name: "connection_failure", platform: "unknown", outcome: "connection_failure", dialErr: fmt.Errorf("CANARY-RAW-TCP-ERROR 8.8.4.4:443: %w", syscall.ECONNREFUSED)},
+		{name: "tls_failure", platform: "unknown", outcome: "tls_failure", untrusted: true, raw: net03CanaryResponse(200, "", net03CanaryBody)},
+		{name: "not_validated", platform: "not_validated", outcome: "not_validated", raw: "CANARY-VREASON " + net03CanaryBody + "\r\n\r\n"},
+		{name: "inconclusive", platform: "validated", outcome: "inconclusive", raw: "CANARY-VREASON " + net03CanaryBody + "\r\n\r\n"},
+		{name: "incomplete", platform: "validated", cancel: true, raw: net03CanaryResponse(200, "", net03CanaryBody)},
+	}
+}
+
+// net03CanaryRun runs one NET-03 path to the canary validation URL, resolved
+// by the scripted system resolver to the canary address.
+func net03CanaryRun(t *testing.T, id string, tc net03CanaryCase) (*surfaces, map[string]any) {
+	t.Helper()
+	h, d, srv, n, _ := net03Harness(t, net03CanaryInput, tc.raw, tc.platform, false, tc.cancel)
+	n.Withheld = append(slices.Clone(n.Withheld), "https://canary-platform-portal-143.example/login", "canary-if-v144", "CANARY-IFINDEX-145")
+	if tc.untrusted {
+		h.adapters.measurementRoots = nil
+	}
+	h.adapters.run.resolver = dnsSystemResolver{func(_ context.Context, _, name string) ([]netip.Addr, error) {
+		if tc.dnsErr != nil {
+			return nil, tc.dnsErr
+		}
+		if name != net03CanaryHost {
+			return nil, errors.New("synthetic: unexpected name")
+		}
+		return []netip.Addr{netip.MustParseAddr("8.8.4.4")}, nil
+	}}
+	d.dial = func(ctx context.Context, _, a string) (measurement.Conn, error) {
+		if a != "8.8.4.4:443" {
+			return nil, errors.New("synthetic: unexpected destination")
+		}
+		if tc.dialErr != nil {
+			return nil, tc.dialErr
+		}
+		var nd net.Dialer
+		return nd.DialContext(ctx, "tcp", srv.Address())
+	}
+	c := h.initialized(t)
+	defer c.Close()
+	s := &surfaces{}
+	rh, err := c.StartRun(h.admit(t, c, net03Task(id, net03CanaryInput, `{}`)))
+	if err != nil {
+		t.Fatal(codeOf(err))
+	}
+	if tc.cancel {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := srv.Wait(ctx, func(c loopback.HTTPCounts) bool { return len(c.Requests) == 1 }); err != nil {
+			t.Fatal(err)
+		}
+		if err := c.CancelRun(rh); err != nil {
+			t.Fatal(codeOf(err))
+		}
+	}
+	waitTerminal(t, c, rh)
+	_, err = c.RunState(rh)
+	s.err(err)
+	s.collect(h, c)
+	rejectedClean(t, h, c, net03CanarySet, withUnknownInput(net03Task("rejected", net03CanaryInput, `{}`), net03CanarySet))
+	if len(s.results) != 1 {
+		t.Fatal("not one result")
+	}
+	if tc.cancel {
+		return s, net03Result(t, s.results[0], "incomplete", "cancelled_by_host", "")
+	}
+	m := net03Result(t, s.results[0], "completed", "", tc.outcome)
+	if class, _ := m["response_class"].(string); class != tc.class || m["platform_validation"] != tc.platform {
+		t.Fatalf("%s: response_class %q, platform_validation %v", tc.name, class, m["platform_validation"])
+	}
+	return s, m
+}
+
+func net03Decoder(t *testing.T, h *harness, id string) *result.Decoder {
+	t.Helper()
+	src, err := networkcontext.NewDirect(h.run.network)
+	if err != nil {
+		t.Fatal(err)
+	}
+	snap, err := src.Capture(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	d, err := result.New(result.Binding{TaskID: id, Output: measurementOutput(net03Test, net03Params(t, net03CanaryInput, `{}`)), MaxAttempts: 1, MaxDurationMS: 60000,
+		Implementation: implementation, ContextDecoder: src.Decoder(), Path: snap.Path(), AccessGeneration: snap.Generation()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return d
+}
+
+// M-NET-03-MINIMIZATION: canaries for every REQ-NET-03-0030 item over the
+// validated, redirect, content_mismatch, unexpected, DNS, TCP and TLS
+// failure, not_validated and incomplete paths; only the registered fields
+// remain, a redirect keeps followed_count 0 and the terminal location class.
+// requirement-ref: REQ-NET-03-0030
+func TestMNet03Minimization(t *testing.T) {
+	net03CanarySet.unique(t)
+	for _, tc := range net03CanaryCases() {
+		t.Run(tc.name, func(t *testing.T) {
+			s, m := net03CanaryRun(t, "minimization", tc)
+			s.check(t, net03CanarySet)
+			minimized(t, s.results[0], net03Allowed)
+			if tc.class == "redirect" {
+				r := net03Last(m)["details"].(map[string]any)["redirect"].(map[string]any)
+				if r["followed_count"] != float64(0) || len(r) != 2 {
+					t.Fatalf("redirect %v", r)
+				}
+			}
+		})
+	}
+	t.Run("injected fields", func(t *testing.T) {
+		h, _, _, _, _ := net03Harness(t, net03CanaryInput, "", "validated", false, false)
+		s, _ := net03CanaryRun(t, "minimization", net03CanaryCases()[0])
+		last := func(v map[string]any) map[string]any {
+			o := v["measurement"].(map[string]any)["observations"].([]any)
+			return o[len(o)-1].(map[string]any)
+		}
+		var inject []func(map[string]any)
+		for _, field := range []string{"url", "address", "location", "body", "digest", "headers", "cookie", "authentication", "portal_url", "interface", "error"} {
+			inject = append(inject, func(v map[string]any) { last(v)["details"].(map[string]any)[field] = "synthetic" },
+				func(v map[string]any) { last(v)[field] = "synthetic" }, func(v map[string]any) { v["measurement"].(map[string]any)[field] = "synthetic" })
+		}
+		assertRejected(t, net03Decoder(t, h, "minimization"), s.results[0], inject...)
+	})
+}
+
+// M-NET-03-INTERPRETATION: the shared prohibited-claims check with the
+// NET-03 claims. A platform validated state with an active request that
+// produced no response is inconclusive rather than validated, and a platform
+// captive-portal state does not override an expected active response
+// (REQ-NET-03-0042).
+// requirement-ref: REQ-NET-03-0001
+// requirement-ref: REQ-NET-03-0002
+// requirement-ref: REQ-NET-03-0003
+// requirement-ref: REQ-NET-03-0031
+// requirement-ref: REQ-NET-03-0032
+// requirement-ref: REQ-NET-03-0033
+func TestMNet03Interpretation(t *testing.T) {
+	var raws [][]byte
+	for _, tc := range net03CanaryCases() {
+		if tc.cancel {
+			continue
+		}
+		s, _ := net03CanaryRun(t, "interpretation", tc)
+		raws = append(raws, s.results...)
+	}
+	// Conflicting platform and active observations.
+	_, m := net03CanaryRun(t, "interpretation", net03CanaryCase{name: "platform validated, no response", platform: "validated", outcome: "inconclusive", raw: "garbage\r\n\r\n"})
+	if _, has := m["response_class"]; has {
+		t.Fatal("no response has a response class")
+	}
+	net03CanaryRun(t, "interpretation", net03CanaryCase{name: "platform portal, expected response", platform: "captive_portal", outcome: "validated", class: "expected", raw: net03CanaryResponse(200, "", net03CanaryBody)})
+	h, _, _, _, _ := net03Harness(t, net03CanaryInput, "", "validated", false, false)
+	interpretation(t, "NET-03", net03Decoder(t, h, "interpretation"), raws[0], raws, []string{"validated", "captive_portal_suspected", "not_validated", "dns_failure",
+		"connection_failure", "tls_failure", "unexpected_response", "inconclusive"}, claims(
+		"validated proves general reachability", `\bvalidated\b[^.]*\b(proves?|establish\w*|means?|shows?)\b[^.]*\b(arbitrary|general|any)\b[^.]*\b(destinations?|internet|reachab\w*)`,
+		"captive portal identifies operator or purpose", `\b(captive_portal_suspected|redirect|content mismatch|content_mismatch)\b[^.]*\bidentif\w*\b[^.]*\b(operator|purpose)\b`,
+		"unvalidated is evidence of censorship", `\b(not_validated|unvalidated)\b[^.]*\b(is|as)\s+(evidence|proof)\s+of\s+censorship`,
+		"platform_validation overrides or confirms", `\bplatform_validation\b[^.]*\b(overrides?|confirms?)\b[^.]*\b(active|request)\b`,
+	),
+		"establishes whether the configured validation endpoint returned its expected response, appeared to be intercepted, or could not be validated on the observed network path",
+		"does not establish that arbitrary or general internet destinations are reachable", "does not identify the operator or the purpose of an intercepting page",
+		"are not evidence of censorship", "does not override or confirm it", "a transient network change may split the observations")
 }

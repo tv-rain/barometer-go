@@ -2,12 +2,15 @@ package barometer
 
 import (
 	"context"
+	"crypto/sha256"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
 	"net/netip"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"syscall"
@@ -766,4 +769,251 @@ func TestMTls01Versions(t *testing.T) {
 			t.Fatalf("invalid output %d accepted: %s", i, data)
 		}
 	}
+}
+
+const tlsCanaryName = "canary-sni-71.example"
+const tlsCanaryAuthority = "8.8.4.4:47392"
+
+// tlsCanaryFixture is a fixture whose names, serials and subjects are
+// canaries, with canaries for the bytes of its chain: DER, public key,
+// signature and fingerprint.
+type tlsCanaryFixture struct {
+	tlsFixture
+	untrusted, mismatch, expired tls.Certificate
+	canaries                     canarySet
+}
+
+func newTLSCanaryFixture(t *testing.T) tlsCanaryFixture {
+	t.Helper()
+	ca, err := loopback.NewTestCA()
+	if err != nil {
+		t.Fatal(err)
+	}
+	other, err := loopback.NewTestCA()
+	if err != nil {
+		t.Fatal(err)
+	}
+	f := tlsCanaryFixture{tlsFixture: tlsFixture{ca: ca}}
+	issue := func(c *loopback.TestCA, name string, expired bool) tls.Certificate {
+		cert, err := c.Issue(name, expired)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return cert
+	}
+	f.cert, f.untrusted, f.mismatch, f.expired = issue(ca, tlsCanaryName, false), issue(other, tlsCanaryName, false), issue(ca, "canary-mismatch-72.example", false), issue(ca, tlsCanaryName, true)
+	f.canaries = canarySet{
+		{"destination address", "8.8.4.4"}, {"destination port", "47392"}, {"server_name", tlsCanaryName}, {"certificate SAN name", "canary-mismatch-72.example"},
+		{"certificate subject and issuer", loopback.CertificateCanary}, {"leaf serial number", "424242"}, {"issuer serial number", "91337"},
+		{"raw alert code", "alert(200)"}, {"raw library error", "remote error"}, {"raw x509 error", "x509:"}, {"raw TLS error", "tls: "},
+		{"raw transport error", "CANARY-RAW-ERROR"}, {"ALPN offer list", `"h2","http/1.1"`},
+	}
+	for i, cert := range []tls.Certificate{f.cert, f.untrusted, f.mismatch} {
+		leaf, err := x509.ParseCertificate(cert.Certificate[0])
+		if err != nil {
+			t.Fatal(err)
+		}
+		chain, err := x509.ParseCertificate(cert.Certificate[1])
+		if err != nil {
+			t.Fatal(err)
+		}
+		sum := sha256.Sum256(leaf.Raw)
+		n := fmt.Sprint(" ", i)
+		f.canaries = append(f.canaries, binaryCanaries("certificate DER"+n, leaf.Raw)...)
+		if i < 2 { // the mismatched leaf shares the first chain's issuer
+			f.canaries = append(f.canaries, binaryCanaries("chain element DER"+n, chain.Raw)...)
+		}
+		f.canaries = append(f.canaries, binaryCanaries("public key"+n, leaf.RawSubjectPublicKeyInfo)...)
+		f.canaries = append(f.canaries, binaryCanaries("signature"+n, leaf.Signature)...)
+		f.canaries = append(f.canaries, binaryCanaries("fingerprint"+n, sum[:])...)
+	}
+	return f
+}
+
+func tlsCanaryTask(id string) string {
+	s := strings.Replace(tlsTask(id), tlsInput, `{"ip_address":"8.8.4.4","port":47392,"server_name":"`+tlsCanaryName+`"}`, 1)
+	return strings.Replace(s, `"limits":{}`, `"limits":{"max_duration_ms":60000}`, 1)
+}
+
+var tlsAllowed = []string{"outcome", "observations[].type", "observations[].status", "observations[].duration_ms", "observations[].failure", "observations[].details.address_family",
+	"observations[].details.tls_version", "observations[].details.alpn", "observations[].details.certificate_validation", "observations[].details.alert"}
+
+type tlsCanaryCase struct {
+	name      string
+	server    *loopback.TLSConfig
+	dialErr   error
+	stall     bool
+	data      func(string) string
+	interrupt string
+	want      tlsExpect
+}
+
+// tlsCanaryRun runs one TLS-01 path against the canary fixture and returns
+// its surfaces and the hello canaries of its connection.
+func tlsCanaryRun(t *testing.T, f tlsCanaryFixture, id string, tc tlsCanaryCase) (*surfaces, canarySet) {
+	t.Helper()
+	h, d := tlsProductionHarness(t, f.tlsFixture)
+	tlsPolicy(t, h, "8.8.4.4", 47392, tlsCanaryName, []string{"h2", "http/1.1"})
+	d.authority = tlsCanaryAuthority
+	var srv *loopback.TLSServer
+	var rec *recordingConn
+	if tc.server != nil {
+		srv = tlsServe(t, d, *tc.server)
+		dial := d.dial
+		d.dial = func(ctx context.Context) (measurement.Conn, error) {
+			c, err := dial(ctx)
+			if err != nil {
+				return nil, err
+			}
+			rec = &recordingConn{Conn: c.(net.Conn)}
+			return rec, nil
+		}
+	} else {
+		d.dial = func(context.Context) (measurement.Conn, error) {
+			return nil, fmt.Errorf("CANARY-RAW-ERROR 8.8.4.4:47392 %s: %w", tlsCanaryName, tc.dialErr)
+		}
+	}
+	if tc.stall {
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			if srv.Wait(ctx, func(c loopback.TLSCounts) bool { return c.In > 0 }) == nil {
+				h.advance(tlsOperationBound)
+			}
+		}()
+	}
+	c := h.initialized(t)
+	defer c.Close()
+	data := tlsCanaryTask(id)
+	if tc.data != nil {
+		data = tc.data(data)
+	}
+	s := &surfaces{}
+	rh, err := c.StartRun(h.admit(t, c, data))
+	if err != nil {
+		t.Fatal(codeOf(err))
+	}
+	if tc.interrupt != "" {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := srv.Wait(ctx, func(c loopback.TLSCounts) bool { return c.In > 0 }); err != nil {
+			t.Fatal(err)
+		}
+		if err := c.CancelRun(rh); err != nil {
+			t.Fatal(codeOf(err))
+		}
+	}
+	waitTerminal(t, c, rh)
+	_, err = c.RunState(rh)
+	s.err(err)
+	s.collect(h, c)
+	rejectedClean(t, h, c, f.canaries, withUnknownInput(tlsCanaryTask("rejected"), f.canaries))
+	var hello canarySet
+	if rec != nil {
+		hello = rec.helloCanaries()
+	}
+	return s, hello
+}
+
+// M-TLS-01-MINIMIZATION: canaries for every REQ-TLS-01-0028 item over the
+// success path, every failure class and the incomplete and not_run paths.
+// Handshake secrets and session tickets are created inside the TLS library
+// and never cross the transport in plaintext, so no canary can be injected;
+// the closed field assertion covers them.
+// requirement-ref: REQ-TLS-01-0028
+func TestMTls01Minimization(t *testing.T) {
+	f := newTLSCanaryFixture(t)
+	f.canaries.unique(t)
+	failed := func(outcome, failure, validation, alert string) tlsExpect {
+		return tlsExpect{state: "completed", outcome: outcome, tls: true, tlsFailure: failure, validation: validation, alert: alert}
+	}
+	tcpFailed := func(outcome, failure string) tlsExpect {
+		return tlsExpect{state: "completed", outcome: outcome, tcpFailure: failure}
+	}
+	cases := []tlsCanaryCase{
+		{name: "handshake_succeeded", server: &loopback.TLSConfig{Certificate: f.cert, ALPN: []string{"h2"}}, want: tlsSucceeded},
+		{name: "tcp_timeout", dialErr: syscall.ETIMEDOUT, want: tcpFailed("tcp_timeout", "timeout")},
+		{name: "tcp_refused", dialErr: syscall.ECONNREFUSED, want: tcpFailed("tcp_refused", "connection_refused")},
+		{name: "tcp_reset", dialErr: syscall.ECONNRESET, want: tcpFailed("tcp_reset", "connection_reset")},
+		{name: "tls_timeout", server: &loopback.TLSConfig{Mode: loopback.TLSStall}, stall: true, want: failed("tls_timeout", "timeout", "not_completed", "")},
+		{name: "tls_alert", server: &loopback.TLSConfig{Mode: loopback.TLSAlert, Alert: 200}, want: failed("tls_alert", "alert", "not_completed", "other")},
+		{name: "protocol_error", server: &loopback.TLSConfig{Mode: loopback.TLSGarbage}, want: failed("protocol_error", "protocol_error", "not_completed", "")},
+		{name: "certificate_untrusted", server: &loopback.TLSConfig{Certificate: f.untrusted, ALPN: []string{"h2"}}, want: failed("certificate_untrusted", "certificate_untrusted", "untrusted", "")},
+		{name: "certificate_name_mismatch", server: &loopback.TLSConfig{Certificate: f.mismatch, ALPN: []string{"h2"}}, want: failed("certificate_name_mismatch", "certificate_name_mismatch", "name_mismatch", "")},
+		{name: "certificate_time_invalid", server: &loopback.TLSConfig{Certificate: f.expired, ALPN: []string{"h2"}}, want: failed("certificate_time_invalid", "certificate_time_invalid", "time_invalid", "")},
+		{name: "alpn_no_overlap", server: &loopback.TLSConfig{Certificate: f.cert, ALPN: []string{"dot"}}, want: failed("alpn_no_overlap", "alpn_no_overlap", "not_completed", "")},
+		{name: "inconclusive", dialErr: errors.New("CANARY-RAW-ERROR"), want: tcpFailed("inconclusive", "inconclusive")},
+		{name: "incomplete", server: &loopback.TLSConfig{Mode: loopback.TLSStall}, interrupt: "cancel", want: tlsExpect{state: "incomplete", reason: "cancelled_by_host"}},
+		{name: "not_run", data: func(s string) string {
+			return strings.Replace(s, `"execution":{"limits":{"max_duration_ms":60000}`, `"execution":{"limits":{"max_duration_ms":60000},"network":{"context":{"required_fields":["country_code"]}}`, 1)
+		}, want: tlsExpect{state: "not_run", reason: "network_context_unavailable"}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			s, hello := tlsCanaryRun(t, f, "minimization", tc)
+			if tc.server != nil && tc.server.Mode == loopback.TLSAccept && len(hello) == 0 {
+				t.Fatal("no hello canaries derived")
+			}
+			s.check(t, append(slices.Clone(f.canaries), hello...))
+			if len(s.results) != 1 {
+				t.Fatal("not one result")
+			}
+			if m := minimized(t, s.results[0], tlsAllowed); (m == nil) != (tc.want.outcome == "") {
+				t.Fatal("measurement presence")
+			}
+			tlsResult(t, s.results[0], tc.want)
+		})
+	}
+	t.Run("injected fields", func(t *testing.T) {
+		s, _ := tlsCanaryRun(t, f, "minimization", cases[0])
+		obs := func(v map[string]any, i int) map[string]any {
+			return v["measurement"].(map[string]any)["observations"].([]any)[i].(map[string]any)
+		}
+		var inject []func(map[string]any)
+		for _, field := range []string{"server_name", "ip_address", "port", "certificate", "certificate_chain", "subject", "issuer", "san", "serial_number", "public_key",
+			"signature", "fingerprint", "alert_code", "alert_description", "client_random", "server_random", "cipher_suites", "cipher_suite", "session_id", "session_ticket",
+			"key_log", "error", "input_digest"} {
+			inject = append(inject, func(v map[string]any) { obs(v, 1)["details"].(map[string]any)[field] = "synthetic" },
+				func(v map[string]any) { obs(v, 1)[field] = "synthetic" }, func(v map[string]any) { v["measurement"].(map[string]any)[field] = "synthetic" })
+		}
+		inject = append(inject, func(v map[string]any) { obs(v, 1)["details"].(map[string]any)["alert"] = "alert(200)" })
+		assertRejected(t, primitiveDecoder(t, "minimization", result.Output{Test: model.Test{ID: "TLS-01", Version: "0.1.0", ResultVersion: "0.1.0"}}), s.results[0], inject...)
+	})
+}
+
+// M-TLS-01-INTERPRETATION: the shared prohibited-claims check with the
+// TLS-01 claims, over results of the success and failure outcomes.
+// requirement-ref: REQ-TLS-01-0001
+// requirement-ref: REQ-TLS-01-0002
+// requirement-ref: REQ-TLS-01-0003
+// requirement-ref: REQ-TLS-01-0029
+// requirement-ref: REQ-TLS-01-0030
+// requirement-ref: REQ-TLS-01-0031
+func TestMTls01Interpretation(t *testing.T) {
+	f := newTLSCanaryFixture(t)
+	var raws [][]byte
+	for _, tc := range []tlsCanaryCase{
+		{server: &loopback.TLSConfig{Certificate: f.cert, ALPN: []string{"h2"}}},
+		{dialErr: syscall.ECONNREFUSED}, {dialErr: syscall.ECONNRESET}, {dialErr: syscall.ETIMEDOUT}, {dialErr: errors.New("synthetic")},
+		{server: &loopback.TLSConfig{Mode: loopback.TLSAlert, Alert: 40}}, {server: &loopback.TLSConfig{Mode: loopback.TLSGarbage}},
+		{server: &loopback.TLSConfig{Certificate: f.untrusted}}, {server: &loopback.TLSConfig{Certificate: f.mismatch}}, {server: &loopback.TLSConfig{Certificate: f.expired}},
+		{server: &loopback.TLSConfig{Certificate: f.cert, ALPN: []string{"dot"}}},
+	} {
+		s, _ := tlsCanaryRun(t, f, "interpretation", tc)
+		raws = append(raws, s.results...)
+	}
+	d := primitiveDecoder(t, "interpretation", result.Output{Test: model.Test{ID: "TLS-01", Version: "0.1.0", ResultVersion: "0.1.0"}})
+	interpretation(t, "TLS-01", d, raws[0], raws, []string{"handshake_succeeded", "tcp_timeout", "tcp_refused", "tcp_reset", "tls_timeout", "tls_alert", "protocol_error",
+		"certificate_untrusted", "certificate_name_mismatch", "certificate_time_invalid", "alpn_no_overlap", "inconclusive"}, claims(
+		"handshake failure establishes filtering", `\b(handshake|tls)\b[^.]*\bfail\w*\b[^.]*\b(establish\w*|indicat\w*|shows?|proves?|means?)\b[^.]*\b(filter\w*|censor\w*|block\w*|interfer\w*|intent\w*)`,
+		"certificate outcome establishes interception", `\bcertificate\w*\b[^.]*\b(establish\w*|indicat\w*|shows?|proves?|means?)\b[^.]*\b(intercept\w*|tamper\w*|mitm|man-in-the-middle)`,
+		"timeout or reset excludes other causes", `\b(tcp_timeout|tcp_reset|tls_timeout)\b[^.]*\bexclud\w*`,
+		"alpn or protocol error excludes configuration", `\b(alpn_no_overlap|protocol_error)\b[^.]*\bexclud\w*`,
+		"handshake_succeeded establishes HTTP availability", `\bhandshake_succeeded\b[^.]*\b(establish\w*|shows?|proves?|means?)\b[^.]*\b(http|application|content)`,
+		"TLS-01 compares SNI values", `\btls-01\b[^.]*\bcompar\w*\b[^.]*\b(sni|server names?)\b`,
+	),
+		"establishes whether tcp and normal authenticated tls completed for the configured address, port, server name and alpn offer",
+		"does not establish tls or sni filtering, censorship, blocking, interference or intent", "does not establish interception or tampering",
+		"does not establish http or application-content availability", "does not compare different sni values", "does not exclude a stale address-to-name mapping",
+		"expired certificate or incorrect device time", "server-side rate limiting or overload")
 }

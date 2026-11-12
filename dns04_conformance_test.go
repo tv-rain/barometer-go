@@ -6,9 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"golang.org/x/net/dns/dnsmessage"
 	"net"
 	"net/netip"
+	"slices"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"syscall"
 	"testing"
@@ -81,15 +84,17 @@ func dotPolicy(t *testing.T, h *harness, input string) {
 // dotTransport maps the checked resolver authority to the loopback server and
 // fails any other destination; lookups counts system bootstrap requests.
 type dotTransport struct {
-	calls   atomic.Int32
-	lookups atomic.Int32
-	dial    func(context.Context) (measurement.Conn, error)
+	// authorities, when set, replace the fixed resolver authority.
+	authorities []string
+	calls       atomic.Int32
+	lookups     atomic.Int32
+	dial        func(context.Context) (measurement.Conn, error)
 }
 
 func (d *dotTransport) Dialer(int) (measurement.Dialer, error) { return d, nil }
 func (d *dotTransport) DialContext(ctx context.Context, network, address string) (measurement.Conn, error) {
 	d.calls.Add(1)
-	if !strings.HasPrefix(network, "tcp") || address != dotAuthority {
+	if !strings.HasPrefix(network, "tcp") || len(d.authorities) == 0 && address != dotAuthority || len(d.authorities) > 0 && !slices.Contains(d.authorities, address) {
 		return nil, errors.New("CANARY-RAW-ERROR")
 	}
 	return d.dial(ctx)
@@ -879,4 +884,206 @@ func TestMDns04Versions(t *testing.T) {
 			t.Fatalf("invalid output %d accepted: %s", i, data)
 		}
 	}
+}
+
+const (
+	dotCanaryName  = "canary-dot-111.example"
+	dotCanaryInput = `{"resolver_name":"canary-dot-111.example","port":47853,"hostname":"canary-dotq-112.example","record_type":"A","bootstrap_ip":"8.8.4.4"}`
+	dotCanarySys   = `{"resolver_name":"canary-dot-111.example","port":47853,"hostname":"canary-dotq-112.example","record_type":"A"}`
+)
+
+// dotCanaries are the REQ-DNS-04-0029 items. The synthetic reviewed profile
+// registers the non-standard canary port; the scripted bootstrap resolver
+// returns the canary resolver address, distinct from the canary bootstrap_ip.
+var dotCanaries = canarySet{
+	{"resolver_name", dotCanaryName}, {"resolver address", "8.8.4.5"}, {"non-standard port", "47853"}, {"bootstrap_ip", "8.8.4.4"},
+	{"query hostname", "canary-dotq-112.example"}, {"query identifier", "48879"}, {"DNS authority record", "canary-authority-74.example"},
+	{"DNS additional record", "canary-additional-75.example"}, {"DNS additional address", "203.0.113.75"}, {"raw DNS message pattern", "CANARY-RAWDNS-BYTES"}, {"answer TTL", "86413"},
+	{"certificate subject and issuer", loopback.CertificateCanary}, {"leaf serial number", "424242"}, {"issuer serial number", "91337"},
+	{"raw stage error", "CANARY-RAW-ERROR"}, {"raw x509 error", "x509:"}, {"raw TLS error", "tls: "},
+}
+
+var dotAllowed = []string{"outcome", "observations[].type", "observations[].status", "observations[].duration_ms", "observations[].failure",
+	"observations[].details.engine", "observations[].details.address_family", "observations[].details.query_type",
+	"observations[].details.responses[].arrival_index", "observations[].details.responses[].arrival_offset_ms", "observations[].details.responses[].rcode",
+	"observations[].details.responses[].answers[].type", "observations[].details.responses[].answers[].value",
+	"observations[].details.tls_version", "observations[].details.certificate_validation", "observations[].details.alert"}
+
+type dotCanaryCase struct {
+	name, input, outcome string
+	reply                func([]byte) []byte
+	tlsServer            *loopback.TLSConfig
+	dial, lookup         error
+}
+
+func dotCanaryCases(t *testing.T) []dotCanaryCase {
+	t.Helper()
+	other, err := loopback.NewTestCA()
+	if err != nil {
+		t.Fatal(err)
+	}
+	untrusted, err := other.Issue(dotCanaryName, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	dns := func(code dnsmessage.RCode, id uint16, answers ...string) func([]byte) []byte {
+		return func(q []byte) []byte { return dotFrame(dnsCanaryResponse(q, id, code, answers...)) }
+	}
+	tcp := func(err error) error { return fmt.Errorf("CANARY-RAW-ERROR 8.8.4.4:47853 %s: %w", dotCanaryName, err) }
+	return []dotCanaryCase{
+		{name: "response with bootstrap_ip", input: dotCanaryInput, outcome: "response", reply: dns(dnsmessage.RCodeSuccess, 0, "9.9.9.9", "9.9.9.9", "1.1.1.1")},
+		{name: "response with system bootstrap", input: dotCanarySys, outcome: "response", reply: dns(dnsmessage.RCodeSuccess, 0, "9.9.9.9")},
+		{name: "bootstrap_failure", input: dotCanarySys, outcome: "bootstrap_failure", lookup: &net.DNSError{IsNotFound: true, Err: "CANARY-RAW-ERROR", Name: dotCanaryName, Server: "127.0.0.1:53"}},
+		{name: "tcp_timeout", input: dotCanaryInput, outcome: "tcp_timeout", dial: tcp(syscall.ETIMEDOUT)},
+		{name: "tcp_refused", input: dotCanaryInput, outcome: "tcp_refused", dial: tcp(syscall.ECONNREFUSED)},
+		{name: "tcp_reset", input: dotCanaryInput, outcome: "tcp_reset", dial: tcp(syscall.ECONNRESET)},
+		{name: "tls_failure", input: dotCanaryInput, outcome: "tls_failure", tlsServer: &loopback.TLSConfig{Certificate: untrusted}},
+		{name: "dns_nxdomain", input: dotCanaryInput, outcome: "dns_nxdomain", reply: dns(dnsmessage.RCodeNameError, 0)},
+		{name: "dns_servfail", input: dotCanaryInput, outcome: "dns_servfail", reply: dns(dnsmessage.RCodeServerFailure, 0)},
+		{name: "dns_refused", input: dotCanarySys, outcome: "dns_refused", reply: dns(dnsmessage.RCodeRefused, 0)},
+		{name: "malformed_dns_response", input: dotCanaryInput, outcome: "malformed_dns_response", reply: func(q []byte) []byte {
+			r := dnsCanaryResponse(q, 0, dnsmessage.RCodeSuccess, "9.9.9.9")
+			return append([]byte{byte((len(r) + 4) >> 8), byte(len(r) + 4)}, append(r[:len(r)-4:len(r)-4], "\x00\x00CANARY-RAWDNS-BYTES"[:8]...)...)
+		}},
+		{name: "query_mismatch", input: dotCanaryInput, outcome: "query_mismatch", reply: dns(dnsmessage.RCodeSuccess, 48879, "9.9.9.9")},
+		{name: "inconclusive", input: dotCanaryInput, outcome: "inconclusive", dial: tcp(syscall.ENETUNREACH)},
+	}
+}
+
+// dotCanaryRun runs one DNS-04 path against the canary resolver profile and
+// returns its surfaces and the canaries of the framed DNS messages.
+func dotCanaryRun(t *testing.T, f dotFixture, id string, tc dotCanaryCase) (*surfaces, canarySet) {
+	t.Helper()
+	h, d := dotHarness(t, f, tc.input)
+	d.authorities = []string{"8.8.4.4:47853", "8.8.4.5:47853"}
+	h.adapters.run.resolver = dnsSystemResolver{func(_ context.Context, _, name string) ([]netip.Addr, error) {
+		if tc.lookup != nil {
+			return nil, tc.lookup
+		}
+		if name != dotCanaryName {
+			return nil, errors.New("synthetic: unexpected name")
+		}
+		return []netip.Addr{netip.MustParseAddr("8.8.4.5")}, nil
+	}}
+	var mu sync.Mutex
+	var messages canarySet
+	switch {
+	case tc.reply != nil:
+		cfg := f.cert
+		cfg.DoT = func(q []byte) []byte {
+			r := tc.reply(q)
+			mu.Lock()
+			n := fmt.Sprint(len(messages))
+			messages = append(messages, binaryCanaries("framed DNS query "+n, dotFrame(q))...)
+			messages = append(messages, binaryCanaries("framed DNS response "+n, r)...)
+			mu.Unlock()
+			return r
+		}
+		dotServe(t, d, cfg)
+	case tc.tlsServer != nil:
+		dotServe(t, d, *tc.tlsServer)
+	case tc.dial != nil:
+		d.dial = func(context.Context) (measurement.Conn, error) { return nil, tc.dial }
+	}
+	c := h.initialized(t)
+	defer c.Close()
+	s := &surfaces{}
+	rh, err := c.StartRun(h.admit(t, c, dotTask(id, tc.input, `{}`)))
+	if err != nil {
+		t.Fatal(codeOf(err))
+	}
+	waitTerminal(t, c, rh)
+	_, err = c.RunState(rh)
+	s.err(err)
+	s.collect(h, c)
+	rejectedClean(t, h, c, dotCanaries, withUnknownInput(dotTask("rejected", tc.input, `{}`), dotCanaries))
+	var r struct{ Measurement *struct{ Outcome string } }
+	if len(s.results) != 1 || json.Unmarshal(s.results[0], &r) != nil || r.Measurement == nil || r.Measurement.Outcome != tc.outcome {
+		t.Fatalf("%s: unexpected result", tc.name)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	return s, slices.Clone(messages)
+}
+
+func dotCanaryFixture(t *testing.T) dotFixture {
+	t.Helper()
+	f := newDotFixture(t)
+	cert, err := f.ca.Issue(dotCanaryName, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.cert.Certificate = cert
+	return f
+}
+
+// M-DNS-04-MINIMIZATION: canaries for every REQ-DNS-04-0029 item over the
+// listed outcome paths; only the registered observation fields remain, with
+// at most 16 normalized answers and no TTL.
+// requirement-ref: REQ-DNS-04-0029
+func TestMDns04Minimization(t *testing.T) {
+	dotCanaries.unique(t)
+	f := dotCanaryFixture(t)
+	for _, tc := range dotCanaryCases(t) {
+		t.Run(tc.name, func(t *testing.T) {
+			s, messages := dotCanaryRun(t, f, "minimization", tc)
+			if tc.reply != nil && len(messages) == 0 {
+				t.Fatal("no message canaries")
+			}
+			s.check(t, append(slices.Clone(dotCanaries), messages...))
+			m := minimized(t, s.results[0], dotAllowed)
+			if tc.name == "response with bootstrap_ip" {
+				obs := m["observations"].([]any)
+				answers := obs[len(obs)-1].(map[string]any)["details"].(map[string]any)["responses"].([]any)[0].(map[string]any)["answers"].([]any)
+				if len(answers) != 2 || len(answers) > 16 || answers[0].(map[string]any)["value"] != "9.9.9.9" {
+					t.Fatal("answers not bounded and deduplicated")
+				}
+			}
+		})
+	}
+	t.Run("injected fields", func(t *testing.T) {
+		s, _ := dotCanaryRun(t, f, "minimization", dotCanaryCases(t)[0])
+		obs := func(v map[string]any, i int) map[string]any {
+			o := v["measurement"].(map[string]any)["observations"].([]any)
+			return o[(i+len(o))%len(o)].(map[string]any)
+		}
+		var inject []func(map[string]any)
+		for _, field := range []string{"resolver_name", "ip_address", "port", "bootstrap_ip", "hostname", "query_id", "ttl", "message", "length_prefix", "certificate", "alpn", "error"} {
+			inject = append(inject, func(v map[string]any) { obs(v, -1)["details"].(map[string]any)[field] = "synthetic" },
+				func(v map[string]any) { obs(v, -2)["details"].(map[string]any)[field] = "synthetic" },
+				func(v map[string]any) {
+					obs(v, -1)["details"].(map[string]any)["responses"].([]any)[0].(map[string]any)["answers"].([]any)[0].(map[string]any)[field] = 86413
+				})
+		}
+		assertRejected(t, primitiveDecoder(t, "minimization", measurementOutput(dotTest, dotParams(t, dotCanaryInput, `{}`))), s.results[0], inject...)
+	})
+}
+
+// M-DNS-04-INTERPRETATION: the shared prohibited-claims check with the
+// DNS-04 claims over results of every registered outcome reachable here.
+// requirement-ref: REQ-DNS-04-0001
+// requirement-ref: REQ-DNS-04-0002
+// requirement-ref: REQ-DNS-04-0003
+// requirement-ref: REQ-DNS-04-0030
+// requirement-ref: REQ-DNS-04-0031
+// requirement-ref: REQ-DNS-04-0032
+func TestMDns04Interpretation(t *testing.T) {
+	f := dotCanaryFixture(t)
+	var raws [][]byte
+	for _, tc := range dotCanaryCases(t) {
+		s, _ := dotCanaryRun(t, f, "interpretation", tc)
+		raws = append(raws, s.results...)
+	}
+	d := primitiveDecoder(t, "interpretation", measurementOutput(dotTest, dotParams(t, dotCanaryInput, `{}`)))
+	interpretation(t, "DNS-04", d, raws[0], raws, []string{"response", "bootstrap_failure", "tcp_timeout", "tcp_refused", "tcp_reset", "tls_failure", "dns_nxdomain",
+		"dns_servfail", "dns_refused", "malformed_dns_response", "query_mismatch", "timeout", "inconclusive"}, claims(
+		"DNS-04 configures DoT for the device or host", `\b(dns-04|the test|dot test)\b[^.]*\bconfigur\w*\b[^.]*\b(device|host application|operating system)\b`,
+		"DoT answer is authoritative or correct", `\b(dot|dns-04)\b[^.]*\b(answer|result|response)s?\b[^.]*\b(is|are)\s+(authoritative|correct)\b`,
+		"port 853 failure proves intentional blocking", `\b(port 853|standard dot port)\b[^.]*\b(establish\w*|proves?|shows?|means?)\b[^.]*\b(intentional|block\w*)`,
+		"transport difference establishes censor intent", `\btransport\w*\b[^.]*\bdifferen\w*\b[^.]*\b(establish\w*|proves?|shows?|means?)\b[^.]*\b(intent|censor\w*)`,
+		"failure class excludes other causes", `\b(dns_refused|tls_failure|tcp_reset|tcp_timeout)\b[^.]*\bexclud\w*`,
+	),
+		"and nothing more", "does not configure dot for the device or the host application", "a response answer is not authoritative or correct",
+		"does not establish intentional blocking", "not a conclusion about censor intent", "alone does not exclude resolver, authoritative dns, certificate or routing outage",
+		"port-specific firewall behavior unrelated to censorship")
 }
