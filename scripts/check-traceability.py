@@ -19,10 +19,10 @@ REFERENCE_REVISION = "da7517c07af7008f432b8e7bf4c4db41b87bd696"
 # Independent reviewed inventory; never infer required mappings from the input under test.
 INVENTORY_REVISION = "c06ce6b7b73b8520f35ce10982315fcb4d05615b"
 BASELINES = {
-    "cross-cutting.json": ("45bc424bd9829f5389b3b4494d0966e10e21da94",
-                           "5bc13351fbfd36090c7e24122781fd4700d46491"),
-    "measurements.json": ("45bc424bd9829f5389b3b4494d0966e10e21da94",
-                          "5bc13351fbfd36090c7e24122781fd4700d46491"),
+    "cross-cutting.json": ("da7517c07af7008f432b8e7bf4c4db41b87bd696",
+                           "13c525135cdd4614c7ba26b3b4e43e168fefc932"),
+    "measurements.json": ("da7517c07af7008f432b8e7bf4c4db41b87bd696",
+                          "13c525135cdd4614c7ba26b3b4e43e168fefc932"),
 }
 # Earlier manifests are retained at the immutable commits where they were current, not as
 # committed copies (decision 0012); git history and CI report artifacts hold them.

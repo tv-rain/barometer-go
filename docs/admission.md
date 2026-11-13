@@ -469,7 +469,7 @@ Reproduce with `go test . -run='^$' -fuzz='^FuzzAdmitTask$' -fuzztime=120s -fuzz
 | `CC-TRUST-TASK-IDENTIFIER-RULES` | Its campaign-identity rows compare task IDs emitted in results across installations with linkage tokens; result production and optional linkage derivation exist, but the cross-installation case needs separate native installations. |
 | `CC-TRUST-TARGETED-DELIVERY` | Its linkage rows compare scheduling decisions and host task-selection hooks, which do not exist; run reservation exists, the host task-selection hooks remain with the native adapters and bindings work. |
 | `CC-TRUST-ADMISSION-ERRORS` | It needs captured log output, which no test fake provides; result-sink and bundle fakes exist. The family suite is not written. |
-| `CC-TRUST-LOCAL-POLICY-LIFECYCLE-RUNTIME` | It needs the host policy adapter; run reservation, cancellation of runs on replacement and Network Context cache invalidation exist. |
+| `CC-TRUST-LOCAL-POLICY-LIFECYCLE-RUNTIME` | The host policy adapter exists in the Android and iOS plugins, whose instrumented tests run its host rows; run reservation, cancellation of runs on replacement and Network Context cache invalidation exist. The Go family suite is not written. |
 | `CC-LIMIT-TASK-AND-IDENTIFIER-LIMITS` | NET-05 step identifier boundaries have synthetic codec coverage; the counting reader at the native adapter remains pending. |
 | `CC-LIMIT-LIMIT-HANDLING` | Generic runtime deadlines and budgets exist; the HTTP-01 body bound, NET-05 profiles and production codecs its remaining rows need exist; the family suite is not written. |
 | `CC-INPUT-JSON-STRUCTURE` | Its rows use the registered NET-01 and DNS-01 input schemas, which both exist; the family suite is not written. |
