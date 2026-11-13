@@ -1125,7 +1125,7 @@ No registered Go codec and no native or host rule needs a codec-reported capabil
 
 ## Signed Remote Task Package Adoption
 
-**Status:** Public contract and internal review alignment are merged; the Go core adopts them with synthetic evidence only. The cryptographic, safety and host integration reviews were performed by the project maintainer with no findings, and the remote-delivery gate is lifted. The interpretation question below is closed by REQ-TRUST-0055, adopted in Go. Binding and host adoption remain open.
+**Status:** Public contract and internal review alignment are merged; the Go core adopts them with synthetic evidence only. The cryptographic, safety and host integration reviews were performed by the project maintainer with no findings, and the remote-delivery gate is lifted. The interpretation question below is closed by REQ-TRUST-0055, adopted in Go. The Android and iOS plugins adopt the package-only remote path; host-application adoption remains open.
 
 This is an adoption record, not a Go finding: the change came from coordination decision 0011, not from an implementation ambiguity. Its public record is [Library-Verified Signed Remote Task Packages](https://github.com/tv-rain/barometer-spec/blob/e97502747c917a16bc2b71337535ff972bbd7d64/specification-issues/signed-remote-task-packages.md).
 
@@ -1154,5 +1154,5 @@ The original adoption's list of required reviews is superseded by the maintainer
 
 - The cryptographic review of the package encoding, signed-message construction, Ed25519 verification strictness and public-key validation, the safety review of residual key exposure, the 365-day maximum key validity and four keys per issuer, and the host integration review of package retention were performed by the project maintainer (`barometer-spec-internal` PR #7, merge `4522637fc91890acae9de6b4da9bd189d9f3318e`) and passed with no findings. The remote-delivery gate is lifted.
 - Independent external reviews of the same scopes run asynchronously and do not gate; their findings return as ordinary findings under the specification issue workflow.
-- No native, Flutter or host binding of the package-only remote path exists yet, so hosts cannot yet pass packages to the Go core, and how hosts avoid retaining received packages is not yet exercised in binding or host code.
+- The Android and iOS plugins pass packages from the channel host to the Go core, and their instrumented tests admit a package signed with a synthetic policy key and reject packages with a wrong key or altered content on Android emulators, iOS simulators and an iPhone. No host application passes packages yet, so how hosts avoid retaining received packages is not exercised in host code.
 - No runtime, platform, field or release support is claimed.
