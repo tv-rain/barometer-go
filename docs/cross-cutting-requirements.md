@@ -45,7 +45,7 @@ The public [threat model](https://github.com/tv-rain/barometer-spec/blob/da7517c
 | DNS, HTTP, context or proxy response at every registered size and time boundary | REQ-LIMIT-0014 to REQ-LIMIT-0018, REQ-LIMIT-0023, REQ-LIMIT-0026 to REQ-LIMIT-0031 | `CC-LIMIT-DNS-LIMITS`, `CC-LIMIT-HTTP-AND-VALIDATION-LIMITS`, `CC-LIMIT-CONTEXT-LINKAGE-AND-RETENTION-LIMITS`, `CC-LIMIT-LIMIT-HANDLING` | None |
 | Network change during each stage and during a NET-05 profile | REQ-CONTEXT-0017 to REQ-CONTEXT-0019, REQ-PROXY-0028 to REQ-PROXY-0030 | `CC-CONTEXT-PATH-CONSISTENCY`, `CC-PROXY-EXECUTION-STATES` | Platform network adapters |
 | Data clearing interrupted after result deletion and after key deletion | REQ-LINKAGE-0023 to REQ-LINKAGE-0026 | `CC-LINKAGE-CLEAR-DATA-CONTRACT` (Go rows), `CC-LINKAGE-CLEAR-DATA-CONTRACT-HOST` | Binding and host |
-| Collector receives linkage with account authentication, source IP, precise time or rare context | REQ-LINKAGE-0040 to REQ-LINKAGE-0042 | `CC-LINKAGE-INGESTION-SEPARATION` (review case only) | Collector operator |
+| Collector receives linkage with account authentication, source IP, precise time or rare context | REQ-LINKAGE-0040, REQ-LINKAGE-0053, REQ-LINKAGE-0054 | `CC-LINKAGE-INGESTION-SEPARATION` (review case only) | Collector operator |
 
 ## Source Allocation Summary
 
@@ -2904,17 +2904,17 @@ Scope: Synthetic core contract cases. Executed in the root `TestCcLinkageStorage
 
 Public source: `library/result-linkage.md`, section **Ingestion Separation**. Intended target: `docs/conformance/host-delivery-review.md`. Planned case location: `docs/conformance/host-delivery-review.md`, `heading:RV-CC-LINKAGE-INGESTION-SEPARATION`.
 
-Case plan: no automated case; review case `RV-CC-LINKAGE-INGESTION-SEPARATION`: Human review case; not automated coverage. Reviewer role: Collector and deployment privacy/safety reviewer (independent of the collector operator). Reviewed artifact: Synthetic deployment delivery-flow description and collector ingress and research-storage configuration at the reviewed revision. Checklist: (1) Is the network-facing ingress component separated from research storage so transport metadata is removed before bundles reach analysis? (2) Does ingress avoid or minimize source-IP logging? (3) Does ingress remove forwarding headers and other transport identifiers before forwarding? (4) Does the bundle endpoint avoid application account authentication where the deployment permits? (5) Is bundle_id retained only as long as needed for idempotency and retry handling? (6) Are size, rate and schema limits enforced without building a persistent device profile? (7) If bundles are delivered through an API authenticated to a user account, is a separate privacy and safety review recorded and is the integration not described as anonymous? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
+Case plan: no automated case; review case `RV-CC-LINKAGE-INGESTION-SEPARATION`: Human review case; not automated coverage. Reviewer role: Collector and deployment privacy/safety reviewer (independent of the collector operator). Reviewed artifact: Synthetic deployment delivery-flow description and collector ingress and research-storage configuration at the reviewed revision. Checklist: (1) Is the network-facing ingress component separated from research storage so transport metadata is removed before bundles reach analysis? (2) Does ingress avoid or minimize source-IP logging? (3) Does ingress remove forwarding headers and other transport identifiers before forwarding? (4) Does the host avoid delivering bundles through an API authenticated to a user account, and does the bundle endpoint neither require, request nor accept account authentication, session cookies or account tokens? (5) Is bundle_id retained only as long as needed for idempotency and retry handling? (6) Are size, rate and schema limits enforced without building a persistent device profile? (7) If account context nevertheless arrives with a bundle, does the collector discard it before the bundle reaches storage or analysis and avoid associating the bundle's results with an account? Evidence record: A `review` evidence record naming the linked requirement IDs, the reviewed artifact revision, each checklist answer and any finding entered in Specification Issues.
 
 Scope: Host, collector or specification review; no runtime enforcement claim. No execution evidence or support claim.
 
 <!-- requirement-ref: REQ-LINKAGE-0040 -->
-<!-- requirement-ref: REQ-LINKAGE-0041 -->
-<!-- requirement-ref: REQ-LINKAGE-0042 -->
+<!-- requirement-ref: REQ-LINKAGE-0053 -->
+<!-- requirement-ref: REQ-LINKAGE-0054 -->
 
 - [REQ-LINKAGE-0040](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0040) → `RV-CC-LINKAGE-INGESTION-SEPARATION`.
-- [REQ-LINKAGE-0041](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0041) → `RV-CC-LINKAGE-INGESTION-SEPARATION`.
-- [REQ-LINKAGE-0042](https://github.com/tv-rain/barometer-spec/blob/d93aff93cbc17e7c065fb40d8f6e2e01a697bf35/library/result-linkage.md#REQ-LINKAGE-0042) → `RV-CC-LINKAGE-INGESTION-SEPARATION`.
+- [REQ-LINKAGE-0053](https://github.com/tv-rain/barometer-spec/blob/5af828d9c7d3c93510d56429a5cb175717480dd0/library/result-linkage.md#REQ-LINKAGE-0053) → `RV-CC-LINKAGE-INGESTION-SEPARATION`.
+- [REQ-LINKAGE-0054](https://github.com/tv-rain/barometer-spec/blob/5af828d9c7d3c93510d56429a5cb175717480dd0/library/result-linkage.md#REQ-LINKAGE-0054) → `RV-CC-LINKAGE-INGESTION-SEPARATION`.
 
 ### CC-LINKAGE-PRIVACY-AND-SAFETY-REQUIREMENTS
 
